@@ -1,0 +1,79 @@
+import { COOKIE_NAME } from "@shared/const";
+import { parse as parseCookie } from "cookie";
+import { z } from "zod";
+import { getSessionCookieOptions } from "./_core/cookies";
+import { createHeartbeatJob } from "./_core/heartbeat";
+import { systemRouter } from "./_core/systemRouter";
+import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
+import * as controlPlane from "./control-plane/service";
+
+const workspaceInput = z.object({
+  name: z.string().min(2).max(120),
+  programName: z.string().min(2).max(160),
+  safeHarbor: z.string().min(10).max(10_000),
+  codeOfConduct: z.string().min(10).max(10_000),
+  allowlist: z.array(z.string().min(1).max(255)).min(1).max(100),
+  exclusions: z.array(z.string().min(1).max(255)).max(100),
+  budgetCents: z.number().int().min(1).max(100_000_000),
+  sessionLimitMinutes: z.number().int().min(5).max(1_440),
+  cooldownMinutes: z.number().int().min(0).max(10_080),
+  retentionDays: z.number().int().min(1).max(3_650),
+});
+
+export const appRouter = router({
+    // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
+  system: systemRouter,
+  auth: router({
+    me: publicProcedure.query(opts => opts.ctx.user),
+    logout: publicProcedure.mutation(({ ctx }) => {
+      const cookieOptions = getSessionCookieOptions(ctx.req);
+      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
+      return {
+        success: true,
+      } as const;
+    }),
+  }),
+  control: router({
+    dashboard: protectedProcedure.query(({ ctx }) => controlPlane.getDashboard(ctx.user.id)),
+  }),
+  workspace: router({
+    list: protectedProcedure.query(({ ctx }) => controlPlane.listWorkspaces(ctx.user.id)),
+    create: protectedProcedure.input(workspaceInput).mutation(({ ctx, input }) => controlPlane.createWorkspace(ctx.user.id, input)),
+    setStatus: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), status: z.enum(["active", "paused", "archived"]) })).mutation(({ ctx, input }) => controlPlane.setWorkspaceStatus(ctx.user.id, input.workspaceId, input.status)),
+    credentials: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => controlPlane.listCredentialReferences(ctx.user.id, input.workspaceId)),
+    addCredentialReference: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), label: z.string().min(2).max(120), secretReference: z.string().min(20).max(200) })).mutation(({ ctx, input }) => controlPlane.addCredentialReference(ctx.user.id, input.workspaceId, input.label, input.secretReference)),
+    scheduleAdministrativeCheck: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), cron: z.string().regex(/^0\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+$/, "Gunakan cron UTC enam kolom dengan detik bernilai 0.") })).mutation(async ({ ctx, input }) => {
+      const sessionToken = parseCookie(ctx.req.headers.cookie ?? "")[COOKIE_NAME] ?? "";
+      const job = await createHeartbeatJob({
+        name: `angelmind-workspace-${input.workspaceId}`,
+        cron: input.cron,
+        path: "/api/scheduled/workspace-maintenance",
+        description: `Administrative and stored-metadata change check for workspace ${input.workspaceId}`,
+      }, sessionToken);
+      await controlPlane.attachScheduleTask(ctx.user.id, input.workspaceId, job.taskUid);
+      return job;
+    }),
+  }),
+  rehearsal: router({
+    run: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).mutation(({ ctx, input }) => controlPlane.rehearseWorkspace(ctx.user.id, input.workspaceId)),
+    listRuns: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive().optional() }).optional()).query(({ ctx, input }) => controlPlane.listRuns(ctx.user.id, input?.workspaceId)),
+  }),
+  governance: router({
+    list: protectedProcedure.query(({ ctx }) => controlPlane.listApprovals(ctx.user.id)),
+    requestTier3: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), action: z.literal("privileged_proof") })).mutation(({ ctx, input }) => controlPlane.requestApproval(ctx.user.id, input.workspaceId, input.action)),
+    decide: protectedProcedure.input(z.object({ approvalId: z.number().int().positive(), decision: z.enum(["approved", "rejected"]), note: z.string().max(2_000) })).mutation(({ ctx, input }) => controlPlane.decideApproval(ctx.user.id, input.approvalId, input.decision, input.note)),
+  }),
+  finding: router({
+    list: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive().optional() }).optional()).query(({ ctx, input }) => controlPlane.listFindings(ctx.user.id, input?.workspaceId)),
+    create: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), fingerprint: z.string().min(8).max(96), title: z.string().min(3).max(240), impactSummary: z.string().min(10).max(12_000), reportDraft: z.string().min(10).max(20_000), confidence: z.number().int().min(0).max(100) })).mutation(({ ctx, input }) => controlPlane.createFinding(ctx.user.id, input)),
+    transition: protectedProcedure.input(z.object({ findingId: z.number().int().positive(), status: z.enum(["triaged", "candidate", "reproducing", "validated", "reported", "invalid", "duplicate", "inconclusive"]) })).mutation(({ ctx, input }) => controlPlane.transitionFinding(ctx.user.id, input)),
+    approveReview: protectedProcedure.input(z.object({ findingId: z.number().int().positive() })).mutation(({ ctx, input }) => controlPlane.approveFindingReview(ctx.user.id, input.findingId)),
+  }),
+  audit: router({
+    list: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => controlPlane.listAudit(ctx.user.id, input.workspaceId)),
+    evidence: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => controlPlane.listEvidence(ctx.user.id, input.workspaceId)),
+    uploadEvidence: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), findingId: z.number().int().positive().optional(), fileName: z.string().min(1).max(120), contentType: z.string().min(3).max(100), contentBase64: z.string().min(4).max(7_000_000) })).mutation(({ ctx, input }) => controlPlane.uploadEvidence(ctx.user.id, input)),
+  }),
+});
+
+export type AppRouter = typeof appRouter;

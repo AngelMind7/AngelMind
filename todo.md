@@ -1,0 +1,25 @@
+# Project TODO
+
+- [x] Define the workspace-isolated data model and core contracts from Scope through Run.
+- [x] Build authenticated workspace and program management with safe-harbor records, allowlists, exclusions, and active-state controls.
+- [x] Implement deterministic policy checks for scope, code of conduct, budget, session constraints, governance tiers, and mandatory Tier 3 approval.
+- [x] Implement network-free dry-run/rehearsal planning with cost and duration estimates.
+- [x] Build governed runs, checkpoints, cooldown handling, event logs, and per-workspace data and credential isolation.
+- [x] Build the finding lifecycle with deduplication, confidence, impact summaries, review-gated reporting, and no direct submission flow.
+- [x] Add hashed, timestamped evidence records, retention controls, approval decision logs, and per-workspace artifact references.
+- [x] Build cyberpunk high-contrast dashboard views for operations, policy, findings, governance, audit, and observability.
+- [x] Add coverage, cost, model-use, run, policy-block, error, false-positive, and reproduction-rate observability.
+- [x] Add owner notifications for approvals, guardrail blocks, and validated findings.
+- [x] Add scheduler safeguards so administrative and change-detection checks only consider active workspaces and always respect cooldown, duration, and budget gates.
+- [x] Add a modular Python 3.12+ foundation with safe core contracts, deterministic safety components, and no active research capabilities.
+- [x] Write property-based and unit tests for safety invariants, dry-run isolation, approval gates, and scheduler eligibility.
+- [x] Write maintainable architecture, tool-contract, governance, compliance, operations, and deployment documentation.
+- [x] Verify the application through type checks, automated tests, dry-run tests, and desktop/mobile visual review.
+- [x] Enforce deterministic code-of-conduct restrictions for prohibited action classes and cover them with tests.
+- [x] Add workspace-scoped credential-reference management and run eligibility checks that apply cooldown and budget limits to every run start.
+- [x] Add auditable retention-review enforcement for expired evidence references without automatic deletion.
+- [x] Compute error, false-positive, reproduction-rate, and coverage telemetry from persisted records.
+- [x] Add session-limit checks and safe stored-metadata change detection to the scheduled administrative path.
+- [x] Re-run explicit scheduler and approval-gate test coverage after the safety hardening pass.
+- [x] Add explicit unit coverage for the Tier 3 approval-gate contract and its no-execution invariant.
+- [ ] Synchronize the completed implementation to the connected GitHub repository.

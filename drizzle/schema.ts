@@ -29,6 +29,7 @@ export const workspaceStatus = ["active", "paused", "archived"] as const;
 export const runStatus = ["queued", "running", "checkpointed", "completed", "blocked", "failed"] as const;
 export const findingStatus = ["discovered", "triaged", "candidate", "reproducing", "validated", "reported", "submitted", "invalid", "duplicate", "inconclusive"] as const;
 export const approvalStatus = ["pending", "approved", "rejected", "expired"] as const;
+export const notificationEventType = ["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check"] as const;
 
 export const workspaces = mysqlTable("workspaces", {
   id: int("id").autoincrement().primaryKey(),
@@ -139,6 +140,32 @@ export const workspaceChangeSnapshots = mysqlTable("workspaceChangeSnapshots", {
 }, table => [
   uniqueIndex("change_snapshot_workspace_uq").on(table.workspaceId),
   index("change_snapshot_checked_idx").on(table.checkedAt),
+]);
+
+export const notificationPreferences = mysqlTable("notificationPreferences", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  eventType: mysqlEnum("eventType", notificationEventType).notNull(),
+  inAppEnabled: int("inAppEnabled").default(1).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [
+  uniqueIndex("notification_preference_user_event_uq").on(table.userId, table.eventType),
+  index("notification_preference_user_idx").on(table.userId),
+]);
+
+export const notifications = mysqlTable("notifications", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  workspaceId: int("workspaceId"),
+  eventType: mysqlEnum("eventType", notificationEventType).notNull(),
+  severity: mysqlEnum("severity", ["info", "warning", "critical"] as const).default("info").notNull(),
+  title: varchar("title", { length: 180 }).notNull(),
+  message: text("message").notNull(),
+  readAt: timestamp("readAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [
+  index("notifications_user_read_created_idx").on(table.userId, table.readAt, table.createdAt),
+  index("notifications_workspace_created_idx").on(table.workspaceId, table.createdAt),
 ]);
 
 export type Workspace = typeof workspaces.$inferSelect;

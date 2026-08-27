@@ -18,3 +18,11 @@ export function prepareGovernanceRequest(action: ActionKind): GovernanceRequest 
     executionAuthorized: false,
   };
 }
+
+export function assertDistinctApprover(requestedByUserId: number, decidedByUserId: number): void {
+  if (requestedByUserId === decidedByUserId) throw new Error("Tier 3 approval must be decided by a different authenticated user.");
+}
+
+export function canReviewApproval(userRole: "user" | "admin", requesterId: number, reviewerId: number): boolean {
+  return userRole === "admin" && requesterId !== reviewerId;
+}

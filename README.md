@@ -30,6 +30,6 @@ PYTHONPATH=src pytest
 
 ## Documentation
 
-Read `docs/architecture.md` for the service boundary and domain flow, `docs/tool-contracts.md` for future integration requirements, `docs/governance.md` for approval behavior, `docs/legal-compliance.md` for audit and retention handling, and `docs/operations.md` for deployment and scheduling.
+Read `docs/architecture.md` for the service boundary and domain flow, `docs/tool-contracts.md` for future integration requirements, `docs/governance.md` for approval behavior, `docs/legal-compliance.md` for audit and retention handling, `docs/operations.md` for deployment and scheduling, `docs/notifications.md` for alert delivery controls, and `docs/readiness-roadmap.md` for the remaining production-readiness plan.
 
 > The control plane is deliberately not an active scanner. Any future capability must be separately hosted, restricted to an authorized workspace, and unable to bypass the deterministic control-plane policy.

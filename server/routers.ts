@@ -36,6 +36,13 @@ export const appRouter = router({
   control: router({
     dashboard: protectedProcedure.query(({ ctx }) => controlPlane.getDashboard(ctx.user.id)),
   }),
+  notification: router({
+    list: protectedProcedure.query(({ ctx }) => controlPlane.listNotifications(ctx.user.id)),
+    preferences: protectedProcedure.query(({ ctx }) => controlPlane.listNotificationPreferences(ctx.user.id)),
+    setPreference: protectedProcedure.input(z.object({ eventType: z.enum(["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check"]), inAppEnabled: z.boolean() })).mutation(({ ctx, input }) => controlPlane.setNotificationPreference(ctx.user.id, input.eventType, input.inAppEnabled)),
+    markRead: protectedProcedure.input(z.object({ notificationId: z.number().int().positive() })).mutation(({ ctx, input }) => controlPlane.markNotificationRead(ctx.user.id, input.notificationId)),
+    markAllRead: protectedProcedure.mutation(({ ctx }) => controlPlane.markAllNotificationsRead(ctx.user.id)),
+  }),
   workspace: router({
     list: protectedProcedure.query(({ ctx }) => controlPlane.listWorkspaces(ctx.user.id)),
     create: protectedProcedure.input(workspaceInput).mutation(({ ctx, input }) => controlPlane.createWorkspace(ctx.user.id, input)),
@@ -59,9 +66,9 @@ export const appRouter = router({
     listRuns: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive().optional() }).optional()).query(({ ctx, input }) => controlPlane.listRuns(ctx.user.id, input?.workspaceId)),
   }),
   governance: router({
-    list: protectedProcedure.query(({ ctx }) => controlPlane.listApprovals(ctx.user.id)),
+    list: protectedProcedure.query(({ ctx }) => controlPlane.listApprovals(ctx.user.id, ctx.user.role)),
     requestTier3: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), action: z.literal("privileged_proof") })).mutation(({ ctx, input }) => controlPlane.requestApproval(ctx.user.id, input.workspaceId, input.action)),
-    decide: protectedProcedure.input(z.object({ approvalId: z.number().int().positive(), decision: z.enum(["approved", "rejected"]), note: z.string().max(2_000) })).mutation(({ ctx, input }) => controlPlane.decideApproval(ctx.user.id, input.approvalId, input.decision, input.note)),
+    decide: protectedProcedure.input(z.object({ approvalId: z.number().int().positive(), decision: z.enum(["approved", "rejected"]), note: z.string().max(2_000) })).mutation(({ ctx, input }) => controlPlane.decideApproval(ctx.user.id, ctx.user.role, input.approvalId, input.decision, input.note)),
   }),
   finding: router({
     list: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive().optional() }).optional()).query(({ ctx, input }) => controlPlane.listFindings(ctx.user.id, input?.workspaceId)),

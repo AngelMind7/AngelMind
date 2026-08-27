@@ -22,4 +22,11 @@
 - [x] Add session-limit checks and safe stored-metadata change detection to the scheduled administrative path.
 - [x] Re-run explicit scheduler and approval-gate test coverage after the safety hardening pass.
 - [x] Add explicit unit coverage for the Tier 3 approval-gate contract and its no-execution invariant.
-- [ ] Synchronize the completed implementation to the connected GitHub repository.
+- [x] Synchronize the completed implementation to the connected GitHub repository.
+- [x] Add configurable in-app notification preferences for governance, guardrail, validated-finding, and scheduled-check events.
+- [x] Test and document custom notification delivery, preference enforcement, and audit behavior.
+- [x] Build a persistent in-app notification center with unread state and per-event preferences.
+- [x] Permit a distinct authenticated administrator to review Tier 3 approvals while preserving owner workspace isolation for non-administrators.
+- [x] Document the remaining production-readiness gaps and the planned external webhook boundary.
+- [x] Add explicit notification delivery, suppression, acknowledgement, and audit-contract tests.
+- [x] Permit a distinct authenticated administrator to review Tier 3 approvals while preserving owner workspace isolation for non-administrators.

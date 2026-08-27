@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
-import { and, desc, eq, inArray } from "drizzle-orm";
-import { auditEvents, approvals, credentialReferences, evidenceArtifacts, findings, runs, workspaceChangeSnapshots, workspaces } from "../../drizzle/schema";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { auditEvents, approvals, credentialReferences, evidenceArtifacts, findings, notificationPreferences, notifications, runs, workspaceChangeSnapshots, workspaces } from "../../drizzle/schema";
 import { getDb, getOwnedWorkspace } from "../db";
 import { notifyOwner } from "../_core/notification";
 import { storagePut } from "../storage";
@@ -8,8 +8,8 @@ import { assertFindingTransition, type FindingWorkflowStatus } from "./finding-w
 import { buildRehearsal } from "./rehearsal";
 import { getAdministrativeCheckEligibility } from "./scheduler";
 import { getRunEligibility } from "./run-eligibility";
-import { prepareGovernanceRequest } from "./governance";
-import { classifyGovernanceTier } from "./guardrails";
+import { assertDistinctApprover, canReviewApproval, prepareGovernanceRequest } from "./governance";
+import { canAcknowledgeNotification, planInAppDelivery, type NotificationEvent, type NotificationSeverity } from "./notifications";
 import type { ActionKind } from "./contracts";
 
 const parseList = (serialized: string): string[] => {
@@ -39,6 +39,25 @@ async function ownedWorkspaceOrThrow(userId: number, workspaceId: number) {
   const workspace = await getOwnedWorkspace(workspaceId, userId);
   if (!workspace) throw new Error("Workspace tidak ditemukan atau tidak dapat diakses.");
   return workspace;
+}
+
+async function createInAppNotification(input: { userId: number; workspaceId: number; eventType: NotificationEvent; severity: NotificationSeverity; title: string; message: string }) {
+  const db = await getDb();
+  if (!db) return { delivered: false, reason: "database-unavailable" as const };
+  const preferences = await db.select().from(notificationPreferences).where(eq(notificationPreferences.userId, input.userId));
+  const delivery = planInAppDelivery(input.eventType, preferences);
+  if (!delivery.delivered) {
+    await addAudit(input.workspaceId, "notification", delivery.auditSubject, { eventType: input.eventType, userId: input.userId, reason: "preference-disabled" });
+    return { delivered: false, reason: "preference-disabled" as const };
+  }
+  await db.insert(notifications).values(input);
+  await addAudit(input.workspaceId, "notification", delivery.auditSubject, { eventType: input.eventType, userId: input.userId, severity: input.severity });
+  return { delivered: true as const };
+}
+
+async function notifyWorkspaceOwner(workspace: { id: number; ownerUserId: number; name: string }, input: { eventType: NotificationEvent; severity: NotificationSeverity; title: string; message: string }) {
+  await createInAppNotification({ userId: workspace.ownerUserId, workspaceId: workspace.id, ...input });
+  await notifyOwner({ title: input.title, content: input.message }).catch(() => false);
 }
 
 export async function listWorkspaces(userId: number) {
@@ -98,7 +117,7 @@ export async function rehearseWorkspace(userId: number, workspaceId: number) {
   const eligibility = getRunEligibility(workspace);
   if (!eligibility.eligible) {
     await addAudit(workspace.id, "policy-block", "dry-run-start", { reason: eligibility.reason });
-    await notifyOwner({ title: "AngelMind rehearsal diblokir", content: `Workspace ${workspace.name} tidak dapat memulai rehearsal: ${eligibility.reason}.` }).catch(() => false);
+    await notifyWorkspaceOwner(workspace, { eventType: "guardrail_blocked", severity: "warning", title: "AngelMind rehearsal diblokir", message: `Workspace ${workspace.name} tidak dapat memulai rehearsal: ${eligibility.reason}.` });
     throw new Error(`Rehearsal diblokir oleh guardrail: ${eligibility.reason}.`);
   }
   const allowlist = parseList(workspace.allowlist);
@@ -131,10 +150,7 @@ export async function rehearseWorkspace(userId: number, workspaceId: number) {
   await db.update(workspaces).set({ lastRunAt: new Date() }).where(eq(workspaces.id, workspace.id));
   await addAudit(workspace.id, rehearsal.policy.allowed ? "rehearsal" : "policy-block", "dry-run", rehearsal);
   if (!rehearsal.policy.allowed) {
-    await notifyOwner({
-      title: "AngelMind guardrail memblokir rehearsal",
-      content: `Workspace ${workspace.name} diblokir: ${rehearsal.policy.reasons.join(" ")}`,
-    }).catch(() => false);
+    await notifyWorkspaceOwner(workspace, { eventType: "guardrail_blocked", severity: "warning", title: "AngelMind guardrail memblokir rehearsal", message: `Workspace ${workspace.name} diblokir: ${rehearsal.policy.reasons.join(" ")}` });
   }
   return rehearsal;
 }
@@ -147,26 +163,26 @@ export async function requestApproval(userId: number, workspaceId: number, actio
   if (!db) throw new Error("Database tidak tersedia.");
   await db.insert(approvals).values({ workspaceId: workspace.id, actionName: action, tier: governance.tier, requestedByUserId: userId, status: "pending" });
   await addAudit(workspace.id, "governance", "tier3-requested", { ...governance, outcome: "blocked-pending-human" });
-  await notifyOwner({
-    title: "AngelMind memerlukan approval manusia",
-    content: `Aksi Tier 3 “${action}” pada workspace ${workspace.name} diblokir dan menunggu keputusan manusia. Tidak ada aksi target yang dijalankan.`,
-  }).catch(() => false);
+  await notifyWorkspaceOwner(workspace, { eventType: "approval_required", severity: "critical", title: "AngelMind memerlukan approval manusia", message: `Aksi Tier 3 “${action}” pada workspace ${workspace.name} diblokir dan menunggu keputusan manusia. Tidak ada aksi target yang dijalankan.` });
   return { success: true, status: "pending" as const };
 }
 
-export async function listApprovals(userId: number) {
-  const owned = await listWorkspaces(userId);
-  if (owned.length === 0) return [];
+export async function listApprovals(userId: number, userRole: "user" | "admin") {
   const db = await getDb();
   if (!db) return [];
+  if (userRole === "admin") return db.select().from(approvals).orderBy(desc(approvals.createdAt));
+  const owned = await listWorkspaces(userId);
+  if (owned.length === 0) return [];
   return db.select().from(approvals).where(inArray(approvals.workspaceId, owned.map(workspace => workspace.id))).orderBy(desc(approvals.createdAt));
 }
 
-export async function decideApproval(userId: number, approvalId: number, decision: "approved" | "rejected", note: string) {
-  const allApprovals = await listApprovals(userId);
+export async function decideApproval(userId: number, userRole: "user" | "admin", approvalId: number, decision: "approved" | "rejected", note: string) {
+  const allApprovals = await listApprovals(userId, userRole);
   const approval = allApprovals.find(item => item.id === approvalId);
   if (!approval) throw new Error("Approval tidak ditemukan atau tidak dapat diakses.");
   if (approval.status !== "pending") throw new Error("Approval ini sudah memiliki keputusan.");
+  if (!canReviewApproval(userRole, approval.requestedByUserId, userId)) throw new Error("Tier 3 approval requires a distinct administrator reviewer.");
+  assertDistinctApprover(approval.requestedByUserId, userId);
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   await db.update(approvals).set({ status: decision, decidedByUserId: userId, decisionNote: note.trim() || null, decidedAt: new Date() }).where(eq(approvals.id, approval.id));
@@ -242,7 +258,8 @@ export async function transitionFinding(userId: number, input: { findingId: numb
   await db.update(findings).set({ status: input.status }).where(eq(findings.id, finding.id));
   await addAudit(finding.workspaceId, "finding", "finding-transition", { findingId: finding.id, from: finding.status, to: input.status });
   if (input.status === "validated") {
-    await notifyOwner({ title: "AngelMind finding tervalidasi", content: `Finding “${finding.title}” di workspace #${finding.workspaceId} memasuki status validated dan menunggu human review.` }).catch(() => false);
+    const workspace = await ownedWorkspaceOrThrow(userId, finding.workspaceId);
+    await notifyWorkspaceOwner(workspace, { eventType: "finding_validated", severity: "info", title: "AngelMind finding tervalidasi", message: `Finding “${finding.title}” di workspace #${finding.workspaceId} memasuki status validated dan menunggu human review.` });
   }
   return { success: true };
 }
@@ -269,6 +286,42 @@ export async function listAudit(userId: number, workspaceId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(auditEvents).where(eq(auditEvents.workspaceId, workspaceId)).orderBy(desc(auditEvents.createdAt)).limit(100);
+}
+
+export async function listNotifications(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt)).limit(100);
+}
+
+export async function listNotificationPreferences(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(notificationPreferences).where(eq(notificationPreferences.userId, userId));
+}
+
+export async function setNotificationPreference(userId: number, eventType: NotificationEvent, inAppEnabled: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  await db.insert(notificationPreferences).values({ userId, eventType, inAppEnabled: inAppEnabled ? 1 : 0 }).onDuplicateKeyUpdate({ set: { inAppEnabled: inAppEnabled ? 1 : 0, updatedAt: new Date() } });
+  return { success: true };
+}
+
+export async function markNotificationRead(userId: number, notificationId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [notification] = await db.select().from(notifications).where(and(eq(notifications.id, notificationId), eq(notifications.userId, userId))).limit(1);
+  if (!notification) throw new Error("Notifikasi tidak ditemukan atau tidak dapat diakses.");
+  if (!canAcknowledgeNotification(notification.userId, userId)) throw new Error("Notifikasi hanya dapat diakui oleh penerima.");
+  await db.update(notifications).set({ readAt: new Date() }).where(eq(notifications.id, notification.id));
+  return { success: true };
+}
+
+export async function markAllNotificationsRead(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  await db.update(notifications).set({ readAt: new Date() }).where(and(eq(notifications.userId, userId), isNull(notifications.readAt)));
+  return { success: true };
 }
 
 export async function getDashboard(userId: number) {
@@ -329,7 +382,7 @@ export async function runScheduledAdministrativeCheck(taskUid: string) {
   if (!eligibility.eligible && eligibility.reason === "session-limit") return { ok: true, skipped: "session-limit" as const };
   if (!eligibility.eligible && eligibility.reason === "budget") {
     await addAudit(workspace.id, "policy-block", "scheduled-administrative-check", { reason: "budget-ceiling" });
-    await notifyOwner({ title: "AngelMind scheduled check diblokir", content: `Workspace ${workspace.name} melampaui batas anggaran.` }).catch(() => false);
+    await notifyWorkspaceOwner(workspace, { eventType: "guardrail_blocked", severity: "warning", title: "AngelMind scheduled check diblokir", message: `Workspace ${workspace.name} melampaui batas anggaran.` });
     return { ok: true, skipped: "budget" as const };
   }
   const db = await getDb();
@@ -343,6 +396,7 @@ export async function runScheduledAdministrativeCheck(taskUid: string) {
   const artifacts = await db.select().from(evidenceArtifacts).where(eq(evidenceArtifacts.workspaceId, workspace.id));
   const retentionReviewCount = artifacts.filter(artifact => artifact.createdAt < cutoff).length;
   await addAudit(workspace.id, "administrative-check", "change-detection", { mode: "metadata-only", networkCalls: 0, changed, retentionReviewCount, result: "No target interaction: configuration digest, retention window, and pending approvals reviewed." });
+  await notifyWorkspaceOwner(workspace, { eventType: "scheduled_check", severity: changed || retentionReviewCount > 0 ? "warning" : "info", title: "AngelMind scheduled check selesai", message: `Workspace ${workspace.name}: ${changed ? "configuration change recorded" : "configuration unchanged"}; retention review: ${retentionReviewCount}. No target interaction occurred.` });
   return { ok: true, completed: changed ? "metadata-change-recorded" as const : "metadata-unchanged" as const, retentionReviewCount };
 }
 

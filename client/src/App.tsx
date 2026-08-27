@@ -10,6 +10,7 @@ import Findings from "./pages/Findings";
 import Governance from "./pages/Governance";
 import Home from "./pages/Home";
 import Operations from "./pages/Operations";
+import Notifications from "./pages/Notifications";
 import Workspaces from "./pages/Workspaces";
 
 function Router() {
@@ -23,6 +24,7 @@ function Router() {
         <Route path={"/findings"} component={Findings} />
         <Route path={"/audit"} component={Audit} />
         <Route path={"/operations"} component={Operations} />
+        <Route path={"/notifications"} component={Notifications} />
         <Route path={"/404"} component={NotFound} />
         <Route component={NotFound} />
       </Switch>

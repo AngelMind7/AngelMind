@@ -106,3 +106,7 @@
   @media (min-width: 640px) { .container { padding-left: 1.5rem; padding-right: 1.5rem; } }
   @media (min-width: 1024px) { .container { padding-left: 2rem; padding-right: 2rem; max-width: 1280px; } }
 }
+
+html[dir="rtl"] [data-sidebar="sidebar"] { direction: rtl; }
+html[dir="rtl"] .font-mono { letter-spacing: normal; }
+html[dir="rtl"] .tracking-\[0\.16em\], html[dir="rtl"] .tracking-\[0\.24em\] { letter-spacing: .03em; }

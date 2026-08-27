@@ -6,6 +6,7 @@ import { CredentialReferencesDialog } from "@/components/CredentialReferencesDia
 import { trpc } from "@/lib/trpc";
 import { Archive, CalendarClock, CircleDollarSign, Pause, Play, RadioTower, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
+import { LocalizedDate } from "@/components/LocalizedDate";
 
 export default function Workspaces() {
   const workspaces = trpc.workspace.list.useQuery();

@@ -4,31 +4,16 @@ import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import { LocaleProvider, StaticCopyLocalizer } from "./contexts/LocaleContext";
 import DashboardLayout from "./components/DashboardLayout";
-import Audit from "./pages/Audit";
-import Findings from "./pages/Findings";
-import Governance from "./pages/Governance";
-import Home from "./pages/Home";
-import Operations from "./pages/Operations";
-import Notifications from "./pages/Notifications";
-import OperationsAdmin from "./pages/OperationsAdmin";
-import Assurance from "./pages/Assurance";
-import Workspaces from "./pages/Workspaces";
+import { authenticatedRoutes } from "./authenticatedRoutes";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
     <DashboardLayout>
       <Switch>
-        <Route path={"/"} component={Home} />
-        <Route path={"/workspaces"} component={Workspaces} />
-        <Route path={"/governance"} component={Governance} />
-        <Route path={"/findings"} component={Findings} />
-        <Route path={"/audit"} component={Audit} />
-        <Route path={"/operations"} component={Operations} />
-        <Route path={"/notifications"} component={Notifications} />
-        <Route path={"/operations-console"} component={OperationsAdmin} />
-        <Route path={"/assurance"} component={Assurance} />
+        {authenticatedRoutes.map(route => <Route key={route.path} path={route.path} component={route.component} />)}
         <Route path={"/404"} component={NotFound} />
         <Route component={NotFound} />
       </Switch>
@@ -48,10 +33,13 @@ function App() {
         defaultTheme="dark"
         // switchable
       >
-        <TooltipProvider>
-          <Toaster />
-          <Router />
-        </TooltipProvider>
+        <LocaleProvider>
+          <TooltipProvider>
+            <StaticCopyLocalizer />
+            <Toaster />
+            <Router />
+          </TooltipProvider>
+        </LocaleProvider>
       </ThemeProvider>
     </ErrorBoundary>
   );

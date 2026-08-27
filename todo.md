@@ -49,3 +49,17 @@
 - [x] Audit every exposed tRPC procedure against an explicit workspace-role matrix and test uncovered authorization decisions.
 - [x] Add service-workflow test seams and coverage for policy request/decision, incident lifecycle/escalation, and webhook activation request/review.
 - [x] Document every exposed tRPC procedure with its exact workspace role requirement and add route-level authorization contract coverage for each permission category.
+- [x] Add a global locale provider, persistent language preference, English fallback, and RTL document-direction support.
+- [x] Add Indonesian, English, Malay, Arabic, Simplified Chinese, Japanese, Korean, Spanish, Portuguese, French, German, and Russian locale packs for shared navigation and operational interface copy.
+- [x] Add a language selector to the authenticated command interface and localize date/number formatting.
+- [x] Translate shared dashboard navigation, page headings, explanatory copy, controls, empty states, and notification preference labels through the locale catalog, preserving English as a safe fallback for unmatched static text.
+- [x] Add i18n unit tests, desktop/mobile/RTL visual verification, and localization maintenance documentation.
+- [x] Correct the Arabic RTL sidebar/inset geometry and re-verify the assurance control layout without overlap.
+- [x] Expand locale catalog coverage across shared operational headings, explanatory copy, controls, status labels, and empty states.
+- [x] Replace hardcoded English date and number formatting with locale-aware provider formatting and centralized rendered-date normalization.
+- [x] Audit shared route copy for locale-key coverage and add tests that protect English fallback behavior.
+- [x] Curate the generated static translation catalog and reject any code-like or non-interface phrase at runtime and in tests.
+- [x] Replace direct date-format calls with locale-aware application formatting and localize high-frequency operational controls through shared locale keys.
+- [x] Add a route-by-route localization inventory and test that all nine authenticated dashboard surfaces participate in the locale system.
+- [x] Derive the localization coverage audit from the actual authenticated route map and migrate remaining timestamp renderers to explicit locale helpers where practical.
+- [x] Replace brittle global date override behavior with a narrowly scoped locale formatter and retain safe fallback for browser-rendered legacy timestamps.

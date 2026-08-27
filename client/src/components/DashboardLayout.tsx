@@ -27,16 +27,18 @@ import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { NotificationIndicator } from "./NotificationIndicator";
+import { LanguageSelector } from "./LanguageSelector";
+import { useLocale } from "@/contexts/LocaleContext";
 
 const menuItems = [
-  { icon: LayoutDashboard, label: "Command center", path: "/" },
-  { icon: Boxes, label: "Workspaces", path: "/workspaces" },
-  { icon: ShieldCheck, label: "Governance", path: "/governance" },
-  { icon: FileSearch, label: "Findings", path: "/findings" },
-  { icon: ScrollText, label: "Evidence & audit", path: "/audit" },
-  { icon: Activity, label: "Observability", path: "/operations" },
-  { icon: Settings2, label: "Operations console", path: "/operations-console" },
-  { icon: ShieldEllipsis, label: "Assurance control", path: "/assurance" },
+  { icon: LayoutDashboard, labelKey: "nav.commandCenter" as const, path: "/" },
+  { icon: Boxes, labelKey: "nav.workspaces" as const, path: "/workspaces" },
+  { icon: ShieldCheck, labelKey: "nav.governance" as const, path: "/governance" },
+  { icon: FileSearch, labelKey: "nav.findings" as const, path: "/findings" },
+  { icon: ScrollText, labelKey: "nav.audit" as const, path: "/audit" },
+  { icon: Activity, labelKey: "nav.observability" as const, path: "/operations" },
+  { icon: Settings2, labelKey: "nav.operations" as const, path: "/operations-console" },
+  { icon: ShieldEllipsis, labelKey: "nav.assurance" as const, path: "/assurance" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";
@@ -54,6 +56,7 @@ export default function DashboardLayout({
     return saved ? parseInt(saved, 10) : DEFAULT_WIDTH;
   });
   const { loading, user } = useAuth();
+  const { t } = useLocale();
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
@@ -69,10 +72,10 @@ export default function DashboardLayout({
         <div className="flex flex-col items-center gap-8 p-8 max-w-md w-full">
           <div className="flex flex-col items-center gap-6">
             <h1 className="text-2xl font-semibold tracking-tight text-center">
-              Sign in to continue
+              {t("auth.signInTitle")}
             </h1>
             <p className="text-sm text-muted-foreground text-center max-w-sm">
-              Access to this dashboard requires authentication. Continue to launch the login flow.
+              {t("auth.signInText")}
             </p>
           </div>
           <Button
@@ -80,7 +83,7 @@ export default function DashboardLayout({
             size="lg"
             className="w-full shadow-lg hover:shadow-xl transition-all"
           >
-            Sign in
+            {t("auth.signIn")}
           </Button>
         </div>
       </div>
@@ -119,6 +122,7 @@ function DashboardLayoutContent({
   const sidebarRef = useRef<HTMLDivElement>(null);
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
+  const { t, isRTL } = useLocale();
 
   useEffect(() => {
     if (isCollapsed) {
@@ -130,8 +134,8 @@ function DashboardLayoutContent({
     const handleMouseMove = (e: MouseEvent) => {
       if (!isResizing) return;
 
-      const sidebarLeft = sidebarRef.current?.getBoundingClientRect().left ?? 0;
-      const newWidth = e.clientX - sidebarLeft;
+      const sidebarBounds = sidebarRef.current?.getBoundingClientRect();
+      const newWidth = isRTL ? (sidebarBounds?.right ?? window.innerWidth) - e.clientX : e.clientX - (sidebarBounds?.left ?? 0);
       if (newWidth >= MIN_WIDTH && newWidth <= MAX_WIDTH) {
         setSidebarWidth(newWidth);
       }
@@ -154,12 +158,13 @@ function DashboardLayoutContent({
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
     };
-  }, [isResizing, setSidebarWidth]);
+  }, [isResizing, isRTL, setSidebarWidth]);
 
   return (
     <>
       <div className="relative" ref={sidebarRef}>
         <Sidebar
+          side={isRTL ? "right" : "left"}
           collapsible="icon"
           className="border-r-0"
           disableTransition={isResizing}
@@ -182,7 +187,7 @@ function DashboardLayoutContent({
           </SidebarHeader>
 
           <SidebarContent className="gap-0 pt-4">
-            {!isCollapsed && <p className="px-5 pb-2 font-mono text-[9px] uppercase tracking-[0.24em] text-cyan-300/70">Control plane</p>}
+            {!isCollapsed && <p className="px-5 pb-2 font-mono text-[9px] uppercase tracking-[0.24em] text-cyan-300/70">{t("nav.controlPlane")}</p>}
             <SidebarMenu className="px-2 py-1">
               {menuItems.map(item => {
                 const isActive = location === item.path;
@@ -191,13 +196,13 @@ function DashboardLayoutContent({
                     <SidebarMenuButton
                       isActive={isActive}
                       onClick={() => setLocation(item.path)}
-                      tooltip={item.label}
+                      tooltip={t(item.labelKey)}
                       className={`h-10 transition-all font-normal`}
                     >
                       <item.icon
                         className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
                       />
-                      <span className="tracking-wide">{item.label}</span>
+                      <span className="tracking-wide">{t(item.labelKey)}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -206,6 +211,7 @@ function DashboardLayoutContent({
           </SidebarContent>
 
           <SidebarFooter className="p-3">
+            <div className="mb-3 group-data-[collapsible=icon]:hidden"><LanguageSelector /></div>
             <div className="mb-3 group-data-[collapsible=icon]:hidden"><NotificationIndicator /></div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -231,14 +237,14 @@ function DashboardLayoutContent({
                   className="cursor-pointer text-destructive focus:text-destructive"
                 >
                   <LogOut className="mr-2 h-4 w-4" />
-                  <span>Sign out</span>
+                  <span>{t("auth.signOut")}</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarFooter>
         </Sidebar>
         <div
-          className={`absolute top-0 right-0 w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors ${isCollapsed ? "hidden" : ""}`}
+          className={`absolute top-0 ${isRTL ? "left-0" : "right-0"} w-1 h-full cursor-col-resize hover:bg-primary/20 transition-colors ${isCollapsed ? "hidden" : ""}`}
           onMouseDown={() => {
             if (isCollapsed) return;
             setIsResizing(true);
@@ -255,12 +261,12 @@ function DashboardLayoutContent({
               <div className="flex items-center gap-3">
                 <div className="flex flex-col gap-1">
                   <span className="tracking-tight text-foreground">
-                    {activeMenuItem?.label ?? "Menu"}
+                    {activeMenuItem ? t(activeMenuItem.labelKey) : t("nav.menu")}
                   </span>
                 </div>
               </div>
             </div>
-            <NotificationIndicator compact />
+            <div className="flex items-center gap-1"><LanguageSelector compact /><NotificationIndicator compact /></div>
           </div>
         )}
         <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>

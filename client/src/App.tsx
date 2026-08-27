@@ -12,6 +12,7 @@ import Home from "./pages/Home";
 import Operations from "./pages/Operations";
 import Notifications from "./pages/Notifications";
 import OperationsAdmin from "./pages/OperationsAdmin";
+import Assurance from "./pages/Assurance";
 import Workspaces from "./pages/Workspaces";
 
 function Router() {
@@ -27,6 +28,7 @@ function Router() {
         <Route path={"/operations"} component={Operations} />
         <Route path={"/notifications"} component={Notifications} />
         <Route path={"/operations-console"} component={OperationsAdmin} />
+        <Route path={"/assurance"} component={Assurance} />
         <Route path={"/404"} component={NotFound} />
         <Route component={NotFound} />
       </Switch>

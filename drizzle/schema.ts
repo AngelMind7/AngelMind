@@ -29,8 +29,11 @@ export const workspaceStatus = ["active", "paused", "archived"] as const;
 export const runStatus = ["queued", "running", "checkpointed", "completed", "blocked", "failed"] as const;
 export const findingStatus = ["discovered", "triaged", "candidate", "reproducing", "validated", "reported", "submitted", "invalid", "duplicate", "inconclusive"] as const;
 export const approvalStatus = ["pending", "approved", "rejected", "expired"] as const;
-export const notificationEventType = ["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check"] as const;
+export const notificationEventType = ["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check", "policy_review_required", "incident_created", "webhook_activation_requested"] as const;
 export const workspaceMemberRole = ["owner", "operator", "reviewer", "auditor"] as const;
+export const policyVersionStatus = ["pending", "approved", "rejected", "superseded"] as const;
+export const incidentSeverity = ["low", "medium", "high", "critical"] as const;
+export const incidentStatus = ["open", "acknowledged", "resolved"] as const;
 
 export const workspaces = mysqlTable("workspaces", {
   id: int("id").autoincrement().primaryKey(),
@@ -203,6 +206,69 @@ export const auditArchives = mysqlTable("auditArchives", {
   createdByUserId: int("createdByUserId").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [index("audit_archive_workspace_created_idx").on(table.workspaceId, table.createdAt)]);
+
+export const policyVersions = mysqlTable("policyVersions", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  version: int("version").notNull(),
+  safeHarbor: text("safeHarbor").notNull(),
+  codeOfConduct: text("codeOfConduct").notNull(),
+  allowlist: text("allowlist").notNull(),
+  exclusions: text("exclusions").notNull(),
+  changeSummary: text("changeSummary").notNull(),
+  diffJson: text("diffJson").notNull(),
+  contentHash: varchar("contentHash", { length: 64 }).notNull(),
+  status: mysqlEnum("status", policyVersionStatus).default("pending").notNull(),
+  requestedByUserId: int("requestedByUserId").notNull(),
+  decidedByUserId: int("decidedByUserId"),
+  decisionNote: text("decisionNote"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  decidedAt: timestamp("decidedAt"),
+}, table => [
+  uniqueIndex("policy_version_workspace_version_uq").on(table.workspaceId, table.version),
+  index("policy_version_workspace_status_idx").on(table.workspaceId, table.status),
+]);
+
+export const incidents = mysqlTable("incidents", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  description: text("description").notNull(),
+  severity: mysqlEnum("severity", incidentSeverity).notNull(),
+  status: mysqlEnum("status", incidentStatus).default("open").notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  acknowledgedByUserId: int("acknowledgedByUserId"),
+  acknowledgedAt: timestamp("acknowledgedAt"),
+  escalationDueAt: timestamp("escalationDueAt").notNull(),
+  escalatedAt: timestamp("escalatedAt"),
+  resolutionNote: text("resolutionNote"),
+  resolvedAt: timestamp("resolvedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [index("incident_workspace_status_due_idx").on(table.workspaceId, table.status, table.escalationDueAt)]);
+
+export const webhookActivationRequests = mysqlTable("webhookActivationRequests", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  webhookConfigurationId: int("webhookConfigurationId").notNull(),
+  status: mysqlEnum("status", approvalStatus).default("pending").notNull(),
+  requestedByUserId: int("requestedByUserId").notNull(),
+  decidedByUserId: int("decidedByUserId"),
+  decisionNote: text("decisionNote"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  decidedAt: timestamp("decidedAt"),
+}, table => [index("webhook_activation_workspace_status_idx").on(table.workspaceId, table.status)]);
+
+export const incidentEvidenceLinks = mysqlTable("incidentEvidenceLinks", {
+  id: int("id").autoincrement().primaryKey(),
+  incidentId: int("incidentId").notNull(),
+  evidenceArtifactId: int("evidenceArtifactId").notNull(),
+  linkedByUserId: int("linkedByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [
+  uniqueIndex("incident_evidence_link_uq").on(table.incidentId, table.evidenceArtifactId),
+  index("incident_evidence_incident_idx").on(table.incidentId),
+]);
 
 export type Workspace = typeof workspaces.$inferSelect;
 export type Run = typeof runs.$inferSelect;

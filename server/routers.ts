@@ -7,6 +7,7 @@ import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import * as controlPlane from "./control-plane/service";
 import * as operations from "./control-plane/operations";
+import * as assurance from "./control-plane/assurance";
 
 const workspaceInput = z.object({
   name: z.string().min(2).max(120),
@@ -40,7 +41,7 @@ export const appRouter = router({
   notification: router({
     list: protectedProcedure.query(({ ctx }) => controlPlane.listNotifications(ctx.user.id)),
     preferences: protectedProcedure.query(({ ctx }) => controlPlane.listNotificationPreferences(ctx.user.id)),
-    setPreference: protectedProcedure.input(z.object({ eventType: z.enum(["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check"]), inAppEnabled: z.boolean() })).mutation(({ ctx, input }) => controlPlane.setNotificationPreference(ctx.user.id, input.eventType, input.inAppEnabled)),
+    setPreference: protectedProcedure.input(z.object({ eventType: z.enum(["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check", "policy_review_required", "incident_created", "webhook_activation_requested"]), inAppEnabled: z.boolean() })).mutation(({ ctx, input }) => controlPlane.setNotificationPreference(ctx.user.id, input.eventType, input.inAppEnabled)),
     markRead: protectedProcedure.input(z.object({ notificationId: z.number().int().positive() })).mutation(({ ctx, input }) => controlPlane.markNotificationRead(ctx.user.id, input.notificationId)),
     markAllRead: protectedProcedure.mutation(({ ctx }) => controlPlane.markAllNotificationsRead(ctx.user.id)),
   }),
@@ -49,10 +50,24 @@ export const appRouter = router({
     addMember: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), email: z.string().email().max(320), role: z.enum(["operator", "reviewer", "auditor"]) })).mutation(({ ctx, input }) => operations.addMember(ctx.user.id, input)),
     removeMember: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), membershipId: z.number().int().positive() })).mutation(({ ctx, input }) => operations.removeMember(ctx.user.id, input.workspaceId, input.membershipId)),
     webhook: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => operations.getWebhookConfiguration(ctx.user.id, input.workspaceId)),
-    saveWebhookDraft: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), endpoint: z.string().max(2_048), signingSecretReference: z.string().max(240).optional(), eventTypes: z.array(z.enum(["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check"])).min(1), endpointConfirmed: z.boolean() })).mutation(({ ctx, input }) => operations.saveWebhookDraft(ctx.user.id, input)),
+    saveWebhookDraft: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), endpoint: z.string().max(2_048), signingSecretReference: z.string().max(240).optional(), eventTypes: z.array(z.enum(["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check", "policy_review_required", "incident_created", "webhook_activation_requested"])).min(1), endpointConfirmed: z.boolean() })).mutation(({ ctx, input }) => operations.saveWebhookDraft(ctx.user.id, input)),
     archives: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => operations.listAuditArchives(ctx.user.id, input.workspaceId)),
     createArchive: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).mutation(({ ctx, input }) => operations.createAuditArchive(ctx.user.id, input.workspaceId)),
     verifyArchive: protectedProcedure.input(z.object({ archiveId: z.number().int().positive() })).mutation(({ ctx, input }) => operations.verifyAuditArchive(ctx.user.id, input.archiveId)),
+  }),
+  assurance: router({
+    policies: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive().optional() }).optional()).query(({ ctx, input }) => assurance.listPolicyVersions(ctx.user.id, input?.workspaceId)),
+    requestPolicy: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), safeHarbor: z.string().min(10).max(10_000), codeOfConduct: z.string().min(10).max(10_000), allowlist: z.array(z.string().min(1).max(255)).min(1).max(100), exclusions: z.array(z.string().min(1).max(255)).max(100), changeSummary: z.string().min(3).max(5_000) })).mutation(({ ctx, input }) => assurance.requestPolicyVersion(ctx.user.id, input)),
+    decidePolicy: protectedProcedure.input(z.object({ policyVersionId: z.number().int().positive(), decision: z.enum(["approved", "rejected"]), note: z.string().max(2_000) })).mutation(({ ctx, input }) => assurance.decidePolicyVersion(ctx.user.id, ctx.user.role, input.policyVersionId, input.decision, input.note)),
+    incidents: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive().optional() }).optional()).query(({ ctx, input }) => assurance.listIncidents(ctx.user.id, input?.workspaceId)),
+    createIncident: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), title: z.string().min(3).max(200), description: z.string().min(3).max(10_000), severity: z.enum(["low", "medium", "high", "critical"]) })).mutation(({ ctx, input }) => assurance.createIncident(ctx.user.id, input)),
+    acknowledgeIncident: protectedProcedure.input(z.object({ incidentId: z.number().int().positive() })).mutation(({ ctx, input }) => assurance.acknowledgeIncident(ctx.user.id, input.incidentId)),
+    resolveIncident: protectedProcedure.input(z.object({ incidentId: z.number().int().positive(), resolutionNote: z.string().max(5_000) })).mutation(({ ctx, input }) => assurance.resolveIncident(ctx.user.id, input.incidentId, input.resolutionNote)),
+    incidentEvidence: protectedProcedure.input(z.object({ incidentId: z.number().int().positive() })).query(({ ctx, input }) => assurance.listIncidentEvidence(ctx.user.id, input.incidentId)),
+    linkIncidentEvidence: protectedProcedure.input(z.object({ incidentId: z.number().int().positive(), evidenceArtifactId: z.number().int().positive() })).mutation(({ ctx, input }) => assurance.linkIncidentEvidence(ctx.user.id, input.incidentId, input.evidenceArtifactId)),
+    webhookActivationRequests: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive().optional() }).optional()).query(({ ctx, input }) => assurance.listWebhookActivationRequests(ctx.user.id, input?.workspaceId)),
+    requestWebhookActivation: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).mutation(({ ctx, input }) => assurance.requestWebhookActivation(ctx.user.id, input.workspaceId)),
+    decideWebhookActivation: protectedProcedure.input(z.object({ requestId: z.number().int().positive(), decision: z.enum(["approved", "rejected"]), note: z.string().max(2_000) })).mutation(({ ctx, input }) => assurance.decideWebhookActivation(ctx.user.id, ctx.user.role, input.requestId, input.decision, input.note)),
   }),
   workspace: router({
     list: protectedProcedure.query(({ ctx }) => controlPlane.listWorkspaces(ctx.user.id)),

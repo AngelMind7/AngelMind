@@ -10,12 +10,13 @@ import type { NotificationEvent } from "./notifications";
 const memberRoles = ["operator", "reviewer", "auditor"] as const;
 export type MemberRole = (typeof memberRoles)[number];
 export type WorkspaceRole = "owner" | MemberRole;
-export type WorkspaceAccessIntent = "read" | "review" | "manage";
+export type WorkspaceAccessIntent = "read" | "review" | "respond" | "manage";
 
 export function roleAllowsWorkspaceAccess(role: WorkspaceRole, intent: WorkspaceAccessIntent): boolean {
   if (role === "owner") return true;
   if (intent === "read") return role === "operator" || role === "reviewer" || role === "auditor";
   if (intent === "review") return role === "reviewer";
+  if (intent === "respond") return role === "operator";
   return false;
 }
 

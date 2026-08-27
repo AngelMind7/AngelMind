@@ -1,4 +1,4 @@
-export const notificationEvents = ["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check"] as const;
+export const notificationEvents = ["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check", "policy_review_required", "incident_created", "webhook_activation_requested"] as const;
 export type NotificationEvent = (typeof notificationEvents)[number];
 export type NotificationSeverity = "info" | "warning" | "critical";
 
@@ -7,6 +7,9 @@ export const notificationLabels: Record<NotificationEvent, string> = {
   guardrail_blocked: "Guardrail memblokir aksi",
   finding_validated: "Finding tervalidasi",
   scheduled_check: "Pemeriksaan terjadwal selesai",
+  policy_review_required: "Review perubahan policy diperlukan",
+  incident_created: "Incident baru tercatat",
+  webhook_activation_requested: "Aktivasi webhook menunggu review",
 };
 
 export function isInAppEnabled(event: NotificationEvent, preferences: Array<{ eventType: NotificationEvent; inAppEnabled: number }>): boolean {

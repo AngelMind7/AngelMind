@@ -11,6 +11,9 @@ const eventDefinitions = [
   { eventType: "guardrail_blocked" as const, title: "Guardrail block", detail: "Saat scope, conduct, budget, cooldown, atau session guard menghentikan tindakan." },
   { eventType: "finding_validated" as const, title: "Finding tervalidasi", detail: "Saat kandidat mencapai validasi dan menunggu human review." },
   { eventType: "scheduled_check" as const, title: "Pemeriksaan terjadwal", detail: "Ringkasan safe metadata-only check dan retention review untuk workspace aktif." },
+  { eventType: "policy_review_required" as const, title: "Review policy", detail: "Saat versi safe-harbor, conduct, allowlist, atau exclusion baru menunggu review." },
+  { eventType: "incident_created" as const, title: "Incident tercatat", detail: "Saat incident workspace baru dibuka dan mendapat jadwal eskalasi." },
+  { eventType: "webhook_activation_requested" as const, title: "Activation webhook", detail: "Saat draft delivery menunggu keputusan reviewer yang berbeda." },
 ];
 
 export default function Notifications() {

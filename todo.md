@@ -36,3 +36,16 @@
 - [x] Add management views, test coverage, and operational documentation for memberships, webhook delivery boundaries, and audit export recovery.
 - [x] Enforce workspace-role authorization for operator and auditor access to non-mutating operational resources.
 - [x] Add explicit unit coverage for membership role decisions, owner bootstrap, non-owner restrictions, and delegated reviewer approval access.
+- [x] Add immutable policy versions, policy-change diff records, and reviewer approval before a new workspace policy becomes effective.
+- [x] Add a workspace-scoped incident workflow with acknowledgement, severity, escalation timing, resolution notes, and linked audit evidence.
+- [x] Extend role enforcement to policy review, incident response, and all remaining operational read/write procedures.
+- [x] Add a webhook activation gate that requires a configured HTTPS endpoint, workspace secret reference, owner confirmation, and separate reviewer approval while keeping outbound delivery disabled by default.
+- [x] Build policy and incident management views, automated tests, and operational documentation for the final readiness controls.
+- [x] Add persisted structured policy diffs and surface changed policy fields for reviewer decisions.
+- [x] Link incident records to workspace evidence references and display those links in incident response.
+- [x] Complete role checks for all currently exposed control-plane reads and mutations, with explicit role decision tests.
+- [x] Add workflow-level contract coverage for policy approval, incident lifecycle, scheduled escalation, and webhook activation review.
+- [x] Add a clear UI action to request webhook activation from a guarded draft while retaining the no-delivery invariant.
+- [x] Audit every exposed tRPC procedure against an explicit workspace-role matrix and test uncovered authorization decisions.
+- [x] Add service-workflow test seams and coverage for policy request/decision, incident lifecycle/escalation, and webhook activation request/review.
+- [x] Document every exposed tRPC procedure with its exact workspace role requirement and add route-level authorization contract coverage for each permission category.

@@ -7,7 +7,9 @@ describe("workspace membership access", () => {
     expect(roleAllowsWorkspaceAccess("operator", "read")).toBe(true);
     expect(roleAllowsWorkspaceAccess("auditor", "read")).toBe(true);
     expect(roleAllowsWorkspaceAccess("reviewer", "review")).toBe(true);
+    expect(roleAllowsWorkspaceAccess("operator", "respond")).toBe(true);
     expect(roleAllowsWorkspaceAccess("operator", "review")).toBe(false);
+    expect(roleAllowsWorkspaceAccess("auditor", "respond")).toBe(false);
     expect(roleAllowsWorkspaceAccess("auditor", "manage")).toBe(false);
   });
 

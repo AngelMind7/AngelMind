@@ -11,6 +11,7 @@ import { getRunEligibility } from "./run-eligibility";
 import { assertDistinctApprover, canReviewApproval, prepareGovernanceRequest } from "./governance";
 import { canAcknowledgeNotification, planInAppDelivery, type NotificationEvent, type NotificationSeverity } from "./notifications";
 import { canAccessWorkspace, ensureOwnerMembership, getReadableWorkspaceIds, getReviewerWorkspaceIds, hasReviewerMembership } from "./operations";
+import { escalateOverdueIncidentsForWorkspace } from "./assurance";
 import type { ActionKind } from "./contracts";
 
 const parseList = (serialized: string): string[] => {
@@ -59,6 +60,10 @@ async function createInAppNotification(input: { userId: number; workspaceId: num
   await db.insert(notifications).values(input);
   await addAudit(input.workspaceId, "notification", delivery.auditSubject, { eventType: input.eventType, userId: input.userId, severity: input.severity });
   return { delivered: true as const };
+}
+
+export async function emitControlPlaneNotification(input: { userId: number; workspaceId: number; eventType: NotificationEvent; severity: NotificationSeverity; title: string; message: string }) {
+  return createInAppNotification(input);
 }
 
 async function notifyWorkspaceOwner(workspace: { id: number; ownerUserId: number; name: string }, input: { eventType: NotificationEvent; severity: NotificationSeverity; title: string; message: string }) {
@@ -408,9 +413,10 @@ export async function runScheduledAdministrativeCheck(taskUid: string) {
   const cutoff = new Date(Date.now() - workspace.retentionDays * 24 * 60 * 60 * 1000);
   const artifacts = await db.select().from(evidenceArtifacts).where(eq(evidenceArtifacts.workspaceId, workspace.id));
   const retentionReviewCount = artifacts.filter(artifact => artifact.createdAt < cutoff).length;
+  const escalatedIncidentCount = await escalateOverdueIncidentsForWorkspace(workspace);
   await addAudit(workspace.id, "administrative-check", "change-detection", { mode: "metadata-only", networkCalls: 0, changed, retentionReviewCount, result: "No target interaction: configuration digest, retention window, and pending approvals reviewed." });
-  await notifyWorkspaceOwner(workspace, { eventType: "scheduled_check", severity: changed || retentionReviewCount > 0 ? "warning" : "info", title: "AngelMind scheduled check selesai", message: `Workspace ${workspace.name}: ${changed ? "configuration change recorded" : "configuration unchanged"}; retention review: ${retentionReviewCount}. No target interaction occurred.` });
-  return { ok: true, completed: changed ? "metadata-change-recorded" as const : "metadata-unchanged" as const, retentionReviewCount };
+  await notifyWorkspaceOwner(workspace, { eventType: "scheduled_check", severity: changed || retentionReviewCount > 0 || escalatedIncidentCount > 0 ? "warning" : "info", title: "AngelMind scheduled check selesai", message: `Workspace ${workspace.name}: ${changed ? "configuration change recorded" : "configuration unchanged"}; retention review: ${retentionReviewCount}; incident escalations: ${escalatedIncidentCount}. No target interaction occurred.` });
+  return { ok: true, completed: changed ? "metadata-change-recorded" as const : "metadata-unchanged" as const, retentionReviewCount, escalatedIncidentCount };
 }
 
 export async function attachScheduleTask(userId: number, workspaceId: number, taskUid: string) {

@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Activity, Boxes, ClipboardCheck, FileSearch, LayoutDashboard, LogOut, PanelLeft, ScrollText, Settings2, ShieldCheck } from "lucide-react";
+import { Activity, Boxes, ClipboardCheck, FileSearch, LayoutDashboard, LogOut, PanelLeft, ScrollText, Settings2, ShieldCheck, ShieldEllipsis } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -36,6 +36,7 @@ const menuItems = [
   { icon: ScrollText, label: "Evidence & audit", path: "/audit" },
   { icon: Activity, label: "Observability", path: "/operations" },
   { icon: Settings2, label: "Operations console", path: "/operations-console" },
+  { icon: ShieldEllipsis, label: "Assurance control", path: "/assurance" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

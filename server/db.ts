@@ -89,6 +89,13 @@ export async function getUserByOpenId(openId: string) {
   return result.length > 0 ? result[0] : undefined;
 }
 
+export async function getUserByEmail(email: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const [user] = await db.select().from(users).where(eq(users.email, email.trim().toLowerCase())).limit(1);
+  return user;
+}
+
 /** Always resolve a workspace through its owning user to prevent cross-workspace data access. */
 export async function getOwnedWorkspace(workspaceId: number, ownerUserId: number) {
   const db = await getDb();

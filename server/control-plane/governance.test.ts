@@ -24,5 +24,6 @@ describe("Tier 3 governance approval gate", () => {
     expect(canReviewApproval("user", 11, 12)).toBe(false);
     expect(canReviewApproval("admin", 11, 11)).toBe(false);
     expect(canReviewApproval("admin", 11, 12)).toBe(true);
+    expect(canReviewApproval("user", 11, 12, true)).toBe(true);
   });
 });

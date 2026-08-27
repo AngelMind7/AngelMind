@@ -30,3 +30,9 @@
 - [x] Document the remaining production-readiness gaps and the planned external webhook boundary.
 - [x] Add explicit notification delivery, suppression, acknowledgement, and audit-contract tests.
 - [x] Permit a distinct authenticated administrator to review Tier 3 approvals while preserving owner workspace isolation for non-administrators.
+- [x] Add workspace membership with owner, operator, reviewer, and auditor roles plus reviewer-delegated Tier 3 approval access.
+- [x] Add safe outbound webhook configuration that remains disabled without a secret-managed signing key and explicit endpoint confirmation.
+- [x] Add signed audit export manifests, integrity verification, and retained storage references per workspace.
+- [x] Add management views, test coverage, and operational documentation for memberships, webhook delivery boundaries, and audit export recovery.
+- [x] Enforce workspace-role authorization for operator and auditor access to non-mutating operational resources.
+- [x] Add explicit unit coverage for membership role decisions, owner bootstrap, non-owner restrictions, and delegated reviewer approval access.

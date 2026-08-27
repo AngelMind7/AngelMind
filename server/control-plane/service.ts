@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
 import { and, desc, eq, inArray, isNull } from "drizzle-orm";
-import { auditEvents, approvals, credentialReferences, evidenceArtifacts, findings, notificationPreferences, notifications, runs, workspaceChangeSnapshots, workspaces } from "../../drizzle/schema";
+import { auditEvents, approvals, credentialReferences, evidenceArtifacts, findings, notificationPreferences, notifications, runs, workspaceChangeSnapshots, workspaceMemberships, workspaces } from "../../drizzle/schema";
 import { getDb, getOwnedWorkspace } from "../db";
 import { notifyOwner } from "../_core/notification";
 import { storagePut } from "../storage";
@@ -10,6 +10,7 @@ import { getAdministrativeCheckEligibility } from "./scheduler";
 import { getRunEligibility } from "./run-eligibility";
 import { assertDistinctApprover, canReviewApproval, prepareGovernanceRequest } from "./governance";
 import { canAcknowledgeNotification, planInAppDelivery, type NotificationEvent, type NotificationSeverity } from "./notifications";
+import { canAccessWorkspace, ensureOwnerMembership, getReadableWorkspaceIds, getReviewerWorkspaceIds, hasReviewerMembership } from "./operations";
 import type { ActionKind } from "./contracts";
 
 const parseList = (serialized: string): string[] => {
@@ -39,6 +40,11 @@ async function ownedWorkspaceOrThrow(userId: number, workspaceId: number) {
   const workspace = await getOwnedWorkspace(workspaceId, userId);
   if (!workspace) throw new Error("Workspace tidak ditemukan atau tidak dapat diakses.");
   return workspace;
+}
+
+async function readableWorkspaceIdOrThrow(userId: number, workspaceId: number) {
+  if (!await canAccessWorkspace(userId, workspaceId, "read")) throw new Error("Workspace tidak ditemukan atau tidak dapat diakses.");
+  return workspaceId;
 }
 
 async function createInAppNotification(input: { userId: number; workspaceId: number; eventType: NotificationEvent; severity: NotificationSeverity; title: string; message: string }) {
@@ -99,7 +105,10 @@ export async function createWorkspace(userId: number, input: {
     retentionDays: input.retentionDays,
   });
   const [created] = await db.select().from(workspaces).where(and(eq(workspaces.ownerUserId, userId), eq(workspaces.name, input.name.trim()))).orderBy(desc(workspaces.id)).limit(1);
-  if (created) await addAudit(created.id, "workspace", "workspace-created", { name: input.name, programName: input.programName });
+  if (created) {
+    await ensureOwnerMembership(created.id, userId);
+    await addAudit(created.id, "workspace", "workspace-created", { name: input.name, programName: input.programName });
+  }
   return { success: true };
 }
 
@@ -172,8 +181,11 @@ export async function listApprovals(userId: number, userRole: "user" | "admin") 
   if (!db) return [];
   if (userRole === "admin") return db.select().from(approvals).orderBy(desc(approvals.createdAt));
   const owned = await listWorkspaces(userId);
-  if (owned.length === 0) return [];
-  return db.select().from(approvals).where(inArray(approvals.workspaceId, owned.map(workspace => workspace.id))).orderBy(desc(approvals.createdAt));
+  const reviewerWorkspaceIds = await getReviewerWorkspaceIds(userId);
+  const ownedWorkspaceIds = owned.map(workspace => workspace.id);
+  const workspaceIds = ownedWorkspaceIds.concat(reviewerWorkspaceIds.filter(workspaceId => !ownedWorkspaceIds.includes(workspaceId)));
+  if (workspaceIds.length === 0) return [];
+  return db.select().from(approvals).where(inArray(approvals.workspaceId, workspaceIds)).orderBy(desc(approvals.createdAt));
 }
 
 export async function decideApproval(userId: number, userRole: "user" | "admin", approvalId: number, decision: "approved" | "rejected", note: string) {
@@ -181,7 +193,8 @@ export async function decideApproval(userId: number, userRole: "user" | "admin",
   const approval = allApprovals.find(item => item.id === approvalId);
   if (!approval) throw new Error("Approval tidak ditemukan atau tidak dapat diakses.");
   if (approval.status !== "pending") throw new Error("Approval ini sudah memiliki keputusan.");
-  if (!canReviewApproval(userRole, approval.requestedByUserId, userId)) throw new Error("Tier 3 approval requires a distinct administrator reviewer.");
+  const reviewerMembership = userRole === "admin" ? false : await hasReviewerMembership(userId, approval.workspaceId);
+  if (!canReviewApproval(userRole, approval.requestedByUserId, userId, reviewerMembership)) throw new Error("Tier 3 approval requires a distinct administrator or delegated reviewer.");
   assertDistinctApprover(approval.requestedByUserId, userId);
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
@@ -191,11 +204,11 @@ export async function decideApproval(userId: number, userRole: "user" | "admin",
 }
 
 export async function listFindings(userId: number, workspaceId?: number) {
-  const owned = workspaceId ? [await ownedWorkspaceOrThrow(userId, workspaceId)] : await listWorkspaces(userId);
-  if (owned.length === 0) return [];
+  const workspaceIds = workspaceId ? [await readableWorkspaceIdOrThrow(userId, workspaceId)] : await getReadableWorkspaceIds(userId);
+  if (workspaceIds.length === 0) return [];
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(findings).where(inArray(findings.workspaceId, owned.map(workspace => workspace.id))).orderBy(desc(findings.updatedAt));
+  return db.select().from(findings).where(inArray(findings.workspaceId, workspaceIds)).orderBy(desc(findings.updatedAt));
 }
 
 export async function listCredentialReferences(userId: number, workspaceId: number) {
@@ -282,7 +295,7 @@ export async function uploadEvidence(userId: number, input: { workspaceId: numbe
 }
 
 export async function listAudit(userId: number, workspaceId: number) {
-  await ownedWorkspaceOrThrow(userId, workspaceId);
+  await readableWorkspaceIdOrThrow(userId, workspaceId);
   const db = await getDb();
   if (!db) return [];
   return db.select().from(auditEvents).where(eq(auditEvents.workspaceId, workspaceId)).orderBy(desc(auditEvents.createdAt)).limit(100);
@@ -359,11 +372,11 @@ export async function getDashboard(userId: number) {
 }
 
 export async function listRuns(userId: number, workspaceId?: number) {
-  const owned = workspaceId ? [await ownedWorkspaceOrThrow(userId, workspaceId)] : await listWorkspaces(userId);
-  if (owned.length === 0) return [];
+  const workspaceIds = workspaceId ? [await readableWorkspaceIdOrThrow(userId, workspaceId)] : await getReadableWorkspaceIds(userId);
+  if (workspaceIds.length === 0) return [];
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(runs).where(inArray(runs.workspaceId, owned.map(workspace => workspace.id))).orderBy(desc(runs.createdAt)).limit(40);
+  return db.select().from(runs).where(inArray(runs.workspaceId, workspaceIds)).orderBy(desc(runs.createdAt)).limit(40);
 }
 
 export async function getWorkspaceByScheduleTaskUid(taskUid: string) {
@@ -409,7 +422,7 @@ export async function attachScheduleTask(userId: number, workspaceId: number, ta
 }
 
 export async function listEvidence(userId: number, workspaceId: number) {
-  await ownedWorkspaceOrThrow(userId, workspaceId);
+  await readableWorkspaceIdOrThrow(userId, workspaceId);
   const db = await getDb();
   if (!db) return [];
   return db.select().from(evidenceArtifacts).where(eq(evidenceArtifacts.workspaceId, workspaceId)).orderBy(desc(evidenceArtifacts.createdAt));

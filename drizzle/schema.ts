@@ -30,6 +30,7 @@ export const runStatus = ["queued", "running", "checkpointed", "completed", "blo
 export const findingStatus = ["discovered", "triaged", "candidate", "reproducing", "validated", "reported", "submitted", "invalid", "duplicate", "inconclusive"] as const;
 export const approvalStatus = ["pending", "approved", "rejected", "expired"] as const;
 export const notificationEventType = ["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check"] as const;
+export const workspaceMemberRole = ["owner", "operator", "reviewer", "auditor"] as const;
 
 export const workspaces = mysqlTable("workspaces", {
   id: int("id").autoincrement().primaryKey(),
@@ -167,6 +168,41 @@ export const notifications = mysqlTable("notifications", {
   index("notifications_user_read_created_idx").on(table.userId, table.readAt, table.createdAt),
   index("notifications_workspace_created_idx").on(table.workspaceId, table.createdAt),
 ]);
+
+export const workspaceMemberships = mysqlTable("workspaceMemberships", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  userId: int("userId").notNull(),
+  role: mysqlEnum("role", workspaceMemberRole).notNull(),
+  addedByUserId: int("addedByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [
+  uniqueIndex("workspace_member_user_uq").on(table.workspaceId, table.userId),
+  index("workspace_member_user_role_idx").on(table.userId, table.role),
+]);
+
+export const webhookConfigurations = mysqlTable("webhookConfigurations", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  endpoint: varchar("endpoint", { length: 2_048 }).notNull(),
+  signingSecretReference: varchar("signingSecretReference", { length: 240 }),
+  eventTypes: text("eventTypes").notNull(),
+  endpointConfirmed: int("endpointConfirmed").default(0).notNull(),
+  enabled: int("enabled").default(0).notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [uniqueIndex("webhook_workspace_uq").on(table.workspaceId)]);
+
+export const auditArchives = mysqlTable("auditArchives", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  storageKey: varchar("storageKey", { length: 512 }).notNull(),
+  storageReference: text("storageReference").notNull(),
+  manifestHash: varchar("manifestHash", { length: 64 }).notNull(),
+  signature: varchar("signature", { length: 64 }).notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [index("audit_archive_workspace_created_idx").on(table.workspaceId, table.createdAt)]);
 
 export type Workspace = typeof workspaces.$inferSelect;
 export type Run = typeof runs.$inferSelect;

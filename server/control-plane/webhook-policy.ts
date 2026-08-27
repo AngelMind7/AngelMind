@@ -1,0 +1,18 @@
+import { notificationEvents, type NotificationEvent } from "./notifications";
+
+const privateIpv4 = /^(127\.|10\.|192\.168\.|169\.254\.|0\.|172\.(1[6-9]|2\d|3[0-1])\.)/;
+
+export function assertSafeWebhookEndpoint(value: string): URL {
+  let url: URL;
+  try { url = new URL(value); } catch { throw new Error("Webhook endpoint must be a valid absolute URL."); }
+  const hostname = url.hostname.toLowerCase();
+  if (url.protocol !== "https:") throw new Error("Webhook endpoint must use HTTPS.");
+  if (url.username || url.password || hostname === "localhost" || hostname.endsWith(".localhost") || hostname.endsWith(".local") || hostname.endsWith(".internal") || hostname === "::1" || privateIpv4.test(hostname)) throw new Error("Webhook endpoint cannot resolve to a local or private address.");
+  return url;
+}
+
+export function normalizeWebhookEvents(events: NotificationEvent[]): NotificationEvent[] {
+  const unique = events.filter((event, index) => events.indexOf(event) === index);
+  if (unique.length === 0 || unique.some(event => !notificationEvents.includes(event))) throw new Error("Webhook must subscribe to one or more supported notification events.");
+  return unique;
+}

@@ -6,6 +6,7 @@ import { createHeartbeatJob } from "./_core/heartbeat";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import * as controlPlane from "./control-plane/service";
+import * as operations from "./control-plane/operations";
 
 const workspaceInput = z.object({
   name: z.string().min(2).max(120),
@@ -42,6 +43,16 @@ export const appRouter = router({
     setPreference: protectedProcedure.input(z.object({ eventType: z.enum(["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check"]), inAppEnabled: z.boolean() })).mutation(({ ctx, input }) => controlPlane.setNotificationPreference(ctx.user.id, input.eventType, input.inAppEnabled)),
     markRead: protectedProcedure.input(z.object({ notificationId: z.number().int().positive() })).mutation(({ ctx, input }) => controlPlane.markNotificationRead(ctx.user.id, input.notificationId)),
     markAllRead: protectedProcedure.mutation(({ ctx }) => controlPlane.markAllNotificationsRead(ctx.user.id)),
+  }),
+  operations: router({
+    members: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => operations.listMembers(ctx.user.id, input.workspaceId)),
+    addMember: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), email: z.string().email().max(320), role: z.enum(["operator", "reviewer", "auditor"]) })).mutation(({ ctx, input }) => operations.addMember(ctx.user.id, input)),
+    removeMember: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), membershipId: z.number().int().positive() })).mutation(({ ctx, input }) => operations.removeMember(ctx.user.id, input.workspaceId, input.membershipId)),
+    webhook: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => operations.getWebhookConfiguration(ctx.user.id, input.workspaceId)),
+    saveWebhookDraft: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), endpoint: z.string().max(2_048), signingSecretReference: z.string().max(240).optional(), eventTypes: z.array(z.enum(["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check"])).min(1), endpointConfirmed: z.boolean() })).mutation(({ ctx, input }) => operations.saveWebhookDraft(ctx.user.id, input)),
+    archives: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => operations.listAuditArchives(ctx.user.id, input.workspaceId)),
+    createArchive: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).mutation(({ ctx, input }) => operations.createAuditArchive(ctx.user.id, input.workspaceId)),
+    verifyArchive: protectedProcedure.input(z.object({ archiveId: z.number().int().positive() })).mutation(({ ctx, input }) => operations.verifyAuditArchive(ctx.user.id, input.archiveId)),
   }),
   workspace: router({
     list: protectedProcedure.query(({ ctx }) => controlPlane.listWorkspaces(ctx.user.id)),

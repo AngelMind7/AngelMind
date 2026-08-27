@@ -4,9 +4,9 @@ The current release delivers an authenticated, workspace-scoped control plane wi
 
 | Priority | Gap | Why it matters | Recommended next change |
 |---|---|---|---|
-| P0 | Workspace membership and reviewer assignment | Distinct approval is enforced, but reviewer access is currently limited to authenticated administrators rather than explicit per-workspace teams. | Add memberships with owner, operator, reviewer, and auditor roles; require a named reviewer group for Tier 3. |
-| P0 | Immutable external audit archive | Database evidence hashes help trace events, but a controlled external archive provides stronger recovery and auditability. | Add signed, append-only export batches with retention review and verified restore exercises. |
-| P0 | Controlled external notification delivery | In-app signals are ready; outbound alerts need a security boundary. | Add a secret-backed, allowlisted webhook provider with retry, signing, redaction, and delivery status. |
+| P0 | Role enforcement across every resource | Workspace membership and delegated reviewer access are now available, but operator and auditor permissions are not yet applied to each future task and artifact procedure. | Extend each new procedure with a workspace-role authorization check and require a named reviewer group for Tier 3. |
+| P0 | Immutable external audit archive | Signed audit manifests are stored in managed storage, but recovery drills and durable append-only external retention are not implemented. | Add signed export batches with retention review and verified restore exercises. |
+| P0 | Controlled external notification delivery | In-app signals and safe webhook drafts are ready; outbound alerts remain intentionally inactive. | Add a secret-backed, allowlisted webhook provider with retry, signing, redaction, and delivery status. |
 | P1 | Policy versioning and change approval | Current policy is recorded as workspace text and digest. | Add policy versions, diff review, approver identity, and effective-at timestamps. |
 | P1 | Operational incident handling | Error counts can be observed, but there is no incident workflow. | Add incident records, acknowledged alerts, escalation timing, and post-incident review. |
 | P1 | Authorized capability adapter sandbox | No target-facing tool is enabled, by design. | Separate a least-privilege worker with capability-specific contracts, rate limits, egress allowlists, and independent audit telemetry. |

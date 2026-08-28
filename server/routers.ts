@@ -15,6 +15,7 @@ import * as workflowPersistence from "./control-plane/workflow-persistence";
 import { validateReportInput } from "./control-plane/report-validation";
 import { extractArtifact } from "./control-plane/artifact-extraction";
 import * as analytics from "./control-plane/analytics";
+import * as collaboration from "./control-plane/collaboration";
 
 const workspaceInput = z.object({
   name: z.string().min(2).max(120),
@@ -122,6 +123,8 @@ export const appRouter = router({
     create: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), fingerprint: z.string().min(8).max(96), title: z.string().min(3).max(240), impactSummary: z.string().min(10).max(12_000), reportDraft: z.string().min(10).max(20_000), confidence: z.number().int().min(0).max(100) })).mutation(({ ctx, input }) => controlPlane.createFinding(ctx.user.id, input)),
     transition: protectedProcedure.input(z.object({ findingId: z.number().int().positive(), status: z.enum(["triaged", "candidate", "reproducing", "validated", "reported", "invalid", "duplicate", "inconclusive"]) })).mutation(({ ctx, input }) => controlPlane.transitionFinding(ctx.user.id, input)),
     approveReview: protectedProcedure.input(z.object({ findingId: z.number().int().positive() })).mutation(({ ctx, input }) => controlPlane.approveFindingReview(ctx.user.id, input.findingId)),
+    comments: protectedProcedure.input(z.object({ findingId: z.number().int().positive(), workspaceId: z.number().int().positive() })).query(({ ctx, input }) => collaboration.listFindingComments(ctx.user.id, input.findingId, input.workspaceId)),
+    addComment: protectedProcedure.input(z.object({ findingId: z.number().int().positive(), workspaceId: z.number().int().positive(), body: z.string().trim().min(1).max(4_000) })).mutation(({ ctx, input }) => collaboration.addFindingComment(ctx.user.id, input)),
   }),
   audit: router({
     list: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => controlPlane.listAudit(ctx.user.id, input.workspaceId)),

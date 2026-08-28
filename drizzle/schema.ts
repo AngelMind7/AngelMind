@@ -301,3 +301,14 @@ export type Workspace = typeof workspaces.$inferSelect;
 export type Run = typeof runs.$inferSelect;
 export type Finding = typeof findings.$inferSelect;
 export type Approval = typeof approvals.$inferSelect;
+
+export const findingComments = mysqlTable("findingComments", {
+  id: int("id").autoincrement().primaryKey(),
+  findingId: int("findingId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  authorUserId: int("authorUserId").notNull(),
+  body: text("body").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [index("finding_comment_finding_created_idx").on(table.findingId, table.createdAt), index("finding_comment_workspace_idx").on(table.workspaceId)]);
+
+export type FindingComment = typeof findingComments.$inferSelect;

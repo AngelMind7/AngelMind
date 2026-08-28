@@ -1,64 +1,176 @@
-# AngelMind Security Research Control Plane
+# AngelMind
 
-AngelMind is an authenticated internal dashboard for governing **authorized** security research programs. It records program terms, preserves workspace isolation, runs zero-network rehearsals, maintains audit evidence, and keeps privileged activity behind a human approval gate.
+## Governed security research operations
 
-## Delivered capabilities
+AngelMind adalah **control plane internal** untuk mengelola program security research yang telah memiliki otorisasi. Aplikasi ini membantu tim menetapkan scope, merekam policy, merencanakan rehearsal offline, mengelola finding dan evidence, serta menjaga approval manusia tetap terlihat di setiap boundary penting.
 
-| Area | Included behavior |
+> AngelMind bukan active scanner. Sistem ini tidak memberikan izin untuk menguji target, mengakses data, mengeksploitasi sistem, atau mengirim laporan eksternal tanpa otorisasi tertulis dan approval yang sesuai.
+
+[![Status](https://img.shields.io/badge/status-production--shaped-22d3ee)](docs/blueprint-delivery-status.md)
+[![Safety](https://img.shields.io/badge/execution-zero--network-fuchsia)](docs/governance.md)
+[![License](https://img.shields.io/badge/license-private-lightgrey)](#)
+
+## Apa yang sudah tersedia
+
+| Area | Implementasi |
 |---|---|
-| Workspaces | Owner-scoped workspace and program records with safe-harbor, conduct, allowlist, exclusions, budgets, session limits, cooldown, retention, and active/paused/archive state |
-| Rehearsal | Deterministic hypothetical plan with cost and duration estimate; fixed at zero network calls and tool executions |
-| Governance | Tier 1/2/3 policy classification; Tier 3 creates a blocked approval record and owner notification, not execution |
-| Runs and audit | Run event logs, checkpoints, SHA-256 audit evidence, timestamped decisions, and workspace-scoped artifact references |
-| Findings | Deduplicated intake, lifecycle state changes, confidence/impact/report drafts, human review before reported state, and no automated submission endpoint |
-| Evidence | Workspace-scoped upload to managed storage, with only a reference and SHA-256 digest retained in the database |
-| Scheduling | Deployed callback for active-only metadata checks that respects cooldown and budget; it never contacts a target |
-| Python foundation | Python 3.12+ core contracts, deterministic guardrails, and property-based invariant tests without active capability integrations |
+| Workspace governance | Workspace owner, role, safe harbor, code of conduct, allowlist, exclusion, budget, session limit, cooldown, retention, dan lifecycle state |
+| Rehearsal workflow | Rencana deterministik berbasis observasi, estimasi biaya/waktu, dan jaminan zero network call serta zero tool execution |
+| Policy and approvals | Klasifikasi Tier 1/2/3, approval record, owner notification, delegated review, dan human gate untuk tindakan sensitif |
+| Findings and evidence | Intake deduplicated, lifecycle, confidence/impact, report draft, workspace isolation, SHA-256 evidence reference, dan audit trail |
+| Operations | Run ledger, checkpoints, signed audit archive, readiness endpoint, maintenance callback, dan operational analytics |
+| Public surface | Product, features, docs, API Playground, Trust Center, pricing, demo, changelog, roadmap, status, academy, contact, serta halaman legal |
+| Localization and UX | 20 locale, timezone-aware date, RTL support, responsive mobile layout, dark control-plane theme, dan public PWA shell |
+| Research foundation | Python contracts, deterministic guardrails, safe planner, property-oriented invariant tests, tanpa active capability integration |
+| Deployment | Railway-compatible Node service, Docker multi-stage image, Docker Compose + MySQL, health checks, Prometheus metrics, dan CI validation |
+| Optional Firebase | Firebase Auth/Storage adapter, Firebase Admin token verification, App Check reCAPTCHA Enterprise, Storage rules, dan emulator config |
 
-## Run and verify
+## Arsitektur singkat
+
+```text
+Browser / PWA
+    │
+    ├── React + TypeScript + Vite
+    ├── Firebase Web SDK (opsional: Auth, Storage, App Check)
+    │
+    ▼
+Express control plane
+    ├── tRPC routers + authorization guards
+    ├── MySQL/TiDB via Drizzle — source of truth
+    ├── Firebase Admin (opsional: token verification, Storage)
+    ├── Managed storage reference + SHA-256 evidence digest
+    └── /healthz · /readyz · /metrics
+```
+
+**MySQL/Drizzle tetap menjadi source of truth** untuk user, workspace, finding, policy, audit, dan metadata evidence. Firebase dipakai sebagai layanan pendukung, bukan sebagai pengganti database utama.
+
+## Menjalankan secara lokal
+
+Persyaratan minimum adalah Node.js 22 atau lebih baru, pnpm, Python 3.12 atau lebih baru untuk research foundation, serta database MySQL/TiDB jika ingin menjalankan workflow yang memakai persistence.
 
 ```bash
+git clone https://github.com/AngelMind7/AngelMind.git
+cd AngelMind
 pnpm install
+cp .env.example .env
+# Isi DATABASE_URL dan JWT_SECRET untuk mode lokal yang terhubung database.
 pnpm dev
+```
+
+Perintah verifikasi yang tersedia:
+
+```bash
 pnpm check
 pnpm test
+pnpm build
+pnpm test:e2e
 
 cd research-service
 python -m pip install -e '.[dev]'
 PYTHONPATH=src pytest
 ```
 
-## Container deployment and operations
+Frontend development berjalan pada mode Vite, sedangkan server production menggunakan bundle `dist/index.js`. Jangan gunakan `pnpm dev` sebagai start command production.
 
-A production-shaped container profile is included. Set secrets outside the repository, then run `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`, and `JWT_SECRET` through the environment before starting the stack:
+## Konfigurasi environment
+
+Gunakan `.env.example` sebagai template. Jangan commit `.env`, service-account JSON, private key, access token, atau credential provider apa pun.
+
+| Kelompok | Variable utama | Keterangan |
+|---|---|---|
+| Database and runtime | `DATABASE_URL`, `JWT_SECRET`, `NODE_ENV` | Database dan session/security configuration |
+| Existing OAuth | `OAUTH_SERVER_URL`, `VITE_APP_ID`, `OWNER_OPEN_ID`, `OWNER_NAME` | Login dan owner bootstrap sesuai deployment |
+| Firebase Web | `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID` | Public browser configuration; dibaca saat frontend build |
+| Firebase App Check | `VITE_FIREBASE_APPCHECK_SITE_KEY` | Site key reCAPTCHA Enterprise; aktif production-only jika konfigurasi lengkap |
+| Firebase Admin | `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_STORAGE_BUCKET` | Server-side verification dan Storage; jangan pernah diletakkan di frontend |
+
+Firebase client tetap disabled jika konfigurasi public belum lengkap. Firebase Admin mengembalikan error terkontrol jika credential server belum tersedia.
+
+## Deploy ke Railway
+
+Buat satu service Node dari repository ini, hubungkan MySQL, lalu gunakan pengaturan berikut:
+
+| Railway setting | Nilai |
+|---|---|
+| Builder | Railpack |
+| Custom Build Command | `pnpm build` |
+| Custom Start Command | `pnpm start` |
+| Healthcheck Path | `/healthz` |
+| Serverless | Off |
+| Teardown | Off |
+| Restart Policy | On Failure |
+| Cron Schedule | Kosongkan kecuali maintenance callback memang sudah dikonfigurasi |
+
+Setelah menambahkan variable `VITE_*`, lakukan **redeploy** karena nilainya dimasukkan ke bundle frontend saat build. Setelah deployment, periksa:
+
+```bash
+curl https://YOUR-RAILWAY-DOMAIN/healthz
+curl https://YOUR-RAILWAY-DOMAIN/readyz
+curl https://YOUR-RAILWAY-DOMAIN/metrics
+```
+
+`/healthz` memeriksa proses, `/readyz` memeriksa readiness konfigurasi runtime, sedangkan `/metrics` menyediakan metrik proses dalam format Prometheus-compatible. Nilai credential tidak perlu dan tidak boleh dikirim ke chat atau dimasukkan ke repository.
+
+## Firebase Auth, Storage, dan App Check
+
+Firebase adalah integrasi opsional untuk deployment yang memilihnya. Untuk mengaktifkan sisi browser, isi seluruh `VITE_FIREBASE_*` dan site key App Check. Untuk sisi server, isi Firebase Admin variables melalui Railway secret variables atau secret manager.
+
+Setelah Firebase Storage tersedia, deploy rules dari root repository:
+
+```bash
+firebase login
+firebase use YOUR_FIREBASE_PROJECT_ID
+firebase deploy --only storage
+```
+
+`storage.rules` membatasi evidence berdasarkan authenticated user dan custom claim `workspaceIds`, membatasi ukuran upload, mengizinkan MIME family yang dapat direview, serta menolak update/delete. Custom claim harus ditetapkan dari workflow server terpercaya; workspace ID yang hanya dikirim browser tidak boleh dipercaya.
+
+`firebase.json` juga menyediakan konfigurasi Auth dan Storage emulator untuk local development. Cloud Functions tidak diperlukan di Railway kecuali fungsi tersebut memang dideploy sebagai service terpisah di Firebase.
+
+## Container deployment
+
+Profil container lokal tersedia melalui Docker Compose:
 
 ```bash
 export MYSQL_PASSWORD='use-a-secret-manager-value'
 export MYSQL_ROOT_PASSWORD='use-a-different-secret-manager-value'
 export JWT_SECRET='use-a-long-random-secret'
 docker compose up --build -d
-curl http://localhost:3000/healthz
-curl http://localhost:3000/readyz
-curl http://localhost:3000/metrics
 ```
 
-The image runs as a non-root user, uses a read-only filesystem with a temporary `/tmp`, exposes health/readiness checks, and applies baseline security headers. `infrastructure/prometheus.yml` provides a scrape configuration for the metrics endpoint. The container pipeline validates the image on pushes and pull requests but does not publish an image or handle secrets.
+Image production menggunakan multi-stage build, non-root user, read-only filesystem dengan `/tmp` sementara, serta healthcheck. `infrastructure/prometheus.yml` berisi konfigurasi scrape untuk endpoint metrics. Container workflow di GitHub hanya memvalidasi image dan tidak mempublikasikan image atau menangani secret.
 
-The public shell is installable as a PWA through `client/public/manifest.json` and uses a same-origin offline shell service worker. API routes are deliberately excluded from the cache.
+## Safety boundaries
 
-## Optional Firebase Auth and Storage
+| Boundary | Default behavior |
+|---|---|
+| Target interaction | Tidak ada active scan, exploit, credential attack, atau target-facing request |
+| External submission | Tidak ada autonomous submission; webhook memerlukan draft, HTTPS, secret reference, owner request, dan reviewer decision |
+| Research planning | Plan-only, deterministic, zero network call, zero tool execution |
+| Evidence | Workspace-scoped, hashed, time-aware, dan dapat diaudit |
+| Privileged action | Tier 3 diblokir sampai human approval tersedia |
+| Data access | Authorization check dan workspace isolation dilakukan di server |
 
-Firebase is an optional supporting provider, not the primary AngelMind database. MySQL/Drizzle remains the source of truth for users, workspaces, findings, policy, audit, and evidence metadata. Set the `VITE_FIREBASE_*` values for the browser SDK and the `FIREBASE_*` values for server-side Admin token verification and Storage access. The client stays disabled when its public configuration is incomplete, and the server returns a controlled configuration error when Admin credentials are absent.
+Fitur target-facing hanya boleh dipertimbangkan sebagai capability terpisah setelah ada scope tertulis, legal review, threat model, rate/budget guard, approval flow, audit evidence, dan independent security review.
 
-Create `firebase.json` and deploy `storage.rules` with the Firebase CLI after creating the project. The Storage rules restrict workspace evidence to authenticated users whose verified token contains the corresponding `workspaceIds` claim, cap uploads at 25 MiB, allow only reviewable MIME families, and deny updates/deletes. The application must set custom claims from a trusted server-side membership workflow; never trust a workspace ID supplied only by the browser.
+## Dokumentasi
 
-For local work, use the Auth and Storage emulators configured in `firebase.json`. Do not commit service-account JSON, private keys, or populated `.env` files. The complete variable list is in `.env.example`.
+| Dokumen | Fokus |
+|---|---|
+| [`docs/architecture.md`](docs/architecture.md) | Service boundary dan domain flow |
+| [`docs/governance.md`](docs/governance.md) | Policy, approval, dan safety gate |
+| [`docs/policy-governance.md`](docs/policy-governance.md) | Tier decision dan authorization matrix |
+| [`docs/operations.md`](docs/operations.md) | Deployment, scheduling, dan maintenance |
+| [`docs/production-runbook.md`](docs/production-runbook.md) | Checklist operasi production |
+| [`docs/legal-compliance.md`](docs/legal-compliance.md) | Retention, audit, dan compliance posture |
+| [`docs/team-access.md`](docs/team-access.md) | Workspace roles dan access model |
+| [`docs/audit-archives.md`](docs/audit-archives.md) | Signed archive dan restore planning |
+| [`docs/webhook-drafts.md`](docs/webhook-drafts.md) | Outbound delivery boundary |
+| [`docs/readiness-roadmap.md`](docs/readiness-roadmap.md) | Gap production-readiness yang masih tersisa |
+| [`docs/master-blueprint-alignment.md`](docs/master-blueprint-alignment.md) | Mapping blueprint ke implementasi |
 
-## Blueprint and documentation
-The supplied master blueprint is preserved at `docs/AI_Bug_Bounty_Master_Blueprint_Final.md`. Its implementation mapping, delivery status, and safety boundaries are tracked in `docs/blueprint-delivery-status.md` and `docs/master-blueprint-alignment.md`.
+## Status validasi
 
-## Documentation
+Validasi terakhir yang dijalankan pada repository ini mencakup **TypeScript type-check, unit test, production build, E2E desktop/mobile, Python research foundation tests, PWA manifest validation, dan `git diff --check`**. CI menjalankan type-check, test, build, manifest validation, dan Python tests pada push serta pull request.
 
-Read `docs/architecture.md` for the service boundary and domain flow, `docs/tool-contracts.md` for future integration requirements, `docs/governance.md` and `docs/policy-governance.md` for approval behavior, `docs/legal-compliance.md` for audit and retention handling, `docs/operations.md` for deployment and scheduling, `docs/incident-response.md` for escalation, `docs/notifications.md` for alert delivery controls, `docs/team-access.md` for workspace roles, `docs/audit-archives.md` for recovery records, `docs/webhook-drafts.md` for the outbound delivery boundary, and `docs/readiness-roadmap.md` for the remaining production-readiness plan.
-
-> The control plane is deliberately not an active scanner. Any future capability must be separately hosted, restricted to an authorized workspace, and unable to bypass the deterministic control-plane policy.
+README ini menjelaskan kondisi kode yang benar-benar ada. Integrasi production tetap memerlukan konfigurasi provider, secret manager, domain, database, retention policy, dan approval organisasi dari operator deployment.

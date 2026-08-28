@@ -1,0 +1,7 @@
+# Default ownership for changes in this repository.
+* @AngelMind7
+
+# Safety-sensitive areas require repository-owner review.
+server/control-plane/ @AngelMind7
+research-service/ @AngelMind7
+infrastructure/ @AngelMind7

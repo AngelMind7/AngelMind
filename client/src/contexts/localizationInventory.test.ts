@@ -3,8 +3,8 @@ import { authenticatedLocalizationRoutes, localeParticipation } from "./localiza
 import { authenticatedRoutes } from "@/authenticatedRoutes";
 
 describe("authenticated-route localization inventory", () => {
-  it("requires all nine dashboard surfaces to participate in shared localization", () => {
-    expect(authenticatedLocalizationRoutes).toHaveLength(9);
+  it("requires all dashboard surfaces to participate in shared localization", () => {
+    expect(authenticatedLocalizationRoutes).toHaveLength(10);
     expect(authenticatedLocalizationRoutes).toEqual(authenticatedRoutes.map(route => route.path));
     authenticatedLocalizationRoutes.forEach(route => expect(localeParticipation[route]).toEqual(["shared-navigation", "static-interface-copy", "locale-formats"]));
   });

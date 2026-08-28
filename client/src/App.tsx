@@ -43,7 +43,7 @@ function App() {
     <ErrorBoundary>
       <ThemeProvider
         defaultTheme="dark"
-        // switchable
+        switchable
       >
         <LocaleProvider>
           <TooltipProvider>

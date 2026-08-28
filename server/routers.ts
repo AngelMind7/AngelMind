@@ -13,6 +13,7 @@ import { parsePassiveInventory } from "./control-plane/passive-inventory";
 import { composeReport } from "./control-plane/report-composer";
 import * as workflowPersistence from "./control-plane/workflow-persistence";
 import { validateReportInput } from "./control-plane/report-validation";
+import { extractArtifact } from "./control-plane/artifact-extraction";
 
 const workspaceInput = z.object({
   name: z.string().min(2).max(120),
@@ -48,6 +49,7 @@ export const appRouter = router({
     importWorkspaceInventory: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), content: z.string().min(1).max(500_000), format: z.enum(["csv", "json"]), allowlist: z.array(z.string().min(1).max(255)).min(1).max(100), exclusions: z.array(z.string().min(1).max(255)).max(100) })).mutation(({ ctx, input }) => workflowPersistence.importPassiveAssets(ctx.user.id, input)),
     listWorkspaceInventory: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => workflowPersistence.listPassiveAssets(ctx.user.id, input.workspaceId)),
     validateReport: protectedProcedure.input(z.object({ scopeSummary: z.string().max(10_000).optional(), report: z.object({ title: z.string(), severity: z.enum(["informational", "low", "medium", "high", "critical"]), summary: z.string(), impact: z.string(), evidence: z.array(z.string()), reproductionNotes: z.array(z.string()), remediation: z.string().optional() }) })).mutation(({ input }) => validateReportInput(input.report, input.scopeSummary ?? "")),
+    extractArtifact: protectedProcedure.input(z.object({ contentBase64: z.string().min(1).max(2_800_000), contentType: z.string().min(1).max(120) })).mutation(({ input }) => extractArtifact(input)),
     saveReportVersion: protectedProcedure.input(z.object({ findingId: z.number().int().positive(), workspaceId: z.number().int().positive(), platform: z.enum(["hackerone", "bugcrowd", "intigriti", "markdown"]), report: z.object({ title: z.string().min(3).max(240), severity: z.enum(["informational", "low", "medium", "high", "critical"]), summary: z.string().max(12_000), impact: z.string().max(12_000), evidence: z.array(z.string().max(4_000)).max(100), reproductionNotes: z.array(z.string().max(4_000)).max(100), remediation: z.string().max(12_000).optional() }) })).mutation(({ ctx, input }) => workflowPersistence.createReportVersion(ctx.user.id, input)),
     listReportVersions: protectedProcedure.input(z.object({ findingId: z.number().int().positive(), workspaceId: z.number().int().positive() })).query(({ ctx, input }) => workflowPersistence.listReportVersions(ctx.user.id, input.findingId, input.workspaceId)),
   }),

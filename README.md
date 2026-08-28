@@ -46,6 +46,14 @@ The image runs as a non-root user, uses a read-only filesystem with a temporary 
 
 The public shell is installable as a PWA through `client/public/manifest.json` and uses a same-origin offline shell service worker. API routes are deliberately excluded from the cache.
 
+## Optional Firebase Auth and Storage
+
+Firebase is an optional supporting provider, not the primary AngelMind database. MySQL/Drizzle remains the source of truth for users, workspaces, findings, policy, audit, and evidence metadata. Set the `VITE_FIREBASE_*` values for the browser SDK and the `FIREBASE_*` values for server-side Admin token verification and Storage access. The client stays disabled when its public configuration is incomplete, and the server returns a controlled configuration error when Admin credentials are absent.
+
+Create `firebase.json` and deploy `storage.rules` with the Firebase CLI after creating the project. The Storage rules restrict workspace evidence to authenticated users whose verified token contains the corresponding `workspaceIds` claim, cap uploads at 25 MiB, allow only reviewable MIME families, and deny updates/deletes. The application must set custom claims from a trusted server-side membership workflow; never trust a workspace ID supplied only by the browser.
+
+For local work, use the Auth and Storage emulators configured in `firebase.json`. Do not commit service-account JSON, private keys, or populated `.env` files. The complete variable list is in `.env.example`.
+
 ## Blueprint and documentation
 The supplied master blueprint is preserved at `docs/AI_Bug_Bounty_Master_Blueprint_Final.md`. Its implementation mapping, delivery status, and safety boundaries are tracked in `docs/blueprint-delivery-status.md` and `docs/master-blueprint-alignment.md`.
 

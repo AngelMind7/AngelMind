@@ -1,0 +1,29 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function workspaceMember(workspaceId) {
+      return signedIn()
+        && workspaceId in request.auth.token.workspaceIds;
+    }
+
+    match /users/{userId}/{allPaths=**} {
+      allow read, write: if signedIn() && request.auth.uid == userId;
+    }
+
+    match /workspaces/{workspaceId}/evidence/{evidenceId} {
+      allow read: if workspaceMember(workspaceId);
+      allow create: if workspaceMember(workspaceId)
+        && request.resource.size < 25 * 1024 * 1024
+        && request.resource.contentType.matches('application/(pdf|json)|text/.*|image/.*');
+      allow update, delete: if false;
+    }
+
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

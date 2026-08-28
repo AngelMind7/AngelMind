@@ -19,11 +19,11 @@ AngelMind adalah **control plane internal** untuk mengelola program security res
 | Policy and approvals | Klasifikasi Tier 1/2/3, approval record, owner notification, delegated review, dan human gate untuk tindakan sensitif |
 | Findings and evidence | Intake deduplicated, lifecycle, confidence/impact, report draft, workspace isolation, SHA-256 evidence reference, dan audit trail |
 | Operations | Run ledger, checkpoints, signed audit archive, readiness endpoint, maintenance callback, dan operational analytics |
-| Public surface | Product, features, docs, API Playground, Trust Center, pricing, demo, changelog, roadmap, status, academy, contact, serta halaman legal |
+| Public surface | Product, features, docs, Trust Center, pricing, changelog, roadmap, status, academy, contact, serta halaman legal |
 | Localization and UX | 20 locale, timezone-aware date, RTL support, responsive mobile layout, dark control-plane theme, dan public PWA shell |
 | Research foundation | Python contracts, deterministic guardrails, safe planner, property-oriented invariant tests, tanpa active capability integration |
 | Deployment | Railway-compatible Node service, Docker multi-stage image, Docker Compose + MySQL, health checks, Prometheus metrics, dan CI validation |
-| Optional Firebase | Firebase Auth/Storage adapter, Firebase Admin token verification, App Check reCAPTCHA Enterprise, Storage rules, dan emulator config |
+| Firebase identity | Firebase Auth, Firebase Admin token verification, App Check reCAPTCHA Enterprise, dan emulator config; file storage production menggunakan Supabase Storage |
 
 ## Arsitektur singkat
 
@@ -31,7 +31,7 @@ AngelMind adalah **control plane internal** untuk mengelola program security res
 Browser / PWA
     │
     ├── React + TypeScript + Vite
-    ├── Firebase Web SDK (opsional: Auth, Storage, App Check)
+    ├── Firebase Web SDK (Auth, App Check)
     │
     ▼
 Express control plane
@@ -79,12 +79,12 @@ Gunakan `.env.example` sebagai template. Jangan commit `.env`, service-account J
 | Kelompok | Variable utama | Keterangan |
 |---|---|---|
 | Database and runtime | `DATABASE_URL`, `JWT_SECRET`, `NODE_ENV` | Database dan session/security configuration |
-| Existing OAuth | `OAUTH_SERVER_URL`, `VITE_APP_ID`, `OWNER_OPEN_ID`, `OWNER_NAME` | Login dan owner bootstrap sesuai deployment |
-| Firebase Web | `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_STORAGE_BUCKET`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID` | Public browser configuration; dibaca saat frontend build |
+| Firebase Auth | `VITE_FIREBASE_*`, `FIREBASE_*` | Google Sign-In di browser dan token verification di server |
+| Firebase Web | `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_AUTH_DOMAIN`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_MESSAGING_SENDER_ID`, `VITE_FIREBASE_APP_ID` | Public browser configuration; dibaca saat frontend build |
 | Firebase App Check | `VITE_FIREBASE_APPCHECK_SITE_KEY` | Site key reCAPTCHA Enterprise; aktif production-only jika konfigurasi lengkap |
-| Firebase Admin | `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`, `FIREBASE_STORAGE_BUCKET` | Server-side verification dan Storage; jangan pernah diletakkan di frontend |
+| Firebase Admin | `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | Server-side token verification; jangan pernah diletakkan di frontend |
 
-Firebase client tetap disabled jika konfigurasi public belum lengkap. Firebase Admin mengembalikan error terkontrol jika credential server belum tersedia.
+Firebase client tetap disabled jika konfigurasi public belum lengkap. Firebase Admin mengembalikan error terkontrol jika credential server belum tersedia. Supabase Storage membutuhkan `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, dan `SUPABASE_STORAGE_BUCKET`. AI menggunakan 9Router primary dan OmniRoute fallback melalui `LLM_*` variables.
 
 ## Deploy ke Railway
 
@@ -111,21 +111,13 @@ curl https://YOUR-RAILWAY-DOMAIN/metrics
 
 `/healthz` memeriksa proses, `/readyz` memeriksa readiness konfigurasi runtime, sedangkan `/metrics` menyediakan metrik proses dalam format Prometheus-compatible. Nilai credential tidak perlu dan tidak boleh dikirim ke chat atau dimasukkan ke repository.
 
-## Firebase Auth, Storage, dan App Check
+## Firebase Auth, Supabase Storage, dan App Check
 
-Firebase adalah integrasi opsional untuk deployment yang memilihnya. Untuk mengaktifkan sisi browser, isi seluruh `VITE_FIREBASE_*` dan site key App Check. Untuk sisi server, isi Firebase Admin variables melalui Railway secret variables atau secret manager.
+Firebase Auth adalah jalur autentikasi utama deployment ini. Untuk mengaktifkan sisi browser, isi seluruh `VITE_FIREBASE_*` dan site key App Check bila App Check digunakan. Untuk sisi server, isi Firebase Admin variables melalui Railway secret variables atau secret manager.
 
-Setelah Firebase Storage tersedia, deploy rules dari root repository:
+Firebase Auth dan App Check dipakai untuk identitas serta proteksi browser. File evidence production disimpan melalui Supabase Storage dari backend; service-role key tidak boleh diekspos ke frontend.
 
-```bash
-firebase login
-firebase use YOUR_FIREBASE_PROJECT_ID
-firebase deploy --only storage
-```
-
-`storage.rules` membatasi evidence berdasarkan authenticated user dan custom claim `workspaceIds`, membatasi ukuran upload, mengizinkan MIME family yang dapat direview, serta menolak update/delete. Custom claim harus ditetapkan dari workflow server terpercaya; workspace ID yang hanya dikirim browser tidak boleh dipercaya.
-
-`firebase.json` juga menyediakan konfigurasi Auth dan Storage emulator untuk local development. Cloud Functions tidak diperlukan di Railway kecuali fungsi tersebut memang dideploy sebagai service terpisah di Firebase.
+`firebase.json` tetap menyediakan konfigurasi emulator untuk local development. Cloud Functions tidak diperlukan di Railway kecuali fungsi tersebut memang dideploy sebagai service terpisah di Firebase.
 
 ## Container deployment
 

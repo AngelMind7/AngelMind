@@ -12,15 +12,13 @@ Configure the platform's server-side environment through the hosting provider's 
 | --- | --- |
 | `DATABASE_URL` | Production MySQL/TiDB connection string |
 | `JWT_SECRET` | Session signing secret |
-| `VITE_APP_ID` | OAuth application identifier |
-| `OAUTH_SERVER_URL` | OAuth backend base URL |
-| `VITE_OAUTH_PORTAL_URL` | Frontend login portal URL |
-| `BUILT_IN_FORGE_API_URL` | Server-side built-in API endpoint |
-| `BUILT_IN_FORGE_API_KEY` | Server-side built-in API credential |
-| `VITE_FRONTEND_FORGE_API_URL` | Frontend built-in API endpoint when required |
-| `VITE_FRONTEND_FORGE_API_KEY` | Frontend-safe public runtime key when required |
+| `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY` | Firebase Admin token verification |
+| `VITE_FIREBASE_*` | Firebase Web Auth configuration |
+| `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_STORAGE_BUCKET` | Server-side evidence/object storage |
+| `LLM_PRIMARY_API_BASE_URL`, `LLM_PRIMARY_API_KEY`, `LLM_PRIMARY_MODEL` | 9Router primary AI provider |
+| `LLM_FALLBACK_API_BASE_URL`, `LLM_FALLBACK_API_KEY`, `LLM_FALLBACK_MODEL` | OmniRoute fallback AI provider |
 
-Use separate values for development, staging, and production. Rotate session and storage credentials according to the hosting provider's policy.
+Use separate values for development, staging, and production. Rotate session, Firebase Admin, Supabase, and AI provider credentials according to the hosting provider's policy. Never expose `SUPABASE_SERVICE_ROLE_KEY` or any AI provider key through `VITE_*`.
 
 ## Release procedure
 

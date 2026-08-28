@@ -9,6 +9,7 @@ import * as controlPlane from "./control-plane/service";
 import * as operations from "./control-plane/operations";
 import * as assurance from "./control-plane/assurance";
 import * as agent from "./control-plane/agent";
+import { parsePassiveInventory } from "./control-plane/passive-inventory";
 
 const workspaceInput = z.object({
   name: z.string().min(2).max(120),
@@ -38,6 +39,7 @@ export const appRouter = router({
   }),
   agent: router({
     analyzeEvidence: protectedProcedure.input(z.object({ scopeSummary: z.string().min(20).max(10_000), evidence: z.string().min(20).max(40_000), findingTitle: z.string().max(240).optional() })).mutation(({ input }) => agent.analyzeEvidence(input)),
+    importPassiveInventory: protectedProcedure.input(z.object({ content: z.string().min(1).max(500_000), format: z.enum(["csv", "json"]), allowlist: z.array(z.string().min(1).max(255)).min(1).max(100), exclusions: z.array(z.string().min(1).max(255)).max(100) })).mutation(({ input }) => parsePassiveInventory(input)),
   }),
   control: router({
     dashboard: protectedProcedure.query(({ ctx }) => controlPlane.getDashboard(ctx.user.id)),

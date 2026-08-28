@@ -29,6 +29,7 @@ import { Button } from "./ui/button";
 import { NotificationIndicator } from "./NotificationIndicator";
 import { LanguageSelector } from "./LanguageSelector";
 import { TimezoneSelector } from "./TimezoneSelector";
+import CommandPalette from "./CommandPalette";
 import { useLocale } from "@/contexts/LocaleContext";
 
 const menuItems = [
@@ -256,6 +257,7 @@ function DashboardLayoutContent({
       </div>
 
       <SidebarInset>
+        <CommandPalette />
         {isMobile && (
           <div className="flex border-b h-14 items-center justify-between bg-background/95 px-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur sticky top-0 z-40">
             <div className="flex items-center gap-2">
@@ -271,7 +273,15 @@ function DashboardLayoutContent({
             <div className="flex items-center gap-1"><LanguageSelector compact /><TimezoneSelector compact /><NotificationIndicator compact /></div>
           </div>
         )}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className="flex-1 p-4 pb-24 sm:p-6 sm:pb-6 lg:p-8">{children}</main>
+        {isMobile && (
+          <nav aria-label="Primary mobile navigation" className="fixed inset-x-0 bottom-0 z-40 grid grid-cols-5 border-t border-cyan-300/15 bg-[#080b14]/95 p-2 backdrop-blur supports-[backdrop-filter]:backdrop-blur">
+            {menuItems.slice(0, 5).map(item => {
+              const isActive = location === item.path;
+              return <button key={item.path} type="button" onClick={() => setLocation(item.path)} aria-current={isActive ? "page" : undefined} className={`flex min-h-11 flex-col items-center justify-center gap-1 rounded-md px-1 text-[10px] transition-colors ${isActive ? "bg-cyan-300/10 text-cyan-200" : "text-slate-500 hover:text-slate-200"}`}><item.icon className="h-4 w-4" /><span className="max-w-full truncate">{t(item.labelKey)}</span></button>;
+            })}
+          </nav>
+        )}
       </SidebarInset>
     </>
   );

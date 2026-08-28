@@ -40,6 +40,7 @@ const menuItems = [
   { icon: BarChart3, labelKey: "nav.observability" as const, path: "/coverage" },
   { icon: BrainCircuit, labelKey: "nav.commandCenter" as const, path: "/researcher" },
   { icon: FileText, labelKey: "nav.findings" as const, path: "/reports" },
+  { icon: Boxes, labelKey: "nav.workspaces" as const, path: "/inventory" },
   { icon: ShieldCheck, labelKey: "nav.governance" as const, path: "/governance" },
   { icon: FileSearch, labelKey: "nav.findings" as const, path: "/findings" },
   { icon: ScrollText, labelKey: "nav.audit" as const, path: "/audit" },

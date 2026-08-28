@@ -10,6 +10,7 @@ const commands = [
   { path: "/coverage", labelKey: "nav.observability" as const, icon: BarChart3, shortcut: "G V" },
   { path: "/researcher", labelKey: "nav.commandCenter" as const, icon: BrainCircuit, shortcut: "G R" },
   { path: "/reports", labelKey: "nav.findings" as const, icon: FileText, shortcut: "G P" },
+  { path: "/inventory", labelKey: "nav.workspaces" as const, icon: Boxes, shortcut: "G I" },
   { path: "/workspaces", labelKey: "nav.workspaces" as const, icon: Boxes, shortcut: "G W" },
   { path: "/governance", labelKey: "nav.governance" as const, icon: ShieldCheck, shortcut: "G G" },
   { path: "/findings", labelKey: "nav.findings" as const, icon: FileSearch, shortcut: "G F" },

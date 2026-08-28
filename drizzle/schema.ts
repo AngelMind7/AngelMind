@@ -270,6 +270,33 @@ export const incidentEvidenceLinks = mysqlTable("incidentEvidenceLinks", {
   index("incident_evidence_incident_idx").on(table.incidentId),
 ]);
 
+export const passiveAssetSource = ["csv", "json"] as const;
+export const passiveAssets = mysqlTable("passiveAssets", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  value: varchar("value", { length: 512 }).notNull(),
+  hostname: varchar("hostname", { length: 255 }).notNull(),
+  source: mysqlEnum("source", passiveAssetSource).notNull(),
+  inScope: int("inScope").default(0).notNull(),
+  reason: varchar("reason", { length: 32 }).notNull(),
+  importedByUserId: int("importedByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [index("passive_asset_workspace_scope_idx").on(table.workspaceId, table.inScope), index("passive_asset_workspace_host_idx").on(table.workspaceId, table.hostname)]);
+
+export const reportPlatform = ["hackerone", "bugcrowd", "intigriti", "markdown"] as const;
+export const reportVersions = mysqlTable("reportVersions", {
+  id: int("id").autoincrement().primaryKey(),
+  findingId: int("findingId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  platform: mysqlEnum("platform", reportPlatform).notNull(),
+  title: varchar("title", { length: 240 }).notNull(),
+  body: text("body").notNull(),
+  missingFields: text("missingFields").notNull(),
+  readyForReview: int("readyForReview").default(0).notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [index("report_version_finding_created_idx").on(table.findingId, table.createdAt), index("report_version_workspace_idx").on(table.workspaceId)]);
+
 export type Workspace = typeof workspaces.$inferSelect;
 export type Run = typeof runs.$inferSelect;
 export type Finding = typeof findings.$inferSelect;

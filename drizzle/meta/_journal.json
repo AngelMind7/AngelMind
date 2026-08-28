@@ -50,6 +50,13 @@
       "when": 1787844969656,
       "tag": "0006_material_gambit",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "5",
+      "when": 1787888644559,
+      "tag": "0007_salty_black_tarantula",
+      "breakpoints": true
     }
   ]
 }

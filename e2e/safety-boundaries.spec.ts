@@ -25,3 +25,18 @@ test("trust center remains usable on mobile", async ({ page }) => {
   await expect(page.locator("body")).toBeVisible();
   await expect(page.locator("body")).not.toHaveCSS("overflow-x", "visible");
 });
+
+test("public information routes render without an authenticated session", async ({ page }) => {
+  for (const path of ["/pricing", "/demo", "/changelog", "/roadmap", "/status", "/contact", "/academy", "/privacy", "/terms", "/cookies"]) {
+    await page.goto(path);
+    await expect(page.locator("h1")).toBeVisible();
+    await expect(page.getByText(/No target contact|No autonomous submission|Safety stays visible/i).first()).toBeVisible();
+  }
+});
+
+test("public shell exposes install metadata and safe health endpoints", async ({ page, request }) => {
+  await page.goto("/product");
+  await expect(page.locator('link[rel="manifest"]')).toHaveAttribute("href", "/manifest.json");
+  await expect((await request.get("/healthz")).ok()).toBeTruthy();
+  await expect((await request.get("/metrics")).ok()).toBeTruthy();
+});

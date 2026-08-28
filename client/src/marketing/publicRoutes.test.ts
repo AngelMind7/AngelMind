@@ -12,6 +12,16 @@ describe("public route inventory", () => {
       ["/docs", "MarketingHome", "reviewed-static-copy"],
       ["/security", "MarketingHome", "reviewed-static-copy"],
       ["/api-playground", "ApiPlayground", "synthetic-read-only"],
+      ["/pricing", "PublicInfoPage", "informational-no-billing"],
+      ["/demo", "PublicInfoPage", "synthetic-read-only"],
+      ["/changelog", "PublicInfoPage", "reviewed-static-copy"],
+      ["/roadmap", "PublicInfoPage", "reviewed-static-copy"],
+      ["/status", "PublicInfoPage", "non-live-status-disclosure"],
+      ["/contact", "PublicInfoPage", "non-collecting-contact"],
+      ["/academy", "PublicInfoPage", "educational-static-copy"],
+      ["/privacy", "PublicInfoPage", "deployment-reviewed-legal-copy"],
+      ["/terms", "PublicInfoPage", "deployment-reviewed-legal-copy"],
+      ["/cookies", "PublicInfoPage", "deployment-reviewed-legal-copy"],
     ]);
   });
   it("keeps every MarketingHome route localized and isolated from authenticated workspace access", () => {

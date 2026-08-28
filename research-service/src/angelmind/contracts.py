@@ -54,6 +54,7 @@ class Observation:
     workspace_id: str
     asset_id: str
     summary: str
+    hostname: str = ""
     observation_id: str = field(default_factory=lambda: f"obs_{uuid4().hex}")
     recorded_at: datetime = field(default_factory=utc_now)
 

@@ -35,3 +35,16 @@ jobs:
         run: pnpm check
       - name: Test
         run: pnpm test -- --run
+      - name: Production build
+        run: pnpm build
+      - name: Validate PWA manifest
+        run: python3 -m json.tool client/public/manifest.json >/dev/null
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Test research foundation
+        working-directory: research-service
+        run: |
+          python -m pip install --upgrade pip pytest hypothesis
+          PYTHONPATH=src python -m pytest

@@ -1,0 +1,13 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: angelmind-control-plane
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app:3000"]
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: service
+        replacement: angelmind-control-plane

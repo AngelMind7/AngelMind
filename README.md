@@ -28,6 +28,24 @@ python -m pip install -e '.[dev]'
 PYTHONPATH=src pytest
 ```
 
+## Container deployment and operations
+
+A production-shaped container profile is included. Set secrets outside the repository, then run `MYSQL_PASSWORD`, `MYSQL_ROOT_PASSWORD`, and `JWT_SECRET` through the environment before starting the stack:
+
+```bash
+export MYSQL_PASSWORD='use-a-secret-manager-value'
+export MYSQL_ROOT_PASSWORD='use-a-different-secret-manager-value'
+export JWT_SECRET='use-a-long-random-secret'
+docker compose up --build -d
+curl http://localhost:3000/healthz
+curl http://localhost:3000/readyz
+curl http://localhost:3000/metrics
+```
+
+The image runs as a non-root user, uses a read-only filesystem with a temporary `/tmp`, exposes health/readiness checks, and applies baseline security headers. `infrastructure/prometheus.yml` provides a scrape configuration for the metrics endpoint. The container pipeline validates the image on pushes and pull requests but does not publish an image or handle secrets.
+
+The public shell is installable as a PWA through `client/public/manifest.json` and uses a same-origin offline shell service worker. API routes are deliberately excluded from the cache.
+
 ## Blueprint and documentation
 The supplied master blueprint is preserved at `docs/AI_Bug_Bounty_Master_Blueprint_Final.md`. Its implementation mapping, delivery status, and safety boundaries are tracked in `docs/blueprint-delivery-status.md` and `docs/master-blueprint-alignment.md`.
 

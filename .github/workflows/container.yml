@@ -1,0 +1,26 @@
+name: Container build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: container-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build runtime image
+        run: docker build --target runtime --tag angelmind:${{ github.sha }} .
+      - name: Inspect image metadata
+        run: docker image inspect angelmind:${{ github.sha }} --format '{{.Config.User}} {{.Config.ExposedPorts}}'

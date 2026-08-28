@@ -7,6 +7,7 @@ import superjson from "superjson";
 import App from "./App";
 import { startLogin } from "./const";
 import "./index.css";
+import { registerServiceWorker } from "./pwa/registerServiceWorker";
 
 const queryClient = new QueryClient();
 
@@ -29,6 +30,7 @@ function loadConfiguredAnalytics() {
 }
 
 loadConfiguredAnalytics();
+registerServiceWorker();
 
 const redirectToLoginIfUnauthorized = (error: unknown) => {
   if (!(error instanceof TRPCClientError)) return;

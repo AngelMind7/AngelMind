@@ -6,5 +6,18 @@ must be verified before an authorized capability integration is considered.
 """
 
 from .contracts import Asset, Evidence, Finding, Hypothesis, Observation, Run, Scope, Task
+from .planner import PlannedResearch, build_hypotheses, plan_research
 
-__all__ = ["Asset", "Evidence", "Finding", "Hypothesis", "Observation", "Run", "Scope", "Task"]
+__all__ = [
+    "Asset",
+    "Evidence",
+    "Finding",
+    "Hypothesis",
+    "Observation",
+    "PlannedResearch",
+    "Run",
+    "Scope",
+    "Task",
+    "build_hypotheses",
+    "plan_research",
+]

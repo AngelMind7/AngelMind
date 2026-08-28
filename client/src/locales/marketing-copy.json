@@ -351,6 +351,28 @@
     "it": "Esamina i confini di sicurezza implementati, la politica di conservazione, il modello di evidenza d'audit e l'approccio alla divulgazione responsabile.",
     "sv": "Granska de implementerade säkerhetsgränserna, bevarandepraxis, modellen för revisionsbevis och tillvägagångssättet för ansvarsfull rapportering."
   },
+  "marketing.trust.humanReview": {
+    "en": "Human review is required before a report can advance; AngelMind does not perform active scanning or autonomous submission.",
+    "id": "Tinjauan manusia wajib dilakukan sebelum laporan dapat dilanjutkan; AngelMind tidak melakukan pemindaian aktif atau pengajuan otonom.",
+    "ms": "Semakan manusia diperlukan sebelum laporan boleh diteruskan; AngelMind tidak melakukan pengimbasan aktif atau penghantaran autonomi.",
+    "ar": "المراجعة البشرية مطلوبة قبل تقدم التقرير؛ لا يجري AngelMind مسحاً نشطاً أو تقديمًا ذاتيًا.",
+    "zh-CN": "报告推进前必须经过人工审查；AngelMind 不执行主动扫描或自动提交。",
+    "ja": "レポートを進める前に人によるレビューが必要です。AngelMindはアクティブスキャンや自律的な提出を行いません。",
+    "ko": "보고서를 진행하기 전에 사람의 검토가 필요합니다. AngelMind는 능동 스캔이나 자율 제출을 수행하지 않습니다.",
+    "es": "Se requiere revisión humana antes de avanzar un informe; AngelMind no realiza escaneo activo ni envíos autónomos.",
+    "pt": "A revisão humana é obrigatória antes de avançar um relatório; o AngelMind não executa varredura ativa nem submissão autônoma.",
+    "fr": "Une revue humaine est requise avant de faire progresser un rapport ; AngelMind n’effectue ni analyse active ni soumission autonome.",
+    "de": "Vor dem Weiterführen eines Berichts ist eine menschliche Prüfung erforderlich; AngelMind führt weder aktive Scans noch autonome Einreichungen durch.",
+    "ru": "Перед продвижением отчёта требуется проверка человеком; AngelMind не выполняет активное сканирование или автономную отправку.",
+    "hi": "रिपोर्ट आगे बढ़ाने से पहले मानवीय समीक्षा आवश्यक है; AngelMind सक्रिय स्कैनिंग या स्वायत्त सबमिशन नहीं करता।",
+    "vi": "Cần có người xem xét trước khi báo cáo được chuyển tiếp; AngelMind không thực hiện quét chủ động hoặc gửi tự động.",
+    "th": "ต้องมีการตรวจสอบโดยมนุษย์ก่อนดำเนินรายงานต่อ AngelMind ไม่ทำการสแกนเชิงรุกหรือส่งโดยอัตโนมัติ",
+    "tr": "Bir rapor ilerletilmeden önce insan incelemesi gerekir; AngelMind etkin tarama veya özerk gönderim yapmaz.",
+    "pl": "Przed dalszym prowadzeniem raportu wymagana jest ocena człowieka; AngelMind nie wykonuje aktywnego skanowania ani autonomicznego przesyłania.",
+    "nl": "Menselijke beoordeling is vereist voordat een rapport verdergaat; AngelMind voert geen actieve scans of autonome indieningen uit.",
+    "it": "È necessaria una revisione umana prima di far avanzare un report; AngelMind non esegue scansioni attive né invii autonomi.",
+    "sv": "Mänsklig granskning krävs innan en rapport kan gå vidare; AngelMind utför inte aktiv skanning eller autonoma inskick."
+  },
   "marketing.docs.eyebrow": {
     "en": "Documentation",
     "id": "Dokumentasi",

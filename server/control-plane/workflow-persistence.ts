@@ -1,5 +1,5 @@
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { passiveAssets, reportVersions } from "../../drizzle/schema";
+import { findings, passiveAssets, reportVersions } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { canAccessWorkspace } from "./operations";
 import { composeReport, type ReportInput, type ReportPlatform } from "./report-composer";
@@ -21,11 +21,17 @@ export async function listPassiveAssets(userId: number, workspaceId: number) {
   return db.select().from(passiveAssets).where(eq(passiveAssets.workspaceId, workspaceId)).orderBy(desc(passiveAssets.createdAt));
 }
 
+async function ensureFindingInWorkspace(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, findingId: number, workspaceId: number) {
+  const [finding] = await db.select({ id: findings.id }).from(findings).where(and(eq(findings.id, findingId), eq(findings.workspaceId, workspaceId))).limit(1);
+  if (!finding) throw new Error("Finding tidak ditemukan pada workspace ini.");
+}
+
 export async function createReportVersion(userId: number, input: { findingId: number; workspaceId: number; platform: ReportPlatform; report: ReportInput }) {
   if (!(await canAccessWorkspace(userId, input.workspaceId, "respond"))) throw new Error("Workspace tidak dapat dikelola oleh user ini.");
-  const composed = composeReport(input.report, input.platform);
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
+  await ensureFindingInWorkspace(db, input.findingId, input.workspaceId);
+  const composed = composeReport(input.report, input.platform);
   await db.insert(reportVersions).values({ findingId: input.findingId, workspaceId: input.workspaceId, platform: composed.platform, title: composed.title, body: composed.body, missingFields: JSON.stringify(composed.missingFields), readyForReview: composed.readyForReview ? 1 : 0, createdByUserId: userId });
   return composed;
 }
@@ -34,5 +40,6 @@ export async function listReportVersions(userId: number, findingId: number, work
   if (!(await canAccessWorkspace(userId, workspaceId, "read"))) throw new Error("Workspace tidak dapat diakses oleh user ini.");
   const db = await getDb();
   if (!db) return [];
+  await ensureFindingInWorkspace(db, findingId, workspaceId);
   return db.select().from(reportVersions).where(and(eq(reportVersions.findingId, findingId), eq(reportVersions.workspaceId, workspaceId))).orderBy(desc(reportVersions.createdAt));
 }

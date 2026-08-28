@@ -7,6 +7,8 @@ export async function listFindingComments(userId: number, findingId: number, wor
   if (!(await canAccessWorkspace(userId, workspaceId, "read"))) throw new Error("Workspace tidak dapat diakses oleh user ini.");
   const db = await getDb();
   if (!db) return [];
+  const [finding] = await db.select({ id: findings.id }).from(findings).where(and(eq(findings.id, findingId), eq(findings.workspaceId, workspaceId))).limit(1);
+  if (!finding) throw new Error("Finding tidak ditemukan pada workspace ini.");
   return db.select().from(findingComments).where(and(eq(findingComments.findingId, findingId), eq(findingComments.workspaceId, workspaceId))).orderBy(asc(findingComments.createdAt));
 }
 

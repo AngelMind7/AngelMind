@@ -129,7 +129,7 @@ export async function listIncidentEvidence(userId: number, incidentId: number) {
   if (!db) return [];
   const [incident] = await db.select().from(incidents).where(eq(incidents.id, incidentId)).limit(1);
   if (!incident || !await canAccessWorkspace(userId, incident.workspaceId, "read")) throw new Error("Incident tidak ditemukan atau tidak dapat diakses.");
-  return db.select({ id: incidentEvidenceLinks.id, evidenceArtifactId: evidenceArtifacts.id, storageReference: evidenceArtifacts.storageReference, sha256: evidenceArtifacts.sha256, artifactType: evidenceArtifacts.artifactType, createdAt: incidentEvidenceLinks.createdAt }).from(incidentEvidenceLinks).leftJoin(evidenceArtifacts, eq(incidentEvidenceLinks.evidenceArtifactId, evidenceArtifacts.id)).where(eq(incidentEvidenceLinks.incidentId, incident.id));
+  return db.select({ id: incidentEvidenceLinks.id, evidenceArtifactId: evidenceArtifacts.id, storageReference: evidenceArtifacts.storageReference, sha256: evidenceArtifacts.sha256, artifactType: evidenceArtifacts.artifactType, createdAt: incidentEvidenceLinks.createdAt }).from(incidentEvidenceLinks).leftJoin(evidenceArtifacts, eq(incidentEvidenceLinks.evidenceArtifactId, evidenceArtifacts.id)).where(and(eq(incidentEvidenceLinks.incidentId, incident.id), eq(evidenceArtifacts.workspaceId, incident.workspaceId)));
 }
 
 export async function linkIncidentEvidence(userId: number, incidentId: number, evidenceArtifactId: number) {
@@ -158,6 +158,7 @@ export async function requestWebhookActivation(userId: number, workspaceId: numb
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const [configuration] = await db.select().from(webhookConfigurations).where(eq(webhookConfigurations.workspaceId, workspace.id)).limit(1);
+  if (!configuration) throw new Error("Webhook draft belum dikonfigurasi untuk workspace ini.");
   const [existing] = await db.select().from(webhookActivationRequests).where(and(eq(webhookActivationRequests.workspaceId, workspace.id), eq(webhookActivationRequests.status, "pending"))).limit(1);
   const pending = prepareWebhookActivationWorkflow(Boolean(configuration && isWebhookActivationReady(configuration)), Boolean(existing), userId);
   await db.insert(webhookActivationRequests).values({ workspaceId: workspace.id, webhookConfigurationId: configuration!.id, requestedByUserId: pending.requestedByUserId, status: pending.status });

@@ -1,9 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { getFirebaseClient, isFirebaseClientConfigured } from "./firebase";
+import { getFirebaseClient, isFirebaseAppCheckConfigured, isFirebaseClientConfigured } from "./firebase";
 
 describe("Firebase client configuration", () => {
   it("stays disabled when public Firebase env is incomplete", () => {
     expect(isFirebaseClientConfigured()).toBe(false);
     expect(getFirebaseClient()).toBeNull();
+    expect(isFirebaseAppCheckConfigured()).toBe(false);
   });
 });

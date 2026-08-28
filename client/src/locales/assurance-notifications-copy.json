@@ -11,7 +11,15 @@
     "pt": "Controle de políticas · resposta a incidentes · porta de ativação",
     "fr": "Contrôle des politiques · réponse aux incidents · porte d'activation",
     "de": "Richtliniensteuerung · Vorfallreaktion · Aktivierungs-Gate",
-    "ru": "Контроль политики · реагирование на инциденты · шлюз активации"
+    "ru": "Контроль политики · реагирование на инциденты · шлюз активации",
+    "hi": "नीति नियंत्रण · घटना प्रतिक्रिया · सक्रियण गेट",
+    "vi": "Policy control · incident response · activation gate",
+    "th": "การควบคุมนโยบาย · การตอบสนองเหตุการณ์ · ประตูเปิดใช้งาน",
+    "tr": "Politika kontrolü · olay müdahalesi · etkinleştirme kapısı",
+    "pl": "Kontrola polityk · reagowanie na incydenty · bramka aktywacji",
+    "nl": "Beleidscontrole · incidentrespons · activeringspoort",
+    "it": "Controllo policy · risposta agli incidenti · gate di attivazione",
+    "sv": "Policystyrning · incidenthantering · aktiveringsspärr"
   },
   "assurance.title": {
     "en": "Assurance Control",
@@ -25,7 +33,15 @@
     "pt": "Controle de Garantia",
     "fr": "Contrôle d'Assurance",
     "de": "Sicherheitskontrolle",
-    "ru": "Контроль гарантий"
+    "ru": "Контроль гарантий",
+    "hi": "आश्वासन नियंत्रण",
+    "vi": "Assurance Control",
+    "th": "การควบคุมเพื่อความมั่นใจ",
+    "tr": "Assurance Control",
+    "pl": "Assurance Control",
+    "nl": "Assurance Control",
+    "it": "Assurance Control",
+    "sv": "Assurance-kontroll"
   },
   "assurance.description": {
     "en": "Every policy change and outbound-delivery activation follows a distinct-reviewer decision path. Incidents are workspace-scoped, timestamped, and retained in audit evidence.",
@@ -39,7 +55,15 @@
     "pt": "Cada alteração de política e ativação de entrega de saída segue um caminho de decisão por um revisor distinto. Incidentes são escopados por espaço de trabalho, com carimbo de data/hora e mantidos como evidência de auditoria.",
     "fr": "Chaque modification de politique et toute activation de livraison sortante suivent un chemin de décision avec un réviseur distinct. Les incidents sont limités au workspace, horodatés et conservés comme preuves d'audit.",
     "de": "Jede Richtlinienänderung und Aktivierung der ausgehenden Zustellung folgt einem Pfad mit einem eigenständigen Prüfer. Vorfälle sind arbeitsbereichsgebunden, zeitgestempelt und werden als Prüfungsnachweis aufbewahrt.",
-    "ru": "Каждое изменение политики и активация исходящей доставки проходят через процедуру принятия решения отдельным ревьюером. Инциденты привязаны к рабочей области, помечаются временной меткой и сохраняются в аудиторских доказательствах."
+    "ru": "Каждое изменение политики и активация исходящей доставки проходят через процедуру принятия решения отдельным ревьюером. Инциденты привязаны к рабочей области, помечаются временной меткой и сохраняются в аудиторских доказательствах.",
+    "hi": "हर नीति परिवर्तन और आउटबाउंड-डिलीवरी सक्रियण एक अलग-रिव्यूअर निर्णय मार्ग का पालन करता है। घटनाएँ Workspace-सीमित, टाइमस्टैम्प की गईं और ऑडिट साक्ष्य में संग्रहीत रहती हैं।",
+    "vi": "Mọi thay đổi chính sách và mọi kích hoạt outbound-delivery đều tuân theo một luồng quyết định bởi người xem xét riêng biệt. Các incident được gán theo workspace, có dấu thời gian và được lưu giữ làm bằng chứng kiểm toán.",
+    "th": "การเปลี่ยนแปลงนโยบายทุกครั้งและการเปิดใช้งานการส่งข้อมูลออกจะต้องผ่านเส้นทางการตัดสินใจของผู้ตรวจสอบที่แยกจากกัน เหตุการณ์ถูกจำกัดขอบเขตตาม workspace มีการประทับเวลา และถูกเก็บไว้เป็นหลักฐานการตรวจสอบ",
+    "tr": "Her politika değişikliği ve outbound-delivery etkinleştirmesi ayrı bir değerlendiricinin karar yolunu izler. Olaylar workspace kapsamındadır, zaman damgalıdır ve denetim kanıtlarında saklanır.",
+    "pl": "Każda zmiana polityki i każde uruchomienie dostawy wychodzącej przechodzi ścieżkę decyzyjną z odrębnym recenzentem. Incydenty są przypisane do workspace, opatrzone znacznikiem czasu i przechowywane jako dowody audytu.",
+    "nl": "Elke beleidswijziging en activering van outbound-levering volgt een besluitpad met een aparte beoordelaar. Incidenten zijn workspace-gebonden, krijgen een tijdstempel en worden bewaard in audit evidence.",
+    "it": "Ogni modifica di policy e ogni attivazione di consegna outbound segue un percorso decisionale con revisore distinto. Gli incidenti sono a livello di workspace, corredati di marca temporale e conservati come evidenza di audit.",
+    "sv": "Varje policyändring och aktivering av utgående leverans följer en beslutsväg med separat granskare. Incidenter är begränsade till Workspace, tidsstämplade och bevaras som revisionsbevis."
   },
   "assurance.policyVersioning": {
     "en": "Policy versioning",
@@ -53,7 +77,15 @@
     "pt": "Versionamento de políticas",
     "fr": "Versionnage des politiques",
     "de": "Richtlinien-Versionierung",
-    "ru": "Версионирование политики"
+    "ru": "Версионирование политики",
+    "hi": "नीति संस्करण प्रबंधन",
+    "vi": "Policy versioning",
+    "th": "การจัดการเวอร์ชันของนโยบาย",
+    "tr": "Politika sürümlendirmesi",
+    "pl": "Wersjonowanie polityk",
+    "nl": "Versiebeheer van beleid",
+    "it": "Versionamento delle policy",
+    "sv": "Policyversionering"
   },
   "assurance.changeControl": {
     "en": "Change control",
@@ -67,7 +99,15 @@
     "pt": "Controle de mudanças",
     "fr": "Contrôle des modifications",
     "de": "Änderungskontrolle",
-    "ru": "Контроль изменений"
+    "ru": "Контроль изменений",
+    "hi": "परिवर्तन नियंत्रण",
+    "vi": "Change control",
+    "th": "การควบคุมการเปลี่ยนแปลง",
+    "tr": "Değişiklik kontrolü",
+    "pl": "Kontrola zmian",
+    "nl": "Wijzigingsbeheer",
+    "it": "Controllo delle modifiche",
+    "sv": "Ändringskontroll"
   },
   "assurance.policyRequestDescription": {
     "en": "A request remains pending until a distinct reviewer or administrator decides it. Only an approved version replaces the active workspace policy.",
@@ -81,7 +121,15 @@
     "pt": "Um pedido permanece pendente até que um revisor distinto ou administrador o decida. Apenas uma versão aprovada substitui a política ativa do espaço de trabalho.",
     "fr": "Une demande reste en attente jusqu'à ce qu'un réviseur distinct ou un administrateur la décide. Seule une version approuvée remplace la politique active du workspace.",
     "de": "Eine Anfrage bleibt ausstehend, bis ein eigenständiger Prüfer oder Administrator entscheidet. Nur eine genehmigte Version ersetzt die aktive Richtlinie des Arbeitsbereichs.",
-    "ru": "Запрос остаётся в ожидании, пока отдельный ревьюер или администратор не примет решение. Только одобренная версия заменяет активную политику рабочей области."
+    "ru": "Запрос остаётся в ожидании, пока отдельный ревьюер или администратор не примет решение. Только одобренная версия заменяет активную политику рабочей области.",
+    "hi": "एक अनुरोध तब तक लंबित रहता है जब तक कि एक अलग-रिव्यूअर या व्यवस्थापक उसे निर्णय नहीं देता। केवल स्वीकृत संस्करण ही सक्रिय Workspace नीति की जगह लेता है।",
+    "vi": "Một yêu cầu sẽ ở trạng thái chờ cho đến khi một người xem xét riêng biệt hoặc quản trị viên ra quyết định. Chỉ phiên bản được phê duyệt mới thay thế chính sách workspace đang hoạt động.",
+    "th": "คำขอจะรอดำเนินการจนกว่าผู้ตรวจสอบที่แยกต่างหรื ผู้ดูแลระบบจะตัดสินใจ มีเพียงเวอร์ชันที่ได้รับอนุมัติเท่านั้นที่จะมาแทนที่นโยบายที่ใช้งานใน workspace",
+    "tr": "Bir istek, farklı bir değerlendirici veya yönetici karar verene kadar beklemede kalır. Yalnızca onaylanmış bir sürüm aktif workspace politikasının yerini alır.",
+    "pl": "Żądanie pozostaje w stanie oczekiwania, dopóki odrębny recenzent lub administrator go nie rozstrzygnie. Tylko zatwierdzona wersja zastąpi aktywną politykę workspace.",
+    "nl": "Een verzoek blijft in afwachting totdat een aparte beoordelaar of beheerder erover beslist. Alleen een goedgekeurde versie vervangt het actieve workspace-beleid.",
+    "it": "Una richiesta resta in sospeso finché un revisore distinto o un amministratore non prende una decisione. Solo una versione approvata sostituisce la policy attiva del workspace.",
+    "sv": "En begäran ligger kvar som väntande tills en separat granskare eller administratör fattar beslut. Endast en godkänd version ersätter den aktiva Workspace-policyn."
   },
   "assurance.selectWorkspace": {
     "en": "Select workspace",
@@ -95,7 +143,15 @@
     "pt": "Selecionar espaço de trabalho",
     "fr": "Sélectionner le workspace",
     "de": "Arbeitsbereich auswählen",
-    "ru": "Выберите рабочую область"
+    "ru": "Выберите рабочую область",
+    "hi": "Workspace चुनें",
+    "vi": "Select workspace",
+    "th": "เลือก workspace",
+    "tr": "Workspace seçin",
+    "pl": "Wybierz workspace",
+    "nl": "Selecteer workspace",
+    "it": "Seleziona workspace",
+    "sv": "Välj Workspace"
   },
   "assurance.changeSummary": {
     "en": "Change summary",
@@ -109,7 +165,15 @@
     "pt": "Resumo das alterações",
     "fr": "Résumé des modifications",
     "de": "Änderungszusammenfassung",
-    "ru": "Сводка изменений"
+    "ru": "Сводка изменений",
+    "hi": "परिवर्तन सारांश",
+    "vi": "Change summary",
+    "th": "สรุปการเปลี่ยนแปลง",
+    "tr": "Değişiklik özeti",
+    "pl": "Podsumowanie zmian",
+    "nl": "Wijzigingssamenvatting",
+    "it": "Riepilogo delle modifiche",
+    "sv": "Ändringssammanfattning"
   },
   "assurance.safeHarbor": {
     "en": "Safe-harbor text",
@@ -123,7 +187,15 @@
     "pt": "Texto de porto seguro",
     "fr": "Texte de safe-harbor",
     "de": "Safe-Harbor-Text",
-    "ru": "Текст safe-harbor"
+    "ru": "Текст safe-harbor",
+    "hi": "Safe-harbor पाठ",
+    "vi": "Safe-harbor text",
+    "th": "ข้อความ safe-harbor",
+    "tr": "Safe-harbor metni",
+    "pl": "Tekst safe-harbor",
+    "nl": "Safe-harbor-tekst",
+    "it": "Testo di safe-harbor",
+    "sv": "Safe-harbor-text"
   },
   "assurance.codeOfConduct": {
     "en": "Code of conduct",
@@ -137,7 +209,15 @@
     "pt": "Código de conduta",
     "fr": "Code de conduite",
     "de": "Verhaltenskodex",
-    "ru": "Кодекс поведения"
+    "ru": "Кодекс поведения",
+    "hi": "आचरण संहिता",
+    "vi": "Code of conduct",
+    "th": "จรรยาบรรณ",
+    "tr": "Davranış kuralları",
+    "pl": "Kodeks postępowania",
+    "nl": "Gedragscode",
+    "it": "Codice di condotta",
+    "sv": "Uppförandekod"
   },
   "assurance.allowlist": {
     "en": "Allowlist, one entry per line",
@@ -151,7 +231,15 @@
     "pt": "Lista de permissões, uma entrada por linha",
     "fr": "Liste d'autorisation, une entrée par ligne",
     "de": "Zulassungsliste, ein Eintrag pro Zeile",
-    "ru": "Белый список, по одной записи в строке"
+    "ru": "Белый список, по одной записи в строке",
+    "hi": "Allowlist, प्रति पंक्ति एक प्रविष्टि",
+    "vi": "Allowlist, one entry per line",
+    "th": "Allowlist — รายการละหนึ่งบรรทัด",
+    "tr": "Allowlist, satır başına bir giriş",
+    "pl": "Allowlist, jeden wpis w wierszu",
+    "nl": "Allowlist, één invoer per regel",
+    "it": "Allowlist, una voce per riga",
+    "sv": "Allowlist, en post per rad"
   },
   "assurance.exclusions": {
     "en": "Exclusions, one entry per line",
@@ -165,7 +253,15 @@
     "pt": "Exclusões, uma entrada por linha",
     "fr": "Exclusions, une entrée par ligne",
     "de": "Ausnahmen, ein Eintrag pro Zeile",
-    "ru": "Исключения, по одной записи в строке"
+    "ru": "Исключения, по одной записи в строке",
+    "hi": "Exclusions, प्रति पंक्ति एक प्रविष्टि",
+    "vi": "Exclusions, one entry per line",
+    "th": "Exclusions — รายการละหนึ่งบรรทัด",
+    "tr": "Hariç tutmalar, satır başına bir giriş",
+    "pl": "Wyłączenia, jeden wpis w wierszu",
+    "nl": "Uitsluitingen, één invoer per regel",
+    "it": "Esclusioni, una voce per riga",
+    "sv": "Exklusioner, en post per rad"
   },
   "assurance.requestPolicyReview": {
     "en": "Request policy review",
@@ -179,7 +275,15 @@
     "pt": "Solicitar revisão de política",
     "fr": "Demander une revue de politique",
     "de": "Richtlinienprüfung anfordern",
-    "ru": "Запросить проверку политики"
+    "ru": "Запросить проверку политики",
+    "hi": "नीति समीक्षा का अनुरोध करें",
+    "vi": "Request policy review",
+    "th": "ร้องขอการทบทวนนโยบาย",
+    "tr": "Politika incelemesi talep et",
+    "pl": "Poproś o przegląd polityki",
+    "nl": "Verzoek om beleidsbeoordeling",
+    "it": "Richiedi revisione della policy",
+    "sv": "Begär policygranskning"
   },
   "assurance.reviewNote": {
     "en": "Review note",
@@ -193,7 +297,15 @@
     "pt": "Nota de revisão",
     "fr": "Note de revue",
     "de": "Prüfvermerk",
-    "ru": "Примечание к проверке"
+    "ru": "Примечание к проверке",
+    "hi": "समीक्षा नोट",
+    "vi": "Review note",
+    "th": "หมายเหตุการทบทวน",
+    "tr": "İnceleme notu",
+    "pl": "Notatka z przeglądu",
+    "nl": "Beoordelingsnotitie",
+    "it": "Nota di revisione",
+    "sv": "Granskningsanteckning"
   },
   "assurance.incidentResponse": {
     "en": "Incident response",
@@ -207,7 +319,15 @@
     "pt": "Resposta a incidentes",
     "fr": "Réponse aux incidents",
     "de": "Vorfallreaktion",
-    "ru": "Реагирование на инциденты"
+    "ru": "Реагирование на инциденты",
+    "hi": "घटना प्रतिक्रिया",
+    "vi": "Incident response",
+    "th": "การตอบสนองต่อเหตุการณ์",
+    "tr": "Olay müdahalesi",
+    "pl": "Reagowanie na incydenty",
+    "nl": "Incidentrespons",
+    "it": "Risposta agli incidenti",
+    "sv": "Incidenthantering"
   },
   "assurance.escalationLedger": {
     "en": "Escalation ledger",
@@ -221,7 +341,15 @@
     "pt": "Registro de escalonamento",
     "fr": "Registre d'escalade",
     "de": "Eskalationsprotokoll",
-    "ru": "Реестр эскалаций"
+    "ru": "Реестр эскалаций",
+    "hi": "एस्कलेशन रजिस्टर",
+    "vi": "Escalation ledger",
+    "th": "สมุดบันทึกการยกระดับ",
+    "tr": "Yükseltme defteri",
+    "pl": "Rejestr eskalacji",
+    "nl": "Escalatie-logboek",
+    "it": "Registro delle escalation",
+    "sv": "Eskalationslogg"
   },
   "assurance.selectIncident": {
     "en": "Select incident",
@@ -235,7 +363,15 @@
     "pt": "Selecionar incidente",
     "fr": "Sélectionner un incident",
     "de": "Vorfall auswählen",
-    "ru": "Выберите инцидент"
+    "ru": "Выберите инцидент",
+    "hi": "घटना चुनें",
+    "vi": "Select incident",
+    "th": "เลือกเหตุการณ์",
+    "tr": "Olay seçin",
+    "pl": "Wybierz incydent",
+    "nl": "Selecteer incident",
+    "it": "Seleziona incidente",
+    "sv": "Välj incident"
   },
   "assurance.incidentTitle": {
     "en": "Incident title",
@@ -249,7 +385,15 @@
     "pt": "Título do incidente",
     "fr": "Titre de l'incident",
     "de": "Vorfallstitel",
-    "ru": "Название инцидента"
+    "ru": "Название инцидента",
+    "hi": "घटना शीर्षक",
+    "vi": "Incident title",
+    "th": "หัวข้อเหตุการณ์",
+    "tr": "Olay başlığı",
+    "pl": "Tytuł incydentu",
+    "nl": "Incidenttitel",
+    "it": "Titolo dell'incidente",
+    "sv": "Incidenttitel"
   },
   "assurance.incidentDescription": {
     "en": "What happened, what is contained, and what requires review?",
@@ -263,7 +407,15 @@
     "pt": "O que aconteceu, o que foi contido e o que precisa de revisão?",
     "fr": "Que s'est-il passé, ce qui est contenu et ce qui nécessite une revue ?",
     "de": "Was ist passiert, was wurde eingegrenzt und was muss geprüft werden?",
-    "ru": "Что произошло, что было локализовано и что требует проверки?"
+    "ru": "Что произошло, что было локализовано и что требует проверки?",
+    "hi": "क्या हुआ, क्या निहित है, और किसकी समीक्षा आवश्यक है?",
+    "vi": "Chuyện gì đã xảy ra, những gì đã được ngăn chặn/kiểm soát, và điều gì cần được xem xét?",
+    "th": "เกิดอะไรขึ้น มีอะไรเกี่ยวข้อง และอะไรต้องได้รับการทบทวน?",
+    "tr": "Ne oldu, neler kapsanıyor ve ne incelenmeli?",
+    "pl": "Co się wydarzyło, co zostało opanowane i co wymaga przeglądu?",
+    "nl": "Wat is er gebeurd, wat is ingedamd en wat vereist beoordeling?",
+    "it": "Cosa è successo, cosa è stato contenuto e cosa necessita di revisione?",
+    "sv": "Vad hände, vad innehåller det och vad kräver granskning?"
   },
   "assurance.severityLow": {
     "en": "Low · 24h escalation",
@@ -277,7 +429,15 @@
     "pt": "Baixa · escalonamento em 24h",
     "fr": "Faible · escalade 24h",
     "de": "Niedrig · Eskalation in 24 h",
-    "ru": "Низкая · эскалация через 24 ч"
+    "ru": "Низкая · эскалация через 24 ч",
+    "hi": "कम · 24 घंटे में एस्कलेशन",
+    "vi": "Low · 24h escalation",
+    "th": "ต่ำ · ยกระดับภายใน 24 ชม.",
+    "tr": "Düşük · 24 saat içinde yükseltme",
+    "pl": "Niskie · eskalacja 24h",
+    "nl": "Laag · escalatie binnen 24u",
+    "it": "Bassa · escalation 24h",
+    "sv": "Låg · eskalering inom 24 h"
   },
   "assurance.severityMedium": {
     "en": "Medium · 8h escalation",
@@ -291,7 +451,15 @@
     "pt": "Média · escalonamento em 8h",
     "fr": "Moyenne · escalade 8h",
     "de": "Mittel · Eskalation in 8 h",
-    "ru": "Средняя · эскалация через 8 ч"
+    "ru": "Средняя · эскалация через 8 ч",
+    "hi": "मध्यम · 8 घंटे में एस्कलेशन",
+    "vi": "Medium · 8h escalation",
+    "th": "ปานกลาง · ยกระดับภายใน 8 ชม.",
+    "tr": "Orta · 8 saat içinde yükseltme",
+    "pl": "Średnie · eskalacja 8h",
+    "nl": "Gemiddeld · escalatie binnen 8u",
+    "it": "Media · escalation 8h",
+    "sv": "Medel · eskalering inom 8 h"
   },
   "assurance.severityHigh": {
     "en": "High · 2h escalation",
@@ -305,7 +473,15 @@
     "pt": "Alta · escalonamento em 2h",
     "fr": "Élevée · escalade 2h",
     "de": "Hoch · Eskalation in 2 h",
-    "ru": "Высокая · эскалация через 2 ч"
+    "ru": "Высокая · эскалация через 2 ч",
+    "hi": "उच्च · 2 घंटे में एस्कलेशन",
+    "vi": "High · 2h escalation",
+    "th": "สูง · ยกระดับภายใน 2 ชม.",
+    "tr": "Yüksek · 2 saat içinde yükseltme",
+    "pl": "Wysokie · eskalacja 2h",
+    "nl": "Hoog · escalatie binnen 2u",
+    "it": "Alta · escalation 2h",
+    "sv": "Hög · eskalering inom 2 h"
   },
   "assurance.severityCritical": {
     "en": "Critical · 30m escalation",
@@ -319,7 +495,15 @@
     "pt": "Crítica · escalonamento em 30m",
     "fr": "Critique · escalade 30 min",
     "de": "Kritisch · Eskalation in 30 min",
-    "ru": "Критическая · эскалация через 30 мин"
+    "ru": "Критическая · эскалация через 30 мин",
+    "hi": "गंभीर · 30 मिनट में एस्कलेशन",
+    "vi": "Critical · 30m escalation",
+    "th": "วิกฤต · ยกระดับภายใน 30 นาที",
+    "tr": "Kritik · 30 dakika içinde yükseltme",
+    "pl": "Krytyczne · eskalacja 30m",
+    "nl": "Kritiek · escalatie binnen 30m",
+    "it": "Critica · escalation 30m",
+    "sv": "Kritisk · eskalering inom 30 min"
   },
   "assurance.openIncident": {
     "en": "Open incident",
@@ -333,7 +517,15 @@
     "pt": "Abrir incidente",
     "fr": "Ouvrir un incident",
     "de": "Vorfall eröffnen",
-    "ru": "Открыть инцидент"
+    "ru": "Открыть инцидент",
+    "hi": "घटना खोलें",
+    "vi": "Open incident",
+    "th": "เปิดเหตุการณ์",
+    "tr": "Olay aç",
+    "pl": "Otwórz incydent",
+    "nl": "Open incident",
+    "it": "Apri incidente",
+    "sv": "Öppna incident"
   },
   "assurance.escalationDue": {
     "en": "Escalation due",
@@ -347,7 +539,15 @@
     "pt": "Escalonamento previsto",
     "fr": "Échéance d'escalade",
     "de": "Eskalation fällig",
-    "ru": "Срок эскалации"
+    "ru": "Срок эскалации",
+    "hi": "एस्कलेशन देय",
+    "vi": "Escalation due",
+    "th": "ครบกำหนดยกระดับ",
+    "tr": "Yükseltme zamanı",
+    "pl": "Termin eskalacji",
+    "nl": "Escalatie gepland",
+    "it": "Scadenza escalation",
+    "sv": "Eskalering förfaller"
   },
   "assurance.acknowledge": {
     "en": "Acknowledge",
@@ -361,7 +561,15 @@
     "pt": "Reconhecer",
     "fr": "Accuser réception",
     "de": "Bestätigen",
-    "ru": "Подтвердить"
+    "ru": "Подтвердить",
+    "hi": "स्वीकारें",
+    "vi": "Acknowledge",
+    "th": "รับทราบ",
+    "tr": "Onayla",
+    "pl": "Potwierdź",
+    "nl": "Bevestigen",
+    "it": "Riconosci",
+    "sv": "Bekräfta"
   },
   "assurance.resolutionNote": {
     "en": "Resolution note",
@@ -375,7 +583,15 @@
     "pt": "Nota de resolução",
     "fr": "Note de résolution",
     "de": "Lösungsnotiz",
-    "ru": "Примечание о разрешении"
+    "ru": "Примечание о разрешении",
+    "hi": "समाधान नोट",
+    "vi": "Resolution note",
+    "th": "หมายเหตุการแก้ไข",
+    "tr": "Çözüm notu",
+    "pl": "Notatka o rozwiązaniu",
+    "nl": "Oplossingsnotitie",
+    "it": "Nota di risoluzione",
+    "sv": "Åtgärdsanteckning"
   },
   "assurance.reviewerEvidence": {
     "en": "Reviewer evidence",
@@ -389,7 +605,15 @@
     "pt": "Evidência do revisor",
     "fr": "Preuve du réviseur",
     "de": "Belege des Prüfers",
-    "ru": "Доказательства проверяющего"
+    "ru": "Доказательства проверяющего",
+    "hi": "समीक्षक साक्ष्य",
+    "vi": "Reviewer evidence",
+    "th": "หลักฐานของผู้ตรวจสอบ",
+    "tr": "Değerlendirici kanıtı",
+    "pl": "Dowody recenzenta",
+    "nl": "Bewijsmateriaal beoordelaar",
+    "it": "Evidenza del revisore",
+    "sv": "Granskarens bevis"
   },
   "assurance.policyDiffLedger": {
     "en": "Policy diff ledger",
@@ -403,7 +627,15 @@
     "pt": "Registro de diferenças da política",
     "fr": "Registre des différences de politique",
     "de": "Richtlinien-Differenzprotokoll",
-    "ru": "Реестр различий политики"
+    "ru": "Реестр различий политики",
+    "hi": "नीति diff रजिस्टर",
+    "vi": "Policy diff ledger",
+    "th": "สมุดบันทึกความแตกต่างของนโยบาย",
+    "tr": "Politika fark defteri",
+    "pl": "Rejestr różnic polityk",
+    "nl": "Beleidsdiff-logboek",
+    "it": "Registro delle differenze di policy",
+    "sv": "Logg över policydiffar"
   },
   "assurance.changedFields": {
     "en": "Changed fields",
@@ -417,7 +649,15 @@
     "pt": "Campos alterados",
     "fr": "Champs modifiés",
     "de": "Geänderte Felder",
-    "ru": "Изменённые поля"
+    "ru": "Изменённые поля",
+    "hi": "परिवर्तित फ़ील्ड",
+    "vi": "Changed fields",
+    "th": "ช่องข้อมูลที่เปลี่ยนแปลง",
+    "tr": "Değiştirilen alanlar",
+    "pl": "Zmienione pola",
+    "nl": "Gewijzigde velden",
+    "it": "Campi modificati",
+    "sv": "Ändrade fält"
   },
   "assurance.noParsableDiff": {
     "en": "no parsable diff",
@@ -431,7 +671,15 @@
     "pt": "nenhuma diferença analisável",
     "fr": "aucune différence analysable",
     "de": "Keine auswertbaren Differenzen",
-    "ru": "нет парсируемых различий"
+    "ru": "нет парсируемых различий",
+    "hi": "कोई पार्स करने योग्य diff नहीं",
+    "vi": "no parsable diff",
+    "th": "ไม่มี diff ที่แยกวิเคราะห์ได้",
+    "tr": "ayrıştırılabilir fark yok",
+    "pl": "brak parsowalnej różnicy",
+    "nl": "geen te parsen diff",
+    "it": "nessuna diff analizzabile",
+    "sv": "Ingen parsbar diff"
   },
   "assurance.noPolicyVersions": {
     "en": "No policy versions awaiting review.",
@@ -445,7 +693,15 @@
     "pt": "Nenhuma versão de política aguardando revisão.",
     "fr": "Aucune version de politique en attente de revue.",
     "de": "Keine Richtlinienversionen warten auf Überprüfung.",
-    "ru": "Нет версий политики, ожидающих проверки."
+    "ru": "Нет версий политики, ожидающих проверки.",
+    "hi": "कोई नीति संस्करण समीक्षा की प्रतीक्षा में नहीं है।",
+    "vi": "No policy versions awaiting review.",
+    "th": "ไม่มีเวอร์ชันนโยบายที่รอการทบทวน",
+    "tr": "İnceleme bekleyen politika sürümü yok.",
+    "pl": "Brak wersji polityk oczekujących na przegląd.",
+    "nl": "Geen beleidsversies in afwachting van beoordeling.",
+    "it": "Nessuna versione di policy in attesa di revisione.",
+    "sv": "Inga policyversioner väntar på granskning."
   },
   "assurance.incidentEvidence": {
     "en": "Incident evidence",
@@ -459,7 +715,15 @@
     "pt": "Evidência do incidente",
     "fr": "Preuves de l'incident",
     "de": "Beweismittel zum Vorfall",
-    "ru": "Доказательства по инциденту"
+    "ru": "Доказательства по инциденту",
+    "hi": "घटना साक्ष्य",
+    "vi": "Incident evidence",
+    "th": "หลักฐานเหตุการณ์",
+    "tr": "Olay kanıtı",
+    "pl": "Dowody incydentu",
+    "nl": "Incidentbewijs",
+    "it": "Evidenza dell'incidente",
+    "sv": "Bevis för incident"
   },
   "assurance.traceableLinks": {
     "en": "Traceable links",
@@ -473,7 +737,15 @@
     "pt": "Links rastreáveis",
     "fr": "Liens traçables",
     "de": "Rückverfolgbare Links",
-    "ru": "Отслеживаемые ссылки"
+    "ru": "Отслеживаемые ссылки",
+    "hi": "ट्रेस करने योग्य लिंक",
+    "vi": "Traceable links",
+    "th": "ลิงก์ที่สามารถติดตามได้",
+    "tr": "İzlenebilir bağlantılar",
+    "pl": "Śledzalne linki",
+    "nl": "Traceerbare koppelingen",
+    "it": "Link tracciabili",
+    "sv": "Spårbara länkar"
   },
   "assurance.evidenceDescription": {
     "en": "Attach an existing workspace evidence artifact by ID. The server rejects artifacts from another workspace and requires incident-response access.",
@@ -487,7 +759,15 @@
     "pt": "Anexe um artefato de evidência existente do espaço de trabalho por ID. O servidor rejeita artefatos de outro espaço de trabalho e exige acesso de resposta a incidentes.",
     "fr": "Joindre un artefact de preuve existant du workspace par ID. Le serveur rejette les artefacts provenant d'un autre workspace et exige un accès incident-response.",
     "de": "Fügen Sie ein vorhandenes Evidenzartefakt des Arbeitsbereichs per ID an. Der Server lehnt Artefakte aus anderen Arbeitsbereichen ab und erfordert Zugriff für Vorfallreaktion.",
-    "ru": "Прикрепите существующий артефакт доказательства рабочей области по ID. Сервер отклоняет артефакты из другой рабочей области и требует доступа incident-response."
+    "ru": "Прикрепите существующий артефакт доказательства рабочей области по ID. Сервер отклоняет артефакты из другой рабочей области и требует доступа incident-response.",
+    "hi": "ID द्वारा मौजूदा Workspace साक्ष्य आर्टिफैक्ट संलग्न करें। सर्वर दूसरे Workspace के आर्टिफैक्ट को अस्वीकार करता है और इसके लिए incident-response एक्सेस आवश्यक है।",
+    "vi": "Đính kèm một evidence artifact hiện có của workspace bằng ID. Server sẽ từ chối artifact từ workspace khác và yêu cầu quyền truy cập incident-response.",
+    "th": "แนบอาร์ติแฟ็กหลักฐานที่มีอยู่ใน workspace โดยระบุ ID เซิร์ฟเวอร์จะปฏิเสธอาร์ติแฟ็กจาก workspace อื่น และต้องการสิทธิ์ incident-response",
+    "tr": "Mevcut bir workspace kanıt artefaktını ID ile ekleyin. Sunucu başka bir workspace'e ait artefaktları reddeder ve incident-response erişimi gerektirir.",
+    "pl": "Dołącz istniejący artefakt dowodowy workspace, podając jego ID. Serwer odrzuca artefakty z innego workspace i wymaga uprawnień incident-response.",
+    "nl": "Voeg een bestaand workspace evidence-artifact toe via ID. De server weigert artifacts van een andere workspace en vereist incident-response-toegang.",
+    "it": "Allega un artefatto di evidenza esistente del workspace tramite ID. Il server rifiuta artefatti provenienti da un altro workspace e richiede accesso incident-response.",
+    "sv": "Bifoga ett befintligt bevisartefakt från Workspace med dess ID. Servern avvisar artefakter från annan Workspace och kräver åtkomst för incidenthantering."
   },
   "assurance.evidenceArtifactId": {
     "en": "Evidence artifact ID",
@@ -501,7 +781,15 @@
     "pt": "ID do artefato de evidência",
     "fr": "ID de l'artefact de preuve",
     "de": "Beweismittel-Artefakt-ID",
-    "ru": "ID артефакта доказательства"
+    "ru": "ID артефакта доказательства",
+    "hi": "साक्ष्य आर्टिफैक्ट ID",
+    "vi": "Evidence artifact ID",
+    "th": "ID ของอาร์ติแฟ็กหลักฐาน",
+    "tr": "Kanıt artefaktı ID",
+    "pl": "ID artefaktu dowodowego",
+    "nl": "Evidence artifact ID",
+    "it": "ID dell'artefatto di evidenza",
+    "sv": "ID för bevisartefakt"
   },
   "assurance.selectIncidentForEvidence": {
     "en": "Select an incident to inspect evidence links.",
@@ -515,7 +803,15 @@
     "pt": "Selecione um incidente para inspecionar os links de evidência.",
     "fr": "Sélectionnez un incident pour inspecter les liens de preuve.",
     "de": "Wählen Sie einen Vorfall, um Beweisverknüpfungen zu überprüfen.",
-    "ru": "Выберите инцидент для просмотра связанных доказательств."
+    "ru": "Выберите инцидент для просмотра связанных доказательств.",
+    "hi": "साक्ष्य लिंक का निरीक्षण करने के लिए किसी घटना का चयन करें।",
+    "vi": "Select an incident to inspect evidence links.",
+    "th": "เลือกเหตุการณ์เพื่อตรวจสอบลิงก์หลักฐาน",
+    "tr": "Kanıt bağlantılarını incelemek için bir olay seçin.",
+    "pl": "Wybierz incydent, aby sprawdzić powiązania dowodów.",
+    "nl": "Selecteer een incident om bewijslinks te bekijken.",
+    "it": "Seleziona un incidente per ispezionare i link delle evidenze.",
+    "sv": "Välj en incident för att granska bevislänkar."
   },
   "assurance.outboundGate": {
     "en": "Outbound delivery gate",
@@ -529,7 +825,15 @@
     "pt": "Porta de entrega de saída",
     "fr": "Porte de livraison sortante",
     "de": "Gate für ausgehende Zustellung",
-    "ru": "Шлюз исходящей доставки"
+    "ru": "Шлюз исходящей доставки",
+    "hi": "आउटबाउंड डिलीवरी गेट",
+    "vi": "Outbound delivery gate",
+    "th": "จุดควบคุมการส่งข้อมูลออก",
+    "tr": "Giden teslimat kapısı",
+    "pl": "Bramka dostawy wychodzącej",
+    "nl": "Poort voor outbound-levering",
+    "it": "Gate di consegna outbound",
+    "sv": "Spärr för utgående leverans"
   },
   "assurance.webhookReviews": {
     "en": "Webhook activation reviews",
@@ -543,7 +847,15 @@
     "pt": "Revisões de ativação de webhook",
     "fr": "Relectures d'activation de webhook",
     "de": "Webhook-Aktivierungsprüfungen",
-    "ru": "Проверки активации webhook"
+    "ru": "Проверки активации webhook",
+    "hi": "webhook सक्रियण समीक्षाएँ",
+    "vi": "Webhook activation reviews",
+    "th": "การทบทวนการเปิดใช้งาน webhook",
+    "tr": "Webhook etkinleştirme incelemeleri",
+    "pl": "Przeglądy aktywacji webhooków",
+    "nl": "Beoordelingen van webhook-activeringen",
+    "it": "Revisioni di attivazione webhook",
+    "sv": "Granskningar av webhook-aktiveringar"
   },
   "assurance.webhookDescription": {
     "en": "A workspace owner must first save a confirmed HTTPS draft with a secret reference in Operations Console. A separate reviewer can approve or reject the readiness request, but this release still performs no outbound network delivery.",
@@ -557,7 +869,15 @@
     "pt": "O proprietário do espaço de trabalho deve primeiro salvar um rascunho HTTPS confirmado com uma referência a um segredo no Operations Console. Um revisor distinto pode aprovar ou rejeitar o pedido de prontidão, mas esta liberação ainda não realiza nenhuma entrega de rede de saída.",
     "fr": "Le propriétaire du workspace doit d'abord enregistrer un brouillon HTTPS confirmé avec une référence de secret dans Operations Console. Un réviseur distinct peut approuver ou rejeter la demande de préparation, mais cette publication n'effectue toujours aucune livraison réseau sortante.",
     "de": "Der Arbeitsbereichsinhaber muss zunächst einen bestätigten HTTPS-Entwurf mit einer Secret-Referenz in der Operations Console speichern. Ein separater Prüfer kann die Readiness-Anfrage genehmigen oder ablehnen, aber diese Freigabe führt weiterhin zu keiner ausgehenden Netzwerkübertragung.",
-    "ru": "Владелец рабочей области должен сначала сохранить подтверждённый черновик HTTPS со ссылкой на секрет в Operations Console. Отдельный ревьюер может одобрить или отклонить запрос на готовность, однако при этом выпуск по-прежнему не выполняет исходящей сетевой доставки."
+    "ru": "Владелец рабочей области должен сначала сохранить подтверждённый черновик HTTPS со ссылкой на секрет в Operations Console. Отдельный ревьюер может одобрить или отклонить запрос на готовность, однако при этом выпуск по-прежнему не выполняет исходящей сетевой доставки.",
+    "hi": "एक Workspace मालिक को पहले Operations Console में secret reference के साथ एक पुष्टि की गई HTTPS ड्राफ्ट सहेजना होगा। एक अलग समीक्षक readiness अनुरोध को स्वीकृत या अस्वीकृत कर सकता है, लेकिन यह रिलीज़ अभी भी कोई आउटबाउंड नेटवर्क डिलीवरी नहीं करती।",
+    "vi": "A workspace owner must first save a confirmed HTTPS draft with a secret reference in Operations Console. A separate reviewer can approve or reject the readiness request, but this release still performs no outbound network delivery.",
+    "th": "เจ้าของ workspace ต้องบันทึกฉบับร่าง HTTPS ที่ยืนยันแล้วพร้อมการอ้างอิงความลับใน Operations Console ก่อน ผู้ตรวจสอบแยกต่างหากสามารถอนุมัติหรือปฏิเสธคำขอความพร้อมได้ แต่การเผยแพร่นี้ยังคงไม่ดำเนินการส่งข้อมูลออกไปยังเครือข่ายภายนอก",
+    "tr": "Workspace sahibi önce Operations Console'da gizli bir referans içeren onaylı bir HTTPS taslağını kaydetmelidir. Ayrı bir değerlendirici hazır olma talebini onaylayabilir veya reddedebilir; ancak bu yayımlama yine de dışa yönelik ağ teslimatı gerçekleştirmez.",
+    "pl": "Właściciel workspace musi najpierw zapisać potwierdzony szkic HTTPS z referencją do sekretu w Operations Console. Oddzielny recenzent może zatwierdzić lub odrzucić żądanie gotowości, jednak to wydanie nadal nie wykonuje żadnej zewnętrznej dostawy sieciowej.",
+    "nl": "Een workspace-eigenaar moet eerst een bevestigde HTTPS-conceptversie met een verwijzing naar een secret opslaan in Operations Console. Een aparte beoordelaar kan het gereedheidsverzoek goedkeuren of afwijzen, maar bij deze vrijgave wordt nog steeds geen outbound netwerklevering uitgevoerd.",
+    "it": "Il proprietario del workspace deve prima salvare una bozza HTTPS confermata con un riferimento a un secret in Operations Console. Un revisore distinto può approvare o rifiutare la richiesta di readiness, ma questa release non esegue comunque alcuna consegna di rete in uscita.",
+    "sv": "En Workspace-ägare måste först spara ett bekräftat HTTPS-utkast med en referens till en hemlighet i Operations Console. En separat granskare kan godkänna eller avslå beredskapsförfrågan, men denna publicering utför fortfarande ingen utgående nätverksleverans."
   },
   "assurance.workspace": {
     "en": "Workspace",
@@ -571,7 +891,15 @@
     "pt": "Espaço de trabalho",
     "fr": "Workspace",
     "de": "Arbeitsbereich",
-    "ru": "Рабочая область"
+    "ru": "Рабочая область",
+    "hi": "Workspace",
+    "vi": "Workspace",
+    "th": "Workspace",
+    "tr": "Workspace",
+    "pl": "Workspace",
+    "nl": "Workspace",
+    "it": "Workspace",
+    "sv": "Workspace"
   },
   "assurance.reviewerDecisionNote": {
     "en": "Reviewer decision note",
@@ -585,7 +913,15 @@
     "pt": "Nota de decisão do revisor",
     "fr": "Note de décision du réviseur",
     "de": "Entscheidungsnotiz des Prüfers",
-    "ru": "Примечание о решении ревьюера"
+    "ru": "Примечание о решении ревьюера",
+    "hi": "समीक्षक निर्णय नोट",
+    "vi": "Reviewer decision note",
+    "th": "บันทึกการตัดสินใจของผู้ตรวจสอบ",
+    "tr": "Değerlendirici karar notu",
+    "pl": "Notatka o decyzji recenzenta",
+    "nl": "Notitie beoordelaarbeslissing",
+    "it": "Nota decisionale del revisore",
+    "sv": "Anteckning om granskarens beslut"
   },
   "assurance.noWebhookRequest": {
     "en": "No webhook activation request.",
@@ -599,7 +935,15 @@
     "pt": "Nenhum pedido de ativação de webhook.",
     "fr": "Aucune demande d'activation de webhook.",
     "de": "Keine Anfrage zur Webhook-Aktivierung.",
-    "ru": "Нет запросов на активацию webhook."
+    "ru": "Нет запросов на активацию webhook.",
+    "hi": "कोई webhook सक्रियण अनुरोध नहीं।",
+    "vi": "No webhook activation request.",
+    "th": "ไม่มีคำขอการเปิดใช้งาน webhook.",
+    "tr": "Webhook etkinleştirme isteği yok.",
+    "pl": "Brak żądań aktywacji webhooka.",
+    "nl": "Geen webhook-activeringsverzoek.",
+    "it": "Nessuna richiesta di attivazione webhook.",
+    "sv": "Ingen begäran om webhook-aktivering."
   },
   "notifications.eyebrow": {
     "en": "Custom alerts · in-app delivery",
@@ -613,7 +957,15 @@
     "pt": "Alertas personalizados · entrega no aplicativo",
     "fr": "Alertes personnalisées · livraison dans l'application",
     "de": "Benutzerdefinierte Warnungen · In-App-Zustellung",
-    "ru": "Пользовательские оповещения · доставка в приложении"
+    "ru": "Пользовательские оповещения · доставка в приложении",
+    "hi": "कस्टम अलर्ट · इन-ऐप डिलीवरी",
+    "vi": "Custom alerts · in-app delivery",
+    "th": "การแจ้งเตือนแบบกำหนดเอง · ส่งในแอป",
+    "tr": "Özel uyarılar · uygulama içi teslimat",
+    "pl": "Niestandardowe alerty · dostarczanie w aplikacji",
+    "nl": "Aangepaste waarschuwingen · in-app levering",
+    "it": "Avvisi personalizzati · consegna in-app",
+    "sv": "Anpassade varningar · leverans i appen"
   },
   "notifications.title": {
     "en": "Signal Center",
@@ -627,7 +979,15 @@
     "pt": "Central de Sinais",
     "fr": "Centre de signaux",
     "de": "Signalzentrale",
-    "ru": "Signal Center"
+    "ru": "Signal Center",
+    "hi": "Signal Center",
+    "vi": "Signal Center",
+    "th": "Signal Center",
+    "tr": "Signal Center",
+    "pl": "Signal Center",
+    "nl": "Signal Center",
+    "it": "Signal Center",
+    "sv": "Signal Center"
   },
   "notifications.description": {
     "en": "Persistent, user-scoped alerts for governance and safety events. No external recipient or webhook is activated from this screen.",
@@ -641,7 +1001,15 @@
     "pt": "Alertas persistentes, com escopo por usuário, para eventos de governança e segurança. Nenhum destinatário externo ou webhook é ativado a partir desta tela.",
     "fr": "Alertes persistantes, à l'échelle de l'utilisateur, pour les événements de gouvernance et de sécurité. Aucun destinataire externe ni webhook n'est activé depuis cet écran.",
     "de": "Persistente, benutzerspezifische Warnungen für Governance- und Sicherheitsereignisse. Von diesem Bildschirm wird kein externer Empfänger oder Webhook aktiviert.",
-    "ru": "Постоянные уведомления, привязанные к пользователю, о событиях управления и безопасности. С этого экрана не активируется ни внешний получатель, ни webhook."
+    "ru": "Постоянные уведомления, привязанные к пользователю, о событиях управления и безопасности. С этого экрана не активируется ни внешний получатель, ни webhook.",
+    "hi": "शासन और सुरक्षा घटनाओं के लिए स्थायी, उपयोगकर्ता-सीमित अलर्ट। इस स्क्रीन से कोई बाहरी प्राप्तकर्ता या webhook सक्रिय नहीं किया जाता।",
+    "vi": "Các cảnh báo tồn tại theo người dùng, phục vụ cho các sự kiện quản trị và an toàn. Không có người nhận bên ngoài hoặc webhook nào được kích hoạt từ màn hình này.",
+    "th": "การแจ้งเตือนถาวรที่จำกัดตามผู้ใช้ สำหรับเหตุการณ์ด้านการกำกับดูแลและความปลอดภัย ไม่มีผู้รับภายนอกหรือ webhook ใดถูกเปิดใช้งานจากหน้าจอนี้",
+    "tr": "Yönetişim ve güvenlik olayları için kalıcı, kullanıcıya özel uyarılar. Bu ekrandan hiçbir dış alıcı veya webhook etkinleştirilmez.",
+    "pl": "Trwałe alerty przypisane do użytkownika dotyczące zdarzeń związanych z zarządzaniem i bezpieczeństwem. Z tego ekranu nie aktywuje się żaden zewnętrzny odbiorca ani webhook.",
+    "nl": "Persistente, gebruikersgebonden waarschuwingen voor governance- en veiligheidsgebeurtenissen. Vanaf dit scherm wordt geen externe ontvanger of webhook geactiveerd.",
+    "it": "Avvisi persistenti a livello utente per eventi di governance e sicurezza. Nessun destinatario esterno o webhook viene attivato da questa schermata.",
+    "sv": "Beständiga, användarspecifika varningar för styrnings- och säkerhetshändelser. Ingen extern mottagare eller webhook aktiveras från denna vy."
   },
   "notifications.markAllRead": {
     "en": "Mark all read",
@@ -655,7 +1023,15 @@
     "pt": "Marcar tudo como lido",
     "fr": "Tout marquer comme lu",
     "de": "Alle als gelesen markieren",
-    "ru": "Отметить всё как прочитанное"
+    "ru": "Отметить всё как прочитанное",
+    "hi": "सभी को पढ़ा हुआ चिह्नित करें",
+    "vi": "Mark all read",
+    "th": "ทำเครื่องหมายทั้งหมดว่าอ่านแล้ว",
+    "tr": "Hepsini okundu olarak işaretle",
+    "pl": "Oznacz wszystkie jako przeczytane",
+    "nl": "Alles als gelezen markeren",
+    "it": "Segna tutto come letto",
+    "sv": "Markera alla som lästa"
   },
   "notifications.deliveryLedger": {
     "en": "Delivery ledger",
@@ -669,7 +1045,15 @@
     "pt": "Registro de entrega",
     "fr": "Registre des livraisons",
     "de": "Zustellungsprotokoll",
-    "ru": "Реестр доставок"
+    "ru": "Реестр доставок",
+    "hi": "डिलीवरी रजिस्टर",
+    "vi": "Delivery ledger",
+    "th": "บันทึกการจัดส่ง",
+    "tr": "Teslim defteri",
+    "pl": "Rejestr dostaw",
+    "nl": "Leveringslogboek",
+    "it": "Registro delle consegne",
+    "sv": "Leveranslogg"
   },
   "notifications.unreadSignal": {
     "en": "unread signal",
@@ -683,7 +1067,15 @@
     "pt": "sinal não lido",
     "fr": "signal non lu",
     "de": "ungelesenes Signal",
-    "ru": "непрочитанный сигнал"
+    "ru": "непрочитанный сигнал",
+    "hi": "अपठित संकेत",
+    "vi": "unread signal",
+    "th": "สัญญาณที่ยังไม่อ่าน",
+    "tr": "okunmamış sinyal",
+    "pl": "nieprzeczytany sygnał",
+    "nl": "ongelezen signaal",
+    "it": "segnale non letto",
+    "sv": "oläst signal"
   },
   "notifications.unreadSignals": {
     "en": "unread signals",
@@ -697,7 +1089,15 @@
     "pt": "sinais não lidos",
     "fr": "signaux non lus",
     "de": "ungelesene Signale",
-    "ru": "непрочитанные сигналы"
+    "ru": "непрочитанные сигналы",
+    "hi": "अपठित संकेत",
+    "vi": "unread signals",
+    "th": "สัญญาณที่ยังไม่อ่าน",
+    "tr": "okunmamış sinyaller",
+    "pl": "nieprzeczytane sygnały",
+    "nl": "ongelezen signalen",
+    "it": "segnali non letti",
+    "sv": "olästa signaler"
   },
   "notifications.selectToAcknowledge": {
     "en": "Select to acknowledge",
@@ -711,7 +1111,15 @@
     "pt": "Selecionar para reconhecer",
     "fr": "Sélectionner pour accuser réception",
     "de": "Zum Bestätigen auswählen",
-    "ru": "Выберите для подтверждения"
+    "ru": "Выберите для подтверждения",
+    "hi": "स्वीकृति के लिए चयन करें",
+    "vi": "Select to acknowledge",
+    "th": "เลือกเพื่อรับทราบ",
+    "tr": "Kabul etmek için seçin",
+    "pl": "Wybierz do potwierdzenia",
+    "nl": "Selecteer om te bevestigen",
+    "it": "Seleziona per riconoscere",
+    "sv": "Välj för att bekräfta"
   },
   "notifications.noRecords": {
     "en": "No notification records",
@@ -725,7 +1133,15 @@
     "pt": "Nenhum registro de notificação",
     "fr": "Aucun enregistrement de notification",
     "de": "Keine Benachrichtigungsaufzeichnungen",
-    "ru": "Нет записей уведомлений"
+    "ru": "Нет записей уведомлений",
+    "hi": "कोई सूचना रिकॉर्ड नहीं",
+    "vi": "No notification records",
+    "th": "ไม่มีบันทึกการแจ้งเตือน",
+    "tr": "Bildirim kaydı yok",
+    "pl": "Brak zapisów powiadomień",
+    "nl": "Geen meldingsrecords",
+    "it": "Nessun record di notifica",
+    "sv": "Inga aviseringar"
   },
   "notifications.noRecordsDescription": {
     "en": "Alerts appear only after a governed event occurs; no synthetic activity has been added.",
@@ -739,7 +1155,15 @@
     "pt": "Alertas aparecem somente após a ocorrência de um evento governado; nenhuma atividade sintética foi adicionada.",
     "fr": "Les alertes n'apparaissent qu'après la survenue d'un événement gouverné ; aucune activité synthétique n'a été ajoutée.",
     "de": "Warnungen erscheinen erst, nachdem ein Governance-Ereignis eingetreten ist; es wurden keine synthetischen Aktivitäten hinzugefügt.",
-    "ru": "Оповещения появляются только после наступления управляемого события; синтетическая активность не добавлялась."
+    "ru": "Оповещения появляются только после наступления управляемого события; синтетическая активность не добавлялась.",
+    "hi": "अलर्ट केवल तब दिखाई देते हैं जब कोई नियंत्रित घटना होती है; कोई कृत्रिम गतिविधि जोड़ी नहीं गई है।",
+    "vi": "Cảnh báo chỉ xuất hiện sau khi một sự kiện chịu quản lý xảy ra; không có hoạt động giả lập nào được thêm.",
+    "th": "การแจ้งเตือนจะปรากฏเฉพาะเมื่อเกิดเหตุการณ์ที่อยู่ในการกำกับเท่านั้น; ยังไม่มีการเพิ่มกิจกรรมจำลองใดๆ",
+    "tr": "Uyarılar yalnızca yönetilen bir olay gerçekleştiğinde görünür; sentetik herhangi bir etkinlik eklenmemiştir.",
+    "pl": "Alerty pojawiają się tylko po wystąpieniu zdarzenia podlegającego nadzorowi; nie dodano żadnej syntetycznej aktywności.",
+    "nl": "Meldingen verschijnen alleen nadat een gereguleerd evenement heeft plaatsgevonden; er is geen synthetische activiteit toegevoegd.",
+    "it": "Gli avvisi appaiono solo dopo che si verifica un evento governato; non è stata aggiunta alcuna attività sintetica.",
+    "sv": "Varningar visas endast efter att en styrd händelse inträffat; ingen syntetisk aktivitet har lagts till."
   },
   "notifications.eventPreferences": {
     "en": "Event preferences",
@@ -753,7 +1177,15 @@
     "pt": "Preferências de evento",
     "fr": "Préférences d'événements",
     "de": "Ereigniseinstellungen",
-    "ru": "Настройки событий"
+    "ru": "Настройки событий",
+    "hi": "घटना प्राथमिकताएँ",
+    "vi": "Event preferences",
+    "th": "การตั้งค่าเหตุการณ์",
+    "tr": "Olay tercihleri",
+    "pl": "Preferencje zdarzeń",
+    "nl": "Gebeurtenisvoorkeuren",
+    "it": "Preferenze eventi",
+    "sv": "Händelseinställningar"
   },
   "notifications.alertMatrix": {
     "en": "Alert matrix",
@@ -767,7 +1199,15 @@
     "pt": "Matriz de alertas",
     "fr": "Matrice d'alertes",
     "de": "Warnmatrix",
-    "ru": "Матрица оповещений"
+    "ru": "Матрица оповещений",
+    "hi": "अलर्ट मैट्रिक्स",
+    "vi": "Alert matrix",
+    "th": "เมทริกซ์การแจ้งเตือน",
+    "tr": "Uyarı matrisi",
+    "pl": "Macierz alertów",
+    "nl": "Waarschuwingsmatrix",
+    "it": "Matrice degli avvisi",
+    "sv": "Varningsmatris"
   },
   "notifications.preferencesDescription": {
     "en": "In-app delivery is enabled by default. Disabling an event suppresses its inbox alert and records the result in its workspace audit trail.",
@@ -781,7 +1221,15 @@
     "pt": "A entrega no aplicativo está ativada por padrão. Desativar um evento suprime seu alerta na caixa de entrada e registra o resultado na trilha de auditoria do espaço de trabalho.",
     "fr": "La livraison dans l'application est activée par défaut. Désactiver un événement supprime son alerte de la boîte de réception et enregistre le résultat dans la piste d'audit du workspace.",
     "de": "Die In-App-Zustellung ist standardmäßig aktiviert. Wenn ein Ereignis deaktiviert wird, wird seine Posteingangs-Warnung unterdrückt und das Ergebnis im Prüfpfad des Arbeitsbereichs protokolliert.",
-    "ru": "Доставка в приложении включена по умолчанию. Отключение события подавляет уведомление во входящих и фиксирует результат в аудите рабочей области."
+    "ru": "Доставка в приложении включена по умолчанию. Отключение события подавляет уведомление во входящих и фиксирует результат в аудите рабочей области.",
+    "hi": "डिफॉल्ट रूप से इन-ऐप डिलीवरी सक्षम है। किसी इवेंट को अक्षम करने से उसकी इनबॉक्स अलर्ट दबती है और परिणाम उसकी Workspace ऑडिट ट्रेल में दर्ज होता है।",
+    "vi": "Giao nhận trong ứng dụng được bật theo mặc định. Tắt một sự kiện sẽ chặn cảnh báo vào hộp thư đến và ghi kết quả vào nhật ký kiểm toán của workspace.",
+    "th": "การส่งในแอปถูกเปิดใช้งานโดยค่าเริ่มต้น การปิดการใช้งานเหตุการณ์จะยกเลิกการแจ้งเตือนในกล่องข้อความและบันทึกผลลัพธ์ลงในเส้นทางการตรวจสอบของ workspace",
+    "tr": "Uygulama içi teslimat varsayılan olarak etkinleştirilir. Bir olayı devre dışı bırakmak gelen kutusu uyarısını bastırır ve sonucu workspace denetim izine kaydeder.",
+    "pl": "Dostarczanie w aplikacji jest domyślnie włączone. Wyłączenie zdarzenia powoduje stłumienie jego alertu w skrzynce odbiorczej i zapisanie wyniku w ścieżce audytu workspace.",
+    "nl": "In-app levering is standaard ingeschakeld. Het uitschakelen van een gebeurtenis onderdrukt de inboxwaarschuwing en registreert het resultaat in de workspace-audittrail.",
+    "it": "La consegna in-app è abilitata di default. Disabilitare un evento sopprime il suo avviso nella inbox e registra il risultato nella traccia di audit del workspace.",
+    "sv": "Leverans i appen är aktiverad som standard. Att inaktivera en händelse undertrycker dess inkorgsvarning och registrerar resultatet i dess Workspace-revisionslogg."
   },
   "notifications.externalBoundary": {
     "en": "External delivery boundary",
@@ -795,7 +1243,15 @@
     "pt": "Limite de entrega externa",
     "fr": "Limite de livraison externe",
     "de": "Grenze für externe Zustellung",
-    "ru": "Граница внешней доставки"
+    "ru": "Граница внешней доставки",
+    "hi": "बाहरी डिलीवरी सीमा",
+    "vi": "External delivery boundary",
+    "th": "ขอบเขตการส่งภายนอก",
+    "tr": "Harici teslimat sınırı",
+    "pl": "Granica dostaw zewnętrznych",
+    "nl": "Grens voor externe levering",
+    "it": "Confine di consegna esterna",
+    "sv": "Gräns för extern leverans"
   },
   "notifications.externalBoundaryDescription": {
     "en": "Webhook, email, and chat integrations are intentionally unconfigured. Enabling one requires a recipient endpoint and credential managed as a secret, plus a delivery retry and signing policy.",
@@ -809,7 +1265,15 @@
     "pt": "As integrações de webhook, e-mail e chat estão intencionalmente não configuradas. Habilitar uma requer um endpoint destinatário e uma credencial gerenciada como segredo, além de uma política de tentativas de reenvio e de assinatura.",
     "fr": "Les intégrations webhook, e-mail et chat sont intentionnellement non configurées. L'activation en nécessite un point de terminaison destinataire et des identifiants gérés comme secret, ainsi qu'une stratégie de nouvelle tentative de livraison et de signature.",
     "de": "Webhook-, E-Mail- und Chat-Integrationen sind bewusst nicht konfiguriert. Das Aktivieren einer Integration erfordert einen Empfängerendpunkt und Zugangsdaten, die als Secret verwaltet werden, sowie eine Zustellungs-Wiederholungs- und Signierungsrichtlinie.",
-    "ru": "Интеграции webhook, электронной почты и чата намеренно не настроены. Включение одной требует конечной точки получателя и учётных данных, управляемых как секрет, а также политики повторной отправки и подписи."
+    "ru": "Интеграции webhook, электронной почты и чата намеренно не настроены. Включение одной требует конечной точки получателя и учётных данных, управляемых как секрет, а также политики повторной отправки и подписи.",
+    "hi": "Webhook, ईमेल और चैट इंटीग्रेशन जानबूझकर अनकन्फ़िगर हैं। इनमें से किसी एक को सक्षम करने के लिए एक प्राप्तकर्ता endpoint और secret के रूप में प्रबंधित credential की आवश्यकता होती है, साथ ही डिलीवरी retry और साइनिंग नीति।",
+    "vi": "Các tích hợp webhook, email và chat được cố ý chưa cấu hình. Việc bật một tích hợp yêu cầu một endpoint người nhận và thông tin xác thực được quản lý như bí mật, cùng với chính sách thử lại gửi và chính sách ký.",
+    "th": "การผสานรวม webhook, อีเมล และแชท ถูกตั้งค่าให้ไม่กำหนดค่าโดยเจตนา การเปิดใช้งานใดๆ จะต้องมี endpoint ผู้รับและข้อมูลรับรองที่จัดการเป็นความลับ รวมถึงนโยบายการลองส่งซ้ำและการลงนาม",
+    "tr": "Webhook, email ve chat entegrasyonları kasten yapılandırılmamıştır. Birini etkinleştirmek alıcı uç noktası ve gizli olarak yönetilen kimlik bilgisi ile birlikte teslim denemesi ve imzalama politikası gerektirir.",
+    "pl": "Integracje webhook, e-mail i czat są celowo nie skonfigurowane. Włączenie którejkolwiek wymaga punktu końcowego odbiorcy i poświadczenia zarządzanego jako sekret, a także polityki ponawiania dostarczeń i podpisywania.",
+    "nl": "Webhook-, e-mail- en chatintegraties zijn opzettelijk niet geconfigureerd. Het inschakelen van één vereist een ontvanger-endpoint en referentie die als secret wordt beheerd, plus een retry- en ondertekeningsbeleid voor levering.",
+    "it": "Le integrazioni webhook, email e chat sono intenzionalmente non configurate. Abilitare una richiede un endpoint destinatario e una credenziale gestita come secret, oltre a una policy di retry per la consegna e di firma.",
+    "sv": "Webhook-, e-post- och chattintegrationer är avsiktligt okonfigurerade. Att aktivera någon kräver en mottagarendpoint och autentiseringsuppgifter som hanteras som en hemlighet, samt en policy för leveransförsök och signering."
   },
   "notifications.approvalRequired": {
     "en": "Tier 3 approval",
@@ -823,7 +1287,15 @@
     "pt": "Aprovação de Nível 3",
     "fr": "Approbation de niveau 3",
     "de": "Genehmigung Stufe 3",
-    "ru": "Одобрение Tier 3"
+    "ru": "Одобрение Tier 3",
+    "hi": "Tier 3 अनुमोदन",
+    "vi": "Tier 3 approval",
+    "th": "Tier 3 approval",
+    "tr": "Tier 3 approval",
+    "pl": "Zatwierdzenie Tier 3",
+    "nl": "Tier 3 goedkeuring",
+    "it": "Approvazione Tier 3",
+    "sv": "Tier 3-godkännande"
   },
   "notifications.approvalRequiredDetail": {
     "en": "When a Tier 3 action is queued and blocked until human review.",
@@ -837,7 +1309,15 @@
     "pt": "Quando uma ação de Nível 3 é enfileirada e bloqueada até revisão humana.",
     "fr": "Lorsqu'une action de niveau 3 est mise en file et bloquée en attente d'une revue humaine.",
     "de": "Wenn eine Stufe‑3-Aktion in Wartestellung ist und bis zur menschlichen Prüfung blockiert bleibt.",
-    "ru": "Когда действие Tier 3 поставлено в очередь и заблокировано до ручной проверки."
+    "ru": "Когда действие Tier 3 поставлено в очередь и заблокировано до ручной проверки.",
+    "hi": "जब Tier 3 कार्रवाई कतारबद्ध हो जाती है और मानव समीक्षा तक अवरुद्ध रहती है।",
+    "vi": "Khi một hành động Tier 3 được đưa vào hàng đợi và bị chặn cho đến khi có xem xét bởi con người.",
+    "th": "เมื่อการดำเนินการระดับ Tier 3 ถูกต่อคิวและถูกบล็อกจนกว่าจะได้รับการทบทวนโดยมนุษย์",
+    "tr": "Bir Tier 3 eylemi kuyruğa alındığında ve insan incelemesi yapılana kadar engellendiğinde.",
+    "pl": "Gdy działanie Tier 3 jest w kolejce i zablokowane do czasu przeglądu przez człowieka.",
+    "nl": "Wanneer een Tier 3-actie in de wachtrij staat en wordt geblokkeerd totdat een menselijke beoordeling plaatsvindt.",
+    "it": "Quando un'azione Tier 3 è messa in coda e bloccata in attesa di revisione umana.",
+    "sv": "När en Tier 3-åtgärd är köad och blockerad tills mänsklig granskning sker."
   },
   "notifications.guardrailBlocked": {
     "en": "Guardrail block",
@@ -851,7 +1331,15 @@
     "pt": "Bloqueio por guardrail",
     "fr": "Blocage par garde-fou",
     "de": "Guardrail-Blockade",
-    "ru": "Блокировка защитного барьера"
+    "ru": "Блокировка защитного барьера",
+    "hi": "Guardrail अवरोध",
+    "vi": "Guardrail block",
+    "th": "การบล็อกโดย guardrail",
+    "tr": "Koruma engeli",
+    "pl": "Blokada zabezpieczeń",
+    "nl": "Guardrail-blokkade",
+    "it": "Blocco guardrail",
+    "sv": "Guardrail-blockering"
   },
   "notifications.guardrailBlockedDetail": {
     "en": "When scope, conduct, budget, cooldown, or session guards stop an action.",
@@ -865,7 +1353,15 @@
     "pt": "Quando salvaguardas de escopo, conduta, orçamento, período de espera ou sessão impedem uma ação.",
     "fr": "Lorsque des garde-fous de périmètre, de conduite, de budget, de période de latence ou de session arrêtent une action.",
     "de": "Wenn Schutzmechanismen für Umfang, Verhalten, Budget, Abkühlzeit oder Sitzung eine Aktion stoppen.",
-    "ru": "Когда ограничения по области, поведению, бюджету, периоду ожидания или сессии останавливают действие."
+    "ru": "Когда ограничения по области, поведению, бюджету, периоду ожидания или сессии останавливают действие.",
+    "hi": "जब स्कोप, आचरण, बजट, कूलडाउन, या सत्र सुरक्षा किसी कार्रवाई को रोकते हैं।",
+    "vi": "Khi các cơ chế bảo vệ về phạm vi, hành vi, ngân sách, thời gian chờ, hoặc phiên ngăn chặn một hành động.",
+    "th": "เมื่อการควบคุมด้านขอบเขต พฤติกรรม งบประมาณ การหน่วงเวลา หรือเซสชัน หยุดการดำเนินการ",
+    "tr": "Kapsam, davranış, bütçe, bekleme süresi (cooldown) veya oturum korumaları bir eylemi durdurduğunda.",
+    "pl": "Gdy zabezpieczenia dotyczące zakresu, postępowania, budżetu, okresu odczekania lub sesji zatrzymują działanie.",
+    "nl": "Wanneer guards voor scope, gedrag, budget, cooldown of sessie een actie stoppen.",
+    "it": "Quando guardie relative a ambito, condotta, budget, cooldown o sessione fermano un'azione.",
+    "sv": "När skydd för omfattning, uppförande, budget, nedkylningsperiod eller session stoppar en åtgärd."
   },
   "notifications.findingValidated": {
     "en": "Validated finding",
@@ -879,7 +1375,15 @@
     "pt": "Achado validado",
     "fr": "Constat validé",
     "de": "Validierter Befund",
-    "ru": "Проверенная находка"
+    "ru": "Проверенная находка",
+    "hi": "सत्यापित निष्कर्ष",
+    "vi": "Validated finding",
+    "th": "ผลการค้นพบที่ได้รับการยืนยัน",
+    "tr": "Doğrulanmış bulgu",
+    "pl": "Zatwierdzone ustalenie",
+    "nl": "Geverifieerde bevinding",
+    "it": "Finding convalidato",
+    "sv": "Validerat fynd"
   },
   "notifications.findingValidatedDetail": {
     "en": "When a candidate reaches validation and awaits human review.",
@@ -893,7 +1397,15 @@
     "pt": "Quando um candidato atinge validação e aguarda revisão humana.",
     "fr": "Lorsqu'un candidat atteint la validation et attend une revue humaine.",
     "de": "Wenn ein Kandidat die Validierung erreicht und auf die menschliche Überprüfung wartet.",
-    "ru": "Когда кандидат проходит валидацию и ожидает ручной проверки."
+    "ru": "Когда кандидат проходит валидацию и ожидает ручной проверки.",
+    "hi": "जब एक उम्मीदवार सत्यापन तक पहुँचता है और मानव समीक्षा की प्रतीक्षा करता है।",
+    "vi": "Khi một phát hiện đạt đến bước xác thực và đang chờ xem xét bởi con người.",
+    "th": "เมื่อรายการผู้เข้ารับการตรวจสอบผ่านการยืนยันและรอการทบทวนโดยมนุษย์",
+    "tr": "Bir aday doğrulamaya ulaştığında ve insan incelemesini beklediğinde.",
+    "pl": "Gdy kandydat osiąga etap walidacji i oczekuje na przegląd przez człowieka.",
+    "nl": "Wanneer een kandidaat validatie bereikt en wacht op menselijke beoordeling.",
+    "it": "Quando un candidato raggiunge la convalida e attende la revisione umana.",
+    "sv": "När en kandidat når validering och väntar på mänsklig granskning."
   },
   "notifications.scheduledCheck": {
     "en": "Scheduled check",
@@ -907,7 +1419,15 @@
     "pt": "Verificação agendada",
     "fr": "Vérification planifiée",
     "de": "Geplanter Check",
-    "ru": "Плановая проверка"
+    "ru": "Плановая проверка",
+    "hi": "अनुसूचित जाँच",
+    "vi": "Scheduled check",
+    "th": "การตรวจสอบตามกำหนด",
+    "tr": "Planlı kontrol",
+    "pl": "Zaplanowana kontrola",
+    "nl": "Geplande controle",
+    "it": "Verifica programmata",
+    "sv": "Schemalagd kontroll"
   },
   "notifications.scheduledCheckDetail": {
     "en": "Summary of safe metadata-only checks and retention review for active workspaces.",
@@ -921,7 +1441,15 @@
     "pt": "Resumo de verificações seguras que utilizam apenas metadados e revisão de retenção para espaços de trabalho ativos.",
     "fr": "Résumé des contrôles sûrs limités aux métadonnées et de la revue de conservation pour les workspaces actifs.",
     "de": "Zusammenfassung sicherer, ausschließlich metadatenbasierter Prüfungen und Aufbewahrungsüberprüfungen für aktive Arbeitsbereiche.",
-    "ru": "Краткое описание безопасных проверок, затрагивающих только метаданные, и обзора хранения для активных рабочих областей."
+    "ru": "Краткое описание безопасных проверок, затрагивающих только метаданные, и обзора хранения для активных рабочих областей.",
+    "hi": "सक्रिय Workspaces के लिए केवल सुरक्षित मेटाडेटा-आधारित जाँच और रिटेंशन समीक्षा का सारांश।",
+    "vi": "Tóm tắt các kiểm tra chỉ metadata an toàn và xem xét lưu giữ cho các workspace đang hoạt động.",
+    "th": "สรุปการตรวจสอบที่เป็นเพียงเมตาดาต้าที่ปลอดภัยและการทบทวนการเก็บรักษาสำหรับ workspace ที่ใช้งานอยู่",
+    "tr": "Etkin workspace'ler için yalnızca güvenli meta verilere dayalı kontrollerin ve saklama incelemesinin özeti.",
+    "pl": "Podsumowanie bezpiecznych kontroli obejmujących tylko metadane oraz przegląd retencji dla aktywnych workspace.",
+    "nl": "Samenvatting van veilige, alleen-metadatacontroles en retentiebeoordeling voor actieve workspaces.",
+    "it": "Riepilogo di controlli sicuri limitati ai metadata e della revisione della retention per i workspace attivi.",
+    "sv": "Sammanfattning av säkra metadatakontroller utan innehåll och översyn av lagring för aktiva Workspaces."
   },
   "notifications.policyReview": {
     "en": "Policy review",
@@ -935,7 +1463,15 @@
     "pt": "Revisão de política",
     "fr": "Revue de politique",
     "de": "Richtlinienprüfung",
-    "ru": "Проверка политики"
+    "ru": "Проверка политики",
+    "hi": "नीति समीक्षा",
+    "vi": "Policy review",
+    "th": "การทบทวนนโยบาย",
+    "tr": "Politika incelemesi",
+    "pl": "Przegląd polityki",
+    "nl": "Beleidsbeoordeling",
+    "it": "Revisione della policy",
+    "sv": "Policygranskning"
   },
   "notifications.policyReviewDetail": {
     "en": "When a new safe-harbor, conduct, allowlist, or exclusion version awaits review.",
@@ -949,7 +1485,15 @@
     "pt": "Quando uma nova versão de porto seguro, conduta, lista de permissões ou exclusão aguarda revisão.",
     "fr": "Lorsqu'une nouvelle version de safe-harbor, du code de conduite, de la liste d'autorisation ou des exclusions attend une revue.",
     "de": "Wenn eine neue Version des Safe-Harbor, des Verhaltenskodexes, der Zulassungsliste oder der Ausnahmen auf Überprüfung wartet.",
-    "ru": "Когда новая версия safe-harbor, кодекса поведения, белого списка или исключений ожидает проверки."
+    "ru": "Когда новая версия safe-harbor, кодекса поведения, белого списка или исключений ожидает проверки.",
+    "hi": "जब कोई नया safe-harbor, conduct, allowlist, या exclusion संस्करण समीक्षा की प्रतीक्षा करता है।",
+    "vi": "Khi một phiên bản mới của safe-harbor, conduct, allowlist, hoặc exclusion đang chờ xem xét.",
+    "th": "เมื่อมีเวอร์ชันใหม่ของ safe-harbor, conduct, allowlist หรือ exclusions รอการทบทวน",
+    "tr": "Yeni bir safe-harbor, davranış kuralları, allowlist veya hariç tutma sürümü inceleme beklediğinde.",
+    "pl": "Gdy nowa wersja safe-harbor, kodeksu postępowania, allowlist lub wyłączeń oczekuje na przegląd.",
+    "nl": "Wanneer een nieuwe safe-harbor-, gedrag-, allowlist- of uitsluitingsversie wacht op beoordeling.",
+    "it": "Quando una nuova versione di safe-harbor, conduct, allowlist o exclusion è in attesa di revisione.",
+    "sv": "När en ny version av safe-harbor, uppförandekod, allowlist eller exklusion väntar på granskning."
   },
   "notifications.incidentCreated": {
     "en": "Incident recorded",
@@ -963,7 +1507,15 @@
     "pt": "Incidente registrado",
     "fr": "Incident enregistré",
     "de": "Vorfall erfasst",
-    "ru": "Инцидент зарегистрирован"
+    "ru": "Инцидент зарегистрирован",
+    "hi": "घटना दर्ज की गई",
+    "vi": "Incident recorded",
+    "th": "มีการบันทึกเหตุการณ์",
+    "tr": "Olay kaydedildi",
+    "pl": "Zarejestrowano incydent",
+    "nl": "Incident vastgelegd",
+    "it": "Incidente registrato",
+    "sv": "Incident registrerad"
   },
   "notifications.incidentCreatedDetail": {
     "en": "When a new workspace incident is opened and receives an escalation schedule.",
@@ -977,7 +1529,15 @@
     "pt": "Quando um novo incidente do espaço de trabalho é aberto e recebe um cronograma de escalonamento.",
     "fr": "Lorsqu'un nouvel incident de workspace est ouvert et reçoit un calendrier d'escalade.",
     "de": "Wenn ein neuer Vorfall im Arbeitsbereich eröffnet wird und einen Eskalationsplan erhält.",
-    "ru": "Когда в рабочей области открывается новый инцидент и получает график эскалации."
+    "ru": "Когда в рабочей области открывается новый инцидент и получает график эскалации.",
+    "hi": "जब एक नई Workspace घटना खोली जाती है और उसे एस्कलेशन अनुसूची मिलती है।",
+    "vi": "Khi một incident mới của workspace được mở và nhận lịch leo thang.",
+    "th": "เมื่อมีการเปิดเหตุการณ์ใหม่ใน workspace และได้รับกำหนดการยกระดับ",
+    "tr": "Yeni bir workspace olayı açıldığında ve bir yükseltme programı atandığında.",
+    "pl": "Gdy nowy incydent workspace zostaje otwarty i otrzymuje harmonogram eskalacji.",
+    "nl": "Wanneer een nieuw workspace-incident wordt geopend en een escalatieschema krijgt.",
+    "it": "Quando viene aperto un nuovo incidente nel workspace e riceve un programma di escalation.",
+    "sv": "När en ny Workspace-incident öppnas och får ett eskalationsschema."
   },
   "notifications.webhookActivation": {
     "en": "Webhook activation",
@@ -991,7 +1551,15 @@
     "pt": "Ativação de webhook",
     "fr": "Activation de webhook",
     "de": "Webhook-Aktivierung",
-    "ru": "Активация webhook"
+    "ru": "Активация webhook",
+    "hi": "Webhook सक्रियण",
+    "vi": "Webhook activation",
+    "th": "การเปิดใช้งาน webhook",
+    "tr": "Webhook etkinleştirme",
+    "pl": "Aktywacja webhooka",
+    "nl": "Webhook-activatie",
+    "it": "Attivazione webhook",
+    "sv": "Webhook-aktivering"
   },
   "notifications.webhookActivationDetail": {
     "en": "When a delivery draft awaits a distinct reviewer's decision.",
@@ -1005,6 +1573,14 @@
     "pt": "Quando um rascunho de entrega aguarda a decisão de um revisor distinto.",
     "fr": "Lorsqu'un brouillon de livraison attend la décision d'un réviseur distinct.",
     "de": "Wenn ein Zustellungsentwurf auf die Entscheidung eines eigenständigen Prüfers wartet.",
-    "ru": "Когда черновик доставки ожидает решения отдельного ревьюера."
+    "ru": "Когда черновик доставки ожидает решения отдельного ревьюера.",
+    "hi": "जब एक डिलीवरी ड्राफ्ट एक अलग समीक्षक के निर्णय की प्रतीक्षा कर रहा होता है।",
+    "vi": "Khi một bản nháp giao hàng đang chờ quyết định của một reviewer riêng biệt.",
+    "th": "เมื่อฉบับร่างการจัดส่งรอการตัดสินใจจากผู้ตรวจสอบที่แยกจากกัน",
+    "tr": "Bir teslim taslağı ayrı bir değerlendiricinin kararını beklediğinde.",
+    "pl": "Gdy szkic dostawy oczekuje na decyzję odrębnego recenzenta.",
+    "nl": "Wanneer een leveringsconcept wacht op de beslissing van een aparte beoordelaar.",
+    "it": "Quando una bozza di consegna è in attesa della decisione di un revisore distinto.",
+    "sv": "När ett leveransutkast väntar på beslut från en separat granskare."
   }
 }

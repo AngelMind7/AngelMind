@@ -8,8 +8,17 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import { LocaleProvider, StaticCopyLocalizer } from "./contexts/LocaleContext";
 import DashboardLayout from "./components/DashboardLayout";
 import { authenticatedRoutes } from "./authenticatedRoutes";
+import MarketingHome from "./marketing/MarketingHome";
+import ApiPlayground from "./marketing/ApiPlayground";
+import TrustCenter from "./marketing/TrustCenter";
+import { publicRoutes } from "@/publicRoutes";
+import OfflineStatus from "./components/OfflineStatus";
 
 function Router() {
+  return <Switch>{publicRoutes.map(route => <Route key={route.path} path={route.path} component={route.component} />)}<Route component={DashboardRouter} /></Switch>;
+}
+
+function DashboardRouter() {
   // make sure to consider if you need authentication for certain routes
   return (
     <DashboardLayout>
@@ -39,6 +48,7 @@ function App() {
         <LocaleProvider>
           <TooltipProvider>
             <StaticCopyLocalizer />
+            <OfflineStatus />
             <Toaster />
             <Router />
           </TooltipProvider>

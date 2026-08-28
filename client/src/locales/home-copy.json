@@ -11,7 +11,15 @@
     "pt": "Pesquisa de segurança autorizada · interface de comando interna",
     "fr": "Recherche en sécurité autorisée · interface de commande interne",
     "de": "Autorisierte Sicherheitsforschung · interne Kommando-Schnittstelle",
-    "ru": "Авторизованные исследования безопасности · внутренний командный интерфейс"
+    "ru": "Авторизованные исследования безопасности · внутренний командный интерфейс",
+    "hi": "प्राधिकृत सुरक्षा अनुसंधान · आंतरिक कमांड इंटरफ़ेस",
+    "vi": "Nghiên cứu bảo mật được ủy quyền · giao diện điều khiển nội bộ",
+    "th": "การวิจัยความปลอดภัยที่ได้รับอนุญาต · อินเทอร์เฟซคำสั่งภายใน",
+    "tr": "Yetkilendirilmiş güvenlik araştırması · dahili komut arayüzü",
+    "pl": "Autoryzowane badania bezpieczeństwa · wewnętrzny interfejs poleceń",
+    "nl": "Geautoriseerd beveiligingsonderzoek · interne commando-interface",
+    "it": "Ricerca sulla sicurezza autorizzata · interfaccia di comando interna",
+    "sv": "Auktoriserad säkerhetsforskning · internt kommandogränssnitt"
   },
   "title": {
     "en": "Command Center",
@@ -25,7 +33,15 @@
     "pt": "Centro de Comando",
     "fr": "Centre de commande",
     "de": "Kommandozentrale",
-    "ru": "Центр управления"
+    "ru": "Центр управления",
+    "hi": "कमांड सेंटर",
+    "vi": "Trung tâm điều khiển",
+    "th": "ศูนย์บัญชาการคำสั่ง",
+    "tr": "Command Center",
+    "pl": "Centrum poleceń",
+    "nl": "Commandocentrum",
+    "it": "Centro di comando",
+    "sv": "Kommandocenter"
   },
   "description": {
     "en": "A governed control plane for scoped workspaces. Rehearsals remain fully offline; every future action is evaluated by deterministic safety policy before it can proceed.",
@@ -39,7 +55,15 @@
     "pt": "Um plano de controle governado para áreas de trabalho com escopo definido. Ensaios permanecem totalmente offline; toda ação futura é avaliada por uma política de segurança determinística antes de poder prosseguir.",
     "fr": "Une plane de contrôle gouvernée pour des espaces de travail limités. Les répétitions restent entièrement hors ligne ; chaque action future est évaluée par une politique de sécurité déterministe avant de pouvoir être exécutée.",
     "de": "Eine geregelte Steuerungsebene für abgegrenzte Arbeitsbereiche. Proben bleiben vollständig offline; jede zukünftige Aktion wird von einer deterministischen Sicherheitsrichtlinie geprüft und erfordert menschliche Freigabe, bevor sie ausgeführt werden kann.",
-    "ru": "Управляемая плоскость управления для ограниченных рабочих областей. Репетиции остаются полностью офлайн; каждое дальнейшее действие оценивается детерминированной политикой безопасности до того, как оно может быть выполнено."
+    "ru": "Управляемая плоскость управления для ограниченных рабочих областей. Репетиции остаются полностью офлайн; каждое дальнейшее действие оценивается детерминированной политикой безопасности до того, как оно может быть выполнено.",
+    "hi": "स्कोप किए गए वर्कस्पेस के लिए नियमनयुक्त कंट्रोल प्लेन। रिहर्सल पूर्णतः ऑफ़लाइन रहते हैं; किसी भी भविष्य की कार्रवाई को आगे बढ़ने से पहले निर्धारित सुरक्षा नीति द्वारा मूल्यांकन किया जाता है।",
+    "vi": "Một mặt phẳng điều khiển được quản trị cho các không gian làm việc có phạm vi xác định. Các buổi diễn tập vẫn hoàn toàn ngoại tuyến; mọi hành động trong tương lai đều được đánh giá theo chính sách an toàn xác định trước trước khi có thể tiến hành.",
+    "th": "ระนาบควบคุมภายใต้การกำกับสำหรับพื้นที่ทำงานที่มีขอบเขตกำหนด การซ้อมยังคงเป็นแบบออฟไลน์อย่างสมบูรณ์; ทุกการดำเนินการในอนาคตจะถูกประเมินโดยนโยบายความปลอดภัยแบบกำหนดได้ก่อนที่จะอนุญาตให้ดำเนินการต่อ",
+    "tr": "Kapsamlı çalışma alanları için yönetilen bir kontrol düzlemi. Provalar tamamen çevrimdışı kalır; gelecekteki her eylem ilerlemeden önce deterministik güvenlik politikası tarafından değerlendirilir.",
+    "pl": "Zarządzana płaszczyzna sterowania dla wyodrębnionych obszarów roboczych. Sesje próbne pozostają całkowicie offline; każda przyszła akcja jest oceniana przez deterministyczną politykę bezpieczeństwa, zanim będzie mogła zostać wykonana.",
+    "nl": "Een door governance beheerde besturingslaag voor afgebakende werkruimten. Repetities blijven volledig offline; elke toekomstige actie wordt door een deterministisch veiligheidsbeleid beoordeeld voordat deze kan doorgaan.",
+    "it": "Un piano di controllo governato per spazi di lavoro con ambito definito. Le esercitazioni restano completamente offline; ogni azione futura è valutata da una policy di sicurezza deterministica prima di poter procedere.",
+    "sv": "Ett styrt kontrollplan för avgränsade arbetsytor. Övningar förblir helt offline; varje framtida åtgärd utvärderas av deterministisk säkerhetspolicy innan den får genomföras."
   },
   "activeWorkspaces": {
     "en": "Active workspaces",
@@ -53,7 +77,15 @@
     "pt": "Áreas de trabalho ativas",
     "fr": "Espaces de travail actifs",
     "de": "Aktive Arbeitsbereiche",
-    "ru": "Активные рабочие области"
+    "ru": "Активные рабочие области",
+    "hi": "सक्रिय वर्कस्पेस",
+    "vi": "Không gian làm việc đang hoạt động",
+    "th": "พื้นที่ทำงานที่กำลังใช้งาน",
+    "tr": "Etkin çalışma alanları",
+    "pl": "Aktywne obszary robocze",
+    "nl": "Actieve werkruimten",
+    "it": "Spazi di lavoro attivi",
+    "sv": "Aktiva arbetsytor"
   },
   "pendingApprovals": {
     "en": "Pending approvals",
@@ -67,7 +99,15 @@
     "pt": "Aprovações pendentes",
     "fr": "Approbations en attente",
     "de": "Ausstehende Genehmigungen",
-    "ru": "Ожидающие одобрения"
+    "ru": "Ожидающие одобрения",
+    "hi": "लंबित अनुमोदन",
+    "vi": "Phê duyệt đang chờ",
+    "th": "การอนุมัติที่รอดำเนินการ",
+    "tr": "Bekleyen onaylar",
+    "pl": "Oczekujące zatwierdzenia",
+    "nl": "In afwachting van goedkeuringen",
+    "it": "Approvazioni in sospeso",
+    "sv": "Väntande godkännanden"
   },
   "policyBlocks": {
     "en": "Policy blocks",
@@ -81,7 +121,15 @@
     "pt": "Bloqueios de política",
     "fr": "Blocages de politique",
     "de": "Policy-Blöcke",
-    "ru": "Блоки политики"
+    "ru": "Блоки политики",
+    "hi": "नीति ब्लॉक्स",
+    "vi": "Khối chính sách",
+    "th": "บล็อกนโยบาย",
+    "tr": "Politika blokları",
+    "pl": "Bloki polityk",
+    "nl": "Beleidsblokken",
+    "it": "Blocchi di policy",
+    "sv": "Policyblock"
   },
   "validatedFindings": {
     "en": "Validated findings",
@@ -95,7 +143,15 @@
     "pt": "Achados validados",
     "fr": "Constats validés",
     "de": "Validierte Befunde",
-    "ru": "Подтвержденные находки"
+    "ru": "Подтвержденные находки",
+    "hi": "मान्य निष्कर्ष",
+    "vi": "Phát hiện đã được xác nhận",
+    "th": "ผลการค้นพบที่ได้รับการยืนยัน",
+    "tr": "Doğrulanmış bulgular",
+    "pl": "Zatwierdzone ustalenia",
+    "nl": "Gevalideerde bevindingen",
+    "it": "Rilevazioni validate",
+    "sv": "Validerade fynd"
   },
   "recordedSpend": {
     "en": "Recorded spend",
@@ -109,7 +165,15 @@
     "pt": "Gastos registrados",
     "fr": "Dépenses enregistrées",
     "de": "Erfasste Ausgaben",
-    "ru": "Учтённые расходы"
+    "ru": "Учтённые расходы",
+    "hi": "दर्ज किया गया व्यय",
+    "vi": "Chi tiêu đã ghi nhận",
+    "th": "ค่าใช้จ่ายที่บันทึก",
+    "tr": "Kaydedilmiş harcama",
+    "pl": "Zarejestrowane wydatki",
+    "nl": "Geregistreerde uitgaven",
+    "it": "Spesa registrata",
+    "sv": "Registrerade utgifter"
   },
   "rehearsalEyebrow": {
     "en": "Network-zero rehearsal",
@@ -123,7 +187,15 @@
     "pt": "Ensaio sem rede",
     "fr": "Répétition sans réseau",
     "de": "Netzwerkfreie Probe",
-    "ru": "Репетиция без сетевого взаимодействия"
+    "ru": "Репетиция без сетевого взаимодействия",
+    "hi": "नेटवर्क-शून्य रिहर्सल",
+    "vi": "Diễn tập không mạng",
+    "th": "การซ้อมแบบไม่มีเครือข่าย",
+    "tr": "Ağ-sıfır provası",
+    "pl": "Próba bez sieci",
+    "nl": "Netwerk-nulrepetitie",
+    "it": "Esercitazione a rete zero",
+    "sv": "Nätverksfri övning"
   },
   "rehearsalTitle": {
     "en": "Plan safely before anything else",
@@ -137,7 +209,15 @@
     "pt": "Planeje com segurança antes de qualquer ação",
     "fr": "Planifiez en toute sécurité avant toute chose",
     "de": "Sicher planen, bevor Sie handeln",
-    "ru": "Спланируйте безопасно прежде всего"
+    "ru": "Спланируйте безопасно прежде всего",
+    "hi": "किसी भी अन्य कार्रवाई से पहले सुरक्षित रूप से योजना बनाएँ",
+    "vi": "Lập kế hoạch an toàn trước hết",
+    "th": "วางแผนอย่างปลอดภัยก่อนทำอย่างอื่น",
+    "tr": "Her şeyden önce güvenli şekilde planlayın",
+    "pl": "Najpierw planuj bezpiecznie",
+    "nl": "Plan veilig voordat je iets anders doet",
+    "it": "Pianifica in modo sicuro prima di tutto",
+    "sv": "Planera säkert innan något annat"
   },
   "dryRunOnly": {
     "en": "Dry-run only",
@@ -151,7 +231,15 @@
     "pt": "Somente simulação — sem contato com alvos",
     "fr": "Exécution à blanc uniquement",
     "de": "Nur Trockenlauf",
-    "ru": "Только сухой прогон — без контакта с целями"
+    "ru": "Только сухой прогон — без контакта с целями",
+    "hi": "केवल ड्राई-रन",
+    "vi": "Chỉ chạy thử",
+    "th": "เฉพาะการรันแบบจำลอง (dry-run)",
+    "tr": "Sadece deneme çalıştırması",
+    "pl": "Tylko symulacja",
+    "nl": "Alleen dry-run",
+    "it": "Solo esecuzione simulata",
+    "sv": "Endast torrkörning"
   },
   "scopeGate": {
     "en": "Scope + conduct gate",
@@ -165,7 +253,15 @@
     "pt": "Controle de escopo e conduta",
     "fr": "Contrôle du périmètre et de la conduite",
     "de": "Geltungsbereichs- und Verhaltenskontrolle",
-    "ru": "Проверка области и поведения"
+    "ru": "Проверка области и поведения",
+    "hi": "स्कोप + आचरण गेट",
+    "vi": "Cổng kiểm soát phạm vi và hành vi",
+    "th": "เกตขอบเขตและการปฏิบัติ",
+    "tr": "Kapsam ve davranış kontrolü",
+    "pl": "Kontrola zakresu i postępowania",
+    "nl": "Scope- en gedragspoort",
+    "it": "Gate di ambito e condotta",
+    "sv": "Kontrollpunkt för omfattning och uppförande"
   },
   "scopeGateDetail": {
     "en": "The declared allowlist and exclusions are evaluated deterministically.",
@@ -179,7 +275,15 @@
     "pt": "A lista de permissões declarada e as exclusões são avaliadas de forma determinística.",
     "fr": "La liste blanche déclarée et les exclusions sont évaluées de manière déterministe.",
     "de": "Die angegebene Zulassungsliste und Ausschlüsse werden deterministisch ausgewertet und erfordern menschliche Genehmigung.",
-    "ru": "Заявленный разрешённый список (allowlist) и исключения оцениваются детерминированным образом."
+    "ru": "Заявленный разрешённый список (allowlist) и исключения оцениваются детерминированным образом.",
+    "hi": "घोषित अनुमति सूची और बहिष्कारों का निर्धारित रूप से मूल्यांकन किया जाता है।",
+    "vi": "Danh sách được cho phép và các ngoại lệ đã khai báo được đánh giá theo quy tắc xác định trước.",
+    "th": "รายการอนุญาต (allowlist) ที่ประกาศและข้อยกเว้นจะถูกประเมินโดยวิธีที่กำหนดได้",
+    "tr": "Beyan edilen izin listesi ve hariç tutmalar deterministik olarak değerlendirilir.",
+    "pl": "Deklarowana lista dozwolonych elementów i wyłączenia są oceniane w sposób deterministyczny.",
+    "nl": "De opgegeven allowlist en uitsluitingen worden deterministisch geëvalueerd.",
+    "it": "La allowlist e le esclusioni dichiarate vengono valutate in modo deterministico.",
+    "sv": "Den angivna tillåtelselistan och undantagen utvärderas deterministiskt."
   },
   "noTargetInteraction": {
     "en": "No target interaction",
@@ -193,7 +297,15 @@
     "pt": "Sem interação com alvos",
     "fr": "Aucune interaction avec la cible",
     "de": "Keine Zielinteraktion",
-    "ru": "Никакого взаимодействия с целями"
+    "ru": "Никакого взаимодействия с целями",
+    "hi": "कोई लक्ष्य इंटरैक्शन नहीं",
+    "vi": "Không tương tác với mục tiêu",
+    "th": "ไม่มีการติดต่อกับเป้าหมาย",
+    "tr": "Hedef ile etkileşim yok",
+    "pl": "Brak interakcji z celem",
+    "nl": "Geen interactie met doelwitten",
+    "it": "Nessuna interazione con il bersaglio",
+    "sv": "Ingen interaktion med mål"
   },
   "noTargetInteractionDetail": {
     "en": "Network calls and tool executions remain fixed at zero for every rehearsal.",
@@ -207,7 +319,15 @@
     "pt": "Chamadas de rede e execuções de ferramentas permanecem fixas em zero para todo ensaio.",
     "fr": "Les appels réseau et l'exécution d'outils restent strictement à zéro pour chaque répétition.",
     "de": "Netzwerkaufrufe und Tool-Ausführungen bleiben bei jeder Probe auf null; es erfolgt kein Kontakt mit Zielsystemen.",
-    "ru": "Сетевые вызовы и исполнение инструментов остаются зафиксированными на нуле для каждой репетиции."
+    "ru": "Сетевые вызовы и исполнение инструментов остаются зафиксированными на нуле для каждой репетиции.",
+    "hi": "नेटवर्क कॉल और टूल निष्पादन प्रत्येक रिहर्सल के लिए शून्य पर स्थिर रहते हैं।",
+    "vi": "Các cuộc gọi mạng và thực thi công cụ vẫn được giữ ở mức bằng không cho mọi buổi diễn tập.",
+    "th": "การเรียกเครือข่ายและการรันเครื่องมือจะถูกตั้งค่าเป็นศูนย์สำหรับทุกการซ้อม",
+    "tr": "Ağ çağrıları ve araç yürütmeleri her prova için sıfır olarak sabit tutulur.",
+    "pl": "Połączenia sieciowe i wykonywanie narzędzi pozostają zerowe podczas każdej sesji próbnej.",
+    "nl": "Netwerkoproepen en tooluitvoeringen blijven voor elke repetitie op nul ingesteld.",
+    "it": "Le chiamate di rete e le esecuzioni di strumenti rimangono pari a zero per ogni esercitazione.",
+    "sv": "Nätverksanrop och verktygskörningar förblir satta till noll för varje övning."
   },
   "budgetSession": {
     "en": "Budget + session checks",
@@ -221,7 +341,15 @@
     "pt": "Verificações de orçamento e sessão",
     "fr": "Vérifications budgetaires et de session",
     "de": "Budget- und Sitzungsprüfungen",
-    "ru": "Проверки бюджета и сессии"
+    "ru": "Проверки бюджета и сессии",
+    "hi": "बजट + सत्र जांच",
+    "vi": "Kiểm tra ngân sách và phiên",
+    "th": "การตรวจสอบงบประมาณและเซสชัน",
+    "tr": "Bütçe + oturum kontrolleri",
+    "pl": "Kontrole budżetu i sesji",
+    "nl": "Budget- en sessiecontroles",
+    "it": "Controlli su budget e sessione",
+    "sv": "Budget- och sessionskontroller"
   },
   "budgetSessionDetail": {
     "en": "Estimates are blocked if the workspace budget or session ceiling is exhausted.",
@@ -235,7 +363,15 @@
     "pt": "Estimativas são bloqueadas se o orçamento da área de trabalho ou o limite de sessão estiverem esgotados.",
     "fr": "Les estimations sont bloquées si le budget de l'espace de travail ou le plafond de la session est atteint.",
     "de": "Schätzungen werden blockiert, wenn das Budget des Arbeitsbereichs oder die Sitzungsschwelle erschöpft ist.",
-    "ru": "Оценки блокируются, если бюджет рабочей области или лимит сессии исчерпан."
+    "ru": "Оценки блокируются, если бюджет рабочей области или лимит сессии исчерпан.",
+    "hi": "यदि वर्कस्पेस बजट या सत्र सीमा समाप्त हो चुकी है तो अनुमान अवरुद्ध कर दिए जाते हैं।",
+    "vi": "Các ước tính sẽ bị chặn nếu ngân sách của không gian làm việc hoặc giới hạn phiên đã bị sử dụng hết.",
+    "th": "การประมาณการจะถูกบล็อกหากงบประมาณของพื้นที่ทำงานหรือเพดานเซสชันถูกใช้งานจนหมด",
+    "tr": "Çalışma alanı bütçesi veya oturum sınırı tükenmişse tahminler engellenir.",
+    "pl": "Szacunki są blokowane, jeśli budżet obszaru roboczego lub limit sesji został wyczerpany.",
+    "nl": "Schattingen worden geblokkeerd als het budget van de werkruimte of het sessieplafond is uitgeput.",
+    "it": "Le stime vengono bloccate se il budget dello spazio di lavoro o il tetto della sessione sono esauriti.",
+    "sv": "Estimat blockeras om arbetsytans budget eller sessionsgräns är uttömd."
   },
   "hypotheticalMap": {
     "en": "Hypothetical task map",
@@ -249,7 +385,15 @@
     "pt": "Mapa hipotético de tarefas",
     "fr": "Carte de tâches hypothétique",
     "de": "Hypothetische Aufgabenkarte",
-    "ru": "Гипотетическая карта задач"
+    "ru": "Гипотетическая карта задач",
+    "hi": "काल्पनिक कार्य मैप",
+    "vi": "Bản đồ tác vụ giả thuyết",
+    "th": "แผนผังงานสมมติ",
+    "tr": "Varsayımsal görev haritası",
+    "pl": "Hipotetyczna mapa zadań",
+    "nl": "Hypothetische taakkaart",
+    "it": "Mappa ipotetica delle attività",
+    "sv": "Hypotetisk uppgiftskarta"
   },
   "hypotheticalMapDetail": {
     "en": "Only policy, asset-graph, and coverage planning tasks are generated.",
@@ -263,7 +407,15 @@
     "pt": "Apenas tarefas de política, de grafo de ativos e de planejamento de cobertura são geradas.",
     "fr": "Seules des tâches de politique, de graphe d'actifs et de planification de couverture sont générées.",
     "de": "Es werden nur Aufgaben für Richtlinien, Asset-Graph und Coverage-Planung erzeugt.",
-    "ru": "Генерируются только задачи по политике, графу активов (asset-graph) и планированию охвата."
+    "ru": "Генерируются только задачи по политике, графу активов (asset-graph) и планированию охвата.",
+    "hi": "केवल नीति, asset-graph, और कवरेज योजना संबंधी कार्य उत्पन्न किए जाते हैं।",
+    "vi": "Chỉ các tác vụ về chính sách, asset-graph và lập kế hoạch phủ sóng được tạo ra.",
+    "th": "จะมีการสร้างงานสำหรับนโยบาย กราฟสินทรัพย์ (asset-graph) และการวางแผนความครอบคลุมเท่านั้น",
+    "tr": "Yalnızca politika, varlık grafiği ve kapsam planlama görevleri üretilir.",
+    "pl": "Generowane są tylko zadania dotyczące polityk, asset-graph oraz planowania pokrycia.",
+    "nl": "Alleen taken voor beleid, asset-graph en dekkingsplanning worden gegenereerd.",
+    "it": "Vengono generate solo attività di policy, asset-graph e pianificazione della copertura.",
+    "sv": "Endast uppgifter för policy, asset-graph och täckningsplanering genereras."
   },
   "selectGuardedWorkspace": {
     "en": "Select guarded workspace",
@@ -277,7 +429,15 @@
     "pt": "Selecionar área de trabalho protegida",
     "fr": "Sélectionner un espace de travail protégé",
     "de": "Geschützten Arbeitsbereich auswählen",
-    "ru": "Выберите защищённую рабочую область"
+    "ru": "Выберите защищённую рабочую область",
+    "hi": "संरक्षित वर्कस्पेस चुनें",
+    "vi": "Chọn không gian làm việc được bảo vệ",
+    "th": "เลือกพื้นที่ทำงานที่มีการป้องกัน",
+    "tr": "Korumalı çalışma alanı seçin",
+    "pl": "Wybierz zabezpieczony obszar roboczy",
+    "nl": "Selecteer beveiligde werkruimte",
+    "it": "Seleziona spazio di lavoro protetto",
+    "sv": "Välj skyddad arbetsyta"
   },
   "createWorkspaceToBegin": {
     "en": "Create a workspace to begin",
@@ -291,7 +451,15 @@
     "pt": "Crie uma área de trabalho para começar",
     "fr": "Créez un espace de travail pour commencer",
     "de": "Erstellen Sie einen Arbeitsbereich, um zu beginnen",
-    "ru": "Создайте рабочую область, чтобы начать"
+    "ru": "Создайте рабочую область, чтобы начать",
+    "hi": "शुरू करने के लिए वर्कस्पेस बनाएँ",
+    "vi": "Tạo một không gian làm việc để bắt đầu",
+    "th": "สร้างพื้นที่ทำงานเพื่อเริ่มต้น",
+    "tr": "Başlamak için bir çalışma alanı oluşturun",
+    "pl": "Utwórz obszar roboczy, aby rozpocząć",
+    "nl": "Maak een werkruimte aan om te beginnen",
+    "it": "Crea uno spazio di lavoro per iniziare",
+    "sv": "Skapa en arbetsyta för att börja"
   },
   "startRehearsal": {
     "en": "Start rehearsal",
@@ -305,7 +473,15 @@
     "pt": "Iniciar ensaio",
     "fr": "Démarrer la répétition",
     "de": "Probe starten",
-    "ru": "Начать репетицию"
+    "ru": "Начать репетицию",
+    "hi": "रिहर्सल शुरू करें",
+    "vi": "Bắt đầu diễn tập",
+    "th": "เริ่มการซ้อม",
+    "tr": "Provayı başlat",
+    "pl": "Rozpocznij próbę",
+    "nl": "Start repetitie",
+    "it": "Avvia esercitazione",
+    "sv": "Starta övning"
   },
   "rehearsing": {
     "en": "Rehearsing…",
@@ -319,7 +495,15 @@
     "pt": "Ensaindo…",
     "fr": "Répétition en cours…",
     "de": "Proben…",
-    "ru": "Идёт репетиция…"
+    "ru": "Идёт репетиция…",
+    "hi": "रिहर्सल चल रहा है…",
+    "vi": "Đang diễn tập…",
+    "th": "กำลังซ้อม…",
+    "tr": "Prova yapılıyor…",
+    "pl": "Trwa próba…",
+    "nl": "Bezig met repeteren…",
+    "it": "Esercitazione in corso…",
+    "sv": "Övar…"
   },
   "telemetryEyebrow": {
     "en": "Operational telemetry",
@@ -333,7 +517,15 @@
     "pt": "Telemetria operacional",
     "fr": "Télémétrie opérationnelle",
     "de": "Betriebliche Telemetrie",
-    "ru": "Операционная телеметрия"
+    "ru": "Операционная телеметрия",
+    "hi": "ऑपरेशनल टेलीमेट्री",
+    "vi": "Số liệu vận hành",
+    "th": "เทเลเมทรีการปฏิบัติการ",
+    "tr": "Operasyonel telemetri",
+    "pl": "Telemetria operacyjna",
+    "nl": "Operationele telemetrie",
+    "it": "Telemetria operativa",
+    "sv": "Operativ telemetri"
   },
   "coverageLens": {
     "en": "Coverage lens",
@@ -347,7 +539,15 @@
     "pt": "Lente de cobertura",
     "fr": "Perspective de couverture",
     "de": "Abdeckungsansicht",
-    "ru": "Фокус покрытия"
+    "ru": "Фокус покрытия",
+    "hi": "कवरेज लेंस",
+    "vi": "Lăng kính phủ sóng",
+    "th": "เลนส์ความครอบคลุม",
+    "tr": "Kapsam merceği",
+    "pl": "Widok pokrycia",
+    "nl": "Dekkingslens",
+    "it": "Lente di copertura",
+    "sv": "Täckningsvy"
   },
   "coverageDescription": {
     "en": "Coverage indicators remain empty until a governed run records eligible, reviewable evidence.",
@@ -361,7 +561,15 @@
     "pt": "Indicadores de cobertura permanecem vazios até que uma execução governada registre evidências elegíveis e passíveis de revisão.",
     "fr": "Les indicateurs de couverture restent vides tant qu'une exécution gouvernée n'enregistre pas de preuves éligibles et révisables.",
     "de": "Abdeckungsindikatoren bleiben leer, bis ein governance-gesteuerter Lauf berechtigte, prüfbare Nachweise aufzeichnet.",
-    "ru": "Индикаторы покрытия остаются пустыми, пока управляемый запуск не зафиксирует допустимые, подлежащие проверке доказательства."
+    "ru": "Индикаторы покрытия остаются пустыми, пока управляемый запуск не зафиксирует допустимые, подлежащие проверке доказательства.",
+    "hi": "कवरेज संकेतक तब तक खाली रहेंगे जब तक कि कोई शासित रन योग्य, समीक्षा योग्य साक्ष्य रिकॉर्ड न करे।",
+    "vi": "Các chỉ số phủ sóng vẫn trống cho tới khi một lần chạy được quản trị ghi lại bằng chứng đủ điều kiện và có thể xem xét.",
+    "th": "ตัวชี้วัดความครอบคลุมจะยังคงว่างเปล่าจนกว่าการรันภายใต้การกำกับจะบันทึกหลักฐานที่มีคุณสมบัติเหมาะสมและพร้อมให้ตรวจทาน",
+    "tr": "Kapsam göstergeleri, yönetilen bir çalışma uygun, incelenebilir kanıt kaydetmedikçe boş kalır.",
+    "pl": "Wskaźniki pokrycia pozostają puste, aż zarządzane uruchomienie nie zarejestruje kwalifikujących się, możliwych do przeglądu dowodów.",
+    "nl": "Dekkingsindicatoren blijven leeg totdat een door governance beheerde run geschikt, beoordeelbaar bewijs registreert.",
+    "it": "Gli indicatori di copertura rimangono vuoti finché un'esecuzione governata non registra prove idonee e revisionabili.",
+    "sv": "Täckningsindikatorer förblir tomma tills en styrd körning registrerar berättigat, granskningsbart bevis."
   },
   "scopeGovernance": {
     "en": "Scope governance",
@@ -375,7 +583,15 @@
     "pt": "Governança de escopo",
     "fr": "Gouvernance du périmètre",
     "de": "Geltungsbereichs-Governance",
-    "ru": "Управление областью"
+    "ru": "Управление областью",
+    "hi": "स्कोप शासन",
+    "vi": "Quản trị phạm vi",
+    "th": "การกำกับขอบเขต",
+    "tr": "Kapsam yönetimi",
+    "pl": "Zarządzanie zakresem",
+    "nl": "Scope-governance",
+    "it": "Governance dell'ambito",
+    "sv": "Omfångsstyrning"
   },
   "programContext": {
     "en": "Program context",
@@ -389,7 +605,15 @@
     "pt": "Contexto do programa",
     "fr": "Contexte du programme",
     "de": "Programmkontext",
-    "ru": "Контекст программы"
+    "ru": "Контекст программы",
+    "hi": "प्रोग्राम संदर्भ",
+    "vi": "Ngữ cảnh chương trình",
+    "th": "บริบทโปรแกรม",
+    "tr": "Program bağlamı",
+    "pl": "Kontekst programu",
+    "nl": "Programmacontext",
+    "it": "Contesto del programma",
+    "sv": "Programkontext"
   },
   "hypothesisPlanning": {
     "en": "Hypothesis planning",
@@ -403,7 +627,15 @@
     "pt": "Planejamento de hipóteses",
     "fr": "Planification d'hypothèses",
     "de": "Hypothesenplanung",
-    "ru": "Планирование гипотез"
+    "ru": "Планирование гипотез",
+    "hi": "परिकल्पना योजना",
+    "vi": "Lập kế hoạch giả thuyết",
+    "th": "การวางแผนสมมติฐาน",
+    "tr": "Hipotez planlaması",
+    "pl": "Planowanie hipotez",
+    "nl": "Hypotheseplanning",
+    "it": "Pianificazione delle ipotesi",
+    "sv": "Hypotesplanering"
   },
   "findingValidation": {
     "en": "Finding validation",
@@ -417,7 +649,15 @@
     "pt": "Validação de achados",
     "fr": "Validation des constats",
     "de": "Befundvalidierung",
-    "ru": "Валидация находок"
+    "ru": "Валидация находок",
+    "hi": "निष्कर्ष सत्यापन",
+    "vi": "Xác thực phát hiện",
+    "th": "การยืนยันผลการค้นพบ",
+    "tr": "Bulguların doğrulanması",
+    "pl": "Walidacja ustaleń",
+    "nl": "Validatie van bevindingen",
+    "it": "Convalida delle rilevazioni",
+    "sv": "Validering av fynd"
   },
   "noModelNoContact": {
     "en": "No model execution · no external target contact",
@@ -431,7 +671,15 @@
     "pt": "Sem execução de modelos · sem contato com alvos externos",
     "fr": "Aucune exécution de modèle · aucun contact avec une cible externe",
     "de": "Keine Modellausführung · kein Kontakt mit externen Zielen",
-    "ru": "Без запуска моделей · без внешнего контакта с целями"
+    "ru": "Без запуска моделей · без внешнего контакта с целями",
+    "hi": "कोई मॉडल निष्पादन नहीं · कोई बाहरी लक्ष्य संपर्क नहीं",
+    "vi": "Không thực thi mô hình · không tiếp xúc với mục tiêu bên ngoài",
+    "th": "ไม่เรียกใช้โมเดล · ไม่ติดต่อเป้าหมายภายนอก",
+    "tr": "Model yürütmesi yok · dış hedef ile temas yok",
+    "pl": "Brak uruchamiania modeli · brak kontaktu z zewnętrznymi celami",
+    "nl": "Geen modeluitvoering · geen extern contact met doelwitten",
+    "it": "Nessuna esecuzione di modelli · nessun contatto con bersagli esterni",
+    "sv": "Ingen modellkörning · ingen extern målkontakt"
   },
   "runLedger": {
     "en": "Run ledger",
@@ -445,7 +693,15 @@
     "pt": "Registro de execuções",
     "fr": "Registre des exécutions",
     "de": "Laufprotokoll",
-    "ru": "Реестр запусков"
+    "ru": "Реестр запусков",
+    "hi": "रन लेजर",
+    "vi": "Sổ ghi chạy",
+    "th": "บันทึกการรัน",
+    "tr": "Çalıştırma defteri",
+    "pl": "Dziennik uruchomień",
+    "nl": "Run-logboek",
+    "it": "Registro delle esecuzioni",
+    "sv": "Körningslogg"
   },
   "latestActivity": {
     "en": "Latest governed activity",
@@ -459,7 +715,15 @@
     "pt": "Última atividade governada",
     "fr": "Dernière activité gouvernée",
     "de": "Neueste Governance-gesteuerte Aktivität",
-    "ru": "Последняя управляемая активность"
+    "ru": "Последняя управляемая активность",
+    "hi": "नवीनतम शासित गतिविधि",
+    "vi": "Hoạt động được quản trị mới nhất",
+    "th": "กิจกรรมภายใต้การกำกับล่าสุด",
+    "tr": "En son yönetilen etkinlik",
+    "pl": "Najnowsza zarządzana aktywność",
+    "nl": "Laatste door governance beheerde activiteit",
+    "it": "Ultima attività governata",
+    "sv": "Senaste styrda aktivitet"
   },
   "noActivity": {
     "en": "No governed activity has been recorded yet.",
@@ -473,6 +737,14 @@
     "pt": "Nenhuma atividade governada foi registrada ainda.",
     "fr": "Aucune activité gouvernée n'a encore été enregistrée.",
     "de": "Es wurden noch keine governance-gesteuerten Aktivitäten aufgezeichnet.",
-    "ru": "Ещё не зафиксировано ни одной управляемой активности."
+    "ru": "Ещё не зафиксировано ни одной управляемой активности.",
+    "hi": "कोई शासित गतिविधि अभी तक दर्ज नहीं की गई है।",
+    "vi": "Chưa có hoạt động nào được quản trị được ghi nhận.",
+    "th": "ยังไม่มีการบันทึกกิจกรรมภายใต้การกำกับ",
+    "tr": "Henüz yönetilen hiçbir etkinlik kaydedilmedi.",
+    "pl": "Nie zarejestrowano jeszcze żadnej zarządzanej aktywności.",
+    "nl": "Er is nog geen door governance beheerde activiteit geregistreerd.",
+    "it": "Non è stata ancora registrata alcuna attività governata.",
+    "sv": "Ingen styrd aktivitet har registrerats än."
   }
 }

@@ -3,9 +3,11 @@ import { getLocaleDirection, isLocaleCode, isSafeStaticPhrase, locales, localize
 
 describe("AngelMind locale catalog", () => {
   it("ships the twelve enabled locales and accepts only known persistent codes", () => {
-    expect(locales).toHaveLength(12);
+    expect(locales).toHaveLength(20);
     expect(isLocaleCode("id")).toBe(true);
     expect(isLocaleCode("zh-CN")).toBe(true);
+    expect(isLocaleCode("hi")).toBe(true);
+    expect(isLocaleCode("sv")).toBe(true);
     expect(isLocaleCode("unknown")).toBe(false);
   });
   it("keeps English fallback available and sets Arabic as RTL", () => {
@@ -19,6 +21,9 @@ describe("AngelMind locale catalog", () => {
     expect(translateStatic("id", "Select workspace")).toBe("Pilih ruang kerja");
     expect(translateStatic("fr", "ANGELMIND")).toBe("ANGELMIND");
   });
+  it("translates curated legacy interface copy for each newly added locale", () => {
+    ["hi", "vi", "th", "tr", "pl", "nl", "it", "sv"].forEach(locale => expect(translateStatic(locale as LocaleCode, "Evidence artifact ID")).not.toBe("Evidence artifact ID"));
+  });
   it("formats embedded browser-default timestamps in the chosen locale without modifying unrelated copy", () => {
     expect(localizeEmbeddedTimestamp("id", "Requested 8/27/2026, 3:30 PM")).not.toContain("8/27/2026");
     expect(localizeEmbeddedTimestamp("en", "No timestamp here")).toBe("No timestamp here");
@@ -30,5 +35,6 @@ describe("AngelMind locale catalog", () => {
     expect(isSafeStaticPhrase("Evidence artifact ID")).toBe(true);
     expect(isSafeStaticPhrase("= MIN_WIDTH && newWidth")).toBe(false);
     expect(isSafeStaticPhrase("const pending = true;")).toBe(false);
+    expect(isSafeStaticPhrase("@peduarte starred 3 repositories")).toBe(false);
   });
 });

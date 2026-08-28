@@ -68,3 +68,12 @@
 - [x] Split authenticated page bundles with route-level lazy loading, loading fallback, and regression coverage.
 - [x] Replace remaining Assurance severity and Signal Center event-preference labels with explicit locale keys across all 12 locales.
 - [x] Thread the persisted IANA timezone through legacy timestamp fallback formatting and add regression coverage for remaining locale-sensitive workflow labels.
+- [x] Translate the supplied master blueprint into a safe AngelMind architecture and phased implementation specification, explicitly separating non-active research governance from prohibited target-facing execution.
+- [x] Define a two-layer public marketing and authenticated dashboard information architecture with page-level ownership, navigation, and responsive/PWA requirements.
+- [x] Expand the scalable localization, design-system, premium experience, trust-center, and API-playground foundations without exposing sensitive credentials or activating external delivery.
+- [x] Establish the infrastructure, deployment, testing, and launch-readiness roadmap with a deterministic guardrail and legal-review gate at each phase.
+- [x] Add a route-isolated, read-only API Playground foundation with synthetic examples only, no live credentials, and no mutating or target-facing calls.
+- [x] Implement concrete premium design-system foundations for public navigation and Trust Center inventory, with regression coverage for every new public route.
+- [x] Add a public-route inventory regression that verifies each public route’s intended component ownership and safety boundary.
+- [x] Add focused MarketingHome route coverage for public navigation, localized copy, and absence of authenticated workspace access on product, features, documentation, and security routes.
+- [x] Assert the exact public route-to-component-to-safety-boundary mapping for every public page in the centralized inventory.

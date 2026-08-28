@@ -1,69 +1,4 @@
 {
-  ". Secret values are never entered, stored, or displayed here.": {
-    "ar": ". القيم السرية لا يتم إدخالها أو تخزينها أو عرضها هنا أبدًا.",
-    "de": ". Geheime Werte werden hier niemals eingegeben, gespeichert oder angezeigt.",
-    "es": ". Los valores secretos nunca se introducen, almacenan ni muestran aquí.",
-    "fr": ". Les valeurs secrètes ne sont jamais saisies, stockées ni affichées ici.",
-    "id": ". Nilai rahasia tidak pernah dimasukkan, disimpan, atau ditampilkan di sini.",
-    "ja": ". 秘密の値はここに入力、保存、または表示されません。",
-    "ko": ". 비밀 값은 여기에서 입력되거나 저장되거나 표시되지 않습니다.",
-    "ms": ". Nilai rahsia tidak pernah dimasukkan, disimpan, atau dipaparkan di sini.",
-    "pt": ". Valores secretos nunca são inseridos, armazenados ou exibidos aqui.",
-    "ru": ". Секретные значения никогда не вводятся, не сохраняются и не отображаются здесь.",
-    "zh-CN": ". 机密值不会在此输入、存储或显示。"
-  },
-  "16:9 Aspect Ratio": {
-    "ar": "نسبة العرض إلى الارتفاع 16:9",
-    "de": "Seitenverhältnis 16:9",
-    "es": "Proporción de aspecto 16:9",
-    "fr": "Ratio d'aspect 16:9",
-    "id": "Rasio Aspek 16:9",
-    "ja": "16:9 アスペクト比",
-    "ko": "16:9 종횡비",
-    "ms": "Nisbah Aspek 16:9",
-    "pt": "Proporção de aspecto 16:9",
-    "ru": "Соотношение сторон 16:9",
-    "zh-CN": "16:9 宽高比"
-  },
-  "@peduarte starred 3 repositories": {
-    "ar": "@peduarte وضع نجمة على 3 مستودعات",
-    "de": "@peduarte hat 3 Repositories mit Stern markiert",
-    "es": "@peduarte marcó con estrella 3 repositorios",
-    "fr": "@peduarte a ajouté une étoile à 3 dépôts",
-    "id": "@peduarte memberi bintang pada 3 repositori",
-    "ja": "@peduarte が 3 件のリポジトリにスターを付けました",
-    "ko": "@peduarte가 3개의 리포지토리에 별을 표시했습니다",
-    "ms": "@peduarte memberi bintang kepada 3 repositori",
-    "pt": "@peduarte marcou 3 repositórios com estrela",
-    "ru": "@peduarte отметил 3 репозитория звёздочкой",
-    "zh-CN": "@peduarte 为 3 个仓库加星"
-  },
-  "A list of your recent invoices.": {
-    "ar": "قائمة بالفواتير الأخيرة الخاصة بك.",
-    "de": "Eine Liste Ihrer aktuellen Rechnungen.",
-    "es": "Una lista de tus facturas recientes.",
-    "fr": "Une liste de vos factures récentes.",
-    "id": "Daftar faktur terbaru Anda.",
-    "ja": "最近の請求書の一覧。",
-    "ko": "최근 청구서 목록입니다.",
-    "ms": "Senarai invois terkini anda.",
-    "pt": "Uma lista das suas faturas recentes.",
-    "ru": "Список ваших последних счетов.",
-    "zh-CN": "您的近期发票列表。"
-  },
-  "A request remains pending until a distinct reviewer or administrator decides it. Only an approved version replaces the active workspace policy.": {
-    "ar": "تبقى الطلبية قيد الانتظار حتى يقررها مُقيّم أو مسؤول مختلف. لا تستبدل سياسة مساحة العمل النشطة إلا نسخة مُوافَق عليها.",
-    "de": "Eine Anfrage bleibt ausstehend, bis ein anderer Prüfer oder Administrator darüber entscheidet. Nur eine genehmigte Version ersetzt die aktive Arbeitsbereichsrichtlinie.",
-    "es": "Una solicitud permanece pendiente hasta que un revisor o administrador distinto la decida. Solo una versión aprobada reemplaza la política activa del espacio de trabajo.",
-    "fr": "Une demande reste en attente jusqu'à ce qu'un relecteur ou administrateur distinct la décide. Seule une version approuvée remplace la politique active de l'espace de travail.",
-    "id": "Sebuah permintaan tetap tertunda hingga pengulas atau administrator berbeda memutuskannya. Hanya versi yang disetujui yang menggantikan kebijakan ruang kerja aktif.",
-    "ja": "申請は別のレビュアーまたは管理者が決定するまで保留のままです。承認されたバージョンのみがアクティブなワークスペースポリシーに置き換わります。",
-    "ko": "요청은 별개의 검토자 또는 관리자가 결정할 때까지 보류 상태로 남습니다. 승인된 버전만 활성 작업 공간 정책을 대체합니다.",
-    "ms": "Permintaan kekal tertunda sehingga seorang penyemak atau pentadbir yang berbeza membuat keputusan. Hanya versi yang diluluskan menggantikan dasar ruang kerja aktif.",
-    "pt": "Um pedido permanece pendente até que um revisor ou administrador distinto o decida. Apenas uma versão aprovada substitui a política ativa do espaço de trabalho.",
-    "ru": "Запрос остаётся в ожидании, пока другой рецензент или администратор не примет решение. Только одобренная версия заменит активную политику рабочей области.",
-    "zh-CN": "该请求将一直处于挂起状态，直到由不同的审查者或管理员决定。只有经过批准的版本才会替换当前的工作区策略。"
-  },
   "AB": {
     "ar": "AB",
     "de": "AB",
@@ -75,7 +10,15 @@
     "ms": "AB",
     "pt": "AB",
     "ru": "AB",
-    "zh-CN": "AB"
+    "zh-CN": "AB",
+    "hi": "AB",
+    "vi": "AB",
+    "th": "AB",
+    "tr": "AB",
+    "pl": "AB",
+    "nl": "AB",
+    "it": "AB",
+    "sv": "AB"
   },
   "AI ChatBox": {
     "ar": "مربع الدردشة AI",
@@ -88,7 +31,15 @@
     "ms": "Kotak Sembang AI",
     "pt": "ChatBox de IA",
     "ru": "AI ChatBox",
-    "zh-CN": "AI 聊天框"
+    "zh-CN": "AI 聊天框",
+    "hi": "AI ChatBox",
+    "vi": "AI ChatBox",
+    "th": "AI ChatBox",
+    "tr": "AI ChatBox",
+    "pl": "AI ChatBox",
+    "nl": "AI ChatBox",
+    "it": "AI ChatBox",
+    "sv": "AI ChatBox"
   },
   "ANGELMIND": {
     "ar": "ANGELMIND",
@@ -101,7 +52,15 @@
     "ms": "ANGELMIND",
     "pt": "ANGELMIND",
     "ru": "ANGELMIND",
-    "zh-CN": "ANGELMIND"
+    "zh-CN": "ANGELMIND",
+    "hi": "ANGELMIND",
+    "vi": "ANGELMIND",
+    "th": "ANGELMIND",
+    "tr": "ANGELMIND",
+    "pl": "ANGELMIND",
+    "nl": "ANGELMIND",
+    "it": "ANGELMIND",
+    "sv": "ANGELMIND"
   },
   "Accent": {
     "ar": "لهجة",
@@ -114,7 +73,15 @@
     "ms": "Aksen",
     "pt": "Acento",
     "ru": "Акцент",
-    "zh-CN": "强调色"
+    "zh-CN": "强调色",
+    "hi": "एक्सेंट",
+    "vi": "Tông màu nhấn",
+    "th": "สีเน้น",
+    "tr": "Vurgu",
+    "pl": "Akcent",
+    "nl": "Accent",
+    "it": "Accento",
+    "sv": "Accent"
   },
   "Accept terms and conditions": {
     "ar": "قبول الشروط والأحكام",
@@ -127,7 +94,15 @@
     "ms": "Terima terma dan syarat",
     "pt": "Aceitar termos e condições",
     "ru": "Принять условия",
-    "zh-CN": "接受条款和条件"
+    "zh-CN": "接受条款和条件",
+    "hi": "नियम और शर्तें स्वीकार करें",
+    "vi": "Chấp nhận các điều khoản và điều kiện",
+    "th": "ยอมรับข้อกำหนดและเงื่อนไข",
+    "tr": "Hüküm ve koşulları kabul et",
+    "pl": "Akceptuj warunki i zasady",
+    "nl": "Accepteer de voorwaarden",
+    "it": "Accetta i termini e le condizioni",
+    "sv": "Acceptera villkor och bestämmelser"
   },
   "Accordion": {
     "ar": "أكورديون",
@@ -140,7 +115,15 @@
     "ms": "Akordeon",
     "pt": "Acordeão",
     "ru": "Аккордеон",
-    "zh-CN": "手风琴"
+    "zh-CN": "手风琴",
+    "hi": "एकॉर्डियन",
+    "vi": "Nhóm có thể thu gọn",
+    "th": "แถบยุบ/ขยาย",
+    "tr": "Akordeon",
+    "pl": "Akordeon",
+    "nl": "Accordeon",
+    "it": "Pannello a fisarmonica",
+    "sv": "Fällbar lista"
   },
   "Account": {
     "ar": "الحساب",
@@ -153,7 +136,15 @@
     "ms": "Akaun",
     "pt": "Conta",
     "ru": "Учетная запись",
-    "zh-CN": "账户"
+    "zh-CN": "账户",
+    "hi": "खाता",
+    "vi": "Tài khoản",
+    "th": "บัญชี",
+    "tr": "Hesap",
+    "pl": "Konto",
+    "nl": "Account",
+    "it": "Account",
+    "sv": "Konto"
   },
   "Acknowledge": {
     "ar": "أقر",
@@ -166,7 +157,15 @@
     "ms": "Akui",
     "pt": "Reconhecer",
     "ru": "Подтвердить",
-    "zh-CN": "确认"
+    "zh-CN": "确认",
+    "hi": "स्वीकार करें",
+    "vi": "Xác nhận",
+    "th": "รับทราบ",
+    "tr": "Onayla",
+    "pl": "Potwierdź",
+    "nl": "Bevestigen",
+    "it": "Conferma",
+    "sv": "Bekräfta"
   },
   "Activate": {
     "ar": "تفعيل",
@@ -179,7 +178,15 @@
     "ms": "Aktifkan",
     "pt": "Ativar",
     "ru": "Активировать",
-    "zh-CN": "激活"
+    "zh-CN": "激活",
+    "hi": "सक्रिय करें",
+    "vi": "Kích hoạt",
+    "th": "เปิดใช้งาน",
+    "tr": "Etkinleştir",
+    "pl": "Aktywuj",
+    "nl": "Activeren",
+    "it": "Attiva",
+    "sv": "Aktivera"
   },
   "Activation gate": {
     "ar": "بوابة التفعيل",
@@ -192,20 +199,15 @@
     "ms": "Gerbang aktivasi",
     "pt": "Portão de ativação",
     "ru": "Ворота активации",
-    "zh-CN": "激活门"
-  },
-  "Active-only · cooldown-aware · session-aware · budget-aware": {
-    "ar": "نشط فقط · مع مراعاة فترة التهدئة · مع مراعاة الجلسة · مع مراعاة الميزانية",
-    "de": "Nur aktiv · Cooldown-berücksichtigt · Sitzungsbezogen · Budgetbezogen",
-    "es": "Solo activo · consciente del tiempo de enfriamiento · consciente de la sesión · consciente del presupuesto",
-    "fr": "Uniquement actif · prenant en compte le temps de repos · prenant en compte la session · prenant en compte le budget",
-    "id": "Hanya aktif · memperhatikan cooldown · memperhatikan sesi · memperhatikan anggaran",
-    "ja": "アクティブのみ · クールダウンを考慮 · セッションを考慮 · 予算を考慮",
-    "ko": "활성 전용 · 쿨다운 고려 · 세션 고려 · 예산 고려",
-    "ms": "Hanya aktif · mengambil kira sela masa · mengambil kira sesi · mengambil kira bajet",
-    "pt": "Apenas ativo · ciente do tempo de espera · ciente da sessão · ciente do orçamento",
-    "ru": "Только активные · учитывается кулдаун · учитывается сессия · учитывается бюджет",
-    "zh-CN": "仅活动 · 考虑冷却时间 · 考虑会话 · 考虑预算"
+    "zh-CN": "激活门",
+    "hi": "सक्रियकरण गेट",
+    "vi": "Ngưỡng kích hoạt",
+    "th": "จุดควบคุมการเปิดใช้งาน",
+    "tr": "Aktivasyon kapısı",
+    "pl": "Bramka aktywacji",
+    "nl": "Activeringspoort",
+    "it": "Gate di attivazione",
+    "sv": "Aktiveringsgrind"
   },
   "Add": {
     "ar": "إضافة",
@@ -218,7 +220,15 @@
     "ms": "Tambah",
     "pt": "Adicionar",
     "ru": "Добавить",
-    "zh-CN": "添加"
+    "zh-CN": "添加",
+    "hi": "जोड़ें",
+    "vi": "Thêm",
+    "th": "เพิ่ม",
+    "tr": "Ekle",
+    "pl": "Dodaj",
+    "nl": "Toevoegen",
+    "it": "Aggiungi",
+    "sv": "Lägg till"
   },
   "Add to library": {
     "ar": "أضف إلى المكتبة",
@@ -231,7 +241,15 @@
     "ms": "Tambah ke perpustakaan",
     "pt": "Adicionar à biblioteca",
     "ru": "Добавить в библиотеку",
-    "zh-CN": "添加到库"
+    "zh-CN": "添加到库",
+    "hi": "लाइब्रेरी में जोड़ें",
+    "vi": "Thêm vào thư viện",
+    "th": "เพิ่มลงในคลัง",
+    "tr": "Kütüphaneye ekle",
+    "pl": "Dodaj do biblioteki",
+    "nl": "Toevoegen aan bibliotheek",
+    "it": "Aggiungi alla libreria",
+    "sv": "Lägg till i biblioteket"
   },
   "Administrative checks": {
     "ar": "فحوصات إدارية",
@@ -244,7 +262,15 @@
     "ms": "Pemeriksaan pentadbiran",
     "pt": "Verificações administrativas",
     "ru": "Административные проверки",
-    "zh-CN": "管理检查"
+    "zh-CN": "管理检查",
+    "hi": "प्रशासनिक जाँच",
+    "vi": "Kiểm tra quản trị",
+    "th": "การตรวจสอบของผู้ดูแลระบบ",
+    "tr": "İdari kontroller",
+    "pl": "Kontrole administracyjne",
+    "nl": "Administratieve controles",
+    "it": "Controlli amministrativi",
+    "sv": "Administrativa kontroller"
   },
   "After the draft has a confirmed HTTPS endpoint and a workspace signing secret reference, create a review request. Approval records readiness only and never turns delivery on.": {
     "ar": "بعد أن تحتوي المسوَّدة على نقطة نهاية HTTPS مؤكدة ومرجع مفتاح توقيع workspace، أنشئ طلب مراجعة. تُسجّل الموافقة جاهزية فقط ولا تُفعّل التسليم أبدًا.",
@@ -257,7 +283,15 @@
     "ms": "Setelah draf mempunyai endpoint HTTPS yang disahkan dan rujukan rahsia tandatangan workspace, buat permintaan semakan. Kelulusan hanya merekodkan kesediaan dan tidak pernah mengaktifkan penghantaran.",
     "pt": "Depois que o rascunho tiver um endpoint HTTPS confirmado e uma referência ao segredo de assinatura do workspace, crie uma solicitação de revisão. A aprovação apenas regista a prontidão e nunca ativa a entrega.",
     "ru": "После того как у черновика будет подтверждённый HTTPS-эндпоинт и ссылка на секрет подписи workspace, создайте запрос на проверку. Одобрение фиксирует только готовность и никогда не включает доставку.",
-    "zh-CN": "在草案具有已确认的 HTTPS 端点和 workspace 签名密钥引用后，创建审查请求。批准仅记录准备就绪，不会开启投递。"
+    "zh-CN": "在草案具有已确认的 HTTPS 端点和 workspace 签名密钥引用后，创建审查请求。批准仅记录准备就绪，不会开启投递。",
+    "hi": "ड्राफ्ट के पास एक पुष्ट HTTPS एंडपॉइंट और वर्कस्पेस साइनिंग सीक्रेट संदर्भ होने के बाद समीक्षा अनुरोध बनाएँ। अनुमोदन केवल तत्परता दर्ज करता है और कभी भी डिलीवरी चालू नहीं करता।",
+    "vi": "Sau khi bản nháp có điểm cuối HTTPS được xác nhận và tham chiếu bí mật ký của không gian làm việc, hãy tạo yêu cầu xem xét. Việc phê duyệt chỉ ghi nhận trạng thái sẵn sàng và không bao giờ bật triển khai.",
+    "th": "เมื่อร่างมี endpoint HTTPS ที่ยืนยันแล้ว และมีการอ้างอิง signing secret ของ workspace ให้สร้างคำขอทบทวน การอนุมัติจะบันทึกเฉพาะความพร้อม และจะไม่เปิดใช้งานการส่งมอบ",
+    "tr": "Taslak doğrulanmış bir HTTPS uç noktası ve bir çalışma alanı imzalama gizli referansı elde edildikten sonra bir inceleme isteği oluşturun. Onay yalnızca hazır olmayı kaydeder ve teslimatı asla etkinleştirmez.",
+    "pl": "Gdy szkic ma potwierdzony punkt końcowy HTTPS oraz odwołanie do sekretu podpisującego przestrzeni roboczej, utwórz prośbę o przegląd. Zatwierdzenie odnotowuje tylko gotowość i nigdy nie włącza dostarczania.",
+    "nl": "Zodra het concept een bevestigd HTTPS-endpoint en een referentie naar het ondertekeningsgeheim van de werkruimte heeft, maak dan een beoordelingsverzoek. Goedkeuring registreert alleen gereedheid en schakelt de levering nooit in.",
+    "it": "Dopo che la bozza ha un endpoint HTTPS confermato e un riferimento al secret di firma dello spazio di lavoro, crea una richiesta di revisione. L'approvazione registra solo la prontezza e non attiva mai la consegna.",
+    "sv": "Efter att utkastet har en bekräftad HTTPS-endpoint och en referens till arbetsytans signeringshemlighet, skapa en granskningsförfrågan. Godkännanden registrerar endast beredskap och aktiverar aldrig leverans."
   },
   "Airplane Mode": {
     "ar": "وضع الطيران",
@@ -270,20 +304,15 @@
     "ms": "Mod Pesawat",
     "pt": "Modo avião",
     "ru": "Авиарежим",
-    "zh-CN": "飞行模式"
-  },
-  "Alert matrix": {
-    "ar": "مصفوفة التنبيهات",
-    "de": "Alarmmatrix",
-    "es": "Matriz de alertas",
-    "fr": "Matrice d'alertes",
-    "id": "Matriks peringatan",
-    "ja": "アラートマトリクス",
-    "ko": "알림 매트릭스",
-    "ms": "Matriks amaran",
-    "pt": "Matriz de alertas",
-    "ru": "Матрица оповещений",
-    "zh-CN": "告警矩阵"
+    "zh-CN": "飞行模式",
+    "hi": "एयरप्लेन मोड",
+    "vi": "Chế độ Máy bay",
+    "th": "โหมดเครื่องบิน",
+    "tr": "Uçak Modu",
+    "pl": "Tryb samolotowy",
+    "nl": "Vliegtuigmodus",
+    "it": "Modalità aereo",
+    "sv": "Flygplansläge"
   },
   "Alerts": {
     "ar": "التنبيهات",
@@ -296,7 +325,15 @@
     "ms": "Amaran",
     "pt": "Alertas",
     "ru": "Оповещения",
-    "zh-CN": "告警"
+    "zh-CN": "告警",
+    "hi": "अलर्ट",
+    "vi": "Cảnh báo",
+    "th": "การแจ้งเตือน",
+    "tr": "Uyarılar",
+    "pl": "Alerty",
+    "nl": "Meldingen",
+    "it": "Avvisi",
+    "sv": "Aviseringar"
   },
   "All notifications marked as read.": {
     "ar": "تم تمييز جميع الإشعارات كمقروءة.",
@@ -309,20 +346,15 @@
     "ms": "Semua pemberitahuan ditandakan sebagai dibaca.",
     "pt": "Todas as notificações marcadas como lidas.",
     "ru": "Все уведомления отмечены как прочтённые.",
-    "zh-CN": "所有通知已标记为已读。"
-  },
-  "Allowlist, one entry per line": {
-    "ar": "قائمة السماح، إدخال واحد لكل سطر",
-    "de": "Zulassungsliste, ein Eintrag pro Zeile",
-    "es": "Lista de permitidos, una entrada por línea",
-    "fr": "Liste autorisée, une entrée par ligne",
-    "id": "Daftar diizinkan, satu entri per baris",
-    "ja": "許可リスト、1 行につき 1 件",
-    "ko": "허용 목록, 항목은 줄마다 하나씩",
-    "ms": "Senarai dibenarkan, satu entri setiap baris",
-    "pt": "Lista de permitidos, uma entrada por linha",
-    "ru": "Белый список, по одному элементу на строку",
-    "zh-CN": "允许列表，每行一项"
+    "zh-CN": "所有通知已标记为已读。",
+    "hi": "सभी सूचनाएँ पढ़ी हुई के रूप में चिह्नित।",
+    "vi": "Tất cả thông báo đã được đánh dấu là đã đọc.",
+    "th": "การแจ้งเตือนทั้งหมดถูกทำเครื่องหมายว่าอ่านแล้ว",
+    "tr": "Tüm bildirimler okundu olarak işaretlendi.",
+    "pl": "Wszystkie powiadomienia oznaczono jako przeczytane.",
+    "nl": "Alle meldingen gemarkeerd als gelezen.",
+    "it": "Tutte le notifiche contrassegnate come lette.",
+    "sv": "Alla aviseringar markerade som lästa."
   },
   "Amount": {
     "ar": "المبلغ",
@@ -335,7 +367,15 @@
     "ms": "Jumlah",
     "pt": "Valor",
     "ru": "Сумма",
-    "zh-CN": "金额"
+    "zh-CN": "金额",
+    "hi": "राशि",
+    "vi": "Số lượng",
+    "th": "จำนวน",
+    "tr": "Tutar",
+    "pl": "Kwota",
+    "nl": "Bedrag",
+    "it": "Importo",
+    "sv": "Belopp"
   },
   "An unexpected error occurred.": {
     "ar": "حدث خطأ غير متوقع.",
@@ -348,7 +388,15 @@
     "ms": "Ralat tidak dijangka berlaku.",
     "pt": "Ocorreu um erro inesperado.",
     "ru": "Произошла непредвиденная ошибка.",
-    "zh-CN": "发生了意外错误。"
+    "zh-CN": "发生了意外错误。",
+    "hi": "एक अप्रत्याशित त्रुटि हुई।",
+    "vi": "Đã xảy ra lỗi không mong đợi.",
+    "th": "เกิดข้อผิดพลาดที่ไม่คาดคิด",
+    "tr": "Beklenmeyen bir hata oluştu.",
+    "pl": "Wystąpił nieoczekiwany błąd.",
+    "nl": "Er is een onverwachte fout opgetreden.",
+    "it": "Si è verificato un errore imprevisto.",
+    "sv": "Ett oväntat fel uppstod."
   },
   "Apple": {
     "ar": "Apple",
@@ -361,7 +409,15 @@
     "ms": "Apple",
     "pt": "Apple",
     "ru": "Apple",
-    "zh-CN": "Apple"
+    "zh-CN": "Apple",
+    "hi": "Apple",
+    "vi": "Apple",
+    "th": "Apple",
+    "tr": "Apple",
+    "pl": "Apple",
+    "nl": "Apple",
+    "it": "Apple",
+    "sv": "Apple"
   },
   "Approval ledger": {
     "ar": "سجل الموافقات",
@@ -374,7 +430,15 @@
     "ms": "Lejar kelulusan",
     "pt": "Livro de aprovações",
     "ru": "Журнал утверждений",
-    "zh-CN": "审批账本"
+    "zh-CN": "审批账本",
+    "hi": "अनुमोदन लेजर",
+    "vi": "Sổ ghi phê duyệt",
+    "th": "สมุดบันทึกการอนุมัติ",
+    "tr": "Onay defteri",
+    "pl": "Rejestr zatwierdzeń",
+    "nl": "Goedkeuringsregister",
+    "it": "Registro approvazioni",
+    "sv": "Godkännandelogg"
   },
   "Approve": {
     "ar": "وافق",
@@ -387,7 +451,15 @@
     "ms": "Setujui",
     "pt": "Aprovar",
     "ru": "Одобрить",
-    "zh-CN": "批准"
+    "zh-CN": "批准",
+    "hi": "अनुमोदित करें",
+    "vi": "Phê duyệt",
+    "th": "อนุมัติ",
+    "tr": "Onayla",
+    "pl": "Zatwierdź",
+    "nl": "Goedkeuren",
+    "it": "Approva",
+    "sv": "Godkänn"
   },
   "Archive": {
     "ar": "أرشفة",
@@ -400,7 +472,15 @@
     "ms": "Arkib",
     "pt": "Arquivar",
     "ru": "Архивировать",
-    "zh-CN": "存档"
+    "zh-CN": "存档",
+    "hi": "आर्काइव",
+    "vi": "Lưu trữ",
+    "th": "เก็บถาวร",
+    "tr": "Arşiv",
+    "pl": "Archiwum",
+    "nl": "Archiveren",
+    "it": "Archivia",
+    "sv": "Arkivera"
   },
   "Are you absolutely sure?": {
     "ar": "هل أنت متأكد تمامًا؟",
@@ -413,7 +493,15 @@
     "ms": "Adakah anda benar-benar pasti?",
     "pt": "Tem certeza absoluta?",
     "ru": "Вы абсолютно уверены?",
-    "zh-CN": "您真的确定吗？"
+    "zh-CN": "您真的确定吗？",
+    "hi": "क्या आप पूरी तरह सुनिश्चित हैं?",
+    "vi": "Bạn có hoàn toàn chắc chắn không?",
+    "th": "คุณแน่ใจอย่างแน่นอนหรือไม่?",
+    "tr": "Kesinlikle emin misiniz?",
+    "pl": "Czy jesteś tego absolutnie pewien?",
+    "nl": "Weet u het zeker?",
+    "it": "Sei assolutamente sicuro?",
+    "sv": "Är du helt säker?"
   },
   "Assurance": {
     "ar": "الضمان",
@@ -426,7 +514,15 @@
     "ms": "Jaminan",
     "pt": "Garantia",
     "ru": "Гарантия",
-    "zh-CN": "保证"
+    "zh-CN": "保证",
+    "hi": "आश्वासन",
+    "vi": "Đảm bảo",
+    "th": "ความมั่นใจ",
+    "tr": "Güvence",
+    "pl": "Zapewnienie",
+    "nl": "Zekerheid",
+    "it": "Garanzia",
+    "sv": "Säkerhetssäkring"
   },
   "Assurance control": {
     "ar": "ضوابط الضمان",
@@ -439,20 +535,15 @@
     "ms": "Kawalan jaminan",
     "pt": "Controle de garantia",
     "ru": "Контроль гарантии",
-    "zh-CN": "保证控制"
-  },
-  "Attach an existing workspace evidence artifact by ID. The server rejects artifacts from another workspace and requires incident-response access.": {
-    "ar": "قم بإرفاق قطعة الدليل الخاصة بـ workspace الموجودة عن طريق المعرف (ID). يرفض الخادم القطع من workspace آخر ويتطلب وصول incident-response.",
-    "de": "Hängen Sie ein vorhandenes workspace-Beweisartefakt per ID an. Der Server lehnt Artefakte aus einem anderen workspace ab und erfordert incident-response-Zugriff.",
-    "es": "Adjunte un artifact de evidencia existente del workspace por ID. El servidor rechaza artifacts de otro workspace y requiere acceso incident-response.",
-    "fr": "Joignez un artefact de preuve existant du workspace par ID. Le serveur rejette les artefacts d'un autre workspace et exige un accès incident-response.",
-    "id": "Lampirkan artifact bukti workspace yang sudah ada berdasarkan ID. Server menolak artifact dari workspace lain dan memerlukan akses incident-response.",
-    "ja": "既存の workspace 証拠アーティファクトを ID で添付してください。サーバーは別の workspace のアーティファクトを拒否し、incident-response アクセスを要求します。",
-    "ko": "존재하는 workspace 증거 아티팩트를 ID로 첨부하세요. 서버는 다른 workspace의 아티팩트를 거부하며 incident-response 액세스가 필요합니다.",
-    "ms": "Lampirkan artifak bukti workspace sedia ada mengikut ID. Pelayan menolak artifak dari workspace lain dan memerlukan akses incident-response.",
-    "pt": "Anexe um artefato de evidência do workspace existente por ID. O servidor rejeita artefatos de outro workspace e exige acesso incident-response.",
-    "ru": "Прикрепите существующий артефакт доказательства workspace по ID. Сервер отклоняет артефакты из другого workspace и требует доступ incident-response.",
-    "zh-CN": "按 ID 附加现有的 workspace 证据工件。服务器会拒绝来自其他 workspace 的工件，并要求 incident-response 访问权限。"
+    "zh-CN": "保证控制",
+    "hi": "आश्वासन नियंत्रण",
+    "vi": "Kiểm soát đảm bảo",
+    "th": "การควบคุมความมั่นใจ",
+    "tr": "Güvence kontrolü",
+    "pl": "Kontrola zapewnienia",
+    "nl": "Waarborgcontrole",
+    "it": "Controllo di garanzia",
+    "sv": "Säkerhetssäkringskontroll"
   },
   "Audit events": {
     "ar": "أحداث التدقيق",
@@ -465,7 +556,15 @@
     "ms": "Acara audit",
     "pt": "Eventos de auditoria",
     "ru": "События аудита",
-    "zh-CN": "审计事件"
+    "zh-CN": "审计事件",
+    "hi": "ऑडिट घटनाएँ",
+    "vi": "Sự kiện kiểm toán",
+    "th": "เหตุการณ์ตรวจสอบ",
+    "tr": "Denetim olayları",
+    "pl": "Zdarzenia audytu",
+    "nl": "Auditgebeurtenissen",
+    "it": "Eventi di audit",
+    "sv": "Revisionshändelser"
   },
   "Authorized Program": {
     "ar": "البرنامج المصرح به",
@@ -478,20 +577,15 @@
     "ms": "Program yang Dibenarkan",
     "pt": "Programa autorizado",
     "ru": "Авторизованная программа",
-    "zh-CN": "已授权程序"
-  },
-  "Authorized security research · internal command interface": {
-    "ar": "أبحاث أمنيّة مرخّصة · واجهة أوامر داخلية",
-    "de": "Autorisierte Sicherheitsforschung · interne Befehlsoberfläche",
-    "es": "Investigación de seguridad autorizada · interfaz de comandos interna",
-    "fr": "Recherche en sécurité autorisée · interface de commande interne",
-    "id": "Penelitian keamanan yang diotorisasi · antarmuka perintah internal",
-    "ja": "認可されたセキュリティ調査 · 内部コマンドインターフェース",
-    "ko": "승인된 보안 연구 · 내부 명령 인터페이스",
-    "ms": "Penyelidikan keselamatan yang dibenarkan · antara muka arahan dalaman",
-    "pt": "Pesquisa de segurança autorizada · interface de comando interna",
-    "ru": "Авторизованные исследования безопасности · внутренний интерфейс команд",
-    "zh-CN": "授权安全研究 · 内部命令接口"
+    "zh-CN": "已授权程序",
+    "hi": "अधिकृत प्रोग्राम",
+    "vi": "Chương trình được ủy quyền",
+    "th": "โปรแกรมที่ได้รับอนุญาต",
+    "tr": "Yetkili Program",
+    "pl": "Autoryzowany program",
+    "nl": "Geautoriseerd programma",
+    "it": "Programma autorizzato",
+    "sv": "Auktoriserat program"
   },
   "Avatar": {
     "ar": "الصورة الرمزية",
@@ -504,7 +598,15 @@
     "ms": "Avatar",
     "pt": "Avatar",
     "ru": "Аватар",
-    "zh-CN": "头像"
+    "zh-CN": "头像",
+    "hi": "अवतार",
+    "vi": "Ảnh đại diện",
+    "th": "รูปประจำตัว",
+    "tr": "Avatar",
+    "pl": "Awatar",
+    "nl": "Avatar",
+    "it": "Avatar",
+    "sv": "Avatar"
   },
   "Background": {
     "ar": "الخلفية",
@@ -517,7 +619,15 @@
     "ms": "Latar belakang",
     "pt": "Fundo",
     "ru": "Фон",
-    "zh-CN": "背景"
+    "zh-CN": "背景",
+    "hi": "पृष्ठभूमि",
+    "vi": "Nền",
+    "th": "พื้นหลัง",
+    "tr": "Arka plan",
+    "pl": "Tło",
+    "nl": "Achtergrond",
+    "it": "Sfondo",
+    "sv": "Bakgrund"
   },
   "Badges": {
     "ar": "الشارات",
@@ -530,7 +640,15 @@
     "ms": "Lencana",
     "pt": "Insígnias",
     "ru": "Значки",
-    "zh-CN": "徽章"
+    "zh-CN": "徽章",
+    "hi": "बैज",
+    "vi": "Huy hiệu",
+    "th": "ตรา",
+    "tr": "Rozetler",
+    "pl": "Odznaki",
+    "nl": "Insignes",
+    "it": "Distintivi",
+    "sv": "Märken"
   },
   "Banana": {
     "ar": "موز",
@@ -543,7 +661,15 @@
     "ms": "Pisang",
     "pt": "Banana",
     "ru": "Банан",
-    "zh-CN": "香蕉"
+    "zh-CN": "香蕉",
+    "hi": "केला",
+    "vi": "Chuối",
+    "th": "กล้วย",
+    "tr": "Muz",
+    "pl": "Banan",
+    "nl": "Banaan",
+    "it": "Banana",
+    "sv": "Banan"
   },
   "Bank Transfer": {
     "ar": "حوالة مصرفية",
@@ -556,7 +682,15 @@
     "ms": "Transfer Bank",
     "pt": "Transferência bancária",
     "ru": "Банковский перевод",
-    "zh-CN": "银行转账"
+    "zh-CN": "银行转账",
+    "hi": "बैंक ट्रांसफ़र",
+    "vi": "Chuyển khoản ngân hàng",
+    "th": "การโอนเงินผ่านธนาคาร",
+    "tr": "Banka Havalesi",
+    "pl": "Przelew bankowy",
+    "nl": "Bankoverschrijving",
+    "it": "Bonifico bancario",
+    "sv": "Banköverföring"
   },
   "Billing": {
     "ar": "الفوترة",
@@ -569,7 +703,15 @@
     "ms": "Pengebilan",
     "pt": "Faturamento",
     "ru": "Выставление счетов",
-    "zh-CN": "计费"
+    "zh-CN": "计费",
+    "hi": "बिलिंग",
+    "vi": "Thanh toán",
+    "th": "การเรียกเก็บเงิน",
+    "tr": "Faturalandırma",
+    "pl": "Rozliczenia",
+    "nl": "Facturering",
+    "it": "Fatturazione",
+    "sv": "Fakturering"
   },
   "Breadcrumb": {
     "ar": "سلسلة التنقل",
@@ -582,20 +724,15 @@
     "ms": "Jejak navigasi",
     "pt": "Trilha de navegação",
     "ru": "Хлебные крошки",
-    "zh-CN": "面包屑"
-  },
-  "Budget + session checks": {
-    "ar": "فحوصات الميزانية + الجلسات",
-    "de": "Budget + Sitzungsprüfungen",
-    "es": "Comprobaciones de presupuesto + sesión",
-    "fr": "Vérifications du budget + de session",
-    "id": "Pemeriksaan anggaran + sesi",
-    "ja": "予算 + セッションチェック",
-    "ko": "예산 + 세션 검사",
-    "ms": "Pemeriksaan belanjawan + sesi",
-    "pt": "Verificações de orçamento + sessão",
-    "ru": "Проверки бюджета + сессий",
-    "zh-CN": "预算 + 会话检查"
+    "zh-CN": "面包屑",
+    "hi": "ब्रेडक्रंब",
+    "vi": "Đường dẫn phân cấp",
+    "th": "เส้นทางนำทาง",
+    "tr": "Gezinti yolu",
+    "pl": "Ścieżka nawigacji",
+    "nl": "Broodkruimel",
+    "it": "Percorso di navigazione",
+    "sv": "Brödsmulor"
   },
   "Buttons": {
     "ar": "الأزرار",
@@ -608,7 +745,15 @@
     "ms": "Butang",
     "pt": "Botões",
     "ru": "Кнопки",
-    "zh-CN": "按钮"
+    "zh-CN": "按钮",
+    "hi": "बटन",
+    "vi": "Nút",
+    "th": "ปุ่ม",
+    "tr": "Düğmeler",
+    "pl": "Przyciski",
+    "nl": "Knoppen",
+    "it": "Pulsanti",
+    "sv": "Knappar"
   },
   "CN": {
     "ar": "CN",
@@ -621,7 +766,15 @@
     "ms": "CN",
     "pt": "CN",
     "ru": "CN",
-    "zh-CN": "CN"
+    "zh-CN": "CN",
+    "hi": "CN",
+    "vi": "CN",
+    "th": "CN",
+    "tr": "CN",
+    "pl": "CN",
+    "nl": "CN",
+    "it": "CN",
+    "sv": "CN"
   },
   "Calendar": {
     "ar": "التقويم",
@@ -634,7 +787,15 @@
     "ms": "Kalendar",
     "pt": "Calendário",
     "ru": "Календарь",
-    "zh-CN": "日历"
+    "zh-CN": "日历",
+    "hi": "कैलेंडर",
+    "vi": "Lịch",
+    "th": "ปฏิทิน",
+    "tr": "Takvim",
+    "pl": "Kalendarz",
+    "nl": "Kalender",
+    "it": "Calendario",
+    "sv": "Kalender"
   },
   "Cancel": {
     "ar": "إلغاء",
@@ -647,7 +808,15 @@
     "ms": "Batal",
     "pt": "Cancelar",
     "ru": "Отмена",
-    "zh-CN": "取消"
+    "zh-CN": "取消",
+    "hi": "रद्द करें",
+    "vi": "Hủy",
+    "th": "ยกเลิก",
+    "tr": "İptal",
+    "pl": "Anuluj",
+    "nl": "Annuleren",
+    "it": "Annulla",
+    "sv": "Avbryt"
   },
   "Card": {
     "ar": "بطاقة",
@@ -660,7 +829,15 @@
     "ms": "Kad",
     "pt": "Cartão",
     "ru": "Карта",
-    "zh-CN": "卡片"
+    "zh-CN": "卡片",
+    "hi": "कार्ड",
+    "vi": "Thẻ",
+    "th": "การ์ด",
+    "tr": "Kart",
+    "pl": "Karta",
+    "nl": "Kaart",
+    "it": "Scheda",
+    "sv": "Kort"
   },
   "Carousel": {
     "ar": "كاروسيل",
@@ -673,7 +850,15 @@
     "ms": "Karusel",
     "pt": "Carrossel",
     "ru": "Карусель",
-    "zh-CN": "轮播"
+    "zh-CN": "轮播",
+    "hi": "कैरोसल",
+    "vi": "Băng chuyền",
+    "th": "แถบสไลด์",
+    "tr": "Karusel",
+    "pl": "Karuzela",
+    "nl": "Carrousel",
+    "it": "Carosello",
+    "sv": "Karusell"
   },
   "Center": {
     "ar": "مركز",
@@ -686,7 +871,15 @@
     "ms": "Tengah",
     "pt": "Centro",
     "ru": "Центр",
-    "zh-CN": "居中"
+    "zh-CN": "居中",
+    "hi": "केंद्र",
+    "vi": "Trung tâm",
+    "th": "กึ่งกลาง",
+    "tr": "Merkez",
+    "pl": "Centrum",
+    "nl": "Centreren",
+    "it": "Centro",
+    "sv": "Centrum"
   },
   "Chain of custody": {
     "ar": "سلسلة الحيازة",
@@ -699,33 +892,15 @@
     "ms": "Rantai pengendalian bukti",
     "pt": "Cadeia de custódia",
     "ru": "Цепочка хранения доказательств",
-    "zh-CN": "证据保管链"
-  },
-  "Change control": {
-    "ar": "التحكم في التغيير",
-    "de": "Änderungskontrolle",
-    "es": "Control de cambios",
-    "fr": "Contrôle des modifications",
-    "id": "Kontrol perubahan",
-    "ja": "変更管理",
-    "ko": "변경 통제",
-    "ms": "Kawalan perubahan",
-    "pt": "Controle de alterações",
-    "ru": "Контроль изменений",
-    "zh-CN": "变更控制"
-  },
-  "Change summary": {
-    "ar": "ملخص التغيير",
-    "de": "Änderungsübersicht",
-    "es": "Resumen de cambios",
-    "fr": "Résumé des modifications",
-    "id": "Ringkasan perubahan",
-    "ja": "変更の概要",
-    "ko": "변경 요약",
-    "ms": "Ringkasan perubahan",
-    "pt": "Resumo de alterações",
-    "ru": "Сводка изменений",
-    "zh-CN": "更改摘要"
+    "zh-CN": "证据保管链",
+    "hi": "कस्टडी की श्रृंखला",
+    "vi": "Chuỗi quản lý chứng cứ",
+    "th": "ห่วงโซ่การควบคุมหลักฐาน",
+    "tr": "Delil zinciri",
+    "pl": "Łańcuch pieczy nad dowodami",
+    "nl": "Keten van bewaring",
+    "it": "Catena di custodia",
+    "sv": "Beviskedja"
   },
   "Code of conduct": {
     "ar": "مدونة السلوك",
@@ -738,7 +913,15 @@
     "ms": "Kod kelakuan",
     "pt": "Código de conduta",
     "ru": "Кодекс поведения",
-    "zh-CN": "行为准则"
+    "zh-CN": "行为准则",
+    "hi": "आचरण संहिता",
+    "vi": "Bộ quy tắc ứng xử",
+    "th": "จรรยาบรรณ",
+    "tr": "Davranış kuralları",
+    "pl": "Kodeks postępowania",
+    "nl": "Gedragscode",
+    "it": "Codice di condotta",
+    "sv": "Uppförandekod"
   },
   "Collapsible": {
     "ar": "قابل للطي",
@@ -751,7 +934,15 @@
     "ms": "Boleh dilipat",
     "pt": "Colapsável",
     "ru": "Сворачиваемый",
-    "zh-CN": "可折叠"
+    "zh-CN": "可折叠",
+    "hi": "विस्तार/संक्षेप योग्य",
+    "vi": "Có thể thu gọn",
+    "th": "ยุบได้",
+    "tr": "Daraltılabilir",
+    "pl": "Zwijane",
+    "nl": "Inklapbaar",
+    "it": "Collassabile",
+    "sv": "Kollapsbar"
   },
   "Color Combinations": {
     "ar": "تركيبات الألوان",
@@ -764,7 +955,15 @@
     "ms": "Kombinasi Warna",
     "pt": "Combinações de cores",
     "ru": "Комбинации цветов",
-    "zh-CN": "配色组合"
+    "zh-CN": "配色组合",
+    "hi": "रंग संयोजन",
+    "vi": "Kết hợp màu",
+    "th": "การจับคู่สี",
+    "tr": "Renk kombinasyonları",
+    "pl": "Kombinacje kolorów",
+    "nl": "Kleurcombinaties",
+    "it": "Combinazioni di colori",
+    "sv": "Färgkombinationer"
   },
   "Command": {
     "ar": "أمر",
@@ -777,7 +976,15 @@
     "ms": "Perintah",
     "pt": "Comando",
     "ru": "Команда",
-    "zh-CN": "命令"
+    "zh-CN": "命令",
+    "hi": "कमांड",
+    "vi": "Lệnh",
+    "th": "คำสั่ง",
+    "tr": "Komut",
+    "pl": "Polecenie",
+    "nl": "Commando",
+    "it": "Comando",
+    "sv": "Kommando"
   },
   "Command center": {
     "ar": "مركز الأوامر",
@@ -790,7 +997,15 @@
     "ms": "Pusat Kawalan",
     "pt": "Centro de comando",
     "ru": "Центр команд",
-    "zh-CN": "指挥中心"
+    "zh-CN": "指挥中心",
+    "hi": "कमांड सेंटर",
+    "vi": "Trung tâm điều khiển",
+    "th": "ศูนย์ควบคุม",
+    "tr": "Komut merkezi",
+    "pl": "Centrum dowodzenia",
+    "nl": "Commandocentrum",
+    "it": "Centro comandi",
+    "sv": "Kommandocentral"
   },
   "Confidence": {
     "ar": "الثقة",
@@ -803,7 +1018,15 @@
     "ms": "Keyakinan",
     "pt": "Confiança",
     "ru": "Уверенность",
-    "zh-CN": "置信度"
+    "zh-CN": "置信度",
+    "hi": "विश्वास",
+    "vi": "Độ tin cậy",
+    "th": "ความเชื่อมั่น",
+    "tr": "Güven",
+    "pl": "Pewność",
+    "nl": "Vertrouwen",
+    "it": "Fiducia",
+    "sv": "Förtroende"
   },
   "Console": {
     "ar": "وحدة التحكم",
@@ -816,7 +1039,15 @@
     "ms": "Konsol",
     "pt": "Console",
     "ru": "Консоль",
-    "zh-CN": "控制台"
+    "zh-CN": "控制台",
+    "hi": "कंसोल",
+    "vi": "Bảng điều khiển",
+    "th": "คอนโซล",
+    "tr": "Konsol",
+    "pl": "Konsola",
+    "nl": "Console",
+    "it": "Console",
+    "sv": "Konsol"
   },
   "Control": {
     "ar": "تحكم",
@@ -829,7 +1060,15 @@
     "ms": "Kawalan",
     "pt": "Controle",
     "ru": "Контроль",
-    "zh-CN": "控制"
+    "zh-CN": "控制",
+    "hi": "नियंत्रण",
+    "vi": "Kiểm soát",
+    "th": "การควบคุม",
+    "tr": "Kontrol",
+    "pl": "Kontrola",
+    "nl": "Controle",
+    "it": "Controllo",
+    "sv": "Kontroll"
   },
   "Control plane": {
     "ar": "مستوى التحكم",
@@ -842,46 +1081,15 @@
     "ms": "Lapisan kawalan",
     "pt": "Plano de controle",
     "ru": "Плоскость управления",
-    "zh-CN": "控制平面"
-  },
-  "Coverage indicators remain empty until a governed run records eligible, reviewable evidence.": {
-    "ar": "تبقى مؤشرات التغطية فارغة حتى يقوم تشغيل مُنَظَّم بتسجيل أدلة مؤهلة وقابلة للمراجعة.",
-    "de": "Die Abdeckungsindikatoren bleiben leer, bis ein gesteuerter Lauf berechtigte, überprüfbare Belege aufzeichnet.",
-    "es": "Los indicadores de cobertura permanecerán vacíos hasta que una ejecución gobernada registre evidencia elegible y revisable.",
-    "fr": "Les indicateurs de couverture restent vides tant qu'une exécution gouvernée n'a pas enregistré des preuves éligibles et vérifiables.",
-    "id": "Indikator cakupan tetap kosong sampai sebuah pelaksanaan yang diatur merekam bukti yang memenuhi syarat dan dapat ditinjau.",
-    "ja": "ガバナンスされた実行が適格でレビュー可能な証拠を記録するまでは、カバレッジ指標は空のままです。",
-    "ko": "거버넌스된 실행이 적격하고 검토 가능한 증거를 기록할 때까지 적용 범위 지표는 비어 있습니다.",
-    "ms": "Penunjuk liputan kekal kosong sehingga satu larian yang diurus merekodkan bukti yang layak dan boleh disemak.",
-    "pt": "Os indicadores de cobertura permanecem vazios até que uma execução governada registre evidências elegíveis e revisáveis.",
-    "ru": "Индикаторы покрытия остаются пустыми, пока управляемый запуск не зафиксирует допустимые, подлежащие проверке доказательства.",
-    "zh-CN": "覆盖指标将保持为空，直到受治理的运行记录了符合条件且可审查的证据。"
-  },
-  "Coverage lens": {
-    "ar": "عدسة التغطية",
-    "de": "Abdeckungsansicht",
-    "es": "Lente de cobertura",
-    "fr": "Lentille de couverture",
-    "id": "Lensa cakupan",
-    "ja": "カバレッジレンズ",
-    "ko": "커버리지 렌즈",
-    "ms": "Lensa liputan",
-    "pt": "Lente de cobertura",
-    "ru": "Режим покрытия",
-    "zh-CN": "覆盖视角"
-  },
-  "Coverage · cost · safety signals": {
-    "ar": "التغطية · التكلفة · إشارات السلامة",
-    "de": "Abdeckung · Kosten · Sicherheitssignale",
-    "es": "Cobertura · costo · señales de seguridad",
-    "fr": "Couverture · coût · signaux de sécurité",
-    "id": "Cakupan · biaya · sinyal keselamatan",
-    "ja": "カバレッジ · コスト · 安全シグナル",
-    "ko": "커버리지 · 비용 · 안전 신호",
-    "ms": "Liputan · kos · isyarat keselamatan",
-    "pt": "Cobertura · custo · sinais de segurança",
-    "ru": "Покрытие · стоимость · сигналы безопасности",
-    "zh-CN": "覆盖 · 成本 · 安全信号"
+    "zh-CN": "控制平面",
+    "hi": "कंट्रोल प्लेन",
+    "vi": "Mặt phẳng điều khiển",
+    "th": "ระนาบการควบคุม",
+    "tr": "Kontrol düzlemi",
+    "pl": "Płaszczyzna sterowania",
+    "nl": "Besturingsvlak",
+    "it": "Piano di controllo",
+    "sv": "Kontrollplan"
   },
   "Create a workspace to unlock operations controls": {
     "ar": "أنشئ مساحة عمل لتمكين عناصر التحكم في العمليات",
@@ -894,7 +1102,15 @@
     "ms": "Buat ruang kerja untuk membuka kawalan operasi",
     "pt": "Crie um espaço de trabalho para desbloquear os controles de operações",
     "ru": "Создайте рабочую область, чтобы разблокировать элементы управления операциями",
-    "zh-CN": "创建一个工作区以解锁操作控制"
+    "zh-CN": "创建一个工作区以解锁操作控制",
+    "hi": "ऑपरेशंस नियंत्रण अनलॉक करने के लिए एक वर्कस्पेस बनाएं",
+    "vi": "Tạo không gian làm việc để mở khóa các điều khiển vận hành",
+    "th": "สร้างพื้นที่ทำงานเพื่อปลดล็อกการควบคุมการปฏิบัติการ",
+    "tr": "Operasyon kontrollerinin kilidini açmak için bir çalışma alanı oluşturun",
+    "pl": "Utwórz przestrzeń roboczą, aby odblokować kontrole operacyjne",
+    "nl": "Maak een werkruimte om operationele controles te ontgrendelen",
+    "it": "Crea uno spazio di lavoro per sbloccare i controlli operativi",
+    "sv": "Skapa en arbetsyta för att låsa upp operativa kontroller"
   },
   "Create and select a workspace first.": {
     "ar": "أنشئ واختر مساحة عمل أولاً.",
@@ -907,7 +1123,15 @@
     "ms": "Buat dan pilih ruang kerja terlebih dahulu.",
     "pt": "Crie e selecione primeiro um espaço de trabalho.",
     "ru": "Сначала создайте и выберите рабочую область.",
-    "zh-CN": "请先创建并选择一个工作区。"
+    "zh-CN": "请先创建并选择一个工作区。",
+    "hi": "पहले एक वर्कस्पेस बनाएं और चुनें।",
+    "vi": "Trước tiên hãy tạo và chọn một không gian làm việc.",
+    "th": "สร้างและเลือกพื้นที่ทำงานก่อน",
+    "tr": "Önce bir çalışma alanı oluşturun ve seçin.",
+    "pl": "Najpierw utwórz i wybierz przestrzeń roboczą.",
+    "nl": "Maak eerst een werkruimte aan en selecteer deze.",
+    "it": "Crea e seleziona prima uno spazio di lavoro.",
+    "sv": "Skapa och välj en arbetsyta först."
   },
   "Create archive": {
     "ar": "إنشاء أرشيف",
@@ -920,7 +1144,15 @@
     "ms": "Buat arkib",
     "pt": "Criar arquivo",
     "ru": "Создать архив",
-    "zh-CN": "创建归档"
+    "zh-CN": "创建归档",
+    "hi": "आर्काइव बनाएं",
+    "vi": "Tạo lưu trữ",
+    "th": "สร้างที่เก็บถาวร",
+    "tr": "Arşiv oluştur",
+    "pl": "Utwórz archiwum",
+    "nl": "Archief aanmaken",
+    "it": "Crea archivio",
+    "sv": "Skapa arkiv"
   },
   "Create report draft": {
     "ar": "إنشاء مسودة تقرير",
@@ -933,7 +1165,15 @@
     "ms": "Buat draf laporan",
     "pt": "Criar rascunho de relatório",
     "ru": "Создать черновик отчета",
-    "zh-CN": "创建报告草稿"
+    "zh-CN": "创建报告草稿",
+    "hi": "रिपोर्ट ड्राफ्ट बनाएं",
+    "vi": "Tạo nháp báo cáo",
+    "th": "สร้างร่างรายงาน",
+    "tr": "Rapor taslağı oluştur",
+    "pl": "Utwórz wersję roboczą raportu",
+    "nl": "Conceptrapport aanmaken",
+    "it": "Crea bozza di rapporto",
+    "sv": "Skapa rapportutkast"
   },
   "Create the first guarded workspace. Nothing can be rehearsed until its safe harbor, conduct, allowlist, exclusions, limits, and retention are recorded.": {
     "ar": "أنشئ أول مساحة عمل محمية. لا شيء يمكن تجربته حتى يتم تسجيل safe harbor، السلوك، قائمة المسموحين، الاستثناءات، الحدود والاحتفاظ.",
@@ -946,7 +1186,15 @@
     "ms": "Buat ruang kerja terjaga pertama. Tiada apa yang boleh dilatih sehingga safe harbor, kelakuan, senarai dibenarkan, pengecualian, had dan penyimpanan direkodkan.",
     "pt": "Crie o primeiro espaço de trabalho protegido. Nada pode ser ensaiado até que o seu porto seguro, conduta, lista de permitidos, exclusões, limites e retenção sejam registrados.",
     "ru": "Создайте первую защищённую рабочую область. Ничего нельзя репетировать, пока не будут зафиксированы её «безопасная гавань», поведение, список разрешённых, исключения, лимиты и хранение.",
-    "zh-CN": "创建第一个受保护的工作区。在记录其安全港、行为、允许列表、排除项、限制和保留策略之前，无法进行任何演练。"
+    "zh-CN": "创建第一个受保护的工作区。在记录其安全港、行为、允许列表、排除项、限制和保留策略之前，无法进行任何演练。",
+    "hi": "पहला संरक्षित वर्कस्पेस बनाएं। जब तक इसका सेफ-हार्बर, आचरण, अनुमोदित सूची, बहिष्करण, सीमाएँ और रिटेंशन दर्ज नहीं होते, तब तक कुछ भी अभ्यास नहीं किया जा सकता।",
+    "vi": "Tạo không gian làm việc được bảo vệ đầu tiên. Không điều gì có thể diễn tập cho đến khi khu an toàn, quy tắc ứng xử, danh sách cho phép, các ngoại lệ, giới hạn và chính sách lưu giữ của nó được ghi nhận.",
+    "th": "สร้างพื้นที่ทำงานควบคุมแรก ไม่มีอะไรสามารถฝึกซ้อมได้จนกว่าจะบันทึกพื้นที่คุ้มครอง นโยบายการปฏิบัติ รายการอนุญาต ข้อยกเว้น ขีดจำกัด และการเก็บรักษา",
+    "tr": "İlk korumalı çalışma alanını oluşturun. Güvenli limanı, davranış kurallarını, izin listesini, hariç tutmaları, limitleri ve saklama sürelerini kaydetmeden hiçbir şey provas edilemez.",
+    "pl": "Utwórz pierwszą chronioną przestrzeń roboczą. Nic nie można przećwiczyć, dopóki nie zostaną zarejestrowane jej bezpieczna strefa, zasady zachowania, lista dozwolonych, wyłączenia, limity i okres przechowywania.",
+    "nl": "Maak de eerste beveiligde werkruimte. Niets kan worden geoefend totdat de veilige haven, gedragscode, toegestane lijst, uitsluitingen, limieten en bewaring zijn vastgelegd.",
+    "it": "Crea il primo spazio di lavoro protetto. Nulla può essere provato finché il suo porto sicuro, il codice di condotta, la lista consentita, le esclusioni, i limiti e la conservazione non sono registrati.",
+    "sv": "Skapa den första bevakade arbetsytan. Inget kan repeteras förrän dess safe harbor, uppförandekod, vitlista, undantag, gränser och lagringstider är dokumenterade."
   },
   "Created": {
     "ar": "تم الإنشاء",
@@ -959,7 +1207,15 @@
     "ms": "Dicipta",
     "pt": "Criado",
     "ru": "Создано",
-    "zh-CN": "已创建"
+    "zh-CN": "已创建",
+    "hi": "बनाया गया",
+    "vi": "Đã tạo",
+    "th": "สร้างแล้ว",
+    "tr": "Oluşturuldu",
+    "pl": "Utworzono",
+    "nl": "Aangemaakt",
+    "it": "Creato",
+    "sv": "Skapad"
   },
   "Credential label": {
     "ar": "تسمية بيانات الاعتماد",
@@ -972,7 +1228,15 @@
     "ms": "Label kredensial",
     "pt": "Rótulo de credencial",
     "ru": "Метка учетных данных",
-    "zh-CN": "凭证标签"
+    "zh-CN": "凭证标签",
+    "hi": "क्रेडेंशियल लेबल",
+    "vi": "Nhãn thông tin xác thực",
+    "th": "ป้ายชื่อข้อมูลรับรอง",
+    "tr": "Kimlik bilgisi etiketi",
+    "pl": "Etykieta poświadczenia",
+    "nl": "Label inloggegevens",
+    "it": "Etichetta credenziale",
+    "sv": "Referensetikett för autentiseringsuppgifter"
   },
   "Credential reference recorded without storing a secret value.": {
     "ar": "تم تسجيل مرجع بيانات الاعتماد دون تخزين قيمة سرية.",
@@ -985,7 +1249,15 @@
     "ms": "Rujukan kredensial direkod tanpa menyimpan nilai rahsia.",
     "pt": "Referência de credencial registrada sem armazenar um valor secreto.",
     "ru": "Ссылка на учетные данные записана без сохранения секретного значения.",
-    "zh-CN": "凭证引用已记录，但未存储秘密值。"
+    "zh-CN": "凭证引用已记录，但未存储秘密值。",
+    "hi": "गुप्त मान संग्रहीत किए बिना क्रेडेंशियल संदर्भ दर्ज किया गया।",
+    "vi": "Tham chiếu thông tin xác thực đã được ghi lại mà không lưu giá trị bí mật.",
+    "th": "บันทึกการอ้างอิงข้อมูลรับรองโดยไม่เก็บค่าลับ",
+    "tr": "Gizli bir değer saklamadan kimlik bilgisi referansı kaydedildi.",
+    "pl": "Odwołanie do poświadczenia zapisano bez przechowywania tajnej wartości.",
+    "nl": "Referentie naar de inloggegevens geregistreerd zonder een geheime waarde op te slaan.",
+    "it": "Riferimento delle credenziali registrato senza memorizzare un valore segreto.",
+    "sv": "Referens till autentiseringsuppgifter registrerad utan att lagra ett hemligt värde."
   },
   "Credential references": {
     "ar": "مراجع بيانات الاعتماد",
@@ -998,7 +1270,15 @@
     "ms": "Rujukan kredensial",
     "pt": "Referências de credenciais",
     "ru": "Ссылки на учетные данные",
-    "zh-CN": "凭证引用"
+    "zh-CN": "凭证引用",
+    "hi": "क्रेडेंशियल संदर्भ",
+    "vi": "Tham chiếu thông tin xác thực",
+    "th": "การอ้างอิงข้อมูลรับรอง",
+    "tr": "Kimlik bilgisi referansları",
+    "pl": "Odwołania do poświadczeń",
+    "nl": "Referenties voor inloggegevens",
+    "it": "Riferimenti delle credenziali",
+    "sv": "Referenser till autentiseringsuppgifter"
   },
   "Credential refs": {
     "ar": "مراجع الاعتماد",
@@ -1011,7 +1291,15 @@
     "ms": "Ref. kredensial",
     "pt": "Refs. de credenciais",
     "ru": "Сокр. ссылки на учетные данные",
-    "zh-CN": "凭证引用"
+    "zh-CN": "凭证引用",
+    "hi": "क्रेडेंशियल रेफ़्स",
+    "vi": "Tham chiếu thông tin xác thực",
+    "th": "อ้างอิงข้อมูลรับรอง",
+    "tr": "Kimlik bilgisi referansları",
+    "pl": "Ref. poświadczeń",
+    "nl": "Inlogreferenties",
+    "it": "Rif. credenziali",
+    "sv": "Uppgiftsreferenser"
   },
   "Credit Card": {
     "ar": "بطاقة ائتمان",
@@ -1024,20 +1312,15 @@
     "ms": "Kad Kredit",
     "pt": "Cartão de crédito",
     "ru": "Кредитная карта",
-    "zh-CN": "信用卡"
-  },
-  "Critical · 30m escalation": {
-    "ar": "حرج · تصعيد 30m",
-    "de": "Kritisch · Eskalation 30m",
-    "es": "Crítico · escalada 30m",
-    "fr": "Critique · escalade 30m",
-    "id": "Kritis · eskalasi 30m",
-    "ja": "重大 · 30m エスカレーション",
-    "ko": "치명적 · 30m 에스컬레이션",
-    "ms": "Kritikal · eskalasi 30m",
-    "pt": "Crítico · escalamento 30m",
-    "ru": "Критично · эскалация 30m",
-    "zh-CN": "严重 · 30m 升级"
+    "zh-CN": "信用卡",
+    "hi": "क्रेडिट कार्ड",
+    "vi": "Thẻ tín dụng",
+    "th": "บัตรเครดิต",
+    "tr": "Kredi Kartı",
+    "pl": "Karta kredytowa",
+    "nl": "Creditcard",
+    "it": "Carta di credito",
+    "sv": "Kreditkort"
   },
   "Current password": {
     "ar": "كلمة المرور الحالية",
@@ -1050,20 +1333,15 @@
     "ms": "Kata laluan semasa",
     "pt": "Senha atual",
     "ru": "Текущий пароль",
-    "zh-CN": "当前密码"
-  },
-  "Custom alerts · in-app delivery": {
-    "ar": "تنبيهات مخصصة · التسليم داخل التطبيق",
-    "de": "Benutzerdefinierte Warnungen · In-App-Zustellung",
-    "es": "Alertas personalizadas · entrega en la aplicación",
-    "fr": "Alertes personnalisées · distribution dans l'application",
-    "id": "Peringatan kustom · pengiriman dalam aplikasi",
-    "ja": "カスタムアラート · アプリ内配信",
-    "ko": "맞춤 경고 · 앱 내 전달",
-    "ms": "Amaran khusus · penghantaran dalam aplikasi",
-    "pt": "Alertas personalizadas · entrega no aplicativo",
-    "ru": "Пользовательские оповещения · доставка в приложении",
-    "zh-CN": "自定义警报 · 应用内投递"
+    "zh-CN": "当前密码",
+    "hi": "वर्तमान पासवर्ड",
+    "vi": "Mật khẩu hiện tại",
+    "th": "รหัสผ่านปัจจุบัน",
+    "tr": "Mevcut şifre",
+    "pl": "Aktualne hasło",
+    "nl": "Huidig wachtwoord",
+    "it": "Password corrente",
+    "sv": "Aktuellt lösenord"
   },
   "Data Display": {
     "ar": "عرض البيانات",
@@ -1076,7 +1354,15 @@
     "ms": "Paparan Data",
     "pt": "Exibição de dados",
     "ru": "Отображение данных",
-    "zh-CN": "数据显示"
+    "zh-CN": "数据显示",
+    "hi": "डेटा प्रदर्शन",
+    "vi": "Hiển thị dữ liệu",
+    "th": "การแสดงข้อมูล",
+    "tr": "Veri Görüntüleme",
+    "pl": "Wyświetlanie danych",
+    "nl": "Gegevensweergave",
+    "it": "Visualizzazione dati",
+    "sv": "Datavisning"
   },
   "Date Time Picker": {
     "ar": "محدد التاريخ والوقت",
@@ -1089,7 +1375,15 @@
     "ms": "Pemilih Tarikh dan Masa",
     "pt": "Seletor de data e hora",
     "ru": "Выбор даты и времени",
-    "zh-CN": "日期时间选择器"
+    "zh-CN": "日期时间选择器",
+    "hi": "तिथि और समय चयनकर्ता",
+    "vi": "Bộ chọn Ngày/Giờ",
+    "th": "ตัวเลือกวันที่และเวลา",
+    "tr": "Tarih Saat Seçici",
+    "pl": "Wybór daty i czasu",
+    "nl": "Datum- en tijdkiezer",
+    "it": "Selettore data e ora",
+    "sv": "Datum- och tidsväljare"
   },
   "Decisions are traceable": {
     "ar": "القرارات قابلة للتتبع",
@@ -1102,7 +1396,15 @@
     "ms": "Keputusan boleh dijejak",
     "pt": "Decisões são rastreáveis",
     "ru": "Решения отслеживаемы",
-    "zh-CN": "决策可追溯"
+    "zh-CN": "决策可追溯",
+    "hi": "निर्णय ट्रेस किए जा सकते हैं",
+    "vi": "Các quyết định có thể truy vết.",
+    "th": "การตัดสินใจสามารถตรวจสอบได้",
+    "tr": "Kararlar izlenebilir",
+    "pl": "Decyzje są śledzalne",
+    "nl": "Beslissingen zijn traceerbaar",
+    "it": "Le decisioni sono tracciabili",
+    "sv": "Beslut är spårbara"
   },
   "Deduplicate": {
     "ar": "إزالة التكرارات",
@@ -1115,7 +1417,15 @@
     "ms": "Buang pendua",
     "pt": "Remover duplicatas",
     "ru": "Удалить дубликаты",
-    "zh-CN": "去重"
+    "zh-CN": "去重",
+    "hi": "डुप्लिकेट हटाएँ",
+    "vi": "Loại bỏ trùng lặp",
+    "th": "ลบรายการซ้ำ",
+    "tr": "Yinelenenleri kaldır",
+    "pl": "Usuń duplikaty",
+    "nl": "Duplicaten verwijderen",
+    "it": "Rimuovi duplicati",
+    "sv": "Ta bort dubbletter"
   },
   "Default": {
     "ar": "افتراضي",
@@ -1128,20 +1438,15 @@
     "ms": "Default",
     "pt": "Padrão",
     "ru": "По умолчанию",
-    "zh-CN": "默认"
-  },
-  "Delivery ledger": {
-    "ar": "سجل التسليم",
-    "de": "Lieferprotokoll",
-    "es": "Registro de entregas",
-    "fr": "Registre de livraison",
-    "id": "Buku besar pengiriman",
-    "ja": "配信台帳",
-    "ko": "전달 원장",
-    "ms": "Rekod penghantaran",
-    "pt": "Registro de entregas",
-    "ru": "Реестр доставок",
-    "zh-CN": "交付账本"
+    "zh-CN": "默认",
+    "hi": "डिफ़ॉल्ट",
+    "vi": "Mặc định",
+    "th": "ค่าเริ่มต้น",
+    "tr": "Varsayılan",
+    "pl": "Domyślny",
+    "nl": "Standaard",
+    "it": "Predefinito",
+    "sv": "Standard"
   },
   "Destructive": {
     "ar": "مدمر",
@@ -1154,7 +1459,15 @@
     "ms": "Destruktif",
     "pt": "Destrutivo",
     "ru": "Деструктивный",
-    "zh-CN": "破坏性"
+    "zh-CN": "破坏性",
+    "hi": "विनाशकारी",
+    "vi": "Nguy hiểm",
+    "th": "การทำลาย",
+    "tr": "Yıkıcı",
+    "pl": "Destrukcyjny",
+    "nl": "Destructief",
+    "it": "Distruttivo",
+    "sv": "Destruktiv"
   },
   "Dimensions": {
     "ar": "الأبعاد",
@@ -1167,7 +1480,15 @@
     "ms": "Dimensi",
     "pt": "Dimensões",
     "ru": "Измерения",
-    "zh-CN": "维度"
+    "zh-CN": "维度",
+    "hi": "आयाम",
+    "vi": "Kích thước",
+    "th": "มิติ",
+    "tr": "Boyutlar",
+    "pl": "Wymiary",
+    "nl": "Dimensies",
+    "it": "Dimensioni",
+    "sv": "Dimensioner"
   },
   "Dropdown Menu": {
     "ar": "قائمة منسدلة",
@@ -1180,20 +1501,15 @@
     "ms": "Menu lungsur",
     "pt": "Menu suspenso",
     "ru": "Выпадающее меню",
-    "zh-CN": "下拉菜单"
-  },
-  "Dry-run only": {
-    "ar": "تشغيل تجريبي فقط",
-    "de": "Nur Testlauf",
-    "es": "Solo prueba",
-    "fr": "Exécution de test uniquement",
-    "id": "Hanya percobaan",
-    "ja": "ドライランのみ",
-    "ko": "시험 실행만",
-    "ms": "Hanya percubaan",
-    "pt": "Somente simulação",
-    "ru": "Только тестовый прогон",
-    "zh-CN": "仅试运行"
+    "zh-CN": "下拉菜单",
+    "hi": "ड्रॉपडाउन मेनू",
+    "vi": "Menu thả xuống",
+    "th": "เมนูแบบเลื่อนลง",
+    "tr": "Açılır menü",
+    "pl": "Menu rozwijane",
+    "nl": "Keuzemenu",
+    "it": "Menu a discesa",
+    "sv": "Rullgardinsmeny"
   },
   "Each program remains owner-scoped with independent scope, safe-harbor, budget, session, cooldown, artifact retention, and scheduling controls.": {
     "ar": "يبقى كل برنامج ضمن نطاق المالك مع نطاق مستقل، وحماية قانونية، وميزانية، وجلسة، وفترة تبريد، والاحتفاظ بالقطع الأثرية، وضوابط الجدولة مستقلة.",
@@ -1206,7 +1522,15 @@
     "ms": "Setiap program kekal dalam skop pemilik dengan skop, perlindungan undang-undang, bajet, sesi, tempoh pendinginan, pengekalan artifak dan kawalan penjadualan yang bebas.",
     "pt": "Cada programa permanece no escopo do proprietário com escopo independente, porto seguro, orçamento, sessão, período de espera, retenção de artefatos e controles de agendamento independentes.",
     "ru": "Каждая программа остается в области ответственности владельца с независимым масштабом, правовой защитой (safe-harbor), бюджетом, сессией, периодом остывания, хранением артефактов и отдельными средствами управления расписанием.",
-    "zh-CN": "每个程序仍然以所有者为范围，具有独立的范围、避风港（safe-harbor）、预算、会话、冷却期、工件保留和调度控制。"
+    "zh-CN": "每个程序仍然以所有者为范围，具有独立的范围、避风港（safe-harbor）、预算、会话、冷却期、工件保留和调度控制。",
+    "hi": "प्रत्येक प्रोग्राम मालिक-स्कोप्ड रहता है और स्वतंत्र स्कोप, सेफ-हार्बर, बजट, सेशन, कूलडाउन, आर्टिफैक्ट रिटेंशन और शेड्यूलिंग नियंत्रण रखता है।",
+    "vi": "Mỗi chương trình vẫn có phạm vi theo chủ sở hữu riêng với phạm vi, khu an toàn, ngân sách, phiên, thời gian làm nguội, lưu giữ artifact và các điều khiển lập lịch độc lập.",
+    "th": "แต่ละโปรแกรมยังคงมีขอบเขตของเจ้าของแยกจากกัน ด้วยขอบเขตอิสระ พื้นที่คุ้มครอง งบประมาณ เซสชัน ช่วงหน่วง การเก็บรักษาอาร์ติแฟ็กต์ และการควบคุมการจัดตาราง",
+    "tr": "Her program, bağımsız kapsam, güvenli liman, bütçe, oturum, bekleme süresi, artefakt saklama ve zamanlama kontrolleriyle sahip kapsamına bağlı kalır.",
+    "pl": "Każdy program pozostaje przypisany do właściciela i posiada niezależny zakres, bezpieczną strefę, budżet, sesję, okres chłodzenia, retencję artefaktów oraz kontrolę harmonogramowania.",
+    "nl": "Elk programma blijft eigenaar-gescopeerd met een onafhankelijk bereik, veilige haven, budget, sessie, afkoelperiode, retentie van artefacten en planningscontroles.",
+    "it": "Ogni programma rimane con ambito di proprietario e dispone di controlli indipendenti su ambito, porto sicuro, budget, sessione, periodo di cooldown, conservazione degli artefatti e pianificazione.",
+    "sv": "Varje program förblir ägarbegränsat med egen omfattning, safe-harbor, budget, session, avkylningsperiod, artefaktlagringstid och schemaläggningskontroller."
   },
   "Edit": {
     "ar": "تحرير",
@@ -1219,7 +1543,15 @@
     "ms": "Sunting",
     "pt": "Editar",
     "ru": "Редактировать",
-    "zh-CN": "编辑"
+    "zh-CN": "编辑",
+    "hi": "संपादित करें",
+    "vi": "Chỉnh sửa",
+    "th": "แก้ไข",
+    "tr": "Düzenle",
+    "pl": "Edytuj",
+    "nl": "Bewerken",
+    "it": "Modifica",
+    "sv": "Redigera"
   },
   "Edit profile": {
     "ar": "تعديل الملف الشخصي",
@@ -1232,7 +1564,15 @@
     "ms": "Sunting profil",
     "pt": "Editar perfil",
     "ru": "Редактировать профиль",
-    "zh-CN": "编辑个人资料"
+    "zh-CN": "编辑个人资料",
+    "hi": "प्रोफ़ाइल संपादित करें",
+    "vi": "Chỉnh sửa hồ sơ",
+    "th": "แก้ไขโปรไฟล์",
+    "tr": "Profili düzenle",
+    "pl": "Edytuj profil",
+    "nl": "Profiel bewerken",
+    "it": "Modifica profilo",
+    "sv": "Redigera profil"
   },
   "Email": {
     "ar": "البريد الإلكتروني",
@@ -1245,7 +1585,15 @@
     "ms": "E-mel",
     "pt": "Email",
     "ru": "Электронная почта",
-    "zh-CN": "电子邮件"
+    "zh-CN": "电子邮件",
+    "hi": "ईमेल",
+    "vi": "Email",
+    "th": "อีเมล",
+    "tr": "E-posta",
+    "pl": "E-mail",
+    "nl": "E-mail",
+    "it": "E-mail",
+    "sv": "E-post"
   },
   "Error": {
     "ar": "خطأ",
@@ -1258,20 +1606,15 @@
     "ms": "Ralat",
     "pt": "Erro",
     "ru": "Ошибка",
-    "zh-CN": "错误"
-  },
-  "Escalation ledger": {
-    "ar": "سجل التصعيد",
-    "de": "Eskalationsprotokoll",
-    "es": "Registro de escaladas",
-    "fr": "Registre d'escalade",
-    "id": "Buku besar eskalasi",
-    "ja": "エスカレーション台帳",
-    "ko": "에스컬레이션 원장",
-    "ms": "Rekod eskalasi",
-    "pt": "Registro de escalamento",
-    "ru": "Реестр эскалаций",
-    "zh-CN": "升级账本"
+    "zh-CN": "错误",
+    "hi": "त्रुटि",
+    "vi": "Lỗi",
+    "th": "ข้อผิดพลาด",
+    "tr": "Hata",
+    "pl": "Błąd",
+    "nl": "Fout",
+    "it": "Errore",
+    "sv": "Fel"
   },
   "Estimate": {
     "ar": "تقدير",
@@ -1284,33 +1627,15 @@
     "ms": "Anggaran",
     "pt": "Estimativa",
     "ru": "Оценка",
-    "zh-CN": "估算"
-  },
-  "Event preferences": {
-    "ar": "تفضيلات الحدث",
-    "de": "Ereignispräferenzen",
-    "es": "Preferencias de evento",
-    "fr": "Préférences d'événement",
-    "id": "Preferensi acara",
-    "ja": "イベント設定",
-    "ko": "이벤트 환경설정",
-    "ms": "Keutamaan acara",
-    "pt": "Preferências de evento",
-    "ru": "Настройки событий",
-    "zh-CN": "事件偏好设置"
-  },
-  "Every policy change and outbound-delivery activation follows a distinct-reviewer decision path. Incidents are workspace-scoped, timestamped, and retained in audit evidence.": {
-    "ar": "كل تغيير في السياسة وتفعيل الإرسال الصادر يتبع مسار قرار مراجع منفصل. الحوادث مقيّدة بنطاق مساحة العمل، ومؤرخة بوقت، ومحتفظ بها كأدلة تدقيق.",
-    "de": "Jede Richtlinienänderung und jede Aktivierung der ausgehenden Zustellung folgt einem eigenen Prüfpfad. Vorfälle sind auf den Arbeitsbereich beschränkt, mit Zeitstempel versehen und als Prüfnachweis archiviert.",
-    "es": "Cada cambio de política y activación de entrega saliente sigue una ruta de decisión de revisor distinta. Los incidentes se delimitan por espacio de trabajo, se registran con marca temporal y se conservan como evidencia de auditoría.",
-    "fr": "Chaque modification de politique et chaque activation de livraison sortante suivent une voie de décision distincte par le réviseur. Les incidents sont limités à l'espace de travail, horodatés et conservés comme preuves d'audit.",
-    "id": "Setiap perubahan kebijakan dan aktivasi pengiriman keluar mengikuti jalur keputusan peninjau yang berbeda. Insiden berskala ruang kerja, diberi cap waktu, dan disimpan dalam bukti audit.",
-    "ja": "すべてのポリシー変更とアウトバウンド配信の有効化は、個別のレビュアーによる判断経路に従います。インシデントはワークスペース単位で、タイムスタンプが付与され、監査証拠として保存されます。",
-    "ko": "모든 정책 변경 및 아웃바운드 전송 활성화는 개별 검토자의 결정 경로를 따릅니다. 인시던트는 워크스페이스 범위로 지정되고, 타임스탬프가 찍히며, 감사 증거로 보관됩니다.",
-    "ms": "Setiap perubahan polisi dan pengaktifan penghantaran keluar mengikuti laluan keputusan penyemak yang berbeza. Insiden dihadkan kepada skop ruang kerja, ditandakan waktu, dan disimpan sebagai bukti audit.",
-    "pt": "Toda alteração de política e ativação de entrega de saída segue um caminho de decisão de revisor distinto. Incidentes têm escopo por espaço de trabalho, são marcados com carimbo de data/hora e retidos como evidência de auditoria.",
-    "ru": "Каждое изменение политики и каждая активация исходящей доставки следуют индивидуальному пути принятия решения рецензентом. Инциденты имеют область применения в пределах рабочего пространства, помечаются временной меткой и сохраняются как доказательства аудита.",
-    "zh-CN": "每次策略变更和出站交付激活都会遵循独立审核者的决策路径。事件以工作区为范围、带有时间戳，并作为审计证据保留。"
+    "zh-CN": "估算",
+    "hi": "अनुमान",
+    "vi": "Ước tính",
+    "th": "ประมาณการ",
+    "tr": "Tahmin",
+    "pl": "Szacunek",
+    "nl": "Schatting",
+    "it": "Stima",
+    "sv": "Uppskattning"
   },
   "Evidence": {
     "ar": "دليل",
@@ -1323,7 +1648,15 @@
     "ms": "Bukti",
     "pt": "Evidência",
     "ru": "Доказательство",
-    "zh-CN": "证据"
+    "zh-CN": "证据",
+    "hi": "सबूत",
+    "vi": "Bằng chứng",
+    "th": "หลักฐาน",
+    "tr": "Delil",
+    "pl": "Dowód",
+    "nl": "Bewijs",
+    "it": "Prove",
+    "sv": "Bevis"
   },
   "Evidence & audit": {
     "ar": "الأدلة والتدقيق",
@@ -1336,7 +1669,15 @@
     "ms": "Bukti & audit",
     "pt": "Evidência e auditoria",
     "ru": "Доказательства и аудит",
-    "zh-CN": "证据与审计"
+    "zh-CN": "证据与审计",
+    "hi": "सबूत और ऑडिट",
+    "vi": "Bằng chứng & kiểm toán",
+    "th": "หลักฐานและการตรวจสอบ",
+    "tr": "Delil ve denetim",
+    "pl": "Dowody i audyt",
+    "nl": "Bewijs en audit",
+    "it": "Prove e audit",
+    "sv": "Bevis och revision"
   },
   "Evidence artifact ID": {
     "ar": "معرّف القطعة الدليلية",
@@ -1349,7 +1690,15 @@
     "ms": "ID artifak bukti",
     "pt": "ID do artefato de evidência",
     "ru": "ID артефакта доказательства",
-    "zh-CN": "证据工件 ID"
+    "zh-CN": "证据工件 ID",
+    "hi": "सबूत आर्टिफैक्ट ID",
+    "vi": "ID hiện vật bằng chứng",
+    "th": "ID อาร์ติแฟ็กต์หลักฐาน",
+    "tr": "Delil artefaktı kimliği",
+    "pl": "ID artefaktu dowodu",
+    "nl": "ID van bewijsartefact",
+    "it": "ID artefatto delle prove",
+    "sv": "Bevisartefakt-ID"
   },
   "Evidence artifact stored with a workspace-scoped reference.": {
     "ar": "يتم تخزين القطعة الدليلية مع مرجع بنطاق مساحة العمل.",
@@ -1362,7 +1711,15 @@
     "ms": "Artifak bukti disimpan dengan rujukan yang ber-skop ruang kerja.",
     "pt": "O artefato de evidência é armazenado com uma referência com escopo de espaço de trabalho.",
     "ru": "Артефакт доказательства хранится с ссылкой, ограниченной областью рабочего пространства.",
-    "zh-CN": "证据工件以具有工作区范围的引用方式存储。"
+    "zh-CN": "证据工件以具有工作区范围的引用方式存储。",
+    "hi": "सबूत आर्टिफैक्ट को वर्कस्पेस-स्कोप्ड संदर्भ के साथ संग्रहीत किया गया।",
+    "vi": "Hiện vật bằng chứng được lưu trữ kèm tham chiếu theo phạm vi không gian làm việc.",
+    "th": "อาร์ติแฟ็กต์หลักฐานถูกจัดเก็บพร้อมการอ้างอิงที่มีขอบเขตเป็นพื้นที่ทำงาน",
+    "tr": "Delil artefaktı, çalışma alanı kapsamlı bir referansla saklandı.",
+    "pl": "Artefakt dowodu przechowywany z odwołaniem ograniczonym do przestrzeni roboczej.",
+    "nl": "Bewijsartefact opgeslagen met een werkruimte-gescopeerde referentie.",
+    "it": "Artefatto delle prove memorizzato con un riferimento a livello di spazio di lavoro.",
+    "sv": "Bevisartefakt lagrad med en arbetsytesspecifik referens."
   },
   "Evidence exports": {
     "ar": "تصدير الأدلة",
@@ -1375,7 +1732,15 @@
     "ms": "Eksport bukti",
     "pt": "Exportações de evidência",
     "ru": "Экспорт доказательств",
-    "zh-CN": "证据导出"
+    "zh-CN": "证据导出",
+    "hi": "सबूत निर्यात",
+    "vi": "Xuất bằng chứng",
+    "th": "การส่งออกหลักฐาน",
+    "tr": "Delil dışa aktarımları",
+    "pl": "Eksporty dowodów",
+    "nl": "Bewijsexporten",
+    "it": "Esportazioni delle prove",
+    "sv": "Export av bevis"
   },
   "Evidence linked to incident.": {
     "ar": "تم ربط الدليل بالحادثة.",
@@ -1388,7 +1753,15 @@
     "ms": "Bukti dipautkan kepada insiden.",
     "pt": "Evidência vinculada ao incidente.",
     "ru": "Доказательство связано с инцидентом.",
-    "zh-CN": "证据已链接到事件。"
+    "zh-CN": "证据已链接到事件。",
+    "hi": "सबूत घटना से जुड़ा हुआ।",
+    "vi": "Bằng chứng được liên kết với sự cố.",
+    "th": "หลักฐานเชื่อมโยงกับเหตุการณ์",
+    "tr": "Delil olaya bağlandı.",
+    "pl": "Dowód powiązany z incydentem.",
+    "nl": "Bewijs gekoppeld aan incident.",
+    "it": "Prove collegate all'incidente.",
+    "sv": "Bevis kopplat till incident."
   },
   "Evidence-backed finding record created.": {
     "ar": "تم إنشاء سجل نتيجة مدعوم بالأدلة.",
@@ -1401,7 +1774,15 @@
     "ms": "Rekod penemuan yang disokong bukti telah dibuat.",
     "pt": "Registro de constatação apoiado por evidência criado.",
     "ru": "Создана запись результата, подтверждённая доказательствами.",
-    "zh-CN": "已创建有证据支持的发现记录。"
+    "zh-CN": "已创建有证据支持的发现记录。",
+    "hi": "सबूत-समर्थित निष्कर्ष रिकॉर्ड बनाया गया।",
+    "vi": "Đã tạo hồ sơ phát hiện có bằng chứng hỗ trợ.",
+    "th": "บันทึกผลการค้นพบที่มีหลักฐานสนับสนุนถูกสร้างแล้ว",
+    "tr": "Delile dayalı bulgu kaydı oluşturuldu.",
+    "pl": "Utworzono rekord ustalenia poparty dowodami.",
+    "nl": "Bewijs-onderbouwd bevindingenrecord aangemaakt.",
+    "it": "Record di finding basato su prove creato.",
+    "sv": "Fyndpost med bevis skapad."
   },
   "Evidence-bound": {
     "ar": "مقيد بالأدلة",
@@ -1414,20 +1795,15 @@
     "ms": "Terikat bukti",
     "pt": "Vinculado à evidência",
     "ru": "Привязано к доказательству",
-    "zh-CN": "与证据绑定"
-  },
-  "Exclusions, one entry per line": {
-    "ar": "استثناءات، إدخال واحد لكل سطر",
-    "de": "Ausnahmen, ein Eintrag pro Zeile",
-    "es": "Exclusiones, una entrada por línea",
-    "fr": "Exclusions, une entrée par ligne",
-    "id": "Pengecualian, satu entri per baris",
-    "ja": "除外事項、1行につき1件",
-    "ko": "제외 항목, 한 줄에 하나씩 입력",
-    "ms": "Pengecualian, satu entri per baris",
-    "pt": "Exclusões, uma entrada por linha",
-    "ru": "Исключения, по одной записи в строке",
-    "zh-CN": "排除项，每行一条"
+    "zh-CN": "与证据绑定",
+    "hi": "सबूत-आधारित",
+    "vi": "Gắn với bằng chứng",
+    "th": "ผูกติดกับหลักฐาน",
+    "tr": "Delile bağlı",
+    "pl": "Powiązane z dowodami",
+    "nl": "Bewijsgebonden",
+    "it": "Vincolato alle prove",
+    "sv": "Bevisbundet"
   },
   "External delivery boundary": {
     "ar": "حدود التوصيل الخارجي",
@@ -1440,7 +1816,15 @@
     "ms": "Sempadan penghantaran luaran",
     "pt": "Limite de entrega externa",
     "ru": "Граница внешней доставки",
-    "zh-CN": "外部交付边界"
+    "zh-CN": "外部交付边界",
+    "hi": "बाह्य डिलीवरी सीमा",
+    "vi": "Ranh giới phân phối bên ngoài",
+    "th": "ขอบเขตการส่งมอบภายนอก",
+    "tr": "Dış teslimat sınırı",
+    "pl": "Zewnętrzna granica dostawy",
+    "nl": "Grens voor externe levering",
+    "it": "Confine di consegna esterno",
+    "sv": "Extern leveransgräns"
   },
   "File": {
     "ar": "ملف",
@@ -1453,7 +1837,15 @@
     "ms": "Fail",
     "pt": "Arquivo",
     "ru": "Файл",
-    "zh-CN": "文件"
+    "zh-CN": "文件",
+    "hi": "फ़ाइल",
+    "vi": "Tệp",
+    "th": "ไฟล์",
+    "tr": "Dosya",
+    "pl": "Plik",
+    "nl": "Bestand",
+    "it": "File",
+    "sv": "Fil"
   },
   "Finding": {
     "ar": "نتيجة",
@@ -1466,7 +1858,15 @@
     "ms": "Penemuan",
     "pt": "Constatação",
     "ru": "Выявление",
-    "zh-CN": "发现"
+    "zh-CN": "发现",
+    "hi": "निष्कर्ष",
+    "vi": "Phát hiện",
+    "th": "ผลการค้นพบ",
+    "tr": "Bulgu",
+    "pl": "Ustalenie",
+    "nl": "Bevinding",
+    "it": "Rilevamento",
+    "sv": "Fynd"
   },
   "Finding queue": {
     "ar": "طابور النتائج",
@@ -1479,7 +1879,15 @@
     "ms": "Antrian penemuan",
     "pt": "Fila de constatações",
     "ru": "Очередь находок",
-    "zh-CN": "发现队列"
+    "zh-CN": "发现队列",
+    "hi": "निष्कर्ष कतार",
+    "vi": "Hàng đợi phát hiện",
+    "th": "คิวผลการค้นพบ",
+    "tr": "Bulgu kuyruğu",
+    "pl": "Kolejka ustaleń",
+    "nl": "Wachtrij voor bevindingen",
+    "it": "Coda dei rilevamenti",
+    "sv": "Fyndkö"
   },
   "Finding state updated.": {
     "ar": "تم تحديث حالة النتيجة.",
@@ -1492,7 +1900,15 @@
     "ms": "Status penemuan dikemas kini.",
     "pt": "Estado da constatação atualizado.",
     "ru": "Состояние находки обновлено.",
-    "zh-CN": "发现状态已更新。"
+    "zh-CN": "发现状态已更新。",
+    "hi": "निष्कर्ष की स्थिति अपडेट की गई।",
+    "vi": "Trạng thái phát hiện đã được cập nhật.",
+    "th": "สถานะผลการค้นพบได้รับการอัปเดต",
+    "tr": "Bulgu durumu güncellendi.",
+    "pl": "Stan ustalenia zaktualizowano.",
+    "nl": "Bevindingstatus bijgewerkt.",
+    "it": "Stato del rilevamento aggiornato.",
+    "sv": "Status för fynd uppdaterad."
   },
   "Finding title": {
     "ar": "عنوان النتيجة",
@@ -1505,7 +1921,15 @@
     "ms": "Tajuk penemuan",
     "pt": "Título da constatação",
     "ru": "Заголовок находки",
-    "zh-CN": "发现标题"
+    "zh-CN": "发现标题",
+    "hi": "निष्कर्ष शीर्षक",
+    "vi": "Tiêu đề phát hiện",
+    "th": "หัวข้อผลการค้นพบ",
+    "tr": "Bulgu başlığı",
+    "pl": "Tytuł ustalenia",
+    "nl": "Bevindingstitel",
+    "it": "Titolo del rilevamento",
+    "sv": "Fyndtitel"
   },
   "Findings": {
     "ar": "النتائج",
@@ -1518,7 +1942,15 @@
     "ms": "Penemuan",
     "pt": "Constatações",
     "ru": "Находки",
-    "zh-CN": "发现"
+    "zh-CN": "发现",
+    "hi": "निष्कर्ष",
+    "vi": "Các phát hiện",
+    "th": "ผลการค้นพบ",
+    "tr": "Bulgular",
+    "pl": "Ustalenia",
+    "nl": "Bevindingen",
+    "it": "Rilevamenti",
+    "sv": "Fynd"
   },
   "Force Reload": {
     "ar": "إعادة تحميل بالقوة",
@@ -1531,6 +1963,14 @@
     "ms": "Paksa Muat Semula",
     "pt": "Forçar recarregamento",
     "ru": "Принудительная перезагрузка",
-    "zh-CN": "强制重新加载"
+    "zh-CN": "强制重新加载",
+    "hi": "बलपूर्वक रीलोड करें",
+    "vi": "Buộc tải lại",
+    "th": "บังคับรีเฟรช",
+    "tr": "Zorla Yenile",
+    "pl": "Wymuś ponowne załadowanie",
+    "nl": "Geforceerd opnieuw laden",
+    "it": "Ricarica forzata",
+    "sv": "Tvinga omladdning"
   }
 }

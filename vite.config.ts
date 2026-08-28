@@ -5,6 +5,7 @@ import fs from "node:fs";
 import path from "node:path";
 import { defineConfig, type Plugin, type ViteDevServer } from "vite";
 import { vitePluginManusRuntime } from "vite-plugin-manus-runtime";
+import { VitePWA } from "vite-plugin-pwa";
 
 // =============================================================================
 // Manus Debug Collector - Vite Plugin
@@ -150,7 +151,12 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector(), VitePWA({
+  registerType: "prompt",
+  manifest: { name: "AngelMind Security Research Control Plane", short_name: "AngelMind", description: "Governed, evidence-led security research operations.", theme_color: "#05060b", background_color: "#05060b", display: "standalone", icons: [{ src: "/manus-storage/angelmind-pwa-icon_47685db8.svg", sizes: "any", type: "image/svg+xml", purpose: "any" }] },
+  workbox: { navigateFallbackDenylist: [/^\/api\//, /^\/__manus__\//] },
+  devOptions: { enabled: false },
+})];
 
 export default defineConfig({
   plugins,

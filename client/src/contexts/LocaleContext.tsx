@@ -2,6 +2,9 @@ import { createContext, useContext, useEffect, useMemo, useRef, useState } from 
 import staticTranslations from "@/locales/curated-translations.json";
 import homeCopy from "@/locales/home-copy.json";
 import assuranceNotificationsCopy from "@/locales/assurance-notifications-copy.json";
+import sharedExpansion from "@/locales/shared-expansion.json";
+import marketingCopy from "@/locales/marketing-copy.json";
+import apiPlaygroundCopy from "@/locales/api-playground-copy.json";
 
 export const locales = [
   { code: "en", label: "English", native: "English", dir: "ltr" },
@@ -16,18 +19,28 @@ export const locales = [
   { code: "fr", label: "French", native: "Français", dir: "ltr" },
   { code: "de", label: "German", native: "Deutsch", dir: "ltr" },
   { code: "ru", label: "Russian", native: "Русский", dir: "ltr" },
+  { code: "hi", label: "Hindi", native: "हिन्दी", dir: "ltr" },
+  { code: "vi", label: "Vietnamese", native: "Tiếng Việt", dir: "ltr" },
+  { code: "th", label: "Thai", native: "ไทย", dir: "ltr" },
+  { code: "tr", label: "Turkish", native: "Türkçe", dir: "ltr" },
+  { code: "pl", label: "Polish", native: "Polski", dir: "ltr" },
+  { code: "nl", label: "Dutch", native: "Nederlands", dir: "ltr" },
+  { code: "it", label: "Italian", native: "Italiano", dir: "ltr" },
+  { code: "sv", label: "Swedish", native: "Svenska", dir: "ltr" },
 ] as const;
 
 export type LocaleCode = (typeof locales)[number]["code"];
 type TranslationKey = keyof typeof english;
-type ExplicitCopyKey = keyof typeof homeCopy | keyof typeof assuranceNotificationsCopy;
+type ExplicitCopyKey = keyof typeof homeCopy | keyof typeof assuranceNotificationsCopy | keyof typeof marketingCopy | keyof typeof apiPlaygroundCopy;
+type ExpansionLocaleCode = "hi" | "vi" | "th" | "tr" | "pl" | "nl" | "it" | "sv";
 const LOCALE_KEY = "angelmind-locale";
 const TIME_ZONE_KEY = "angelmind-time-zone";
 export const commonTimeZones = ["UTC", "Asia/Jakarta", "Asia/Kuala_Lumpur", "Asia/Riyadh", "Asia/Shanghai", "Asia/Tokyo", "Asia/Seoul", "Europe/Madrid", "America/Sao_Paulo", "Europe/Paris", "Europe/Berlin", "Europe/Moscow", "America/New_York", "America/Los_Angeles"] as const;
-const timeZoneLabels: Record<LocaleCode, string> = { en: "Time zone", id: "Zona waktu", ms: "Zon masa", ar: "المنطقة الزمنية", "zh-CN": "时区", ja: "タイムゾーン", ko: "시간대", es: "Zona horaria", pt: "Fuso horário", fr: "Fuseau horaire", de: "Zeitzone", ru: "Часовой пояс" };
+const timeZoneLabels: Record<LocaleCode, string> = { en: "Time zone", id: "Zona waktu", ms: "Zon masa", ar: "المنطقة الزمنية", "zh-CN": "时区", ja: "タイムゾーン", ko: "시간대", es: "Zona horaria", pt: "Fuso horário", fr: "Fuseau horaire", de: "Zeitzone", ru: "Часовой пояс", hi: sharedExpansion["locale.timeZone"].hi, vi: sharedExpansion["locale.timeZone"].vi, th: sharedExpansion["locale.timeZone"].th, tr: sharedExpansion["locale.timeZone"].tr, pl: sharedExpansion["locale.timeZone"].pl, nl: sharedExpansion["locale.timeZone"].nl, it: sharedExpansion["locale.timeZone"].it, sv: sharedExpansion["locale.timeZone"].sv };
 
 const english = { "nav.controlPlane": "Control plane", "nav.commandCenter": "Command center", "nav.workspaces": "Workspaces", "nav.governance": "Governance", "nav.findings": "Findings", "nav.audit": "Evidence & audit", "nav.observability": "Observability", "nav.operations": "Operations console", "nav.assurance": "Assurance control", "nav.notifications": "Notifications", "nav.menu": "Menu", "auth.signIn": "Sign in", "auth.signOut": "Sign out", "auth.signInTitle": "Sign in to continue", "auth.signInText": "Access to this dashboard requires authentication. Continue to launch the login flow.", "locale.language": "Language", "locale.timeZone": "Time zone", "common.selectWorkspace": "Select workspace", "common.approve": "Approve", "common.reject": "Reject", "common.create": "Create", "common.resolve": "Resolve", "common.link": "Link", "status.pending": "Pending", "status.disabled": "Disabled" } as const;
 
+const expansionPack = (locale: ExpansionLocaleCode) => Object.fromEntries(Object.entries(sharedExpansion).map(([key, translations]) => [key, translations[locale]])) as Partial<Record<TranslationKey, string>>;
 const packs: Record<LocaleCode, Partial<Record<TranslationKey, string>>> = {
   en: english,
   id: { "nav.controlPlane": "Control plane", "nav.commandCenter": "Pusat komando", "nav.workspaces": "Ruang kerja", "nav.governance": "Tata kelola", "nav.findings": "Temuan", "nav.audit": "Bukti & audit", "nav.observability": "Observabilitas", "nav.operations": "Konsol operasi", "nav.assurance": "Kontrol jaminan", "nav.notifications": "Notifikasi", "nav.menu": "Menu", "auth.signIn": "Masuk", "auth.signOut": "Keluar", "auth.signInTitle": "Masuk untuk melanjutkan", "auth.signInText": "Akses ke dashboard ini memerlukan autentikasi. Lanjutkan untuk memulai proses masuk.", "locale.language": "Bahasa", "locale.timeZone": "Zona waktu", "common.selectWorkspace": "Pilih ruang kerja", "common.approve": "Setujui", "common.reject": "Tolak", "common.create": "Buat", "common.resolve": "Selesaikan", "common.link": "Tautkan", "status.pending": "Menunggu", "status.disabled": "Nonaktif" },
@@ -41,6 +54,14 @@ const packs: Record<LocaleCode, Partial<Record<TranslationKey, string>>> = {
   fr: { "nav.controlPlane": "Plan de contrôle", "nav.commandCenter": "Centre de commande", "nav.workspaces": "Espaces de travail", "nav.governance": "Gouvernance", "nav.findings": "Constats", "nav.audit": "Preuves et audit", "nav.observability": "Observabilité", "nav.operations": "Console d’opérations", "nav.assurance": "Contrôle d’assurance", "nav.notifications": "Notifications", "nav.menu": "Menu", "auth.signIn": "Se connecter", "auth.signOut": "Se déconnecter", "auth.signInTitle": "Connectez-vous pour continuer", "auth.signInText": "L’accès à ce tableau de bord nécessite une authentification.", "locale.language": "Langue", "common.selectWorkspace": "Sélectionner l’espace", "common.approve": "Approuver", "common.reject": "Rejeter", "common.create": "Créer", "common.resolve": "Résoudre", "common.link": "Lier", "status.pending": "En attente", "status.disabled": "Désactivé" },
   de: { "nav.controlPlane": "Kontrollebene", "nav.commandCenter": "Kommandozentrale", "nav.workspaces": "Arbeitsbereiche", "nav.governance": "Governance", "nav.findings": "Erkenntnisse", "nav.audit": "Nachweise & Audit", "nav.observability": "Beobachtbarkeit", "nav.operations": "Betriebskonsole", "nav.assurance": "Sicherheitskontrolle", "nav.notifications": "Benachrichtigungen", "nav.menu": "Menü", "auth.signIn": "Anmelden", "auth.signOut": "Abmelden", "auth.signInTitle": "Zum Fortfahren anmelden", "auth.signInText": "Der Zugriff auf dieses Dashboard erfordert eine Anmeldung.", "locale.language": "Sprache", "common.selectWorkspace": "Arbeitsbereich wählen", "common.approve": "Genehmigen", "common.reject": "Ablehnen", "common.create": "Erstellen", "common.resolve": "Lösen", "common.link": "Verknüpfen", "status.pending": "Ausstehend", "status.disabled": "Deaktiviert" },
   ru: { "nav.controlPlane": "Панель управления", "nav.commandCenter": "Центр управления", "nav.workspaces": "Рабочие пространства", "nav.governance": "Управление", "nav.findings": "Находки", "nav.audit": "Доказательства и аудит", "nav.observability": "Наблюдаемость", "nav.operations": "Операционная консоль", "nav.assurance": "Контроль гарантий", "nav.notifications": "Уведомления", "nav.menu": "Меню", "auth.signIn": "Войти", "auth.signOut": "Выйти", "auth.signInTitle": "Войдите, чтобы продолжить", "auth.signInText": "Для доступа к панели требуется аутентификация.", "locale.language": "Язык", "common.selectWorkspace": "Выберите пространство", "common.approve": "Одобрить", "common.reject": "Отклонить", "common.create": "Создать", "common.resolve": "Решить", "common.link": "Связать", "status.pending": "Ожидание", "status.disabled": "Отключено" },
+  hi: expansionPack("hi"),
+  vi: expansionPack("vi"),
+  th: expansionPack("th"),
+  tr: expansionPack("tr"),
+  pl: expansionPack("pl"),
+  nl: expansionPack("nl"),
+  it: expansionPack("it"),
+  sv: expansionPack("sv"),
 };
 
 const staticKeyOverrides: Record<string, TranslationKey> = {
@@ -55,7 +76,7 @@ const LocaleContext = createContext<LocaleContextValue | null>(null);
 export function isLocaleCode(value: string): value is LocaleCode { return locales.some(item => item.code === value); }
 export function getLocaleDirection(locale: LocaleCode) { return locales.find(item => item.code === locale)?.dir ?? "ltr"; }
 export function translate(locale: LocaleCode, key: TranslationKey): string { return (key === "locale.timeZone" ? timeZoneLabels[locale] : packs[locale][key]) || english[key]; }
-export function isSafeStaticPhrase(phrase: string): boolean { return phrase.length > 1 && phrase.length < 240 && /[A-Za-z]/.test(phrase) && !/(=>|\bconst\b|\breturn\b|\buseState\b|\buseQuery\b|@nextjs|[{};]|= MIN_WIDTH|\[.*\])/.test(phrase); }
+export function isSafeStaticPhrase(phrase: string): boolean { return phrase.length > 1 && phrase.length < 240 && /^[A-Za-z][A-Za-z0-9 .,:!?&'’/()\-]+$/.test(phrase) && !/(=>|\bconst\b|\breturn\b|\buseState\b|\buseQuery\b|repository|aspect ratio|invoice|[{};@]|= MIN_WIDTH|\[.*\])/.test(phrase); }
 export function translateStatic(locale: LocaleCode, englishText: string): string { if (!isSafeStaticPhrase(englishText)) return englishText; const catalogValue = (staticTranslations as Record<string, Partial<Record<LocaleCode, string>>>)[englishText]?.[locale]; return catalogValue || (staticKeyOverrides[englishText] ? translate(locale, staticKeyOverrides[englishText]) : englishText); }
 export function localizeEmbeddedTimestamp(locale: LocaleCode, value: string, timeZone = "UTC"): string {
   const pattern = /\b\d{1,2}\/\d{1,2}\/\d{4},?\s+\d{1,2}:\d{2}(?::\d{2})?\s+[AP]M\b/g;
@@ -109,7 +130,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const meta = locales.find(item => item.code === locale) ?? locales[0];
   useEffect(() => { localStorage.setItem(LOCALE_KEY, locale); document.documentElement.lang = locale; document.documentElement.dir = meta.dir; }, [locale, meta.dir]);
   useEffect(() => { localStorage.setItem(TIME_ZONE_KEY, timeZone); }, [timeZone]);
-  const value = useMemo(() => ({ locale, setLocale, timeZone, setTimeZone, isRTL: meta.dir === "rtl", t: (key: TranslationKey) => translate(locale, key), copy: (key: ExplicitCopyKey) => { const copy = key in homeCopy ? homeCopy[key as keyof typeof homeCopy] : assuranceNotificationsCopy[key as keyof typeof assuranceNotificationsCopy]; return copy?.[locale] ?? copy?.en ?? key; }, formatDate: (input: Date | string | number) => formatLocaleDate(locale, input, timeZone), formatNumber: (value: number) => new Intl.NumberFormat(locale).format(value) }), [locale, meta.dir, timeZone]);
+  const value = useMemo(() => ({ locale, setLocale, timeZone, setTimeZone, isRTL: meta.dir === "rtl", t: (key: TranslationKey) => translate(locale, key), copy: (key: ExplicitCopyKey) => { const copy = key in homeCopy ? homeCopy[key as keyof typeof homeCopy] : key in assuranceNotificationsCopy ? assuranceNotificationsCopy[key as keyof typeof assuranceNotificationsCopy] : key in marketingCopy ? marketingCopy[key as keyof typeof marketingCopy] : apiPlaygroundCopy[key as keyof typeof apiPlaygroundCopy]; return (copy as Partial<Record<LocaleCode, string>>)?.[locale] ?? copy?.en ?? key; }, formatDate: (input: Date | string | number) => formatLocaleDate(locale, input, timeZone), formatNumber: (value: number) => new Intl.NumberFormat(locale).format(value) }), [locale, meta.dir, timeZone]);
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }
 

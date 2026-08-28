@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandShortcut } from "@/components/ui/command";
-import { Activity, Boxes, FileSearch, LayoutDashboard, ScrollText, Settings2, ShieldCheck, ShieldEllipsis } from "lucide-react";
+import { Activity, BarChart3, Boxes, FileSearch, LayoutDashboard, ScrollText, Settings2, ShieldCheck, ShieldEllipsis } from "lucide-react";
 import { useLocale } from "@/contexts/LocaleContext";
 
 const commands = [
   { path: "/", labelKey: "nav.commandCenter" as const, icon: LayoutDashboard, shortcut: "G D" },
+  { path: "/mission", labelKey: "nav.operations" as const, icon: Activity, shortcut: "G M" },
+  { path: "/coverage", labelKey: "nav.observability" as const, icon: BarChart3, shortcut: "G V" },
   { path: "/workspaces", labelKey: "nav.workspaces" as const, icon: Boxes, shortcut: "G W" },
   { path: "/governance", labelKey: "nav.governance" as const, icon: ShieldCheck, shortcut: "G G" },
   { path: "/findings", labelKey: "nav.findings" as const, icon: FileSearch, shortcut: "G F" },

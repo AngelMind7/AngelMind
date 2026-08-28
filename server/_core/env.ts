@@ -8,7 +8,10 @@ export const ENV = {
   isProduction: process.env.NODE_ENV === "production",
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
-  llmApiUrl: process.env.LLM_API_BASE_URL ?? "",
-  llmApiKey: process.env.LLM_API_KEY ?? "",
-  llmModel: process.env.LLM_MODEL ?? "",
+  llmPrimaryApiUrl: process.env.LLM_PRIMARY_API_BASE_URL ?? process.env.LLM_API_BASE_URL ?? "",
+  llmPrimaryApiKey: process.env.LLM_PRIMARY_API_KEY ?? process.env.LLM_API_KEY ?? "",
+  llmPrimaryModel: process.env.LLM_PRIMARY_MODEL ?? process.env.LLM_MODEL ?? "",
+  llmFallbackApiUrl: process.env.LLM_FALLBACK_API_BASE_URL ?? "",
+  llmFallbackApiKey: process.env.LLM_FALLBACK_API_KEY ?? "",
+  llmFallbackModel: process.env.LLM_FALLBACK_MODEL ?? "",
 };

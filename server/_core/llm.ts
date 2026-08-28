@@ -212,26 +212,49 @@ const normalizeToolChoice = (
   return toolChoice;
 };
 
-const resolveLlmBaseUrl = () => {
-  const baseUrl = ENV.llmApiUrl.trim().replace(/\/$/, "");
-  if (!baseUrl) {
-    throw new Error("LLM_API_BASE_URL is not configured");
-  }
-  return baseUrl;
+type LlmProvider = {
+  name: "9router" | "omniroute";
+  baseUrl: string;
+  apiKey: string;
+  model: string;
 };
 
-const resolveApiUrl = () => {
-  const baseUrl = resolveLlmBaseUrl();
-  return baseUrl.endsWith("/v1")
-    ? `${baseUrl}/chat/completions`
-    : `${baseUrl}/v1/chat/completions`;
+const normalizeBaseUrl = (value: string) => value.trim().replace(/\/$/, "");
+
+const getLlmProviders = (): LlmProvider[] => {
+  const providers: LlmProvider[] = [
+    {
+      name: "9router",
+      baseUrl: normalizeBaseUrl(ENV.llmPrimaryApiUrl),
+      apiKey: ENV.llmPrimaryApiKey.trim(),
+      model: ENV.llmPrimaryModel.trim(),
+    },
+    {
+      name: "omniroute",
+      baseUrl: normalizeBaseUrl(ENV.llmFallbackApiUrl),
+      apiKey: ENV.llmFallbackApiKey.trim(),
+      model: ENV.llmFallbackModel.trim(),
+    },
+  ];
+
+  return providers.filter(provider => provider.baseUrl && provider.apiKey);
 };
+
+const resolveApiUrl = (provider: LlmProvider, path: "chat/completions" | "models") =>
+  provider.baseUrl.endsWith("/v1")
+    ? `${provider.baseUrl}/${path}`
+    : `${provider.baseUrl}/v1/${path}`;
 
 const assertApiKey = () => {
-  if (!ENV.llmApiKey.trim()) {
-    throw new Error("LLM_API_KEY is not configured");
+  if (getLlmProviders().length === 0) {
+    throw new Error(
+      "No LLM provider is configured. Set 9Router primary or OmniRoute fallback variables."
+    );
   }
 };
+
+const shouldFallback = (status: number) =>
+  status === 408 || status === 409 || status === 425 || status === 429 || status >= 500;
 
 const normalizeResponseFormat = ({
   responseFormat,
@@ -372,11 +395,6 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     messages: messages.map(normalizeMessage),
   };
 
-  const selectedModel = model || ENV.llmModel.trim();
-  if (selectedModel) {
-    payload.model = selectedModel;
-  }
-
   if (tools && tools.length > 0) {
     payload.tools = tools;
   }
@@ -412,23 +430,43 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     payload.response_format = normalizedResponseFormat;
   }
 
-  const response = await fetchWithBackoff(resolveApiUrl(), {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      authorization: `Bearer ${ENV.llmApiKey}`,
-    },
-    body: JSON.stringify(payload),
-  });
+  let lastError: Error | null = null;
+  const providers = getLlmProviders();
+  for (let providerIndex = 0; providerIndex < providers.length; providerIndex++) {
+    const provider = providers[providerIndex];
+    const providerPayload = {
+      ...payload,
+      ...(model || provider.model ? { model: model || provider.model } : {}),
+    };
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
-    );
+    try {
+      const response = await fetchWithBackoff(resolveApiUrl(provider, "chat/completions"), {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          authorization: `Bearer ${provider.apiKey}`,
+        },
+        body: JSON.stringify(providerPayload),
+      });
+
+      if (response.ok) {
+        return (await response.json()) as InvokeResult;
+      }
+
+      const errorText = await response.text();
+      lastError = new Error(
+        `${provider.name} LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
+      );
+      if (!shouldFallback(response.status)) throw lastError;
+      console.warn(`${provider.name} unavailable; trying the next LLM provider`);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (providerIndex === providers.length - 1) throw lastError;
+      console.warn(`${provider.name} request failed; trying the next LLM provider`);
+    }
   }
 
-  return (await response.json()) as InvokeResult;
+  throw lastError ?? new Error("No LLM provider is configured");
 }
 
 export type ModelInfo = {
@@ -445,20 +483,32 @@ export type ModelsResponse = {
 
 export async function listLLMModels(): Promise<ModelsResponse> {
   assertApiKey();
+  const providers = getLlmProviders();
+  let lastError: Error | null = null;
 
-  const baseUrl = resolveLlmBaseUrl();
-  const url = baseUrl.endsWith("/v1") ? `${baseUrl}/models` : `${baseUrl}/v1/models`;
+  for (let providerIndex = 0; providerIndex < providers.length; providerIndex++) {
+    const provider = providers[providerIndex];
+    try {
+      const response = await fetchWithBackoff(resolveApiUrl(provider, "models"), {
+        headers: { authorization: `Bearer ${provider.apiKey}` },
+      });
 
-  const response = await fetchWithBackoff(url, {
-    headers: { authorization: `Bearer ${ENV.llmApiKey}` },
-  });
+      if (response.ok) return (await response.json()) as ModelsResponse;
 
-  if (!response.ok) {
-    const errorText = await response.text();
-    throw new Error(
-      `List LLM models failed: ${response.status} ${response.statusText} – ${errorText}`
-    );
+      const errorText = await response.text();
+      lastError = new Error(
+        `${provider.name} model listing failed: ${response.status} ${response.statusText} – ${errorText}`
+      );
+      if (!shouldFallback(response.status) || providerIndex === providers.length - 1) {
+        throw lastError;
+      }
+      console.warn(`${provider.name} model listing failed; trying the next LLM provider`);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      if (providerIndex === providers.length - 1) throw lastError;
+      console.warn(`${provider.name} model listing request failed; trying the next LLM provider`);
+    }
   }
 
-  return (await response.json()) as ModelsResponse;
+  throw lastError ?? new Error("No LLM provider is configured");
 }

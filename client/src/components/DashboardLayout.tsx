@@ -30,6 +30,7 @@ import { NotificationIndicator } from "./NotificationIndicator";
 import { LanguageSelector } from "./LanguageSelector";
 import { TimezoneSelector } from "./TimezoneSelector";
 import CommandPalette from "./CommandPalette";
+import ThemeSwitcher from "./ThemeSwitcher";
 import { useLocale } from "@/contexts/LocaleContext";
 
 const menuItems = [
@@ -217,6 +218,7 @@ function DashboardLayoutContent({
           <SidebarFooter className="p-3">
             <div className="mb-3 group-data-[collapsible=icon]:hidden"><LanguageSelector /></div>
             <div className="mb-3 group-data-[collapsible=icon]:hidden"><TimezoneSelector /></div>
+            <div className="mb-3 group-data-[collapsible=icon]:hidden"><ThemeSwitcher /></div>
             <div className="mb-3 group-data-[collapsible=icon]:hidden"><NotificationIndicator /></div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>

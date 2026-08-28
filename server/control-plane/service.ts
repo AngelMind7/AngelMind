@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
 import { auditEvents, approvals, credentialReferences, evidenceArtifacts, findings, notificationPreferences, notifications, runs, workspaceChangeSnapshots, workspaceMemberships, workspaces } from "../../drizzle/schema";
 import { getDb, getOwnedWorkspace } from "../db";
 import { notifyOwner } from "../_core/notification";
@@ -417,6 +417,31 @@ export async function runScheduledAdministrativeCheck(taskUid: string) {
   await addAudit(workspace.id, "administrative-check", "change-detection", { mode: "metadata-only", networkCalls: 0, changed, retentionReviewCount, result: "No target interaction: configuration digest, retention window, and pending approvals reviewed." });
   await notifyWorkspaceOwner(workspace, { eventType: "scheduled_check", severity: changed || retentionReviewCount > 0 || escalatedIncidentCount > 0 ? "warning" : "info", title: "AngelMind scheduled check selesai", message: `Workspace ${workspace.name}: ${changed ? "configuration change recorded" : "configuration unchanged"}; retention review: ${retentionReviewCount}; incident escalations: ${escalatedIncidentCount}. No target interaction occurred.` });
   return { ok: true, completed: changed ? "metadata-change-recorded" as const : "metadata-unchanged" as const, retentionReviewCount, escalatedIncidentCount };
+}
+
+export async function runScheduledAdministrativeChecks() {
+  const db = await getDb();
+  if (!db) return { ok: false as const, processed: 0, failed: 0, reason: "database-unavailable" as const };
+
+  const scheduled = await db
+    .select({ taskUid: workspaces.scheduleCronTaskUid })
+    .from(workspaces)
+    .where(and(eq(workspaces.status, "active"), isNotNull(workspaces.scheduleCronTaskUid)));
+
+  const taskUids = scheduled
+    .map(row => row.taskUid)
+    .filter((taskUid): taskUid is string => Boolean(taskUid));
+  const results = await Promise.allSettled(taskUids.map(taskUid => runScheduledAdministrativeCheck(taskUid)));
+  return {
+    ok: true as const,
+    processed: results.filter(result => result.status === "fulfilled").length,
+    failed: results.filter(result => result.status === "rejected").length,
+    results: results.map((result, index) => ({
+      taskUid: taskUids[index],
+      status: result.status,
+      ...(result.status === "fulfilled" ? { result: result.value } : { error: String(result.reason) }),
+    })),
+  };
 }
 
 export async function attachScheduleTask(userId: number, workspaceId: number, taskUid: string) {

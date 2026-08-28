@@ -1,8 +1,4 @@
-import { COOKIE_NAME } from "@shared/const";
-import { parse as parseCookie } from "cookie";
 import { z } from "zod";
-import { getSessionCookieOptions } from "./_core/cookies";
-import { createHeartbeatJob } from "./_core/heartbeat";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import * as controlPlane from "./control-plane/service";
@@ -35,13 +31,10 @@ export const appRouter = router({
   system: systemRouter,
   auth: router({
     me: publicProcedure.query(opts => opts.ctx.user),
-    logout: publicProcedure.mutation(({ ctx }) => {
-      const cookieOptions = getSessionCookieOptions(ctx.req);
-      ctx.res.clearCookie(COOKIE_NAME, { ...cookieOptions, maxAge: -1 });
-      return {
-        success: true,
-      } as const;
-    }),
+    logout: publicProcedure.mutation(() => ({
+      success: true,
+      provider: "firebase",
+    } as const)),
   }),
   agent: router({
     analyzeEvidence: protectedProcedure.input(z.object({ scopeSummary: z.string().min(20).max(10_000), evidence: z.string().min(20).max(40_000), findingTitle: z.string().max(240).optional() })).mutation(({ input }) => agent.analyzeEvidence(input)),
@@ -97,16 +90,10 @@ export const appRouter = router({
     setStatus: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), status: z.enum(["active", "paused", "archived"]) })).mutation(({ ctx, input }) => controlPlane.setWorkspaceStatus(ctx.user.id, input.workspaceId, input.status)),
     credentials: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => controlPlane.listCredentialReferences(ctx.user.id, input.workspaceId)),
     addCredentialReference: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), label: z.string().min(2).max(120), secretReference: z.string().min(20).max(200) })).mutation(({ ctx, input }) => controlPlane.addCredentialReference(ctx.user.id, input.workspaceId, input.label, input.secretReference)),
-    scheduleAdministrativeCheck: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), cron: z.string().regex(/^0\s+\S+\s+\S+\s+\S+\s+\S+\s+\S+$/, "Gunakan cron UTC enam kolom dengan detik bernilai 0.") })).mutation(async ({ ctx, input }) => {
-      const sessionToken = parseCookie(ctx.req.headers.cookie ?? "")[COOKIE_NAME] ?? "";
-      const job = await createHeartbeatJob({
-        name: `angelmind-workspace-${input.workspaceId}`,
-        cron: input.cron,
-        path: "/api/scheduled/workspace-maintenance",
-        description: `Administrative and stored-metadata change check for workspace ${input.workspaceId}`,
-      }, sessionToken);
-      await controlPlane.attachScheduleTask(ctx.user.id, input.workspaceId, job.taskUid);
-      return job;
+    scheduleAdministrativeCheck: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), cron: z.string().regex(/^0\s+\S+\s+\S+\s+\S+\s+\S+$/, "Gunakan cron UTC lima kolom.") })).mutation(async ({ ctx, input }) => {
+      const taskUid = `railway:workspace:${input.workspaceId}`;
+      await controlPlane.attachScheduleTask(ctx.user.id, input.workspaceId, taskUid);
+      return { taskUid, cron: input.cron, provider: "railway-cron" } as const;
     }),
   }),
   rehearsal: router({

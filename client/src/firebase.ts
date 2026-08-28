@@ -1,7 +1,6 @@
-import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider, type AppCheck } from "firebase/app-check";
-import { getAuth, GoogleAuthProvider, signInWithPopup, type Auth } from "firebase/auth";
-import { getStorage, type FirebaseStorage } from "firebase/storage";
+import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, type Auth } from "firebase/auth";
 
 const config = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -12,18 +11,25 @@ const config = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID,
 };
 
+const requiredAuthConfig = [
+  config.apiKey,
+  config.authDomain,
+  config.projectId,
+  config.messagingSenderId,
+  config.appId,
+];
 const appCheckSiteKey = import.meta.env.VITE_FIREBASE_APPCHECK_SITE_KEY?.trim();
 let appCheck: AppCheck | null = null;
 
 export function isFirebaseClientConfigured() {
-  return Object.values(config).every(value => typeof value === "string" && value.trim().length > 0);
+  return requiredAuthConfig.every(value => typeof value === "string" && value.trim().length > 0);
 }
 
 export function isFirebaseAppCheckConfigured() {
   return Boolean(import.meta.env.PROD && isFirebaseClientConfigured() && appCheckSiteKey);
 }
 
-export function getFirebaseClient(): { app: FirebaseApp; auth: Auth; storage: FirebaseStorage } | null {
+export function getFirebaseClient(): { app: FirebaseApp; auth: Auth } | null {
   if (!isFirebaseClientConfigured()) return null;
   const app = getApps().length ? getApp() : initializeApp(config);
   if (isFirebaseAppCheckConfigured() && !appCheck) {
@@ -32,7 +38,14 @@ export function getFirebaseClient(): { app: FirebaseApp; auth: Auth; storage: Fi
       isTokenAutoRefreshEnabled: true,
     });
   }
-  return { app, auth: getAuth(app), storage: getStorage(app) };
+  return { app, auth: getAuth(app) };
+}
+
+export async function getFirebaseIdToken(): Promise<string | null> {
+  const client = getFirebaseClient();
+  const user = client?.auth.currentUser;
+  if (!user) return null;
+  return user.getIdToken();
 }
 
 export async function signInWithGoogle() {
@@ -43,7 +56,6 @@ export async function signInWithGoogle() {
   const response = await fetch("/api/auth/firebase", {
     method: "POST",
     headers: { "content-type": "application/json" },
-    credentials: "include",
     body: JSON.stringify({ idToken }),
   });
   if (!response.ok) {
@@ -51,6 +63,11 @@ export async function signInWithGoogle() {
     throw new Error(payload?.error || "Firebase Google Login failed.");
   }
   return result.user;
+}
+
+export async function signOutFirebase() {
+  const client = getFirebaseClient();
+  if (client) await signOut(client.auth);
 }
 
 export { config as firebaseClientConfig, appCheckSiteKey };

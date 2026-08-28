@@ -1,6 +1,7 @@
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useMemo } from "react";
+import { signOutFirebase } from "@/firebase";
 
 type UseAuthOptions = {
   /** Kept for compatibility with existing callers; Firebase login is user-triggered in the UI. */
@@ -34,6 +35,7 @@ export function useAuth(_options?: UseAuthOptions) {
       }
       throw error;
     } finally {
+      await signOutFirebase().catch(() => undefined);
       utils.auth.me.setData(undefined, null);
       await utils.auth.me.invalidate();
     }

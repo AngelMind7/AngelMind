@@ -147,7 +147,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 108 | Database performance | **Partial** | Index dasar dan bounded queries ada; query profiling/load benchmark belum. |
 | 109 | Email system | **Planned** | Belum ada email provider, templates, queue, unsubscribe, delivery log. |
 | 110 | Documentation | **Partial** | README, architecture, governance, runbook, alignment, roadmap tersedia; API/domain/operator docs lengkap belum. |
-| 111 | Repository final | **Partial** | Main sudah dibersihkan dari demo/template/runtime Manus; remaining provider/domain gaps tercatat di matrix ini. |
+| 111 | Repository final | **Partial** | Runtime provider-neutral sudah dipakai: Firebase Auth, Supabase Storage, Railway-ready API, serta CI GitHub; remaining domain gaps tercatat di matrix ini. |
 | 112 | Aturan tim | **Implemented** | Safety boundary dan definition of done terdokumentasi; automation enforcement dapat diperluas. |
 | 113 | Definition of done | **Partial** | Checklist terdokumentasi; belum semua future domain memenuhi seluruh checklist. |
 | 114 | Scope/authorization principle | **Implemented** | Scope → authorization → rehearsal → evidence → finding → report dijaga; target execution tetap diblokir. |

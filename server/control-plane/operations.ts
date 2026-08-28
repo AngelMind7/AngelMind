@@ -134,7 +134,7 @@ export async function createAuditArchive(ownerUserId: number, workspaceId: numbe
   const workspace = await ownedWorkspaceOrThrow(ownerUserId, workspaceId);
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
-  if (!ENV.cookieSecret) throw new Error("Archive signing secret is unavailable.");
+  if (!ENV.archiveSigningSecret) throw new Error("Archive signing secret is unavailable.");
   const [events, evidence, runRows, approvalRows, notificationRows] = await Promise.all([
     db.select().from(auditEvents).where(eq(auditEvents.workspaceId, workspace.id)).orderBy(desc(auditEvents.createdAt)),
     db.select().from(evidenceArtifacts).where(eq(evidenceArtifacts.workspaceId, workspace.id)).orderBy(desc(evidenceArtifacts.createdAt)),
@@ -144,7 +144,7 @@ export async function createAuditArchive(ownerUserId: number, workspaceId: numbe
   ]);
   const manifestJson = JSON.stringify({ schema: "angelmind.audit-archive.v1", workspaceId: workspace.id, generatedAt: new Date().toISOString(), auditEvents: events, evidence, runs: runRows, approvals: approvalRows, notifications: notificationRows });
   const manifestHash = sha256(manifestJson);
-  const signature = signArchiveManifest(manifestHash, ENV.cookieSecret);
+  const signature = signArchiveManifest(manifestHash, ENV.archiveSigningSecret);
   const stored = await storagePut(`workspace-${workspace.id}/audit-archives/${Date.now()}-manifest.json`, manifestJson, "application/json");
   await db.insert(auditArchives).values({ workspaceId: workspace.id, storageKey: stored.key, storageReference: stored.url, manifestHash, signature, createdByUserId: ownerUserId });
   await addAudit(workspace.id, "audit-archive", "archive-created", { manifestHash, storageReference: stored.url, recordCounts: { events: events.length, evidence: evidence.length, runs: runRows.length, approvals: approvalRows.length, notifications: notificationRows.length } });
@@ -166,12 +166,12 @@ export async function restoreAuditArchivePlan(ownerUserId: number, archiveId: nu
   await ownedWorkspaceOrThrow(ownerUserId, archive.workspaceId);
   const destinationId = destinationWorkspaceId ?? archive.workspaceId;
   await ownedWorkspaceOrThrow(ownerUserId, destinationId);
-  if (!ENV.cookieSecret) throw new Error("Archive signing secret is unavailable.");
+  if (!ENV.archiveSigningSecret) throw new Error("Archive signing secret is unavailable.");
   const url = await storageGetSignedUrl(archive.storageKey);
   const response = await fetch(url);
   if (!response.ok) throw new Error("Archive could not be retrieved from managed storage.");
   const manifestJson = await response.text();
-  const valid = verifyArchiveIntegrity(manifestJson, archive.manifestHash, archive.signature, ENV.cookieSecret);
+  const valid = verifyArchiveIntegrity(manifestJson, archive.manifestHash, archive.signature, ENV.archiveSigningSecret);
   if (!valid) throw new Error("Archive integrity verification failed; restore plan refused.");
   const manifest = JSON.parse(manifestJson) as { auditEvents?: unknown[]; evidence?: unknown[]; runs?: unknown[]; approvals?: unknown[]; notifications?: unknown[] };
   return { archiveId, workspaceId: archive.workspaceId, destinationWorkspaceId: destinationId, valid: true as const, requiresHumanConfirmation: true as const, recordCounts: { auditEvents: manifest.auditEvents?.length ?? 0, evidence: manifest.evidence?.length ?? 0, runs: manifest.runs?.length ?? 0, approvals: manifest.approvals?.length ?? 0, notifications: manifest.notifications?.length ?? 0 }, mode: "plan-only" as const };
@@ -183,12 +183,12 @@ export async function verifyAuditArchive(ownerUserId: number, archiveId: number)
   const [archive] = await db.select().from(auditArchives).where(eq(auditArchives.id, archiveId)).limit(1);
   if (!archive) throw new Error("Audit archive tidak ditemukan.");
   await ownedWorkspaceOrThrow(ownerUserId, archive.workspaceId);
-  if (!ENV.cookieSecret) throw new Error("Archive signing secret is unavailable.");
+  if (!ENV.archiveSigningSecret) throw new Error("Archive signing secret is unavailable.");
   const url = await storageGetSignedUrl(archive.storageKey);
   const response = await fetch(url);
   if (!response.ok) throw new Error("Archive could not be retrieved from managed storage.");
   const manifestJson = await response.text();
-  const valid = verifyArchiveIntegrity(manifestJson, archive.manifestHash, archive.signature, ENV.cookieSecret);
+  const valid = verifyArchiveIntegrity(manifestJson, archive.manifestHash, archive.signature, ENV.archiveSigningSecret);
   await addAudit(archive.workspaceId, "audit-archive", "archive-verified", { archiveId: archive.id, valid });
   return { valid, manifestHash: archive.manifestHash };
 }

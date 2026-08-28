@@ -1,8 +1,5 @@
-import { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 import type { Express, Request, Response } from "express";
 import * as db from "./db";
-import { getSessionCookieOptions } from "./_core/cookies";
-import { sdk } from "./_core/sdk";
 import { isFirebaseAdminConfigured, verifyFirebaseIdToken } from "./firebase";
 
 const MAX_TOKEN_LENGTH = 12_000;
@@ -37,16 +34,10 @@ export function registerFirebaseAuthRoutes(app: Express) {
         openId,
         name: decoded.name ?? decoded.email ?? "Firebase user",
         email: decoded.email ?? null,
-        loginMethod: "google-firebase",
+        loginMethod: provider,
         lastSignedIn: new Date(),
       });
-      const sessionToken = await sdk.createSessionToken(openId, {
-        name: decoded.name ?? decoded.email ?? "Firebase user",
-        expiresInMs: ONE_YEAR_MS,
-      });
-      const cookieOptions = getSessionCookieOptions(req);
-      res.cookie(COOKIE_NAME, sessionToken, { ...cookieOptions, maxAge: ONE_YEAR_MS });
-      res.json({ success: true });
+      res.json({ success: true, provider: "firebase", uid: decoded.uid });
     } catch (error) {
       console.error("[Firebase Auth] Token exchange failed", error);
       res.status(401).json({ error: "Firebase authentication failed." });

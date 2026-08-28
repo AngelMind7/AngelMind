@@ -31,6 +31,8 @@ jobs:
           cache: pnpm
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+      - name: Verify provider-neutral source
+        run: node scripts/check-provider-neutral.mjs
       - name: Typecheck
         run: pnpm check
       - name: Test

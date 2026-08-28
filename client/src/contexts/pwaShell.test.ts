@@ -6,9 +6,9 @@ describe("safe PWA shell", () => {
   it("uses a static-app manifest while excluding API routes from navigation fallback", () => {
     const config = readFileSync(path.resolve(import.meta.dirname, "../../../vite.config.ts"), "utf8");
     expect(config).toContain("VitePWA");
-    expect(config).not.toContain("manus-storage");
+    expect(config).not.toContain("/storage/");
     expect(config).toContain("/^\\/api\\//");
-    expect(config).not.toContain("__manus__");
+    expect(config).not.toContain("__runtime__");
   });
   it("presents offline state as static-only rather than permitting protected workflow activity", () => {
     const component = readFileSync(path.resolve(import.meta.dirname, "../components/OfflineStatus.tsx"), "utf8");

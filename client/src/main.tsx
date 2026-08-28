@@ -5,6 +5,7 @@ import superjson from "superjson";
 import App from "./App";
 import "./index.css";
 import { registerServiceWorker } from "./pwa/registerServiceWorker";
+import { getFirebaseIdToken } from "./firebase";
 import { trpc } from "./lib/trpc";
 
 const queryClient = new QueryClient();
@@ -57,9 +58,13 @@ const trpcClient = trpc.createClient({
     httpBatchLink({
       url: "/api/trpc",
       transformer: superjson,
-      fetch(input, init) {
+      async fetch(input, init) {
+        const token = await getFirebaseIdToken();
+        const headers = new Headers(init?.headers);
+        if (token) headers.set("authorization", `Bearer ${token}`);
         return globalThis.fetch(input, {
           ...(init ?? {}),
+          headers,
           credentials: "include",
         });
       },

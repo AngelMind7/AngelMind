@@ -1,31 +1,32 @@
-import { getApps, initializeApp, cert, type App } from "firebase-admin/app";
+import { cert, getApps, getApp, initializeApp, type App } from "firebase-admin/app";
 import { getAuth, type Auth } from "firebase-admin/auth";
-import { getStorage, type Storage } from "firebase-admin/storage";
 
 function readConfig() {
   return {
     projectId: process.env.FIREBASE_PROJECT_ID?.trim(),
     clientEmail: process.env.FIREBASE_CLIENT_EMAIL?.trim(),
     privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n"),
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET?.trim(),
   };
 }
 
 export function isFirebaseAdminConfigured() {
   const config = readConfig();
-  return Boolean(config.projectId && config.clientEmail && config.privateKey && config.storageBucket);
+  return Boolean(config.projectId && config.clientEmail && config.privateKey);
 }
 
-export function getFirebaseAdmin(): { app: App; auth: Auth; storage: Storage } | null {
+export function getFirebaseAdmin(): { app: App; auth: Auth } | null {
   if (!isFirebaseAdminConfigured()) return null;
   const config = readConfig();
   const app = getApps().length
-    ? getApps()[0]
+    ? getApp()
     : initializeApp({
-        credential: cert({ projectId: config.projectId, clientEmail: config.clientEmail, privateKey: config.privateKey }),
-        storageBucket: config.storageBucket,
+        credential: cert({
+          projectId: config.projectId,
+          clientEmail: config.clientEmail,
+          privateKey: config.privateKey,
+        }),
       });
-  return { app, auth: getAuth(app), storage: getStorage(app) };
+  return { app, auth: getAuth(app) };
 }
 
 export async function verifyFirebaseIdToken(idToken: string) {

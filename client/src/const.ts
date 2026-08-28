@@ -10,11 +10,24 @@ export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 // `state` it sends. Do NOT call it during render (no `href={startLogin()}` /
 // `loginUrl={...}`): each call overwrites the cookie, so a stray render-phase
 // call would desync it from an in-flight login and the callback would reject it
-// with "invalid oauth state". It returns void by design, so there is no URL to
-// stash across renders.
+// with "invalid oauth state". It returns false when configuration is missing and
+// true after navigation starts; there is no URL to stash across renders.
+export function getOAuthConfigStatus() {
+  const missing: string[] = [];
+  if (!import.meta.env.VITE_OAUTH_PORTAL_URL?.trim()) missing.push("VITE_OAUTH_PORTAL_URL");
+  if (!import.meta.env.VITE_APP_ID?.trim()) missing.push("VITE_APP_ID");
+  return { configured: missing.length === 0, missing };
+}
+
 export const startLogin = () => {
-  const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL;
-  const appId = import.meta.env.VITE_APP_ID;
+  const oauthPortalUrl = import.meta.env.VITE_OAUTH_PORTAL_URL?.trim();
+  const appId = import.meta.env.VITE_APP_ID?.trim();
+  const configStatus = getOAuthConfigStatus();
+  if (!configStatus.configured || !oauthPortalUrl || !appId) {
+    console.error(`[OAuth] Sign in is unavailable. Missing: ${configStatus.missing.join(", ")}`);
+    window.dispatchEvent(new CustomEvent("angelmind:oauth-config-error", { detail: configStatus }));
+    return false;
+  }
   const redirectUri = `${window.location.origin}/api/oauth/callback`;
 
   const nonce = crypto.randomUUID();
@@ -28,4 +41,5 @@ export const startLogin = () => {
   url.searchParams.set("type", "signIn");
 
   window.location.href = url.toString();
+  return true;
 };

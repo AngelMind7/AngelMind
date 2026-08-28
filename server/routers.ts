@@ -75,7 +75,7 @@ export const appRouter = router({
     archives: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => operations.listAuditArchives(ctx.user.id, input.workspaceId)),
     createArchive: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).mutation(({ ctx, input }) => operations.createAuditArchive(ctx.user.id, input.workspaceId)),
     verifyArchive: protectedProcedure.input(z.object({ archiveId: z.number().int().positive() })).mutation(({ ctx, input }) => operations.verifyAuditArchive(ctx.user.id, input.archiveId)),
-    restoreArchivePlan: protectedProcedure.input(z.object({ archiveId: z.number().int().positive() })).mutation(({ ctx, input }) => operations.restoreAuditArchivePlan(ctx.user.id, input.archiveId)),
+    restoreArchivePlan: protectedProcedure.input(z.object({ archiveId: z.number().int().positive(), destinationWorkspaceId: z.number().int().positive().optional() })).mutation(({ ctx, input }) => operations.restoreAuditArchivePlan(ctx.user.id, input.archiveId, input.destinationWorkspaceId)),
   }),
   assurance: router({
     policies: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive().optional() }).optional()).query(({ ctx, input }) => assurance.listPolicyVersions(ctx.user.id, input?.workspaceId)),

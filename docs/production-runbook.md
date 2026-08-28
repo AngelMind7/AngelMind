@@ -1,0 +1,53 @@
+# AngelMind Production Runbook
+
+## Purpose
+
+AngelMind is deployed as a governed AI security-research control plane. It assists with passive inventory analysis, evidence review, finding lifecycle management, and report drafting. It does not scan targets actively, execute exploits, replay credentials, exfiltrate data, or submit reports autonomously.
+
+## Required environment
+
+Configure the platform's server-side environment through the hosting provider's secret manager. Never commit `.env` files or put secret values in source control.
+
+| Variable | Required purpose |
+| --- | --- |
+| `DATABASE_URL` | Production MySQL/TiDB connection string |
+| `JWT_SECRET` | Session signing secret |
+| `VITE_APP_ID` | OAuth application identifier |
+| `OAUTH_SERVER_URL` | OAuth backend base URL |
+| `VITE_OAUTH_PORTAL_URL` | Frontend login portal URL |
+| `BUILT_IN_FORGE_API_URL` | Server-side built-in API endpoint |
+| `BUILT_IN_FORGE_API_KEY` | Server-side built-in API credential |
+| `VITE_FRONTEND_FORGE_API_URL` | Frontend built-in API endpoint when required |
+| `VITE_FRONTEND_FORGE_API_KEY` | Frontend-safe public runtime key when required |
+
+Use separate values for development, staging, and production. Rotate session and storage credentials according to the hosting provider's policy.
+
+## Release procedure
+
+1. Confirm the target commit is on `main` and the GitHub CI checks are green.
+2. Configure the environment variables in the hosting provider.
+3. Deploy the application build with `pnpm install --frozen-lockfile`, `pnpm build`, and `pnpm start` as the production lifecycle.
+4. Run the schema migration against the intended production database with `pnpm db:push`. Review the generated SQL before applying it; never point this command at an unrelated database.
+5. Open the deployed URL and complete the smoke test in `docs/e2e.md`.
+6. Create a test workspace, upload only non-sensitive evidence, run a rehearsal, create a signed archive, verify it, and generate a restore plan. The restore operation must remain plan-only until a separately designed confirmation workflow exists.
+7. Only after the smoke test succeeds should a production workspace be created from the program's official scope.
+
+## Workspace onboarding
+
+Record the program name, official allowlist, exclusions, safe-harbor language, code of conduct, budget, session limit, cooldown, retention, timezone, and designated reviewer. The workspace owner must verify these values against the program's current policy before any evidence is accepted.
+
+## Incident response
+
+If a policy mismatch, secret exposure, unauthorized artifact, or unexpected external request is observed, pause the affected workspace, preserve the audit trail, revoke exposed credentials, and create an incident record. Do not delete evidence before retention and incident owners agree on the action. Escalate target-facing concerns to the program owner through its official channel.
+
+## Backup and restore
+
+Create signed audit archives on a schedule appropriate for the workspace. Verify archive integrity after creation and before any restore discussion. Restore plans identify the archive and destination workspace but do not write or delete records. Test any future executor only against a separate recovery environment with an explicit human confirmation gate.
+
+## Rollback
+
+If a release introduces a regression, stop new workspace activity, preserve the audit records, roll back to the last known-good application commit, and re-run the smoke test. Do not roll back the database blindly; schema changes require an explicit forward migration or a reviewed restoration procedure.
+
+## Security boundary
+
+External platform submission remains a human action. Any proposed target-facing capability requires a new threat model, egress policy, least-privilege design, capability-specific rate limit, program authorization, independent review, and additional audit tests before implementation.

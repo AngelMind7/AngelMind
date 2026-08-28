@@ -158,12 +158,14 @@ export async function listAuditArchives(ownerUserId: number, workspaceId: number
   return db.select().from(auditArchives).where(eq(auditArchives.workspaceId, workspaceId)).orderBy(desc(auditArchives.createdAt));
 }
 
-export async function restoreAuditArchivePlan(ownerUserId: number, archiveId: number) {
+export async function restoreAuditArchivePlan(ownerUserId: number, archiveId: number, destinationWorkspaceId?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const [archive] = await db.select().from(auditArchives).where(eq(auditArchives.id, archiveId)).limit(1);
   if (!archive) throw new Error("Audit archive tidak ditemukan.");
   await ownedWorkspaceOrThrow(ownerUserId, archive.workspaceId);
+  const destinationId = destinationWorkspaceId ?? archive.workspaceId;
+  await ownedWorkspaceOrThrow(ownerUserId, destinationId);
   if (!ENV.cookieSecret) throw new Error("Archive signing secret is unavailable.");
   const url = await storageGetSignedUrl(archive.storageKey);
   const response = await fetch(url);
@@ -172,7 +174,7 @@ export async function restoreAuditArchivePlan(ownerUserId: number, archiveId: nu
   const valid = verifyArchiveIntegrity(manifestJson, archive.manifestHash, archive.signature, ENV.cookieSecret);
   if (!valid) throw new Error("Archive integrity verification failed; restore plan refused.");
   const manifest = JSON.parse(manifestJson) as { auditEvents?: unknown[]; evidence?: unknown[]; runs?: unknown[]; approvals?: unknown[]; notifications?: unknown[] };
-  return { archiveId, workspaceId: archive.workspaceId, valid: true as const, requiresHumanConfirmation: true as const, recordCounts: { auditEvents: manifest.auditEvents?.length ?? 0, evidence: manifest.evidence?.length ?? 0, runs: manifest.runs?.length ?? 0, approvals: manifest.approvals?.length ?? 0, notifications: manifest.notifications?.length ?? 0 }, mode: "plan-only" as const };
+  return { archiveId, workspaceId: archive.workspaceId, destinationWorkspaceId: destinationId, valid: true as const, requiresHumanConfirmation: true as const, recordCounts: { auditEvents: manifest.auditEvents?.length ?? 0, evidence: manifest.evidence?.length ?? 0, runs: manifest.runs?.length ?? 0, approvals: manifest.approvals?.length ?? 0, notifications: manifest.notifications?.length ?? 0 }, mode: "plan-only" as const };
 }
 
 export async function verifyAuditArchive(ownerUserId: number, archiveId: number) {

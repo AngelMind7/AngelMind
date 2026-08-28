@@ -1,6 +1,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/NotFound";
+import { Suspense } from "react";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
@@ -12,11 +13,13 @@ function Router() {
   // make sure to consider if you need authentication for certain routes
   return (
     <DashboardLayout>
-      <Switch>
-        {authenticatedRoutes.map(route => <Route key={route.path} path={route.path} component={route.component} />)}
-        <Route path={"/404"} component={NotFound} />
-        <Route component={NotFound} />
-      </Switch>
+      <Suspense fallback={<div className="grid min-h-[320px] place-items-center" role="status" aria-live="polite"><span className="font-mono text-xs uppercase tracking-[.16em] text-cyan-300">Loading secured workspace…</span></div>}>
+        <Switch>
+          {authenticatedRoutes.map(route => <Route key={route.path} path={route.path} component={route.component} />)}
+          <Route path={"/404"} component={NotFound} />
+          <Route component={NotFound} />
+        </Switch>
+      </Suspense>
     </DashboardLayout>
   );
 }

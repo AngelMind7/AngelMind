@@ -63,3 +63,8 @@
 - [x] Add a route-by-route localization inventory and test that all nine authenticated dashboard surfaces participate in the locale system.
 - [x] Derive the localization coverage audit from the actual authenticated route map and migrate remaining timestamp renderers to explicit locale helpers where practical.
 - [x] Replace brittle global date override behavior with a narrowly scoped locale formatter and retain safe fallback for browser-rendered legacy timestamps.
+- [x] Add explicit localized copy for the Assurance and Signal Center operator workflows across all supported locales.
+- [x] Add a persisted timezone preference and ensure all localized timestamps honor it without altering stored UTC values.
+- [x] Split authenticated page bundles with route-level lazy loading, loading fallback, and regression coverage.
+- [x] Replace remaining Assurance severity and Signal Center event-preference labels with explicit locale keys across all 12 locales.
+- [x] Thread the persisted IANA timezone through legacy timestamp fallback formatting and add regression coverage for remaining locale-sensitive workflow labels.

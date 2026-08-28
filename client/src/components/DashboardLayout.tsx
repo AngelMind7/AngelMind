@@ -28,6 +28,7 @@ import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
 import { Button } from "./ui/button";
 import { NotificationIndicator } from "./NotificationIndicator";
 import { LanguageSelector } from "./LanguageSelector";
+import { TimezoneSelector } from "./TimezoneSelector";
 import { useLocale } from "@/contexts/LocaleContext";
 
 const menuItems = [
@@ -212,6 +213,7 @@ function DashboardLayoutContent({
 
           <SidebarFooter className="p-3">
             <div className="mb-3 group-data-[collapsible=icon]:hidden"><LanguageSelector /></div>
+            <div className="mb-3 group-data-[collapsible=icon]:hidden"><TimezoneSelector /></div>
             <div className="mb-3 group-data-[collapsible=icon]:hidden"><NotificationIndicator /></div>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -266,7 +268,7 @@ function DashboardLayoutContent({
                 </div>
               </div>
             </div>
-            <div className="flex items-center gap-1"><LanguageSelector compact /><NotificationIndicator compact /></div>
+            <div className="flex items-center gap-1"><LanguageSelector compact /><TimezoneSelector compact /><NotificationIndicator compact /></div>
           </div>
         )}
         <main className="flex-1 p-4 sm:p-6 lg:p-8">{children}</main>

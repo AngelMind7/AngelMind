@@ -1,13 +1,5 @@
-import Audit from "@/pages/Audit";
-import Assurance from "@/pages/Assurance";
-import Findings from "@/pages/Findings";
-import Governance from "@/pages/Governance";
-import Home from "@/pages/Home";
-import Notifications from "@/pages/Notifications";
-import Operations from "@/pages/Operations";
-import OperationsAdmin from "@/pages/OperationsAdmin";
-import Workspaces from "@/pages/Workspaces";
+import { lazy } from "react";
 
 export const authenticatedRoutes = [
-  { path: "/", component: Home }, { path: "/workspaces", component: Workspaces }, { path: "/governance", component: Governance }, { path: "/findings", component: Findings }, { path: "/audit", component: Audit }, { path: "/operations", component: Operations }, { path: "/notifications", component: Notifications }, { path: "/operations-console", component: OperationsAdmin }, { path: "/assurance", component: Assurance },
+  { path: "/", component: lazy(() => import("@/pages/Home")) }, { path: "/workspaces", component: lazy(() => import("@/pages/Workspaces")) }, { path: "/governance", component: lazy(() => import("@/pages/Governance")) }, { path: "/findings", component: lazy(() => import("@/pages/Findings")) }, { path: "/audit", component: lazy(() => import("@/pages/Audit")) }, { path: "/operations", component: lazy(() => import("@/pages/Operations")) }, { path: "/notifications", component: lazy(() => import("@/pages/Notifications")) }, { path: "/operations-console", component: lazy(() => import("@/pages/OperationsAdmin")) }, { path: "/assurance", component: lazy(() => import("@/pages/Assurance")) },
 ] as const;

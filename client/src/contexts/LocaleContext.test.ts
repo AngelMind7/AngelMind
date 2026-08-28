@@ -23,6 +23,9 @@ describe("AngelMind locale catalog", () => {
     expect(localizeEmbeddedTimestamp("id", "Requested 8/27/2026, 3:30 PM")).not.toContain("8/27/2026");
     expect(localizeEmbeddedTimestamp("en", "No timestamp here")).toBe("No timestamp here");
   });
+  it("honors a selected IANA timezone for the legacy timestamp fallback", () => {
+    expect(localizeEmbeddedTimestamp("en", "8/28/2026, 12:00 AM", "Asia/Jakarta")).toContain("7:00 AM");
+  });
   it("accepts only interface-like static catalog phrases for browser translation", () => {
     expect(isSafeStaticPhrase("Evidence artifact ID")).toBe(true);
     expect(isSafeStaticPhrase("= MIN_WIDTH && newWidth")).toBe(false);

@@ -28,6 +28,9 @@ python -m pip install -e '.[dev]'
 PYTHONPATH=src pytest
 ```
 
+## Blueprint and documentation
+The supplied master blueprint is preserved at `docs/AI_Bug_Bounty_Master_Blueprint_Final.md`. Its implementation mapping, delivery status, and safety boundaries are tracked in `docs/blueprint-delivery-status.md` and `docs/master-blueprint-alignment.md`.
+
 ## Documentation
 
 Read `docs/architecture.md` for the service boundary and domain flow, `docs/tool-contracts.md` for future integration requirements, `docs/governance.md` and `docs/policy-governance.md` for approval behavior, `docs/legal-compliance.md` for audit and retention handling, `docs/operations.md` for deployment and scheduling, `docs/incident-response.md` for escalation, `docs/notifications.md` for alert delivery controls, `docs/team-access.md` for workspace roles, `docs/audit-archives.md` for recovery records, `docs/webhook-drafts.md` for the outbound delivery boundary, and `docs/readiness-roadmap.md` for the remaining production-readiness plan.

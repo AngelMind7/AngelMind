@@ -10,6 +10,7 @@ import * as operations from "./control-plane/operations";
 import * as assurance from "./control-plane/assurance";
 import * as agent from "./control-plane/agent";
 import { parsePassiveInventory } from "./control-plane/passive-inventory";
+import { composeReport } from "./control-plane/report-composer";
 
 const workspaceInput = z.object({
   name: z.string().min(2).max(120),
@@ -41,6 +42,7 @@ export const appRouter = router({
     analyzeEvidence: protectedProcedure.input(z.object({ scopeSummary: z.string().min(20).max(10_000), evidence: z.string().min(20).max(40_000), findingTitle: z.string().max(240).optional() })).mutation(({ input }) => agent.analyzeEvidence(input)),
     analyzeAndCreateFinding: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), scopeSummary: z.string().min(20).max(10_000), evidence: z.string().min(20).max(40_000), findingTitle: z.string().min(3).max(240) })).mutation(({ ctx, input }) => agent.analyzeAndCreateFinding(ctx.user.id, input)),
     importPassiveInventory: protectedProcedure.input(z.object({ content: z.string().min(1).max(500_000), format: z.enum(["csv", "json"]), allowlist: z.array(z.string().min(1).max(255)).min(1).max(100), exclusions: z.array(z.string().min(1).max(255)).max(100) })).mutation(({ input }) => parsePassiveInventory(input)),
+    composeReport: protectedProcedure.input(z.object({ platform: z.enum(["hackerone", "bugcrowd", "intigriti", "markdown"]), title: z.string().min(3).max(240), severity: z.enum(["informational", "low", "medium", "high", "critical"]), summary: z.string().max(12_000), impact: z.string().max(12_000), evidence: z.array(z.string().max(4_000)).max(100), reproductionNotes: z.array(z.string().max(4_000)).max(100), remediation: z.string().max(12_000).optional() })).mutation(({ input }) => composeReport(input, input.platform)),
   }),
   control: router({
     dashboard: protectedProcedure.query(({ ctx }) => controlPlane.getDashboard(ctx.user.id)),

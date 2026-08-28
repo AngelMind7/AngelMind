@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { startLogin } from "@/const";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Activity, BarChart3, BrainCircuit, Boxes, FileSearch, LayoutDashboard, LogOut, PanelLeft, ScrollText, Settings2, ShieldCheck, ShieldEllipsis } from "lucide-react";
+import { Activity, BarChart3, BrainCircuit, Boxes, FileSearch, FileText, LayoutDashboard, LogOut, PanelLeft, ScrollText, Settings2, ShieldCheck, ShieldEllipsis } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -39,6 +39,7 @@ const menuItems = [
   { icon: Boxes, labelKey: "nav.workspaces" as const, path: "/workspaces" },
   { icon: BarChart3, labelKey: "nav.observability" as const, path: "/coverage" },
   { icon: BrainCircuit, labelKey: "nav.commandCenter" as const, path: "/researcher" },
+  { icon: FileText, labelKey: "nav.findings" as const, path: "/reports" },
   { icon: ShieldCheck, labelKey: "nav.governance" as const, path: "/governance" },
   { icon: FileSearch, labelKey: "nav.findings" as const, path: "/findings" },
   { icon: ScrollText, labelKey: "nav.audit" as const, path: "/audit" },

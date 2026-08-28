@@ -73,7 +73,7 @@ The public surface and the authenticated application must have distinct route sh
 | Layer | Route family | Page purpose | Data rule |
 | --- | --- | --- | --- |
 | Marketing | `/`, `/features`, `/trust`, `/docs`, `/pricing`, `/contact`, `/security` | Explain the product, safe operating model, documentation, policy posture, and contact path. | Static, reviewed editorial content only. No testimonials, fabricated metrics, or client records. |
-| Authenticated application | `/app`, `/workspaces`, `/governance`, `/findings`, `/audit`, `/operations`, `/notifications`, `/operations-console`, `/assurance` | Govern program workflows and inspect workspace-scoped records. | Protected by OAuth, role policy, audit events, and row-level workspace logic. |
+| Authenticated application | `/app`, `/workspaces`, `/organizations`, `/research`, `/researcher`, `/ai-center`, `/profile`, `/security`, `/governance`, `/findings`, `/audit`, `/operations`, `/notifications`, `/operations-console`, `/assurance` | Govern tenant, program, research, AI, identity, and workspace-scoped records. | Protected by Firebase bearer token or scoped API key, role policy, audit events, and row-level workspace logic. |
 
 ### Marketing-page breakdown
 

@@ -25,6 +25,149 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
+export const accountSecurityEventType = ["login", "logout", "token_rejected", "password_reset_requested", "mfa_enrolled", "mfa_unenrolled", "device_registered", "device_revoked", "profile_updated"] as const;
+export const profileVisibility = ["private", "organization", "public"] as const;
+export const apiKeyStatus = ["active", "revoked", "expired"] as const;
+export const entitlementPlan = ["free", "team", "enterprise"] as const;
+export const privacyRequestType = ["export", "delete", "rectify"] as const;
+export const privacyRequestStatus = ["requested", "processing", "completed", "rejected"] as const;
+export const authDevicePlatform = ["web", "ios", "android", "unknown"] as const;
+export const onboardingStatus = ["not_started", "in_progress", "completed", "skipped"] as const;
+
+export const userProfiles = mysqlTable("userProfiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  username: varchar("username", { length: 64 }),
+  avatarReference: varchar("avatarReference", { length: 512 }),
+  bio: text("bio").notNull(),
+  specialization: varchar("specialization", { length: 160 }),
+  skills: text("skills").notNull(),
+  experience: text("experience").notNull(),
+  visibility: mysqlEnum("visibility", profileVisibility).default("organization").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [uniqueIndex("user_profile_user_uq").on(table.userId), uniqueIndex("user_profile_username_uq").on(table.username), index("user_profile_visibility_idx").on(table.visibility, table.updatedAt)]);
+
+export const authDevices = mysqlTable("authDevices", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  deviceFingerprint: varchar("deviceFingerprint", { length: 128 }).notNull(),
+  label: varchar("label", { length: 120 }).notNull(),
+  platform: mysqlEnum("platform", authDevicePlatform).default("unknown").notNull(),
+  userAgent: varchar("userAgent", { length: 512 }),
+  lastIpHash: varchar("lastIpHash", { length: 128 }),
+  lastSeenAt: timestamp("lastSeenAt").defaultNow().notNull(),
+  trusted: int("trusted").default(1).notNull(),
+  revokedAt: timestamp("revokedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [
+  uniqueIndex("auth_device_user_fingerprint_uq").on(table.userId, table.deviceFingerprint),
+  index("auth_device_user_last_seen_idx").on(table.userId, table.lastSeenAt),
+]);
+
+export const apiKeys = mysqlTable("apiKeys", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  workspaceId: int("workspaceId"),
+  name: varchar("name", { length: 120 }).notNull(),
+  prefix: varchar("prefix", { length: 16 }).notNull(),
+  secretHash: varchar("secretHash", { length: 64 }).notNull(),
+  scopes: text("scopes").notNull(),
+  status: mysqlEnum("status", apiKeyStatus).default("active").notNull(),
+  expiresAt: timestamp("expiresAt"),
+  lastUsedAt: timestamp("lastUsedAt"),
+  revokedAt: timestamp("revokedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("api_key_secret_hash_uq").on(table.secretHash), index("api_key_user_status_idx").on(table.userId, table.status), index("api_key_workspace_status_idx").on(table.workspaceId, table.status)]);
+
+export const accountSecurityEvents = mysqlTable("accountSecurityEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  eventType: mysqlEnum("eventType", accountSecurityEventType).notNull(),
+  deviceId: int("deviceId"),
+  ipHash: varchar("ipHash", { length: 128 }),
+  userAgent: varchar("userAgent", { length: 512 }),
+  metadata: text("metadata").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [
+  index("account_security_event_user_created_idx").on(table.userId, table.createdAt),
+  index("account_security_event_type_created_idx").on(table.eventType, table.createdAt),
+]);
+
+export const onboardingProfiles = mysqlTable("onboardingProfiles", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  status: mysqlEnum("status", onboardingStatus).default("not_started").notNull(),
+  currentStep: varchar("currentStep", { length: 64 }).default("profile").notNull(),
+  organizationName: varchar("organizationName", { length: 160 }),
+  roleIntent: varchar("roleIntent", { length: 80 }),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [uniqueIndex("onboarding_profile_user_uq").on(table.userId)]);
+
+export const organizationStatus = ["active", "suspended", "archived"] as const;
+export const organizationMemberRole = ["owner", "admin", "researcher", "reviewer", "auditor"] as const;
+export const programStatus = ["draft", "active", "paused", "completed", "archived"] as const;
+
+export const organizations = mysqlTable("organizations", {
+  id: int("id").autoincrement().primaryKey(),
+  ownerUserId: int("ownerUserId").notNull(),
+  name: varchar("name", { length: 160 }).notNull(),
+  slug: varchar("slug", { length: 180 }).notNull(),
+  status: mysqlEnum("status", organizationStatus).default("active").notNull(),
+  settings: text("settings").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [uniqueIndex("organization_slug_uq").on(table.slug), index("organization_owner_status_idx").on(table.ownerUserId, table.status)]);
+
+export const organizationMembers = mysqlTable("organizationMembers", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organizationId").notNull(),
+  userId: int("userId").notNull(),
+  role: mysqlEnum("role", organizationMemberRole).default("researcher").notNull(),
+  invitedByUserId: int("invitedByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("organization_member_uq").on(table.organizationId, table.userId), index("organization_member_user_idx").on(table.userId, table.role)]);
+
+export const programs = mysqlTable("programs", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organizationId").notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  name: varchar("name", { length: 200 }).notNull(),
+  description: text("description").notNull(),
+  status: mysqlEnum("status", programStatus).default("draft").notNull(),
+  includedAssets: text("includedAssets").notNull(),
+  excludedAssets: text("excludedAssets").notNull(),
+  rules: text("rules").notNull(),
+  safeHarbor: text("safeHarbor").notNull(),
+  currentVersion: int("currentVersion").default(1).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [index("program_organization_status_idx").on(table.organizationId, table.status), uniqueIndex("program_organization_name_uq").on(table.organizationId, table.name)]);
+
+export const organizationEntitlements = mysqlTable("organizationEntitlements", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organizationId").notNull(),
+  plan: mysqlEnum("plan", entitlementPlan).default("free").notNull(),
+  featureFlags: text("featureFlags").notNull(),
+  limits: text("limits").notNull(),
+  periodStart: timestamp("periodStart").notNull(),
+  periodEnd: timestamp("periodEnd").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [uniqueIndex("organization_entitlement_uq").on(table.organizationId), index("organization_entitlement_period_idx").on(table.periodEnd)]);
+
+export const privacyRequests = mysqlTable("privacyRequests", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  requestType: mysqlEnum("requestType", privacyRequestType).notNull(),
+  status: mysqlEnum("status", privacyRequestStatus).default("requested").notNull(),
+  reason: text("reason").notNull(),
+  resultReference: varchar("resultReference", { length: 512 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+}, table => [index("privacy_request_user_status_idx").on(table.userId, table.status), index("privacy_request_created_idx").on(table.createdAt)]);
+
 export const workspaceStatus = ["active", "paused", "archived"] as const;
 export const runStatus = ["queued", "running", "checkpointed", "completed", "blocked", "failed"] as const;
 export const findingStatus = ["discovered", "triaged", "candidate", "reproducing", "validated", "reported", "submitted", "invalid", "duplicate", "inconclusive"] as const;
@@ -38,6 +181,8 @@ export const incidentStatus = ["open", "acknowledged", "resolved"] as const;
 export const workspaces = mysqlTable("workspaces", {
   id: int("id").autoincrement().primaryKey(),
   ownerUserId: int("ownerUserId").notNull(),
+  organizationId: int("organizationId"),
+  programId: int("programId"),
   name: varchar("name", { length: 120 }).notNull(),
   programName: varchar("programName", { length: 160 }).notNull(),
   status: mysqlEnum("status", workspaceStatus).default("active").notNull(),
@@ -58,6 +203,173 @@ export const workspaces = mysqlTable("workspaces", {
   index("workspaces_owner_status_idx").on(table.ownerUserId, table.status),
   uniqueIndex("workspaces_schedule_cron_task_uid_uq").on(table.scheduleCronTaskUid),
 ]);
+
+export const researchSessionState = ["draft", "ready", "active", "paused", "completed", "archived"] as const;
+export const researchAssetType = ["domain", "subdomain", "ip", "application", "api", "endpoint", "technology", "service"] as const;
+export const researchAssetState = ["discovered", "triaged", "in_scope", "out_of_scope", "archived"] as const;
+export const researchTaskStatus = ["queued", "running", "blocked", "paused", "failed", "retrying", "completed", "cancelled"] as const;
+export const researchObservationStatus = ["new", "reviewed", "linked", "archived"] as const;
+export const researchHypothesisStatus = ["proposed", "investigating", "supported", "disproven", "validated", "archived"] as const;
+
+export const researchSessions = mysqlTable("researchSessions", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  ownerUserId: int("ownerUserId").notNull(),
+  title: varchar("title", { length: 200 }).notNull(),
+  state: mysqlEnum("state", researchSessionState).default("draft").notNull(),
+  scopeDigest: varchar("scopeDigest", { length: 128 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  completedAt: timestamp("completedAt"),
+}, table => [index("research_session_workspace_state_idx").on(table.workspaceId, table.state), index("research_session_owner_updated_idx").on(table.ownerUserId, table.updatedAt)]);
+
+export const researchAssets = mysqlTable("researchAssets", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  sessionId: int("sessionId").notNull(),
+  assetType: mysqlEnum("assetType", researchAssetType).notNull(),
+  value: varchar("value", { length: 512 }).notNull(),
+  hostname: varchar("hostname", { length: 255 }),
+  state: mysqlEnum("state", researchAssetState).default("discovered").notNull(),
+  inScope: int("inScope").default(0).notNull(),
+  metadata: text("metadata").notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [index("research_asset_session_state_idx").on(table.sessionId, table.state), uniqueIndex("research_asset_session_value_uq").on(table.sessionId, table.value)]);
+
+export const researchObservations = mysqlTable("researchObservations", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  sessionId: int("sessionId").notNull(),
+  assetId: int("assetId"),
+  title: varchar("title", { length: 240 }).notNull(),
+  content: text("content").notNull(),
+  status: mysqlEnum("status", researchObservationStatus).default("new").notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [index("research_observation_session_created_idx").on(table.sessionId, table.createdAt), index("research_observation_asset_idx").on(table.assetId)]);
+
+export const researchHypotheses = mysqlTable("researchHypotheses", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  sessionId: int("sessionId").notNull(),
+  assetId: int("assetId"),
+  observationId: int("observationId"),
+  description: text("description").notNull(),
+  reason: text("reason").notNull(),
+  priority: int("priority").default(50).notNull(),
+  status: mysqlEnum("status", researchHypothesisStatus).default("proposed").notNull(),
+  evidence: text("evidence").notNull(),
+  aiAnalysis: text("aiAnalysis"),
+  outcome: text("outcome"),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [index("research_hypothesis_session_status_idx").on(table.sessionId, table.status), index("research_hypothesis_observation_idx").on(table.observationId)]);
+
+export const researchTasks = mysqlTable("researchTasks", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  sessionId: int("sessionId").notNull(),
+  type: varchar("type", { length: 80 }).notNull(),
+  title: varchar("title", { length: 240 }).notNull(),
+  priority: int("priority").default(50).notNull(),
+  status: mysqlEnum("status", researchTaskStatus).default("queued").notNull(),
+  ownerUserId: int("ownerUserId"),
+  dependencies: text("dependencies").notNull(),
+  inputs: text("inputs").notNull(),
+  outputs: text("outputs").notNull(),
+  retryCount: int("retryCount").default(0).notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [index("research_task_session_status_priority_idx").on(table.sessionId, table.status, table.priority), index("research_task_owner_status_idx").on(table.ownerUserId, table.status)]);
+
+export const aiModelStatus = ["active", "degraded", "disabled"] as const;
+export const aiRunStatus = ["queued", "running", "completed", "failed", "partial", "cancelled"] as const;
+export const jobStatus = ["queued", "running", "succeeded", "failed", "retrying", "dead_letter", "cancelled"] as const;
+export const outboxEventStatus = ["pending", "published", "failed"] as const;
+
+export const aiModels = mysqlTable("aiModels", {
+  id: int("id").autoincrement().primaryKey(),
+  modelKey: varchar("modelKey", { length: 160 }).notNull(),
+  provider: varchar("provider", { length: 120 }).notNull(),
+  gateway: varchar("gateway", { length: 120 }).notNull(),
+  capabilities: text("capabilities").notNull(),
+  contextWindow: int("contextWindow").default(0).notNull(),
+  status: mysqlEnum("status", aiModelStatus).default("active").notNull(),
+  version: varchar("version", { length: 80 }),
+  inputCostPerMillionCents: int("inputCostPerMillionCents").default(0).notNull(),
+  outputCostPerMillionCents: int("outputCostPerMillionCents").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [uniqueIndex("ai_model_key_uq").on(table.modelKey), index("ai_model_status_idx").on(table.status, table.updatedAt)]);
+
+export const aiRuns = mysqlTable("aiRuns", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  sessionId: int("sessionId"),
+  taskId: int("taskId"),
+  userId: int("userId").notNull(),
+  modelKey: varchar("modelKey", { length: 160 }).notNull(),
+  gateway: varchar("gateway", { length: 120 }).notNull(),
+  purpose: varchar("purpose", { length: 120 }).notNull(),
+  traceId: varchar("traceId", { length: 128 }).notNull(),
+  inputReference: varchar("inputReference", { length: 512 }).notNull(),
+  outputReference: varchar("outputReference", { length: 512 }),
+  status: mysqlEnum("status", aiRunStatus).default("queued").notNull(),
+  inputTokens: int("inputTokens").default(0).notNull(),
+  outputTokens: int("outputTokens").default(0).notNull(),
+  costCents: int("costCents").default(0).notNull(),
+  errorCode: varchar("errorCode", { length: 120 }),
+  startedAt: timestamp("startedAt"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [index("ai_run_workspace_created_idx").on(table.workspaceId, table.createdAt), index("ai_run_trace_idx").on(table.traceId), index("ai_run_status_idx").on(table.status, table.createdAt)]);
+
+export const promptVersions = mysqlTable("promptVersions", {
+  id: int("id").autoincrement().primaryKey(),
+  purpose: varchar("purpose", { length: 120 }).notNull(),
+  version: int("version").notNull(),
+  template: text("template").notNull(),
+  variables: text("variables").notNull(),
+  compatibleModels: text("compatibleModels").notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("prompt_purpose_version_uq").on(table.purpose, table.version), index("prompt_purpose_created_idx").on(table.purpose, table.createdAt)]);
+
+export const jobs = mysqlTable("jobs", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId"),
+  kind: varchar("kind", { length: 80 }).notNull(),
+  idempotencyKey: varchar("idempotencyKey", { length: 180 }).notNull(),
+  payload: text("payload").notNull(),
+  status: mysqlEnum("status", jobStatus).default("queued").notNull(),
+  attempts: int("attempts").default(0).notNull(),
+  maxAttempts: int("maxAttempts").default(3).notNull(),
+  availableAt: timestamp("availableAt").defaultNow().notNull(),
+  lockedAt: timestamp("lockedAt"),
+  lastError: text("lastError"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [uniqueIndex("job_idempotency_key_uq").on(table.idempotencyKey), index("job_status_available_idx").on(table.status, table.availableAt), index("job_workspace_created_idx").on(table.workspaceId, table.createdAt)]);
+
+export const outboxEvents = mysqlTable("outboxEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId"),
+  eventType: varchar("eventType", { length: 120 }).notNull(),
+  aggregateType: varchar("aggregateType", { length: 80 }).notNull(),
+  aggregateId: int("aggregateId").notNull(),
+  idempotencyKey: varchar("idempotencyKey", { length: 180 }).notNull(),
+  payload: text("payload").notNull(),
+  status: mysqlEnum("status", outboxEventStatus).default("pending").notNull(),
+  attempts: int("attempts").default(0).notNull(),
+  publishedAt: timestamp("publishedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("outbox_event_idempotency_uq").on(table.idempotencyKey), index("outbox_event_status_created_idx").on(table.status, table.createdAt), index("outbox_event_workspace_idx").on(table.workspaceId, table.createdAt)]);
 
 export const runs = mysqlTable("runs", {
   id: int("id").autoincrement().primaryKey(),
@@ -124,6 +436,42 @@ export const evidenceArtifacts = mysqlTable("evidenceArtifacts", {
   sha256: varchar("sha256", { length: 64 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [index("evidence_workspace_created_idx").on(table.workspaceId, table.createdAt)]);
+
+export const evidenceProvenance = mysqlTable("evidenceProvenance", {
+  id: int("id").autoincrement().primaryKey(),
+  evidenceArtifactId: int("evidenceArtifactId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  sourceType: varchar("sourceType", { length: 64 }).notNull(),
+  sourceReference: varchar("sourceReference", { length: 512 }).notNull(),
+  capturedAt: timestamp("capturedAt").notNull(),
+  capturedByUserId: int("capturedByUserId").notNull(),
+  metadata: text("metadata").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("evidence_provenance_artifact_uq").on(table.evidenceArtifactId), index("evidence_provenance_workspace_idx").on(table.workspaceId, table.createdAt)]);
+
+export const findingRelations = mysqlTable("findingRelations", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  findingId: int("findingId").notNull(),
+  relatedFindingId: int("relatedFindingId").notNull(),
+  relationType: mysqlEnum("relationType", ["duplicate", "related", "supersedes"] as const).notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("finding_relation_pair_uq").on(table.findingId, table.relatedFindingId, table.relationType), index("finding_relation_workspace_idx").on(table.workspaceId, table.createdAt)]);
+
+export const findingRetests = mysqlTable("findingRetests", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  findingId: int("findingId").notNull(),
+  requestedByUserId: int("requestedByUserId").notNull(),
+  status: mysqlEnum("status", ["requested", "in_progress", "passed", "failed", "inconclusive", "cancelled"] as const).default("requested").notNull(),
+  scopeDigest: varchar("scopeDigest", { length: 128 }).notNull(),
+  resultSummary: text("resultSummary"),
+  evidenceArtifactId: int("evidenceArtifactId"),
+  reviewedByUserId: int("reviewedByUserId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+}, table => [index("finding_retest_workspace_status_idx").on(table.workspaceId, table.status), index("finding_retest_finding_created_idx").on(table.findingId, table.createdAt)]);
 
 export const credentialReferences = mysqlTable("credentialReferences", {
   id: int("id").autoincrement().primaryKey(),

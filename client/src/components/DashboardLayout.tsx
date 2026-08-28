@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { signInWithGoogle } from "@/firebase";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Activity, BarChart3, BrainCircuit, Boxes, FileSearch, FileText, LayoutDashboard, LogOut, PanelLeft, ScrollText, Settings2, ShieldCheck, ShieldEllipsis } from "lucide-react";
+import { Activity, BarChart3, BrainCircuit, Boxes, Building2, FileSearch, FileText, KeyRound, LayoutDashboard, LogOut, PanelLeft, Radar, ScrollText, Settings2, ShieldCheck, ShieldEllipsis, UserRound } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -37,8 +37,11 @@ const menuItems = [
   { icon: LayoutDashboard, labelKey: "nav.commandCenter" as const, path: "/" },
   { icon: Activity, labelKey: "nav.operations" as const, path: "/mission" },
   { icon: Boxes, labelKey: "nav.workspaces" as const, path: "/workspaces" },
+  { icon: Building2, labelKey: "nav.workspaces" as const, path: "/organizations" },
   { icon: BarChart3, labelKey: "nav.observability" as const, path: "/coverage" },
   { icon: BrainCircuit, labelKey: "nav.commandCenter" as const, path: "/researcher" },
+  { icon: BrainCircuit, labelKey: "nav.commandCenter" as const, path: "/ai-center" },
+  { icon: Radar, labelKey: "nav.commandCenter" as const, path: "/research" },
   { icon: FileText, labelKey: "nav.findings" as const, path: "/reports" },
   { icon: Boxes, labelKey: "nav.workspaces" as const, path: "/inventory" },
   { icon: ShieldCheck, labelKey: "nav.governance" as const, path: "/governance" },
@@ -47,6 +50,8 @@ const menuItems = [
   { icon: Activity, labelKey: "nav.observability" as const, path: "/operations" },
   { icon: Settings2, labelKey: "nav.operations" as const, path: "/operations-console" },
   { icon: ShieldEllipsis, labelKey: "nav.assurance" as const, path: "/assurance" },
+  { icon: KeyRound, labelKey: "nav.operations" as const, path: "/security" },
+  { icon: UserRound, labelKey: "nav.operations" as const, path: "/profile" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

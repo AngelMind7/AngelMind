@@ -57,6 +57,20 @@
       "when": 1787888644559,
       "tag": "0007_salty_black_tarantula",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1787947456267,
+      "tag": "0008_early_wallflower",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1787947738713,
+      "tag": "0009_third_exodus",
+      "breakpoints": true
     }
   ]
 }

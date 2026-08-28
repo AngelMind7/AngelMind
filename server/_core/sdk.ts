@@ -3,6 +3,7 @@ import { ForbiddenError } from "@shared/_core/errors";
 import type { User } from "../../drizzle/schema";
 import * as db from "../db";
 import { isFirebaseAdminConfigured, verifyFirebaseIdToken } from "../firebase";
+import { authenticateApiKey } from "../security-platform";
 
 export type AuthenticatedUser = User;
 
@@ -38,13 +39,19 @@ function getFirebaseRequestUser(decoded: Awaited<ReturnType<typeof verifyFirebas
 
 class FirebaseAuthServer {
   async authenticateRequest(req: Request): Promise<AuthenticatedUser> {
-    if (!isFirebaseAdminConfigured()) {
-      throw ForbiddenError("Firebase Authentication is not configured");
-    }
-
     const token = readBearerToken(req);
     if (!token) {
-      throw ForbiddenError("Firebase ID token is required");
+      const apiKeyHeader = req.headers["x-api-key"];
+      const apiKey = typeof apiKeyHeader === "string" ? apiKeyHeader.trim() : null;
+      if (apiKey) {
+        const apiUser = await authenticateApiKey(apiKey);
+        if (apiUser) return apiUser;
+      }
+      throw ForbiddenError("Firebase ID token or API key is required");
+    }
+
+    if (!isFirebaseAdminConfigured()) {
+      throw ForbiddenError("Firebase Authentication is not configured");
     }
 
     let decoded: Awaited<ReturnType<typeof verifyFirebaseIdToken>>;

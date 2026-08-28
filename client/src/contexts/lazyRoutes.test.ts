@@ -6,7 +6,7 @@ describe("authenticated route loading", () => {
   it("keeps page imports lazy and renders them through a Suspense loading boundary", () => {
     const routeMap = readFileSync(path.resolve(import.meta.dirname, "../authenticatedRoutes.ts"), "utf8");
     const app = readFileSync(path.resolve(import.meta.dirname, "../App.tsx"), "utf8");
-    expect(routeMap.match(/lazy\(\(\) => import/g)).toHaveLength(15);
+    expect(routeMap.match(/lazy\(\(\) => import/g)).toHaveLength(20);
     expect(app).toContain("<Suspense");
   });
 });

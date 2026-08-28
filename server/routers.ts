@@ -12,6 +12,13 @@ import { validateReportInput } from "./control-plane/report-validation";
 import { extractArtifact } from "./control-plane/artifact-extraction";
 import * as analytics from "./control-plane/analytics";
 import * as collaboration from "./control-plane/collaboration";
+import * as accountSecurity from "./account-security";
+import * as researchWorkflow from "./research-workflow";
+import * as organization from "./organization";
+import * as evidenceWorkflow from "./evidence-workflow";
+import * as aiPlatform from "./ai-platform";
+import * as securityPlatform from "./security-platform";
+import * as profile from "./profile";
 
 const workspaceInput = z.object({
   name: z.string().min(2).max(120),
@@ -30,11 +37,23 @@ export const appRouter = router({
     // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
   auth: router({
+    apiKeys: protectedProcedure.query(({ ctx }) => securityPlatform.listApiKeys(ctx.user.id)),
+    createApiKey: protectedProcedure.input(z.object({ name: z.string().min(3).max(120), workspaceId: z.number().int().positive().optional(), scopes: z.array(z.string().min(1).max(80)).max(50), expiresAt: z.coerce.date().optional() })).mutation(({ ctx, input }) => securityPlatform.createApiKey(ctx.user.id, input)),
+    revokeApiKey: protectedProcedure.input(z.object({ apiKeyId: z.number().int().positive() })).mutation(({ ctx, input }) => securityPlatform.revokeApiKey(ctx.user.id, input.apiKeyId)),
+    privacyRequests: protectedProcedure.query(({ ctx }) => securityPlatform.listPrivacyRequests(ctx.user.id)),
+    profile: protectedProcedure.query(({ ctx }) => profile.getUserProfile(ctx.user.id)),
+    updateProfile: protectedProcedure.input(z.object({ username: z.string().max(64).optional(), avatarReference: z.string().max(512).optional(), bio: z.string().max(4_000), specialization: z.string().max(160).optional(), skills: z.array(z.string().min(1).max(120)).max(100), experience: z.array(z.string().min(1).max(240)).max(100), visibility: z.enum(["private", "organization", "public"]) })).mutation(({ ctx, input }) => profile.updateUserProfile(ctx.user.id, input)),
+    requestPrivacyAction: protectedProcedure.input(z.object({ requestType: z.enum(["export", "delete", "rectify"]), reason: z.string().min(3).max(20_000) })).mutation(({ ctx, input }) => securityPlatform.requestPrivacyAction(ctx.user.id, input)),
     me: publicProcedure.query(opts => opts.ctx.user),
-    logout: publicProcedure.mutation(() => ({
-      success: true,
-      provider: "firebase",
-    } as const)),
+    logout: publicProcedure.mutation(({ ctx }) => {
+      if (ctx.user) void accountSecurity.recordAuthEvent(ctx.user.id, "logout");
+      return { success: true, provider: "firebase" } as const;
+    }),
+    security: protectedProcedure.query(({ ctx }) => accountSecurity.getAccountSecurity(ctx.user.id)),
+    registerDevice: protectedProcedure.input(z.object({ fingerprint: z.string().min(16).max(512), label: z.string().max(120).optional(), platform: z.enum(["web", "ios", "android", "unknown"]).optional(), userAgent: z.string().max(512).optional() })).mutation(({ ctx, input }) => accountSecurity.registerAuthDevice(ctx.user.id, input)),
+    revokeDevice: protectedProcedure.input(z.object({ deviceId: z.number().int().positive() })).mutation(({ ctx, input }) => accountSecurity.revokeAuthDevice(ctx.user.id, input.deviceId)),
+    onboarding: protectedProcedure.mutation(({ ctx }) => accountSecurity.getAccountSecurity(ctx.user.id).then(result => result.profile)),
+    saveOnboarding: protectedProcedure.input(z.object({ status: z.enum(["not_started", "in_progress", "completed", "skipped"]), currentStep: z.enum(["profile", "organization", "workspace", "complete"]), organizationName: z.string().max(160).optional(), roleIntent: z.string().max(80).optional() })).mutation(({ ctx, input }) => accountSecurity.saveOnboardingProfile(ctx.user.id, input)),
   }),
   agent: router({
     analyzeEvidence: protectedProcedure.input(z.object({ scopeSummary: z.string().min(20).max(10_000), evidence: z.string().min(20).max(40_000), findingTitle: z.string().max(240).optional() })).mutation(({ input }) => agent.analyzeEvidence(input)),
@@ -95,6 +114,53 @@ export const appRouter = router({
       await controlPlane.attachScheduleTask(ctx.user.id, input.workspaceId, taskUid);
       return { taskUid, cron: input.cron, provider: "railway-cron" } as const;
     }),
+  }),
+  ai: router({
+    models: protectedProcedure.query(() => aiPlatform.listModels()),
+    registerModel: protectedProcedure.input(z.object({ modelKey: z.string().min(2).max(160), provider: z.string().min(2).max(120), gateway: z.string().min(2).max(120), capabilities: z.array(z.string().min(1).max(80)).max(50), contextWindow: z.number().int().min(0).max(10_000_000), version: z.string().max(80).optional(), inputCostPerMillionCents: z.number().int().min(0).max(10_000_000).optional(), outputCostPerMillionCents: z.number().int().min(0).max(10_000_000).optional() })).mutation(({ ctx, input }) => { if (ctx.user.role !== "admin") throw new Error("Admin role is required to register a model."); return aiPlatform.registerModel(ctx.user.id, input); }),
+    runs: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => aiPlatform.listAiRuns(ctx.user.id, input.workspaceId)),
+    startRun: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), sessionId: z.number().int().positive().optional(), taskId: z.number().int().positive().optional(), modelKey: z.string().min(2).max(160), gateway: z.string().min(2).max(120), purpose: z.string().min(2).max(120), inputReference: z.string().min(2).max(512), estimatedCostCents: z.number().int().min(0).max(100_000_000).optional() })).mutation(({ ctx, input }) => aiPlatform.startAiRun(ctx.user.id, input)),
+    updateRun: protectedProcedure.input(z.object({ runId: z.number().int().positive(), status: z.enum(["running", "completed", "failed", "partial", "cancelled"]), outputReference: z.string().max(512).optional(), inputTokens: z.number().int().min(0).max(10_000_000).optional(), outputTokens: z.number().int().min(0).max(10_000_000).optional(), costCents: z.number().int().min(0).max(100_000_000).optional(), errorCode: z.string().max(120).optional() })).mutation(({ ctx, input }) => aiPlatform.updateAiRun(ctx.user.id, input)),
+    enqueueJob: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive().optional(), kind: z.string().min(2).max(80), idempotencyKey: z.string().min(8).max(180), payload: z.record(z.string(), z.unknown()), maxAttempts: z.number().int().min(1).max(10).optional() })).mutation(({ ctx, input }) => aiPlatform.enqueueJob(ctx.user.id, input)),
+    jobs: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive().optional() }).optional()).query(({ ctx, input }) => aiPlatform.listJobs(ctx.user.id, input?.workspaceId)),
+    publishEvent: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive().optional(), eventType: z.string().min(3).max(120), aggregateType: z.string().min(2).max(80), aggregateId: z.number().int().positive(), idempotencyKey: z.string().min(8).max(180), payload: z.record(z.string(), z.unknown()) })).mutation(({ ctx, input }) => aiPlatform.publishOutboxEvent(ctx.user.id, input)),
+  }),
+  evidence: router({
+    list: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => evidenceWorkflow.listEvidenceWithProvenance(ctx.user.id, input.workspaceId)),
+    recordProvenance: protectedProcedure.input(z.object({ evidenceArtifactId: z.number().int().positive(), sourceType: z.string().min(2).max(64), sourceReference: z.string().min(2).max(512), capturedAt: z.coerce.date(), metadata: z.record(z.string(), z.unknown()).optional() })).mutation(({ ctx, input }) => evidenceWorkflow.recordEvidenceProvenance(ctx.user.id, input)),
+    findingRelations: protectedProcedure.input(z.object({ findingId: z.number().int().positive() })).query(({ ctx, input }) => evidenceWorkflow.listFindingRelations(ctx.user.id, input.findingId)),
+    linkFindingRelation: protectedProcedure.input(z.object({ findingId: z.number().int().positive(), relatedFindingId: z.number().int().positive(), relationType: z.enum(["duplicate", "related", "supersedes"]) })).mutation(({ ctx, input }) => evidenceWorkflow.linkFindingRelation(ctx.user.id, input)),
+    findingRetests: protectedProcedure.input(z.object({ findingId: z.number().int().positive() })).query(({ ctx, input }) => evidenceWorkflow.listFindingRetests(ctx.user.id, input.findingId)),
+    requestRetest: protectedProcedure.input(z.object({ findingId: z.number().int().positive() })).mutation(({ ctx, input }) => evidenceWorkflow.requestFindingRetest(ctx.user.id, input.findingId)),
+    completeRetest: protectedProcedure.input(z.object({ retestId: z.number().int().positive(), status: z.enum(["in_progress", "passed", "failed", "inconclusive", "cancelled"]), resultSummary: z.string().min(3).max(20_000), evidenceArtifactId: z.number().int().positive().optional() })).mutation(({ ctx, input }) => evidenceWorkflow.completeFindingRetest(ctx.user.id, input)),
+    qualityGate: protectedProcedure.input(z.object({ findingId: z.number().int().positive() })).query(({ ctx, input }) => evidenceWorkflow.getFindingQualityGate(ctx.user.id, input.findingId)),
+  }),
+  organization: router({
+    entitlement: protectedProcedure.input(z.object({ organizationId: z.number().int().positive() })).query(({ ctx, input }) => securityPlatform.getEntitlement(ctx.user.id, input.organizationId)),
+    updateEntitlement: protectedProcedure.input(z.object({ organizationId: z.number().int().positive(), plan: z.enum(["free", "team", "enterprise"]), featureFlags: z.array(z.string().min(1).max(80)).max(100), limits: z.record(z.string(), z.number().int().min(0).max(1_000_000_000)), periodEnd: z.coerce.date() })).mutation(({ ctx, input }) => securityPlatform.updateEntitlement(ctx.user.id, input)),
+    list: protectedProcedure.query(({ ctx }) => organization.listOrganizations(ctx.user.id)),
+    create: protectedProcedure.input(z.object({ name: z.string().min(2).max(160) })).mutation(({ ctx, input }) => organization.createOrganization(ctx.user.id, input)),
+    members: protectedProcedure.input(z.object({ organizationId: z.number().int().positive() })).query(({ ctx, input }) => organization.listOrganizationMembers(ctx.user.id, input.organizationId)),
+    addMember: protectedProcedure.input(z.object({ organizationId: z.number().int().positive(), email: z.string().email().max(320), role: z.enum(["admin", "researcher", "reviewer", "auditor"]) })).mutation(({ ctx, input }) => organization.addOrganizationMember(ctx.user.id, input)),
+    programs: protectedProcedure.input(z.object({ organizationId: z.number().int().positive() })).query(({ ctx, input }) => organization.listPrograms(ctx.user.id, input.organizationId)),
+    createProgram: protectedProcedure.input(z.object({ organizationId: z.number().int().positive(), name: z.string().min(3).max(200), description: z.string().max(20_000), includedAssets: z.array(z.string().min(1).max(512)).min(1).max(500), excludedAssets: z.array(z.string().min(1).max(512)).max(500), rules: z.array(z.string().min(1).max(4_000)).max(100), safeHarbor: z.string().min(10).max(20_000) })).mutation(({ ctx, input }) => organization.createProgram(ctx.user.id, input)),
+    setProgramStatus: protectedProcedure.input(z.object({ programId: z.number().int().positive(), status: z.enum(["draft", "active", "paused", "completed", "archived"]) })).mutation(({ ctx, input }) => organization.setProgramStatus(ctx.user.id, input.programId, input.status)),
+    linkWorkspaceToProgram: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), organizationId: z.number().int().positive(), programId: z.number().int().positive() })).mutation(({ ctx, input }) => organization.linkWorkspaceToProgram(ctx.user.id, input)),
+  }),
+  research: router({
+    sessions: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => researchWorkflow.listResearchSessions(ctx.user.id, input.workspaceId)),
+    createSession: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), title: z.string().min(3).max(200) })).mutation(({ ctx, input }) => researchWorkflow.createResearchSession(ctx.user.id, input)),
+    transitionSession: protectedProcedure.input(z.object({ sessionId: z.number().int().positive(), state: z.enum(["draft", "ready", "active", "paused", "completed", "archived"]) })).mutation(({ ctx, input }) => researchWorkflow.transitionResearchSession(ctx.user.id, input.sessionId, input.state)),
+    assets: protectedProcedure.input(z.object({ sessionId: z.number().int().positive() })).query(({ ctx, input }) => researchWorkflow.listResearchAssets(ctx.user.id, input.sessionId)),
+    createAsset: protectedProcedure.input(z.object({ sessionId: z.number().int().positive(), assetType: z.enum(["domain", "subdomain", "ip", "application", "api", "endpoint", "technology", "service"]), value: z.string().min(1).max(512), hostname: z.string().max(255).optional(), inScope: z.boolean(), metadata: z.record(z.string(), z.unknown()).optional() })).mutation(({ ctx, input }) => researchWorkflow.createResearchAsset(ctx.user.id, input)),
+    observations: protectedProcedure.input(z.object({ sessionId: z.number().int().positive() })).query(({ ctx, input }) => researchWorkflow.listResearchObservations(ctx.user.id, input.sessionId)),
+    createObservation: protectedProcedure.input(z.object({ sessionId: z.number().int().positive(), assetId: z.number().int().positive().optional(), title: z.string().min(3).max(240), content: z.string().min(3).max(20_000) })).mutation(({ ctx, input }) => researchWorkflow.createResearchObservation(ctx.user.id, input)),
+    hypotheses: protectedProcedure.input(z.object({ sessionId: z.number().int().positive() })).query(({ ctx, input }) => researchWorkflow.listResearchHypotheses(ctx.user.id, input.sessionId)),
+    createHypothesis: protectedProcedure.input(z.object({ sessionId: z.number().int().positive(), assetId: z.number().int().positive().optional(), observationId: z.number().int().positive().optional(), description: z.string().min(3).max(20_000), reason: z.string().min(3).max(20_000), priority: z.number().int().min(1).max(100) })).mutation(({ ctx, input }) => researchWorkflow.createResearchHypothesis(ctx.user.id, input)),
+    transitionHypothesis: protectedProcedure.input(z.object({ hypothesisId: z.number().int().positive(), status: z.enum(["proposed", "investigating", "supported", "disproven", "validated", "archived"]), outcome: z.string().max(20_000).optional() })).mutation(({ ctx, input }) => researchWorkflow.transitionResearchHypothesis(ctx.user.id, input.hypothesisId, input.status, input.outcome)),
+    tasks: protectedProcedure.input(z.object({ sessionId: z.number().int().positive() })).query(({ ctx, input }) => researchWorkflow.listResearchTasks(ctx.user.id, input.sessionId)),
+    createTask: protectedProcedure.input(z.object({ sessionId: z.number().int().positive(), type: z.string().min(2).max(80), title: z.string().min(3).max(240), priority: z.number().int().min(1).max(100), dependencies: z.array(z.number().int().positive()).max(50).default([]), ownerUserId: z.number().int().positive().optional(), inputs: z.record(z.string(), z.unknown()).optional() })).mutation(({ ctx, input }) => researchWorkflow.createResearchTask(ctx.user.id, input)),
+    transitionTask: protectedProcedure.input(z.object({ taskId: z.number().int().positive(), status: z.enum(["queued", "running", "blocked", "paused", "failed", "retrying", "completed", "cancelled"]), outputs: z.record(z.string(), z.unknown()).optional() })).mutation(({ ctx, input }) => researchWorkflow.transitionResearchTask(ctx.user.id, input.taskId, input.status, input.outputs)),
   }),
   rehearsal: router({
     run: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).mutation(({ ctx, input }) => controlPlane.rehearseWorkspace(ctx.user.id, input.workspaceId)),

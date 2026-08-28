@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from "express";
 import * as db from "./db";
 import { isFirebaseAdminConfigured, verifyFirebaseIdToken } from "./firebase";
+import * as accountSecurity from "./account-security";
 
 const MAX_TOKEN_LENGTH = 12_000;
 
@@ -37,6 +38,8 @@ export function registerFirebaseAuthRoutes(app: Express) {
         loginMethod: provider,
         lastSignedIn: new Date(),
       });
+      const storedUser = await db.getUserByOpenId(openId);
+      if (storedUser) await accountSecurity.recordAuthEvent(storedUser.id, "login", { provider });
       res.json({ success: true, provider: "firebase", uid: decoded.uid });
     } catch (error) {
       console.error("[Firebase Auth] Token exchange failed", error);

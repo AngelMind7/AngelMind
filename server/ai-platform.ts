@@ -1,0 +1,98 @@
+import { randomUUID } from "node:crypto";
+import { and, asc, desc, eq, lte, sql } from "drizzle-orm";
+import { aiModels, aiRuns, jobs, outboxEvents, workspaces } from "../drizzle/schema";
+import { getDb } from "./db";
+import { canAccessWorkspace } from "./control-plane/operations";
+
+async function requireWorkspace(userId: number, workspaceId: number, intent: "read" | "respond" = "read") {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  if (!(await canAccessWorkspace(userId, workspaceId, intent))) throw new Error("Workspace tidak ditemukan atau tidak dapat diakses.");
+  const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  if (!workspace) throw new Error("Workspace tidak ditemukan.");
+  return { db, workspace };
+}
+
+export async function listModels() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(aiModels).where(eq(aiModels.status, "active")).orderBy(asc(aiModels.provider), asc(aiModels.modelKey));
+}
+
+export async function registerModel(userId: number, input: { modelKey: string; provider: string; gateway: string; capabilities: string[]; contextWindow: number; version?: string; inputCostPerMillionCents?: number; outputCostPerMillionCents?: number }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const modelKey = input.modelKey.trim();
+  if (modelKey.length < 2) throw new Error("Model key is required.");
+  await db.insert(aiModels).values({ modelKey, provider: input.provider.trim(), gateway: input.gateway.trim(), capabilities: JSON.stringify(input.capabilities), contextWindow: input.contextWindow, status: "active", version: input.version?.trim() || null, inputCostPerMillionCents: input.inputCostPerMillionCents ?? 0, outputCostPerMillionCents: input.outputCostPerMillionCents ?? 0 }).onDuplicateKeyUpdate({ set: { provider: input.provider.trim(), gateway: input.gateway.trim(), capabilities: JSON.stringify(input.capabilities), contextWindow: input.contextWindow, version: input.version?.trim() || null, inputCostPerMillionCents: input.inputCostPerMillionCents ?? 0, outputCostPerMillionCents: input.outputCostPerMillionCents ?? 0, status: "active", updatedAt: new Date() } });
+  const [model] = await db.select().from(aiModels).where(eq(aiModels.modelKey, modelKey)).limit(1);
+  return model;
+}
+
+export async function startAiRun(userId: number, input: { workspaceId: number; sessionId?: number; taskId?: number; modelKey: string; gateway: string; purpose: string; inputReference: string; estimatedCostCents?: number }) {
+  const { db, workspace } = await requireWorkspace(userId, input.workspaceId, "respond");
+  const estimatedCostCents = Math.max(0, input.estimatedCostCents ?? 0);
+  if (workspace.budgetCents > 0 && workspace.spentCents + estimatedCostCents > workspace.budgetCents) throw new Error("AI run blocked by workspace budget ceiling.");
+  const traceId = randomUUID();
+  await db.insert(aiRuns).values({ workspaceId: workspace.id, sessionId: input.sessionId ?? null, taskId: input.taskId ?? null, userId, modelKey: input.modelKey.trim(), gateway: input.gateway.trim(), purpose: input.purpose.trim(), traceId, inputReference: input.inputReference.trim(), status: "queued", costCents: estimatedCostCents });
+  const [run] = await db.select().from(aiRuns).where(eq(aiRuns.traceId, traceId)).limit(1);
+  if (!run) throw new Error("AI run could not be created.");
+  return run;
+}
+
+export async function updateAiRun(userId: number, input: { runId: number; status: "running" | "completed" | "failed" | "partial" | "cancelled"; outputReference?: string; inputTokens?: number; outputTokens?: number; costCents?: number; errorCode?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, input.runId)).limit(1);
+  if (!run || !(await canAccessWorkspace(userId, run.workspaceId, "respond"))) throw new Error("AI run tidak ditemukan atau tidak dapat diakses.");
+  const costCents = Math.max(0, input.costCents ?? run.costCents);
+  await db.update(aiRuns).set({ status: input.status, outputReference: input.outputReference?.trim() || run.outputReference, inputTokens: input.inputTokens ?? run.inputTokens, outputTokens: input.outputTokens ?? run.outputTokens, costCents, errorCode: input.errorCode?.trim() || null, startedAt: run.startedAt ?? new Date(), completedAt: ["completed", "failed", "partial", "cancelled"].includes(input.status) ? new Date() : null }).where(eq(aiRuns.id, run.id));
+  if (input.status === "completed" || input.status === "partial") await db.update(workspaces).set({ spentCents: sql`${workspaces.spentCents} + ${costCents}` }).where(eq(workspaces.id, run.workspaceId));
+  const [updated] = await db.select().from(aiRuns).where(eq(aiRuns.id, run.id)).limit(1);
+  return updated;
+}
+
+export async function listAiRuns(userId: number, workspaceId: number) {
+  const { db } = await requireWorkspace(userId, workspaceId);
+  return db.select().from(aiRuns).where(eq(aiRuns.workspaceId, workspaceId)).orderBy(desc(aiRuns.createdAt)).limit(100);
+}
+
+export async function enqueueJob(userId: number, input: { workspaceId?: number; kind: string; idempotencyKey: string; payload: Record<string, unknown>; maxAttempts?: number }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  if (input.workspaceId) await requireWorkspace(userId, input.workspaceId, "respond");
+  const idempotencyKey = input.idempotencyKey.trim();
+  if (idempotencyKey.length < 8) throw new Error("Idempotency key must be at least 8 characters.");
+  const [existing] = await db.select().from(jobs).where(eq(jobs.idempotencyKey, idempotencyKey)).limit(1);
+  if (existing) return existing;
+  await db.insert(jobs).values({ workspaceId: input.workspaceId ?? null, kind: input.kind.trim(), idempotencyKey, payload: JSON.stringify(input.payload), status: "queued", attempts: 0, maxAttempts: input.maxAttempts ?? 3, availableAt: new Date() });
+  const [job] = await db.select().from(jobs).where(eq(jobs.idempotencyKey, idempotencyKey)).limit(1);
+  return job;
+}
+
+export async function listJobs(userId: number, workspaceId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  if (workspaceId) await requireWorkspace(userId, workspaceId);
+  const rows = workspaceId ? await db.select().from(jobs).where(eq(jobs.workspaceId, workspaceId)).orderBy(desc(jobs.createdAt)).limit(100) : await db.select().from(jobs).where(eq(jobs.status, "queued")).orderBy(asc(jobs.availableAt)).limit(100);
+  return rows;
+}
+
+export async function publishOutboxEvent(userId: number, input: { workspaceId?: number; eventType: string; aggregateType: string; aggregateId: number; idempotencyKey: string; payload: Record<string, unknown> }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  if (input.workspaceId) await requireWorkspace(userId, input.workspaceId, "respond");
+  const existing = await db.select().from(outboxEvents).where(eq(outboxEvents.idempotencyKey, input.idempotencyKey)).limit(1);
+  if (existing[0]) return existing[0];
+  await db.insert(outboxEvents).values({ workspaceId: input.workspaceId ?? null, eventType: input.eventType.trim(), aggregateType: input.aggregateType.trim(), aggregateId: input.aggregateId, idempotencyKey: input.idempotencyKey.trim(), payload: JSON.stringify(input.payload), status: "pending", attempts: 0 });
+  const [event] = await db.select().from(outboxEvents).where(eq(outboxEvents.idempotencyKey, input.idempotencyKey)).limit(1);
+  return event;
+}
+
+export async function claimPendingJobs(limit = 25) {
+  const db = await getDb();
+  if (!db) return [];
+  const available = await db.select().from(jobs).where(and(eq(jobs.status, "queued"), lte(jobs.availableAt, new Date()))).orderBy(asc(jobs.availableAt)).limit(Math.min(100, Math.max(1, limit)));
+  for (const job of available) await db.update(jobs).set({ status: "running", attempts: job.attempts + 1, lockedAt: new Date(), updatedAt: new Date() }).where(and(eq(jobs.id, job.id), eq(jobs.status, "queued")));
+  return available;
+}

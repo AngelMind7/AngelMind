@@ -1,6 +1,6 @@
 import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import { initializeAppCheck, ReCaptchaEnterpriseProvider, type AppCheck } from "firebase/app-check";
-import { getAuth, type Auth } from "firebase/auth";
+import { getAuth, GoogleAuthProvider, signInWithPopup, type Auth } from "firebase/auth";
 import { getStorage, type FirebaseStorage } from "firebase/storage";
 
 const config = {
@@ -33,6 +33,24 @@ export function getFirebaseClient(): { app: FirebaseApp; auth: Auth; storage: Fi
     });
   }
   return { app, auth: getAuth(app), storage: getStorage(app) };
+}
+
+export async function signInWithGoogle() {
+  const client = getFirebaseClient();
+  if (!client) throw new Error("Firebase Google Login is not configured.");
+  const result = await signInWithPopup(client.auth, new GoogleAuthProvider());
+  const idToken = await result.user.getIdToken(true);
+  const response = await fetch("/api/auth/firebase", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    credentials: "include",
+    body: JSON.stringify({ idToken }),
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null) as { error?: string } | null;
+    throw new Error(payload?.error || "Firebase Google Login failed.");
+  }
+  return result.user;
 }
 
 export { config as firebaseClientConfig, appCheckSiteKey };

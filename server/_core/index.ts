@@ -10,6 +10,7 @@ import { createContext } from "./context";
 import { serveStatic, setupVite } from "./vite";
 import { workspaceMaintenanceHandler } from "../control-plane/scheduled";
 import { registerHealthRoutes, registerMetricsRoute, registerSecurityMiddleware } from "../security";
+import { registerFirebaseAuthRoutes } from "../firebase-auth";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -41,6 +42,7 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "50mb", extended: true }));
   registerStorageProxy(app);
   registerOAuthRoutes(app);
+  registerFirebaseAuthRoutes(app);
   app.post("/api/scheduled/workspace-maintenance", workspaceMaintenanceHandler);
   // tRPC API
   app.use(

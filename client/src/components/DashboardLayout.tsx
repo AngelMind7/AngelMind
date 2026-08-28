@@ -19,7 +19,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { startLogin } from "@/const";
+import { signInWithGoogle } from "@/firebase";
 import { useIsMobile } from "@/hooks/useMobile";
 import { Activity, BarChart3, BrainCircuit, Boxes, FileSearch, FileText, LayoutDashboard, LogOut, PanelLeft, ScrollText, Settings2, ShieldCheck, ShieldEllipsis } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -65,6 +65,11 @@ export default function DashboardLayout({
   });
   const { loading, user } = useAuth();
   const { t } = useLocale();
+  const [authError, setAuthError] = useState<string | null>(null);
+  const handleGoogleSignIn = () => {
+    setAuthError(null);
+    void signInWithGoogle().then(() => window.location.reload()).catch(error => setAuthError(error instanceof Error ? error.message : "Google Login failed."));
+  };
 
   useEffect(() => {
     localStorage.setItem(SIDEBAR_WIDTH_KEY, sidebarWidth.toString());
@@ -86,13 +91,14 @@ export default function DashboardLayout({
               {t("auth.signInText")}
             </p>
           </div>
-          <Button
-            onClick={() => startLogin()}
+            <Button
+            onClick={handleGoogleSignIn}
             size="lg"
             className="w-full shadow-lg hover:shadow-xl transition-all"
           >
             {t("auth.signIn")}
           </Button>
+          {authError && <p role="alert" className="text-center text-sm text-destructive">{authError}</p>}
         </div>
       </div>
     );

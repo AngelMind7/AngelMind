@@ -8,6 +8,7 @@ import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import * as controlPlane from "./control-plane/service";
 import * as operations from "./control-plane/operations";
 import * as assurance from "./control-plane/assurance";
+import * as agent from "./control-plane/agent";
 
 const workspaceInput = z.object({
   name: z.string().min(2).max(120),
@@ -34,6 +35,9 @@ export const appRouter = router({
         success: true,
       } as const;
     }),
+  }),
+  agent: router({
+    analyzeEvidence: protectedProcedure.input(z.object({ scopeSummary: z.string().min(20).max(10_000), evidence: z.string().min(20).max(40_000), findingTitle: z.string().max(240).optional() })).mutation(({ input }) => agent.analyzeEvidence(input)),
   }),
   control: router({
     dashboard: protectedProcedure.query(({ ctx }) => controlPlane.getDashboard(ctx.user.id)),

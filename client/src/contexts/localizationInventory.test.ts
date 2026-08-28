@@ -4,7 +4,7 @@ import { authenticatedRoutes } from "@/authenticatedRoutes";
 
 describe("authenticated-route localization inventory", () => {
   it("requires all dashboard surfaces to participate in shared localization", () => {
-    expect(authenticatedLocalizationRoutes).toHaveLength(12);
+    expect(authenticatedLocalizationRoutes).toHaveLength(13);
     expect(authenticatedLocalizationRoutes).toEqual(authenticatedRoutes.map(route => route.path));
     authenticatedLocalizationRoutes.forEach(route => expect(localeParticipation[route]).toEqual(["shared-navigation", "static-interface-copy", "locale-formats"]));
   });

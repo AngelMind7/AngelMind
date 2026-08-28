@@ -1,4 +1,6 @@
+import { createHash } from "node:crypto";
 import { invokeLLM } from "../_core/llm";
+import { createFinding } from "./service";
 
 export type EvidenceAnalysis = {
   summary: string;
@@ -41,4 +43,11 @@ export async function analyzeEvidence(input: { scopeSummary: string; evidence: s
   if (typeof content !== "string") throw new Error("Agent returned no structured analysis.");
   const parsed = JSON.parse(content) as EvidenceAnalysis;
   return { ...parsed, safety: { networkCalls: 0, toolsExecuted: 0, autonomousSubmission: false } };
+}
+
+export async function analyzeAndCreateFinding(userId: number, input: { workspaceId: number; scopeSummary: string; evidence: string; findingTitle: string }) {
+  const analysis = await analyzeEvidence(input);
+  const fingerprint = createHash("sha256").update(`${input.workspaceId}:${input.findingTitle}:${input.evidence}`).digest("hex").slice(0, 64);
+  const finding = await createFinding(userId, { workspaceId: input.workspaceId, fingerprint, title: input.findingTitle, impactSummary: analysis.summary, reportDraft: analysis.reportDraft, confidence: analysis.confidence });
+  return { ...finding, analysis, fingerprint };
 }

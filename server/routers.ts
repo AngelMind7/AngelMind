@@ -39,6 +39,7 @@ export const appRouter = router({
   }),
   agent: router({
     analyzeEvidence: protectedProcedure.input(z.object({ scopeSummary: z.string().min(20).max(10_000), evidence: z.string().min(20).max(40_000), findingTitle: z.string().max(240).optional() })).mutation(({ input }) => agent.analyzeEvidence(input)),
+    analyzeAndCreateFinding: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), scopeSummary: z.string().min(20).max(10_000), evidence: z.string().min(20).max(40_000), findingTitle: z.string().min(3).max(240) })).mutation(({ ctx, input }) => agent.analyzeAndCreateFinding(ctx.user.id, input)),
     importPassiveInventory: protectedProcedure.input(z.object({ content: z.string().min(1).max(500_000), format: z.enum(["csv", "json"]), allowlist: z.array(z.string().min(1).max(255)).min(1).max(100), exclusions: z.array(z.string().min(1).max(255)).max(100) })).mutation(({ input }) => parsePassiveInventory(input)),
   }),
   control: router({

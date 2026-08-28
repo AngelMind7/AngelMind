@@ -4,7 +4,6 @@ import homeCopy from "@/locales/home-copy.json";
 import assuranceNotificationsCopy from "@/locales/assurance-notifications-copy.json";
 import sharedExpansion from "@/locales/shared-expansion.json";
 import marketingCopy from "@/locales/marketing-copy.json";
-import apiPlaygroundCopy from "@/locales/api-playground-copy.json";
 
 export const locales = [
   { code: "en", label: "English", native: "English", dir: "ltr" },
@@ -31,7 +30,7 @@ export const locales = [
 
 export type LocaleCode = (typeof locales)[number]["code"];
 type TranslationKey = keyof typeof english;
-type ExplicitCopyKey = keyof typeof homeCopy | keyof typeof assuranceNotificationsCopy | keyof typeof marketingCopy | keyof typeof apiPlaygroundCopy;
+type ExplicitCopyKey = keyof typeof homeCopy | keyof typeof assuranceNotificationsCopy | keyof typeof marketingCopy;
 type ExpansionLocaleCode = "hi" | "vi" | "th" | "tr" | "pl" | "nl" | "it" | "sv";
 const LOCALE_KEY = "angelmind-locale";
 const TIME_ZONE_KEY = "angelmind-time-zone";
@@ -130,7 +129,7 @@ export function LocaleProvider({ children }: { children: React.ReactNode }) {
   const meta = locales.find(item => item.code === locale) ?? locales[0];
   useEffect(() => { localStorage.setItem(LOCALE_KEY, locale); document.documentElement.lang = locale; document.documentElement.dir = meta.dir; }, [locale, meta.dir]);
   useEffect(() => { localStorage.setItem(TIME_ZONE_KEY, timeZone); }, [timeZone]);
-  const value = useMemo(() => ({ locale, setLocale, timeZone, setTimeZone, isRTL: meta.dir === "rtl", t: (key: TranslationKey) => translate(locale, key), copy: (key: ExplicitCopyKey) => { const copy = key in homeCopy ? homeCopy[key as keyof typeof homeCopy] : key in assuranceNotificationsCopy ? assuranceNotificationsCopy[key as keyof typeof assuranceNotificationsCopy] : key in marketingCopy ? marketingCopy[key as keyof typeof marketingCopy] : apiPlaygroundCopy[key as keyof typeof apiPlaygroundCopy]; return (copy as Partial<Record<LocaleCode, string>>)?.[locale] ?? copy?.en ?? key; }, formatDate: (input: Date | string | number) => formatLocaleDate(locale, input, timeZone), formatNumber: (value: number) => new Intl.NumberFormat(locale).format(value) }), [locale, meta.dir, timeZone]);
+  const value = useMemo(() => ({ locale, setLocale, timeZone, setTimeZone, isRTL: meta.dir === "rtl", t: (key: TranslationKey) => translate(locale, key), copy: (key: ExplicitCopyKey) => { const copy = key in homeCopy ? homeCopy[key as keyof typeof homeCopy] : key in assuranceNotificationsCopy ? assuranceNotificationsCopy[key as keyof typeof assuranceNotificationsCopy] : key in marketingCopy ? marketingCopy[key as keyof typeof marketingCopy] : undefined; return (copy as Partial<Record<LocaleCode, string>>)?.[locale] ?? copy?.en ?? key; }, formatDate: (input: Date | string | number) => formatLocaleDate(locale, input, timeZone), formatNumber: (value: number) => new Intl.NumberFormat(locale).format(value) }), [locale, meta.dir, timeZone]);
   return <LocaleContext.Provider value={value}>{children}</LocaleContext.Provider>;
 }
 

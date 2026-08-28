@@ -9,7 +9,6 @@ import { LocaleProvider, StaticCopyLocalizer } from "./contexts/LocaleContext";
 import DashboardLayout from "./components/DashboardLayout";
 import { authenticatedRoutes } from "./authenticatedRoutes";
 import MarketingHome from "./marketing/MarketingHome";
-import ApiPlayground from "./marketing/ApiPlayground";
 import TrustCenter from "./marketing/TrustCenter";
 import { publicRoutes } from "@/publicRoutes";
 import OfflineStatus from "./components/OfflineStatus";

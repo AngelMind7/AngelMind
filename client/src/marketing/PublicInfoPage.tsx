@@ -2,7 +2,7 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { translateStatic, useLocale } from "@/contexts/LocaleContext";
-import { ArrowRight, BookOpen, CheckCircle2, ShieldCheck } from "lucide-react";
+import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
 type PageDefinition = {
@@ -21,16 +21,6 @@ const pages: Record<string, PageDefinition> = {
       { title: "Free / evaluation", body: "Explore the read-only control plane, synthetic API examples, rehearsal workflows, and public safety model." },
       { title: "Pro / team operations", body: "Coordinate governed workspaces, delegated reviews, findings, evidence, notifications, and operational analytics." },
       { title: "Enterprise / assurance", body: "Extend the same deterministic boundaries with organization-specific retention, audit, and deployment controls." },
-    ],
-  },
-  "/demo": {
-    eyebrow: "Interactive walkthrough",
-    title: "See a governed decision move from scope to evidence.",
-    description: "This demonstration uses synthetic records only. It never contacts a target, executes a scan, or submits a report externally.",
-    sections: [
-      { title: "01 / Scope gate", body: "A workspace allowlist, exclusions, safe-harbor record, and code of conduct are established before any rehearsal." },
-      { title: "02 / Review gate", body: "The control plane estimates cost and duration, records policy decisions, and blocks Tier 3 actions pending human approval." },
-      { title: "03 / Evidence trail", body: "Synthetic observations become reviewable artifacts with hashes, timestamps, retention posture, and audit references." },
     ],
   },
   "/changelog": {
@@ -70,7 +60,7 @@ const pages: Record<string, PageDefinition> = {
     sections: [
       { title: "Security disclosure", body: "Preserve evidence, avoid unauthorized testing, and follow the responsible disclosure policy published by the deploying organization." },
       { title: "Enterprise readiness", body: "Discuss retention, roles, approval delegation, audit export, deployment boundaries, and observability requirements." },
-      { title: "Implementation support", body: "Review the documentation and API Playground first; all examples are synthetic and read-only." },
+      { title: "Implementation support", body: "Review the documentation and operating model before enabling production workflows." },
     ],
   },
   "/academy": {
@@ -129,7 +119,7 @@ export default function PublicInfoPage() {
       <main className="mx-auto max-w-6xl px-5 pb-20 pt-16 sm:px-8">
         <Badge variant="outline" className="border-cyan-300/40 bg-cyan-300/5 font-mono text-[10px] uppercase tracking-[.16em] text-cyan-200">{text(page.eyebrow)}</Badge>
         <div className="grid gap-10 pt-7 lg:grid-cols-[1.05fr_.95fr] lg:items-end">
-          <div><h1 className="max-w-4xl font-display text-5xl font-black uppercase leading-[.9] tracking-[-.055em] text-white sm:text-7xl">{text(page.title)}</h1><p className="mt-7 max-w-2xl text-base leading-8 text-slate-400">{text(page.description)}</p><div className="mt-9 flex flex-wrap gap-3"><Link href="/product"><Button className="neon-button">{text("Open control plane")} <ArrowRight className="ml-2 h-4 w-4" /></Button></Link><Link href="/api-playground" className="inline-flex h-10 items-center border border-cyan-300/25 px-4 text-sm text-cyan-100 transition hover:bg-cyan-300/10"><BookOpen className="mr-2 h-4 w-4" />{text("Read API Playground")}</Link></div></div>
+          <div><h1 className="max-w-4xl font-display text-5xl font-black uppercase leading-[.9] tracking-[-.055em] text-white sm:text-7xl">{text(page.title)}</h1><p className="mt-7 max-w-2xl text-base leading-8 text-slate-400">{text(page.description)}</p><div className="mt-9 flex flex-wrap gap-3"><Link href="/product"><Button className="neon-button">{text("Open control plane")} <ArrowRight className="ml-2 h-4 w-4" /></Button></Link></div></div>
           <div className="border border-cyan-300/20 bg-[#0b1020]/80 p-6 shadow-[0_0_60px_rgba(34,211,238,.08)]"><ShieldCheck className="h-6 w-6 text-fuchsia-300" /><p className="mt-5 font-display text-xl font-bold text-white">{text("Safety stays visible at every boundary.")}</p><p className="mt-3 text-sm leading-6 text-slate-400">{text("No target contact. No autonomous submission. No hidden bypass.")}</p></div>
         </div>
         <section className="mt-16 grid gap-4 md:grid-cols-3">{page.sections.map(section => <article key={section.title} className="border border-cyan-300/15 bg-white/[.025] p-6"><CheckCircle2 className="h-5 w-5 text-cyan-300" /><h2 className="mt-7 font-display text-xl font-bold text-white">{text(section.title)}</h2><p className="mt-3 text-sm leading-6 text-slate-400">{text(section.body)}</p></article>)}</section>

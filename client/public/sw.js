@@ -1,5 +1,5 @@
 const CACHE_NAME = "angelmind-shell-v1";
-const SHELL_ASSETS = ["/", "/product", "/trust", "/api-playground", "/manifest.json"];
+const SHELL_ASSETS = ["/", "/product", "/trust", "/manifest.json"];
 
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE_NAME).then(cache => cache.addAll(SHELL_ASSETS)).then(() => self.skipWaiting()));

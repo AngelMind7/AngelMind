@@ -36,6 +36,23 @@ export async function createReportVersion(userId: number, input: { findingId: nu
   return composed;
 }
 
+export async function compareReportVersions(userId: number, input: { findingId: number; workspaceId: number; fromVersionId: number; toVersionId: number }) {
+  if (!(await canAccessWorkspace(userId, input.workspaceId, "read"))) throw new Error("Workspace tidak dapat diakses oleh user ini.");
+  if (input.fromVersionId === input.toVersionId) throw new Error("Report versions must be different.");
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  await ensureFindingInWorkspace(db, input.findingId, input.workspaceId);
+  const rows = await db.select().from(reportVersions).where(and(eq(reportVersions.findingId, input.findingId), eq(reportVersions.workspaceId, input.workspaceId), inArray(reportVersions.id, [input.fromVersionId, input.toVersionId])));
+  const from = rows.find(row => row.id === input.fromVersionId);
+  const to = rows.find(row => row.id === input.toVersionId);
+  if (!from || !to) throw new Error("Kedua report version harus berasal dari finding/workspace yang sama.");
+  const before = from.body.split("\\n");
+  const after = to.body.split("\\n");
+  const maxLines = Math.max(before.length, after.length);
+  const changes = Array.from({ length: maxLines }, (_, index) => ({ line: index + 1, before: before[index] ?? null, after: after[index] ?? null })).filter(change => change.before !== change.after);
+  return { findingId: input.findingId, fromVersionId: from.id, toVersionId: to.id, changedLines: changes.length, changes };
+}
+
 export async function listReportVersions(userId: number, findingId: number, workspaceId: number) {
   if (!(await canAccessWorkspace(userId, workspaceId, "read"))) throw new Error("Workspace tidak dapat diakses oleh user ini.");
   const db = await getDb();

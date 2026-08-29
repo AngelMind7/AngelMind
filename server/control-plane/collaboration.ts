@@ -1,5 +1,5 @@
 import { and, asc, eq } from "drizzle-orm";
-import { findingComments, findings } from "../../drizzle/schema";
+import { findingComments, findings, notifications, users, workspaceMemberships } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { canAccessWorkspace } from "./operations";
 
@@ -21,5 +21,10 @@ export async function addFindingComment(userId: number, input: { findingId: numb
   const body = input.body.trim();
   const mentions = Array.from(new Set(Array.from(body.matchAll(/@([a-zA-Z0-9_.-]{2,64})/g), match => match[1].toLowerCase())));
   const result = await db.insert(findingComments).values({ findingId: input.findingId, workspaceId: input.workspaceId, authorUserId: userId, body, mentions: JSON.stringify(mentions) });
+  if (mentions.length > 0) {
+    const members = await db.select({ userId: workspaceMemberships.userId, name: users.name, email: users.email }).from(workspaceMemberships).innerJoin(users, eq(users.id, workspaceMemberships.userId)).where(eq(workspaceMemberships.workspaceId, input.workspaceId));
+    const recipients = members.filter(member => member.userId !== userId && mentions.some(mention => mention === member.name?.trim().toLowerCase() || mention === member.email?.trim().toLowerCase()));
+    if (recipients.length > 0) await db.insert(notifications).values(recipients.map(recipient => ({ userId: recipient.userId, workspaceId: input.workspaceId, eventType: "comment_mentioned" as const, severity: "info" as const, title: "You were mentioned in a finding comment", message: `You were mentioned on finding #${input.findingId}.` })));
+  }
   return { id: Number(result[0].insertId), mentions, success: true as const };
 }

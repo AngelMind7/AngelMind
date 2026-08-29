@@ -1,0 +1,2 @@
+ALTER TABLE `notificationPreferences` MODIFY COLUMN `eventType` enum('approval_required','guardrail_blocked','finding_validated','scheduled_check','policy_review_required','incident_created','webhook_activation_requested','comment_mentioned') NOT NULL;--> statement-breakpoint
+ALTER TABLE `notifications` MODIFY COLUMN `eventType` enum('approval_required','guardrail_blocked','finding_validated','scheduled_check','policy_review_required','incident_created','webhook_activation_requested','comment_mentioned') NOT NULL;

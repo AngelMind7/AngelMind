@@ -1,7 +1,7 @@
 import { and, asc, desc, eq } from "drizzle-orm";
 import { getDb, getUserByEmail } from "./db";
 import { programs, organizationMembers, organizations, workspaces } from "../drizzle/schema";
-import { normalizeProgramScope } from "./control-plane/program-scope";
+import { diffProgramScope, normalizeProgramScope, parseStoredProgramScope } from "./control-plane/program-scope";
 
 const organizationRoles = ["owner", "admin", "researcher", "reviewer", "auditor"] as const;
 type OrganizationRole = (typeof organizationRoles)[number];
@@ -69,6 +69,17 @@ export async function createProgram(userId: number, input: { organizationId: num
   const [program] = await db.select().from(programs).where(and(eq(programs.organizationId, input.organizationId), eq(programs.name, name))).limit(1);
   if (!program) throw new Error("Program could not be created.");
   return program;
+}
+
+export async function previewProgramScopeChange(userId: number, input: { programId: number; includedAssets: string[]; excludedAssets: string[]; rules: string[]; safeHarbor: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [program] = await db.select().from(programs).where(eq(programs.id, input.programId)).limit(1);
+  if (!program) throw new Error("Program tidak ditemukan.");
+  await requireMembership(userId, program.organizationId);
+  const previous = parseStoredProgramScope(program);
+  const current = normalizeProgramScope({ includedAssets: input.includedAssets, excludedAssets: input.excludedAssets, rules: input.rules, safeHarbor: input.safeHarbor, version: previous.version });
+  return { programId: program.id, organizationId: program.organizationId, currentVersion: previous.version, nextVersion: previous.version + (diffProgramScope(previous, current).changed ? 1 : 0), diff: diffProgramScope(previous, current) };
 }
 
 export async function setProgramStatus(userId: number, programId: number, status: "draft" | "active" | "paused" | "completed" | "archived") {

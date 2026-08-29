@@ -10,7 +10,7 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 | Session/device/security center | Implemented (core) | Device registration/revocation, auth events, onboarding profile, API key metadata, scoped creation, rotation, and revoke lifecycle. |
 | Audit archive | Partial | Signed export batch, retention metadata, verification, dan restore drill contract. |
 | Secret handling | Partial | No secret in frontend/source, secret references only, rotation/revocation metadata, tests. |
-| Data lifecycle/privacy | Implemented (contract) | Export/delete/rectify request API, idempotent active-request guard, and status/audit-ready persistence; fulfillment worker remains environment/operations dependent. |
+| Data lifecycle/privacy | Implemented (contract) | Export/delete/rectify request API, idempotent active-request guard, admin-gated processing lifecycle, result references, and terminal timestamps; actual export/delete worker remains environment/operations dependent. |
 
 ## Commit group B — research domain
 
@@ -39,7 +39,7 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 | Area | Status awal | Target commit evidence |
 |---|---|---|
 | Model registry/gateway health | Partial | Provider/model capability metadata plus admin health status, latency, and error metadata; live provider probes remain environment-dependent. |
-| AI orchestration | Partial | Planner, task graph, assignment, aggregation, cross-check, validation, synthesis. |
+| AI orchestration | Partial | Deterministic planner, role/task assignment, dependency gating, confidence-filtered synthesis, cross-check verdict, and human-review signal; provider execution and persisted agent-run graph remain environment/architecture dependent. |
 | AI provenance/memory | Partial | Run trace, input/output references, workspace isolation, and configurable 1–3650 day retentionUntil policy; purge worker/memory retrieval remains partial. |
 | Job queue/retry/DLQ | Implemented (core) | Persistent claim lease recovery, retry backoff, max-attempt dead-letter, and completion/failure helpers. |
 | Events/outbox/idempotency | Partial | Versioned schemaVersion, transactional persistence, dedupe/idempotency keys, bounded delivery transitions; production dispatcher remains partial. |

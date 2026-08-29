@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, like, ne, or } from "drizzle-orm";
 import { evidenceArtifacts, evidenceProvenance, findingRelations, findingRetests, findings, reportVersions, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
@@ -44,6 +44,13 @@ export async function recordEvidenceProvenance(userId: number, input: { evidence
 export async function listFindingRelations(userId: number, findingId: number) {
   const { db, finding } = await loadFinding(userId, findingId);
   return db.select().from(findingRelations).where(and(eq(findingRelations.workspaceId, finding.workspaceId), eq(findingRelations.findingId, finding.id))).orderBy(desc(findingRelations.createdAt));
+}
+
+export async function findDuplicateCandidates(userId: number, input: { findingId: number; query: string }) {
+  const { db, finding } = await loadFinding(userId, input.findingId);
+  const query = input.query.trim().slice(0, 120);
+  if (query.length < 3) throw new Error("Duplicate search query is required.");
+  return db.select({ id: findings.id, title: findings.title, status: findings.status, confidence: findings.confidence, fingerprint: findings.fingerprint, updatedAt: findings.updatedAt }).from(findings).where(and(eq(findings.workspaceId, finding.workspaceId), ne(findings.id, finding.id), or(like(findings.title, `%${query}%`), like(findings.impactSummary, `%${query}%`), like(findings.fingerprint, `%${query}%`)))).orderBy(desc(findings.updatedAt)).limit(20);
 }
 
 export async function linkFindingRelation(userId: number, input: { findingId: number; relatedFindingId: number; relationType: "duplicate" | "related" | "supersedes" }) {

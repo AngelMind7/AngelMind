@@ -173,7 +173,8 @@ export async function restoreAuditArchivePlan(ownerUserId: number, archiveId: nu
   const manifestJson = await response.text();
   const valid = verifyArchiveIntegrity(manifestJson, archive.manifestHash, archive.signature, ENV.archiveSigningSecret);
   if (!valid) throw new Error("Archive integrity verification failed; restore plan refused.");
-  const manifest = JSON.parse(manifestJson) as { auditEvents?: unknown[]; evidence?: unknown[]; runs?: unknown[]; approvals?: unknown[]; notifications?: unknown[] };
+  const manifest = JSON.parse(manifestJson) as { schema?: unknown; workspaceId?: unknown; auditEvents?: unknown[]; evidence?: unknown[]; runs?: unknown[]; approvals?: unknown[]; notifications?: unknown[] };
+  if (manifest.schema !== "angelmind.audit-archive.v1" || manifest.workspaceId !== archive.workspaceId) throw new Error("Archive manifest schema or workspace identity is invalid.");
   return { archiveId, workspaceId: archive.workspaceId, destinationWorkspaceId: destinationId, valid: true as const, requiresHumanConfirmation: true as const, recordCounts: { auditEvents: manifest.auditEvents?.length ?? 0, evidence: manifest.evidence?.length ?? 0, runs: manifest.runs?.length ?? 0, approvals: manifest.approvals?.length ?? 0, notifications: manifest.notifications?.length ?? 0 }, mode: "plan-only" as const };
 }
 

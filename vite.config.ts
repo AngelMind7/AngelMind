@@ -27,6 +27,17 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (/[\\/]node_modules[\\/](react|react-dom|react-router|react-router-dom)[\\/]/.test(id)) return "vendor-react";
+          if (/[\\/]node_modules[\\/](@trpc|zod|superjson|drizzle-orm)[\\/]/.test(id)) return "vendor-data";
+          if (/[\\/]node_modules[\\/](@radix-ui|lucide-react|recharts)[\\/]/.test(id)) return "vendor-ui";
+          return "vendor";
+        },
+      },
+    },
   },
   server: {
     host: true,

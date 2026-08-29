@@ -103,6 +103,8 @@ export async function requestPrivacyAction(userId: number, input: { requestType:
   if (!db) throw new Error("Database tidak tersedia.");
   const reason = input.reason.trim();
   if (reason.length < 3) throw new Error("Privacy request reason is required.");
+  const [activeRequest] = await db.select().from(privacyRequests).where(and(eq(privacyRequests.userId, userId), eq(privacyRequests.requestType, input.requestType), eq(privacyRequests.status, "requested"))).orderBy(desc(privacyRequests.createdAt)).limit(1);
+  if (activeRequest) return activeRequest;
   await db.insert(privacyRequests).values({ userId, requestType: input.requestType, status: "requested", reason });
   const [request] = await db.select().from(privacyRequests).where(and(eq(privacyRequests.userId, userId), eq(privacyRequests.requestType, input.requestType))).orderBy(desc(privacyRequests.createdAt)).limit(1);
   return request;

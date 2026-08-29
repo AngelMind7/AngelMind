@@ -684,6 +684,17 @@ export const reportVersions = mysqlTable("reportVersions", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [index("report_version_finding_created_idx").on(table.findingId, table.createdAt), index("report_version_workspace_idx").on(table.workspaceId)]);
 
+export const reportDrafts = mysqlTable("reportDrafts", {
+  id: int("id").autoincrement().primaryKey(),
+  findingId: int("findingId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  platform: mysqlEnum("platform", reportPlatform).notNull(),
+  reportJson: text("reportJson").notNull(),
+  lastSavedByUserId: int("lastSavedByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [uniqueIndex("report_draft_finding_workspace_uq").on(table.findingId, table.workspaceId), index("report_draft_workspace_updated_idx").on(table.workspaceId, table.updatedAt)]);
+
 export type Workspace = typeof workspaces.$inferSelect;
 export type Run = typeof runs.$inferSelect;
 export type Finding = typeof findings.$inferSelect;

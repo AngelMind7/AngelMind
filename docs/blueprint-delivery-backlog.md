@@ -7,10 +7,10 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 | Area | Status awal | Target commit evidence |
 |---|---|---|
 | Workspace/tenant authorization matrix | Partial | Semua procedure sensitif memiliki workspace + role/ownership guard dan negative tests lintas tenant. |
-| Session/device/security center | Partial | Security lifecycle, revocation, login history, recovery boundary, dan API key metadata memiliki contract/test. |
+| Session/device/security center | Implemented (core) | Device registration/revocation, auth events, onboarding profile, API key metadata, scoped creation, rotation, and revoke lifecycle. |
 | Audit archive | Partial | Signed export batch, retention metadata, verification, dan restore drill contract. |
 | Secret handling | Partial | No secret in frontend/source, secret references only, rotation/revocation metadata, tests. |
-| Data lifecycle/privacy | Partial | Export/delete/retention request contracts and audit trail. |
+| Data lifecycle/privacy | Implemented (contract) | Export/delete/rectify request API, idempotent active-request guard, and status/audit-ready persistence; fulfillment worker remains environment/operations dependent. |
 
 ## Commit group B — research domain
 
@@ -51,11 +51,11 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 | Area | Status awal | Target commit evidence |
 |---|---|---|
 | Public website | Partial | Blueprint route inventory, reviewed content, legal/trust/status boundaries. |
-| Developer platform | Partial | Versioned read-only API docs/playground, API key scopes/rotation/revocation. |
+| Developer platform | Implemented (core) | Public API docs/playground routes, scoped API key create/rotation/revocation, workspace authorization, and hashed secrets. |
 | Integrations | Blocked/Partial | Credential scopes, sync state, webhook/audit contracts; external activation requires secrets and review. |
 | Billing/usage/invoices | Partial/Blocked | Data model and usage contracts can be implemented; payment provider activation requires account configuration. |
-| Observability/incident/backup | Partial | Metrics, trace IDs, incident review, backup/restore evidence, runbook. |
-| Accessibility/performance/i18n | Partial | Automated checks, route-level lazy loading, localization coverage, performance budgets. |
+| Observability/incident/backup | Implemented (core) | Health/readiness/metrics endpoints, trace IDs, incident workflow, signed archive/restore contracts; provider backup drill remains deployment dependent. |
+| Accessibility/performance/i18n | Implemented (core) | Localization/accessibility inventories, lazy routes, PWA checks, and vendor chunk splitting; automated browser/a11y performance budgets remain partial. |
 
 ## Definition of 100 percent
 

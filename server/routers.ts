@@ -17,6 +17,7 @@ import * as researchWorkflow from "./research-workflow";
 import * as organization from "./organization";
 import * as evidenceWorkflow from "./evidence-workflow";
 import * as aiPlatform from "./ai-platform";
+import * as aiOrchestration from "./ai-orchestration";
 import * as securityPlatform from "./security-platform";
 import * as submissionWorkflow from "./submission-workflow";
 import * as globalSearch from "./global-search";
@@ -60,6 +61,9 @@ export const appRouter = router({
     saveOnboarding: protectedProcedure.input(z.object({ status: z.enum(["not_started", "in_progress", "completed", "skipped"]), currentStep: z.enum(["profile", "organization", "workspace", "complete"]), organizationName: z.string().max(160).optional(), roleIntent: z.string().max(80).optional() })).mutation(({ ctx, input }) => accountSecurity.saveOnboardingProfile(ctx.user.id, input)),
   }),
   agent: router({
+    planMultiAgentRun: protectedProcedure.input(z.object({ objective: z.string().trim().min(10).max(10_000), roles: z.array(z.enum(["scope", "evidence", "risk", "report"])).min(1).max(4), evidenceReferences: z.array(z.string().trim().min(1).max(512)).max(100).optional() })).mutation(({ input }) => aiOrchestration.planMultiAgentRun(input)),
+    crossCheck: protectedProcedure.input(z.object({ observations: z.array(z.object({ taskId: z.string().min(1).max(120), role: z.enum(["scope", "evidence", "risk", "report"]), conclusion: z.string().min(1).max(10_000), confidence: z.number().min(0).max(1), evidenceReferences: z.array(z.string().max(512)).max(100) })).min(1).max(50) })).mutation(({ input }) => aiOrchestration.crossCheckObservations(input.observations)),
+    synthesize: protectedProcedure.input(z.object({ observations: z.array(z.object({ taskId: z.string().min(1).max(120), role: z.enum(["scope", "evidence", "risk", "report"]), conclusion: z.string().min(1).max(10_000), confidence: z.number().min(0).max(1), evidenceReferences: z.array(z.string().max(512)).max(100) })).max(50), minimumConfidence: z.number().min(0).max(1).optional() })).mutation(({ input }) => aiOrchestration.synthesizeObservations(input.observations, input.minimumConfidence)),
     analyzeEvidence: protectedProcedure.input(z.object({ scopeSummary: z.string().min(20).max(10_000), evidence: z.string().min(20).max(40_000), findingTitle: z.string().max(240).optional() })).mutation(({ input }) => agent.analyzeEvidence(input)),
     analyzeAndCreateFinding: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), scopeSummary: z.string().min(20).max(10_000), evidence: z.string().min(20).max(40_000), findingTitle: z.string().min(3).max(240) })).mutation(({ ctx, input }) => agent.analyzeAndCreateFinding(ctx.user.id, input)),
     importPassiveInventory: protectedProcedure.input(z.object({ content: z.string().min(1).max(500_000), format: z.enum(["csv", "json"]), allowlist: z.array(z.string().min(1).max(255)).min(1).max(100), exclusions: z.array(z.string().min(1).max(255)).max(100) })).mutation(({ input }) => parsePassiveInventory(input)),

@@ -1,11 +1,15 @@
 import type { Request, Response } from "express";
+import { timingSafeEqual } from "node:crypto";
 import { runScheduledAdministrativeCheck, runScheduledAdministrativeChecks } from "./service";
 
 function isAuthorizedRailwayCron(req: Request): boolean {
   const expected = process.env.RAILWAY_CRON_SECRET?.trim();
   if (!expected) return false;
   const supplied = req.headers["x-railway-cron-secret"];
-  return typeof supplied === "string" && supplied.length > 0 && supplied === expected;
+  if (typeof supplied !== "string" || supplied.length === 0) return false;
+  const suppliedBuffer = Buffer.from(supplied, "utf8");
+  const expectedBuffer = Buffer.from(expected, "utf8");
+  return suppliedBuffer.length === expectedBuffer.length && timingSafeEqual(suppliedBuffer, expectedBuffer);
 }
 
 export async function workspaceMaintenanceHandler(req: Request, res: Response) {

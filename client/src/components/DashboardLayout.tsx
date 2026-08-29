@@ -35,23 +35,23 @@ import { useLocale } from "@/contexts/LocaleContext";
 
 const menuItems = [
   { icon: LayoutDashboard, labelKey: "nav.commandCenter" as const, path: "/" },
-  { icon: Activity, labelKey: "nav.operations" as const, path: "/mission" },
+  { icon: Activity, labelKey: "nav.mission" as const, path: "/mission" },
   { icon: Boxes, labelKey: "nav.workspaces" as const, path: "/workspaces" },
-  { icon: Building2, labelKey: "nav.workspaces" as const, path: "/organizations" },
+  { icon: Building2, labelKey: "nav.organizations" as const, path: "/organizations" },
   { icon: BarChart3, labelKey: "nav.observability" as const, path: "/coverage" },
-  { icon: BrainCircuit, labelKey: "nav.commandCenter" as const, path: "/researcher" },
-  { icon: BrainCircuit, labelKey: "nav.commandCenter" as const, path: "/ai-center" },
-  { icon: Radar, labelKey: "nav.commandCenter" as const, path: "/research" },
-  { icon: FileText, labelKey: "nav.findings" as const, path: "/reports" },
-  { icon: Boxes, labelKey: "nav.workspaces" as const, path: "/inventory" },
+  { icon: BrainCircuit, labelKey: "nav.researcher" as const, path: "/researcher" },
+  { icon: BrainCircuit, labelKey: "nav.aiCenter" as const, path: "/ai-center" },
+  { icon: Radar, labelKey: "nav.research" as const, path: "/research" },
+  { icon: FileText, labelKey: "nav.reports" as const, path: "/reports" },
+  { icon: Boxes, labelKey: "nav.inventory" as const, path: "/inventory" },
   { icon: ShieldCheck, labelKey: "nav.governance" as const, path: "/governance" },
   { icon: FileSearch, labelKey: "nav.findings" as const, path: "/findings" },
   { icon: ScrollText, labelKey: "nav.audit" as const, path: "/audit" },
   { icon: Activity, labelKey: "nav.observability" as const, path: "/operations" },
   { icon: Settings2, labelKey: "nav.operations" as const, path: "/operations-console" },
   { icon: ShieldEllipsis, labelKey: "nav.assurance" as const, path: "/assurance" },
-  { icon: KeyRound, labelKey: "nav.operations" as const, path: "/security" },
-  { icon: UserRound, labelKey: "nav.operations" as const, path: "/profile" },
+  { icon: KeyRound, labelKey: "nav.security" as const, path: "/security" },
+  { icon: UserRound, labelKey: "nav.profile" as const, path: "/profile" },
 ];
 
 const SIDEBAR_WIDTH_KEY = "sidebar-width";

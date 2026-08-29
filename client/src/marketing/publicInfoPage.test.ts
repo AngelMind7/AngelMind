@@ -5,7 +5,6 @@ describe("public information pages", () => {
   it("defines every registered informational route with meaningful content", () => {
     const expected = [
       "/pricing",
-      "/demo",
       "/changelog",
       "/roadmap",
       "/status",

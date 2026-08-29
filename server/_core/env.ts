@@ -1,6 +1,6 @@
 export const ENV = {
   databaseUrl: process.env.DATABASE_URL ?? "",
-  archiveSigningSecret: process.env.APP_ENCRYPTION_KEY ?? process.env.JWT_SECRET ?? "",
+  archiveSigningSecret: process.env.AUDIT_ARCHIVE_SIGNING_KEY ?? process.env.APP_ENCRYPTION_KEY ?? "",
   firebaseProjectId: process.env.FIREBASE_PROJECT_ID ?? "",
   firebaseClientEmail: process.env.FIREBASE_CLIENT_EMAIL ?? "",
   firebasePrivateKey: process.env.FIREBASE_PRIVATE_KEY ?? "",

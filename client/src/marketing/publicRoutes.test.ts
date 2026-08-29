@@ -18,7 +18,6 @@ describe("public route inventory", () => {
       ["/api-playground", "PublicInfoPage", "read-only-no-execution"],
       ["/security", "MarketingHome", "reviewed-static-copy"],
       ["/pricing", "PublicInfoPage", "informational-no-billing"],
-      ["/demo", "PublicInfoPage", "synthetic-read-only"],
       ["/changelog", "PublicInfoPage", "reviewed-static-copy"],
       ["/roadmap", "PublicInfoPage", "reviewed-static-copy"],
       ["/status", "PublicInfoPage", "non-live-status-disclosure"],

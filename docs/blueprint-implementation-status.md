@@ -28,11 +28,11 @@ Dokumen ini memetakan 115 area pada `Angelmindstrukturjelas.pdf` terhadap implem
 
 ## Migration
 
-Schema terbaru menghasilkan `drizzle/0008_early_wallflower.sql` untuk identity, tenant, research, evidence, AI, jobs, dan outbox tables, serta `drizzle/0009_third_exodus.sql` untuk `userProfiles`. Jalankan migration pada environment yang memiliki `DATABASE_URL` setelah meninjau SQL tersebut; sandbox tidak mengeksekusi migration ke database produksi.
+Schema terbaru berada pada rangkaian migration sampai `drizzle/0018_ai_run_retention.sql`, termasuk identity, tenant, research, evidence, reports, collaboration, outbox versioning, AI evaluations, dan AI run retention. Jalankan migration pada environment yang memiliki `DATABASE_URL` setelah meninjau SQL tersebut; sandbox tidak mengeksekusi migration ke database produksi.
 
 ## Validasi
 
-`pnpm check`, seluruh test suite Vitest dengan 36 test files dan 75 tests, serta `pnpm build` berhasil. Build masih memberi warning ukuran entry chunk frontend sekitar 1 MB dan warning data `baseline-browser-mapping` yang sudah berumur; keduanya tidak menggagalkan build.
+Validasi terakhir yang dijalankan pada branch main mencakup `pnpm check`, seluruh test suite Vitest dengan 38 test files dan 81 tests, `pnpm build`, `pnpm check:budget`, Python tests, Ruff lint, `git diff --check`, dan public safety E2E desktop/mobile. Build dapat memberikan warning tooling yang tidak menggagalkan proses.
 
 ## Batas yang disengaja
 

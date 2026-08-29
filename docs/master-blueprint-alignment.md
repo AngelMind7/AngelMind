@@ -81,7 +81,7 @@ The launchable marketing baseline consists of a purpose-led home page, feature o
 
 The first public implementation is available as a route-isolated marketing shell at `/product`, with related `/features`, `/trust`, `/docs`, and `/security` pages. It ships only reviewed, safety-bounded copy and does not receive authenticated workspace data. The existing `/` command-center route is preserved during the staged public-root migration to avoid breaking established dashboard deep links.
 
-The interactive demonstration should show a **closed offline rehearsal** using synthetic, non-target data only. It must label each state as simulated and never imply that a user-supplied domain has been contacted. The first API Playground foundation is now live at `/api-playground`: it is route-isolated, uses read-only synthetic request/response examples, localizes its UI, renders identifiers and payloads left-to-right in RTL layouts, and contains no credential input, request dispatch, or mutable operation. Pricing, academy, blog, and public roadmap remain later editorial/product workstreams requiring verified content, ownership, and legal review before publication.
+AngelMind does not publish an interactive product demo or target-facing demonstration. The API Playground foundation at `/api-playground` is a route-isolated, read-only documentation surface with synthetic request/response examples; it contains no credential input, request dispatch, or mutable operation. Pricing, academy, blog, and public roadmap remain editorial/product workstreams requiring verified content, ownership, and legal review before publication.
 
 ### Authenticated-dashboard breakdown
 
@@ -141,7 +141,7 @@ Legal and privacy work includes reviewed safe-harbor records, program-specific c
 
 ## 10. Lifecycle and Research Workflow
 
-The finding lifecycle remains `discovered → triaged → candidate → reproducing → validated → reported`, with `invalid`, `duplicate`, and `inconclusive` outcomes. The final external submission step is deliberately outside the current product and remains subject to human review and authorized workflow integration.
+The finding lifecycle remains `discovered → triaged → candidate → reproducing → validated → reported`, with `invalid`, `duplicate`, and `inconclusive` outcomes. The current product includes an internal submission-record workflow for report readiness, events, reviewer decisions, and delivery state; it does not make external HackerOne, Bugcrowd, Intigriti, or other target-platform API calls. Any future external submission remains subject to human review and separately authorized workflow integration.
 
 The safe research loop is: load workspace context, verify safe harbor, verify scope, classify governance tier, create offline hypothesis and coverage plan, run zero-network rehearsal, retain policy and evidence references, collect human decision where required, update non-sensitive planning records, and pause for review or a metadata-only scheduled check. This loop is valuable without target probing and avoids the dangerous assumption that an AI may autonomously progress from hypothesis to external action.
 

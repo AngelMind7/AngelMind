@@ -103,16 +103,6 @@ const pages: Record<string, PageDefinition> = {
       { title: "Enterprise / assurance", body: "Extend the same deterministic boundaries with organization-specific retention, audit, and deployment controls." },
     ],
   },
-  "/demo": {
-    eyebrow: "Product demo",
-    title: "See the workflow without contacting a target.",
-    description: "The demo is a guided, synthetic walkthrough of scope, evidence, review, and audit controls. It does not accept credentials or execute external operations.",
-    sections: [
-      { title: "Synthetic workspace", body: "Review representative records without connecting to customer data or target systems." },
-      { title: "Review gates", body: "See how policy, ownership, evidence quality, and human approval shape the workflow." },
-      { title: "Safe boundary", body: "No target contact, active scanning, autonomous submission, or hidden bypass is available in this public demo." },
-    ],
-  },
   "/changelog": {
     eyebrow: "Changelog",
     title: "A dated record of what changed and why.",

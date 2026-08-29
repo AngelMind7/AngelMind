@@ -49,6 +49,27 @@ export async function createApiKey(userId: number, input: { name: string; worksp
   return { ...created, secret: rawSecret };
 }
 
+export async function rotateApiKey(userId: number, apiKeyId: number, expiresAt?: Date) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [key] = await db.select().from(apiKeys).where(and(eq(apiKeys.id, apiKeyId), eq(apiKeys.userId, userId))).limit(1);
+  if (!key || key.status !== "active") throw new Error("Active API key tidak ditemukan.");
+  if (key.workspaceId !== null && !(await canAccessWorkspace(userId, key.workspaceId, "manage"))) throw new Error("API key workspace access denied.");
+  let scopes: string[] = [];
+  try {
+    const parsed = JSON.parse(key.scopes);
+    scopes = Array.isArray(parsed) ? parsed.filter((scope): scope is string => typeof scope === "string") : [];
+  } catch {
+    scopes = [];
+  }
+  const rawSecret = `am_${randomBytes(24).toString("base64url")}`;
+  await db.update(apiKeys).set({ status: "revoked", revokedAt: new Date() }).where(and(eq(apiKeys.id, key.id), eq(apiKeys.userId, userId), eq(apiKeys.status, "active")));
+  await db.insert(apiKeys).values({ userId, workspaceId: key.workspaceId, name: key.name, prefix: rawSecret.slice(0, 10), secretHash: hashSecret(rawSecret), scopes: JSON.stringify(scopes), status: "active", expiresAt: expiresAt ?? key.expiresAt });
+  const [rotated] = await db.select({ id: apiKeys.id, name: apiKeys.name, prefix: apiKeys.prefix, workspaceId: apiKeys.workspaceId, scopes: apiKeys.scopes, status: apiKeys.status, expiresAt: apiKeys.expiresAt, createdAt: apiKeys.createdAt }).from(apiKeys).where(eq(apiKeys.secretHash, hashSecret(rawSecret))).limit(1);
+  if (!rotated) throw new Error("API key rotation could not be confirmed.");
+  return { ...rotated, secret: rawSecret, replacedApiKeyId: key.id };
+}
+
 export async function revokeApiKey(userId: number, apiKeyId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");

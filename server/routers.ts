@@ -41,6 +41,7 @@ export const appRouter = router({
   auth: router({
     apiKeys: protectedProcedure.query(({ ctx }) => securityPlatform.listApiKeys(ctx.user.id)),
     createApiKey: protectedProcedure.input(z.object({ name: z.string().min(3).max(120), workspaceId: z.number().int().positive().optional(), scopes: z.array(z.string().trim().min(1).max(80)).min(1).max(50), expiresAt: z.coerce.date().optional() })).mutation(({ ctx, input }) => securityPlatform.createApiKey(ctx.user.id, input)),
+    rotateApiKey: protectedProcedure.input(z.object({ apiKeyId: z.number().int().positive(), expiresAt: z.coerce.date().optional() })).mutation(({ ctx, input }) => securityPlatform.rotateApiKey(ctx.user.id, input.apiKeyId, input.expiresAt)),
     revokeApiKey: protectedProcedure.input(z.object({ apiKeyId: z.number().int().positive() })).mutation(({ ctx, input }) => securityPlatform.revokeApiKey(ctx.user.id, input.apiKeyId)),
     privacyRequests: protectedProcedure.query(({ ctx }) => securityPlatform.listPrivacyRequests(ctx.user.id)),
     profile: protectedProcedure.query(({ ctx }) => profile.getUserProfile(ctx.user.id)),

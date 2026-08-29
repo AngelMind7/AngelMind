@@ -3,12 +3,14 @@ import { permissionNeedsWorkspaceRole, routedProcedurePermissions } from "./rout
 
 describe("routed procedure authorization contract", () => {
   it("contains every workspace-scoped operation with an explicit role requirement", () => {
-    expect(Object.keys(routedProcedurePermissions)).toHaveLength(60);
+    expect(Object.keys(routedProcedurePermissions)).toHaveLength(66);
     expect(routedProcedurePermissions["operations.addMember"]).toBe("owner");
     expect(routedProcedurePermissions["assurance.decidePolicy"]).toBe("admin-or-distinct-reviewer");
     expect(routedProcedurePermissions["assurance.createIncident"]).toBe("responder");
     expect(routedProcedurePermissions["audit.uploadEvidence"]).toBe("owner");
     expect(routedProcedurePermissions["rehearsal.listRuns"]).toBe("read-member");
+    expect(routedProcedurePermissions["evidence.duplicateCandidates"]).toBe("read-member");
+    expect(routedProcedurePermissions["organization.createSubmission"]).toBe("responder");
   });
   it("identifies which route types require an explicit workspace role gate", () => {
     expect(permissionNeedsWorkspaceRole("owner")).toBe(true);

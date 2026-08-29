@@ -11,6 +11,7 @@ import {
 } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
+import { isTargetInScope } from "./control-plane/guardrails";
 
 const sessionTransitions: Record<string, string[]> = {
   draft: ["ready", "archived"],
@@ -109,14 +110,19 @@ export async function listResearchAssets(userId: number, sessionId: number) {
   return db.select().from(researchAssets).where(eq(researchAssets.sessionId, session.id)).orderBy(asc(researchAssets.hostname), asc(researchAssets.value));
 }
 
-export async function createResearchAsset(userId: number, input: { sessionId: number; assetType: "domain" | "subdomain" | "ip" | "application" | "api" | "endpoint" | "technology" | "service"; value: string; hostname?: string; inScope: boolean; metadata?: Record<string, unknown> }) {
+export async function createResearchAsset(userId: number, input: { sessionId: number; assetType: "domain" | "subdomain" | "ip" | "application" | "api" | "endpoint" | "technology" | "service"; value: string; hostname?: string; metadata?: Record<string, unknown> }) {
   const { db, session } = await requireSession(userId, input.sessionId, "respond");
+  const [workspace] = await db.select({ allowlist: workspaces.allowlist, exclusions: workspaces.exclusions }).from(workspaces).where(eq(workspaces.id, session.workspaceId)).limit(1);
+  if (!workspace) throw new Error("Research workspace tidak ditemukan.");
   const value = input.value.trim();
+  const target = (input.hostname ?? value).trim();
   if (!value) throw new Error("Asset value is required.");
-  await db.insert(researchAssets).values({ workspaceId: session.workspaceId, sessionId: session.id, assetType: input.assetType, value, hostname: input.hostname?.trim() || null, state: input.inScope ? "in_scope" : "out_of_scope", inScope: input.inScope ? 1 : 0, metadata: JSON.stringify(input.metadata ?? {}), createdByUserId: userId });
+  if (!target) throw new Error("Asset hostname is required for scope validation.");
+  const inScope = isTargetInScope(target, parseJson<string[]>(workspace.allowlist, []), parseJson<string[]>(workspace.exclusions, []));
+  await db.insert(researchAssets).values({ workspaceId: session.workspaceId, sessionId: session.id, assetType: input.assetType, value, hostname: input.hostname?.trim() || null, state: inScope ? "in_scope" : "out_of_scope", inScope: inScope ? 1 : 0, metadata: JSON.stringify({ ...(input.metadata ?? {}), scopeTarget: target, scopeCheckedAt: new Date().toISOString() }), createdByUserId: userId });
   const [asset] = await db.select().from(researchAssets).where(and(eq(researchAssets.sessionId, session.id), eq(researchAssets.value, value))).limit(1);
   if (!asset) throw new Error("Asset could not be created.");
-  await addResearchAudit(db, session.workspaceId, userId, "research-asset-created", { sessionId: session.id, assetId: asset.id, inScope: input.inScope });
+  await addResearchAudit(db, session.workspaceId, userId, "research-asset-created", { sessionId: session.id, assetId: asset.id, inScope, target });
   return asset;
 }
 

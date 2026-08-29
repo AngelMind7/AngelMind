@@ -9,7 +9,7 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 | Workspace/tenant authorization matrix | Partial | Semua procedure sensitif memiliki workspace + role/ownership guard dan negative tests lintas tenant. |
 | Session/device/security center | Implemented (core) | Device registration/revocation, auth events, onboarding profile, API key metadata, scoped creation, rotation, and revoke lifecycle. |
 | Audit archive | Partial | Signed export batch, retention metadata, verification, dan restore drill contract. |
-| Secret handling | Partial | No secret in frontend/source, secret references only, rotation/revocation metadata, tests. |
+| Secret handling | Partial | No secret in frontend/source, secret references only, rotation/revocation metadata, tests, archive signing key separated from JWT fallback, and constant-time cron secret comparison. |
 | Data lifecycle/privacy | Implemented (contract) | Export/delete/rectify request API, idempotent active-request guard, admin-gated processing lifecycle, result references, and terminal timestamps; actual export/delete worker remains environment/operations dependent. |
 
 ## Commit group B — research domain
@@ -50,12 +50,12 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 
 | Area | Status awal | Target commit evidence |
 |---|---|---|
-| Public website | Partial | Blueprint route inventory, reviewed content, legal/trust/status boundaries, and synthetic read-only `/demo` route with passing desktop/mobile E2E safety checks. |
+| Public website | Partial | Blueprint route inventory, reviewed content, legal/trust/status boundaries, no interactive demo route, and public safety E2E checks. |
 | Developer platform | Implemented (core) | Public API docs/playground routes, scoped API key create/rotation/revocation, workspace authorization, and hashed secrets. |
 | Integrations | Blocked/Partial | Credential scopes, sync state, webhook/audit contracts; external activation requires secrets and review. |
 | Billing/usage/invoices | Partial/Blocked | Data model and usage contracts can be implemented; payment provider activation requires account configuration. |
 | Observability/incident/backup | Implemented (core) | Health/readiness/metrics endpoints, trace IDs, incident workflow, signed archive/restore contracts; provider backup drill remains deployment dependent. |
-| Accessibility/performance/i18n | Implemented (core) | Localization/accessibility inventories, lazy routes, PWA checks, vendor chunk splitting, passing public safety E2E across desktop/mobile, and enforced JavaScript gzip/raw bundle budgets; full automated axe/Lighthouse CI remains partial. |
+| Accessibility/performance/i18n | Implemented (core) | Localization/accessibility inventories, semantic dashboard navigation labels, lazy routes, PWA checks, vendor chunk splitting, passing public safety E2E across desktop/mobile, and enforced JavaScript gzip/raw bundle budgets; full automated axe/Lighthouse CI remains partial. |
 
 ## Definition of 100 percent
 

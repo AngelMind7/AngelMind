@@ -47,6 +47,7 @@ export const appRouter = router({
     profile: protectedProcedure.query(({ ctx }) => profile.getUserProfile(ctx.user.id)),
     updateProfile: protectedProcedure.input(z.object({ username: z.string().max(64).optional(), avatarReference: z.string().max(512).optional(), bio: z.string().max(4_000), specialization: z.string().max(160).optional(), skills: z.array(z.string().min(1).max(120)).max(100), experience: z.array(z.string().min(1).max(240)).max(100), visibility: z.enum(["private", "organization", "public"]) })).mutation(({ ctx, input }) => profile.updateUserProfile(ctx.user.id, input)),
     requestPrivacyAction: protectedProcedure.input(z.object({ requestType: z.enum(["export", "delete", "rectify"]), reason: z.string().min(3).max(20_000) })).mutation(({ ctx, input }) => securityPlatform.requestPrivacyAction(ctx.user.id, input)),
+    processPrivacyRequest: protectedProcedure.input(z.object({ requestId: z.number().int().positive(), status: z.enum(["processing", "completed", "rejected"]), resultReference: z.string().trim().max(512).optional() })).mutation(({ ctx, input }) => { if (ctx.user.role !== "admin") throw new Error("Admin role is required to process privacy requests."); return securityPlatform.processPrivacyRequest(input); }),
     me: publicProcedure.query(opts => opts.ctx.user),
     logout: publicProcedure.mutation(({ ctx }) => {
       if (ctx.user) void accountSecurity.recordAuthEvent(ctx.user.id, "logout");

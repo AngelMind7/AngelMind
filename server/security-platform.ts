@@ -115,3 +115,20 @@ export async function listPrivacyRequests(userId: number) {
   if (!db) return [];
   return db.select().from(privacyRequests).where(eq(privacyRequests.userId, userId)).orderBy(desc(privacyRequests.createdAt));
 }
+
+export async function processPrivacyRequest(input: { requestId: number; status: "processing" | "completed" | "rejected"; resultReference?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [request] = await db.select().from(privacyRequests).where(eq(privacyRequests.id, input.requestId)).limit(1);
+  if (!request) throw new Error("Privacy request tidak ditemukan.");
+  if (request.status === "completed" || request.status === "rejected") {
+    if (request.status !== input.status) throw new Error("Terminal privacy request cannot be reopened.");
+    return request;
+  }
+  if (input.status === "completed" && !input.resultReference?.trim()) throw new Error("Completed privacy request requires a result reference.");
+  const resultReference = input.resultReference?.trim() || null;
+  const completedAt = input.status === "completed" || input.status === "rejected" ? new Date() : null;
+  await db.update(privacyRequests).set({ status: input.status, resultReference, completedAt }).where(and(eq(privacyRequests.id, request.id), eq(privacyRequests.status, request.status)));
+  const [updated] = await db.select().from(privacyRequests).where(eq(privacyRequests.id, request.id)).limit(1);
+  return updated;
+}

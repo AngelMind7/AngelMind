@@ -16,22 +16,22 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 
 | Area | Status awal | Target commit evidence |
 |---|---|---|
-| Programs and scope engine | Partial | Program assets/rules/version/change diff plus pre-workflow scope validation. |
+| Programs and scope engine | Implemented (core) | `program-scope.ts`, normalization/overlap guard, version diff, preview API, create-program integration. |
 | Research session state machine | Partial | Explicit transition rules, permission, validation, event, audit. |
-| Asset intelligence | Partial | Asset/component/technology/interface/endpoint relationship model. |
+| Asset intelligence | Implemented (core) | Server-derived scope validation, typed asset categories, provenance-ready metadata, and workspace isolation. |
 | Task dependency graph | Partial | Dependency validation, block/unblock, retry, cancellation, priority. |
 | Observation → hypothesis → evidence → finding | Partial | Provenance links and quality gates; no direct AI-output-to-finding shortcut. |
-| Retest and duplicate intelligence | Partial | Candidate matching, human/policy decision, retest evidence and result. |
+| Retest and duplicate intelligence | Implemented (core) | Duplicate candidate query, relation linking, retest evidence/result, and finding status synchronization. |
 
 ## Commit group C — reports and collaboration
 
 | Area | Status awal | Target commit evidence |
 |---|---|---|
 | Report builder/versioning | Partial | Autosave/version/diff/preview/export contracts and UI path. |
-| Submission tracking | Partial | State history and event/audit records. |
+| Submission tracking | Implemented (core) | `submissions` + `submissionEvents` migration, transition API, readiness/human-review gate. |
 | Comments/mentions/review | Partial | Workspace-scoped collaboration and distinct reviewer checks. |
 | Notifications | Partial | Event → notification → queue/delivery/retry/failure model; outbound delivery remains gated. |
-| Search/saved views/tags/notes | Partial | Permission-aware query contract and indexes/derived views. |
+| Search/saved views/tags/notes | Implemented (core) | Workspace-scoped global search across findings, assets, sessions, programs, and reports. Saved views/tags/notes remain partial. |
 | Knowledge graph/intelligence | Partial | Explicit relationship records and change detection signals. |
 
 ## Commit group D — AI and platform reliability
@@ -41,10 +41,10 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 | Model registry/gateway health | Partial | Provider/model capability metadata, health, cost, latency, error state. |
 | AI orchestration | Partial | Planner, task graph, assignment, aggregation, cross-check, validation, synthesis. |
 | AI provenance/memory | Partial | Run trace, input/output references, scope isolation, retention. |
-| Job queue/retry/DLQ | Partial | Persistent job state, backoff, retry limit, dead-letter and alert contract. |
+| Job queue/retry/DLQ | Implemented (core) | Persistent claim lease recovery, retry backoff, max-attempt dead-letter, and completion/failure helpers. |
 | Events/outbox/idempotency | Partial | Versioned schemas, transactional outbox, dedupe/idempotency keys. |
 | Scheduler/realtime | Partial | Safe scheduled metadata jobs and realtime event delivery boundaries. |
-| Cost governance/evaluation | Partial | Per-user/workspace/task budgets, runaway detection, quality/latency evaluation. |
+| Cost governance/evaluation | Implemented (core) | Workspace budget ceiling and idempotent terminal AI billing; quality/latency evaluation remains partial. |
 
 ## Commit group E — product surface and operations
 

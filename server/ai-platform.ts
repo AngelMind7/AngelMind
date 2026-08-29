@@ -91,6 +91,23 @@ export async function publishOutboxEvent(userId: number, input: { workspaceId?: 
   return event;
 }
 
+export async function markOutboxEventPublished(eventId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  await db.update(outboxEvents).set({ status: "published", publishedAt: new Date() }).where(and(eq(outboxEvents.id, eventId), eq(outboxEvents.status, "pending")));
+  return { success: true as const, eventId, status: "published" as const };
+}
+
+export async function failOutboxEvent(eventId: number, errorMessage: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [event] = await db.select().from(outboxEvents).where(eq(outboxEvents.id, eventId)).limit(1);
+  if (!event) throw new Error("Outbox event tidak ditemukan.");
+  if (event.attempts >= 5) return { success: false as const, eventId, status: "failed" as const, attempts: event.attempts };
+  await db.update(outboxEvents).set({ status: "failed", attempts: event.attempts + 1 }).where(and(eq(outboxEvents.id, eventId), eq(outboxEvents.status, "pending")));
+  return { success: false as const, eventId, status: "failed" as const, attempts: event.attempts + 1, error: errorMessage.trim().slice(0, 4_000) };
+}
+
 export async function claimPendingJobs(limit = 25) {
   const db = await getDb();
   if (!db) return [];

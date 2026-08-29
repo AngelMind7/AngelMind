@@ -10,6 +10,15 @@
 
 </div>
 
+<p align="center">
+  <img src="assets/readme/icon-bughunter.png" alt="Bug hunter research" width="150" />
+  <img src="assets/readme/icon-programs.png" alt="Bug bounty programs" width="150" />
+  <img src="assets/readme/icon-findings.png" alt="Verified vulnerability findings" width="150" />
+  <img src="assets/readme/icon-disclosure.png" alt="Responsible disclosure" width="150" />
+</p>
+
+<p align="center"><sub>Discover vulnerabilities · Build stronger reports · Disclose responsibly</sub></p>
+
 ---
 
 ## What is AngelMind?

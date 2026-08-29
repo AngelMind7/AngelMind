@@ -245,25 +245,13 @@ Gunakan [`.env.example`](.env.example) sebagai sumber nama variable. Jangan comm
 | `NODE_ENV` | Direkomendasikan | Set `production` pada deployment production. |
 | `PORT` | Tidak | Biasanya disediakan otomatis oleh Railway; server membaca port runtime. |
 
-`APP_ENCRYPTION_KEY` dapat dibuat dengan:
-
-```bash
-openssl rand -base64 48
-```
+Nilai `APP_ENCRYPTION_KEY` harus dibuat dan disimpan langsung oleh operator melalui secret manager atau Railway Variables. Nilai aktualnya sengaja tidak didokumentasikan di repository, README, issue, log, atau chat.
 
 ### Firebase Web
 
 Variable berikut dibaca saat frontend build dan boleh terlihat di browser sebagai konfigurasi public Firebase Web App:
 
-```text
-VITE_FIREBASE_API_KEY=
-VITE_FIREBASE_AUTH_DOMAIN=
-VITE_FIREBASE_PROJECT_ID=
-VITE_FIREBASE_STORAGE_BUCKET=
-VITE_FIREBASE_MESSAGING_SENDER_ID=
-VITE_FIREBASE_APP_ID=
-VITE_FIREBASE_APPCHECK_SITE_KEY=
-```
+Nama variable Firebase Web yang diperlukan dapat dilihat di [`.env.example`](.env.example). README ini tidak memuat nilai konfigurasi Firebase, project identifier privat, site key, atau credential apa pun.
 
 Setelah mengubah variable `VITE_*` di Railway, lakukan redeploy karena nilainya dibundel pada saat build frontend.
 
@@ -271,65 +259,19 @@ Setelah mengubah variable `VITE_*` di Railway, lakukan redeploy karena nilainya 
 
 Variable berikut hanya untuk server:
 
-```text
-FIREBASE_PROJECT_ID=
-FIREBASE_CLIENT_EMAIL=
-FIREBASE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
-ADMIN_FIREBASE_UIDS=
-```
-
-`ADMIN_FIREBASE_UIDS` berisi satu atau beberapa Firebase UID yang dipisahkan koma. `FIREBASE_PRIVATE_KEY` dapat disimpan dengan escaped newline `\n`; server akan mengubahnya menjadi newline. Jangan masukkan private key ke source code atau frontend.
+Variable Firebase Admin dan admin allowlist harus diisi melalui secret manager atau Railway Variables. Nilai service account, private key, Firebase UID, dan identifier internal sengaja tidak ditampilkan di README. Jangan masukkan private key ke source code, frontend, issue, log, atau dokumentasi publik.
 
 ### Supabase Storage
 
 Jika storage evidence/archive digunakan, isi:
 
-```text
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_SERVICE_ROLE_KEY=
-SUPABASE_STORAGE_BUCKET=angelmind-files
-```
+Nama variable Supabase Storage tersedia di [`.env.example`](.env.example). URL project, nama bucket internal, dan service-role value harus diambil langsung oleh operator dari secret manager atau dashboard Supabase. `SUPABASE_SERVICE_ROLE_KEY` wajib server-only dan tidak boleh diubah menjadi variable `VITE_*`.
 
-`SUPABASE_SERVICE_ROLE_KEY` wajib server-only. Jangan pernah mengubahnya menjadi variable `VITE_*`.
+### Scheduler, AI provider, notification, dan analytics
 
-### Scheduler
+Nama variable untuk Railway Cron, AI provider, notification webhook, dan analytics tersedia di [`.env.example`](.env.example). Nilai secret, endpoint internal, model identifier, webhook URL, analytics identifier, dan konfigurasi provider harus diisi langsung oleh operator pada secret manager atau Railway Variables. README ini sengaja tidak menyertakan contoh value, placeholder endpoint, token, key, UID, atau identifier internal.
 
-Jika Railway Cron atau maintenance callback diaktifkan:
-
-```text
-RAILWAY_CRON_SECRET=
-```
-
-Gunakan secret berbeda dari `APP_ENCRYPTION_KEY`.
-
-### AI provider
-
-Primary provider menggunakan endpoint OpenAI-compatible:
-
-```text
-LLM_PRIMARY_API_BASE_URL=https://provider.example/v1
-LLM_PRIMARY_API_KEY=
-LLM_PRIMARY_MODEL=
-```
-
-Fallback bersifat opsional:
-
-```text
-LLM_FALLBACK_API_BASE_URL=https://fallback-provider.example/v1
-LLM_FALLBACK_API_KEY=
-LLM_FALLBACK_MODEL=
-```
-
-Jika provider belum tersedia, kosongkan variable ini. Jangan mengisi endpoint atau key palsu.
-
-### Notification dan analytics opsional
-
-```text
-NOTIFICATION_WEBHOOK_URL=
-NOTIFICATION_WEBHOOK_SECRET=
-VITE_ANALYTICS_ENDPOINT=
-VITE_ANALYTICS_WEBSITE_ID=
-```
+Jika provider atau integrasi belum tersedia, biarkan variable terkait tidak dikonfigurasi. Jangan mengisi endpoint, key, token, atau secret palsu.
 
 In-app notification tetap menjadi source of truth jika outbound webhook belum dikonfigurasi. Analytics juga aman dibiarkan kosong.
 
@@ -356,46 +298,11 @@ Railway dapat digunakan sebagai Node service untuk control plane AngelMind. Hubu
 
 Untuk production control plane, isi minimal:
 
-```text
-DATABASE_URL
-APP_ENCRYPTION_KEY
-NODE_ENV=production
-VITE_FIREBASE_API_KEY
-VITE_FIREBASE_AUTH_DOMAIN
-VITE_FIREBASE_PROJECT_ID
-VITE_FIREBASE_STORAGE_BUCKET
-VITE_FIREBASE_MESSAGING_SENDER_ID
-VITE_FIREBASE_APP_ID
-FIREBASE_PROJECT_ID
-FIREBASE_CLIENT_EMAIL
-FIREBASE_PRIVATE_KEY
-ADMIN_FIREBASE_UIDS
-```
-
-Tambahkan variable berikut sesuai fitur yang diaktifkan:
-
-```text
-SUPABASE_URL
-SUPABASE_SERVICE_ROLE_KEY
-SUPABASE_STORAGE_BUCKET
-RAILWAY_CRON_SECRET
-LLM_PRIMARY_API_BASE_URL
-LLM_PRIMARY_API_KEY
-LLM_PRIMARY_MODEL
-LLM_FALLBACK_API_BASE_URL
-LLM_FALLBACK_API_KEY
-LLM_FALLBACK_MODEL
-NOTIFICATION_WEBHOOK_URL
-NOTIFICATION_WEBHOOK_SECRET
-```
+Daftar **nama variable** yang diperlukan dapat dirujuk dari [`.env.example`](.env.example). Nilai aktual untuk database, identity, storage, scheduler, AI, webhook, dan analytics harus diisi langsung di Railway Variables atau secret manager. README tidak menyimpan atau menampilkan value, token, key, UID, domain privat, maupun identifier internal.
 
 ### Verifikasi setelah deploy
 
-```bash
-curl https://YOUR-RAILWAY-DOMAIN/healthz
-curl https://YOUR-RAILWAY-DOMAIN/readyz
-curl https://YOUR-RAILWAY-DOMAIN/metrics
-```
+Akses endpoint health melalui domain deployment yang hanya diketahui operator. Jangan menuliskan domain privat, URL internal, atau response yang mengandung data environment ke README, issue, log publik, atau chat.
 
 `/healthz` menunjukkan bahwa proses HTTP hidup. `/readyz` memeriksa readiness configuration boundary. `/metrics` menyediakan metrik proses yang dapat dikonsumsi oleh sistem observability.
 

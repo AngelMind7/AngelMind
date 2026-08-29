@@ -18,6 +18,7 @@ import * as organization from "./organization";
 import * as evidenceWorkflow from "./evidence-workflow";
 import * as aiPlatform from "./ai-platform";
 import * as securityPlatform from "./security-platform";
+import * as submissionWorkflow from "./submission-workflow";
 import * as profile from "./profile";
 
 const workspaceInput = z.object({
@@ -147,6 +148,10 @@ export const appRouter = router({
     previewProgramScope: protectedProcedure.input(z.object({ programId: z.number().int().positive(), includedAssets: z.array(z.string().min(1).max(512)).max(500), excludedAssets: z.array(z.string().min(1).max(512)).max(500), rules: z.array(z.string().min(1).max(4_000)).max(100), safeHarbor: z.string().min(10).max(20_000) })).query(({ ctx, input }) => organization.previewProgramScopeChange(ctx.user.id, input)),
     setProgramStatus: protectedProcedure.input(z.object({ programId: z.number().int().positive(), status: z.enum(["draft", "active", "paused", "completed", "archived"]) })).mutation(({ ctx, input }) => organization.setProgramStatus(ctx.user.id, input.programId, input.status)),
     linkWorkspaceToProgram: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), organizationId: z.number().int().positive(), programId: z.number().int().positive() })).mutation(({ ctx, input }) => organization.linkWorkspaceToProgram(ctx.user.id, input)),
+    submissions: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => submissionWorkflow.listSubmissions(ctx.user.id, input.workspaceId)),
+    submissionEvents: protectedProcedure.input(z.object({ submissionId: z.number().int().positive() })).query(({ ctx, input }) => submissionWorkflow.listSubmissionEvents(ctx.user.id, input.submissionId)),
+    createSubmission: protectedProcedure.input(z.object({ findingId: z.number().int().positive(), reportVersionId: z.number().int().positive(), externalReference: z.string().max(240).optional() })).mutation(({ ctx, input }) => submissionWorkflow.createSubmission(ctx.user.id, input)),
+    transitionSubmission: protectedProcedure.input(z.object({ submissionId: z.number().int().positive(), status: z.enum(["submitted", "acknowledged", "triaged", "accepted", "rejected", "duplicate", "resolved", "retest"]), note: z.string().max(5_000).optional() })).mutation(({ ctx, input }) => submissionWorkflow.transitionSubmission(ctx.user.id, input)),
   }),
   research: router({
     sessions: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => researchWorkflow.listResearchSessions(ctx.user.id, input.workspaceId)),

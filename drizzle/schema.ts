@@ -632,6 +632,31 @@ export const passiveAssets = mysqlTable("passiveAssets", {
 }, table => [index("passive_asset_workspace_scope_idx").on(table.workspaceId, table.inScope), index("passive_asset_workspace_host_idx").on(table.workspaceId, table.hostname)]);
 
 export const reportPlatform = ["hackerone", "bugcrowd", "intigriti", "markdown"] as const;
+export const submissionStatus = ["submitted", "acknowledged", "triaged", "accepted", "rejected", "duplicate", "resolved", "retest"] as const;
+export const submissions = mysqlTable("submissions", {
+  id: int("id").autoincrement().primaryKey(),
+  findingId: int("findingId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  reportVersionId: int("reportVersionId").notNull(),
+  platform: mysqlEnum("platform", reportPlatform).notNull(),
+  externalReference: varchar("externalReference", { length: 240 }),
+  status: mysqlEnum("status", submissionStatus).default("submitted").notNull(),
+  submittedByUserId: int("submittedByUserId").notNull(),
+  submittedAt: timestamp("submittedAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [index("submission_finding_created_idx").on(table.findingId, table.submittedAt), index("submission_workspace_status_idx").on(table.workspaceId, table.status)]);
+
+export const submissionEvents = mysqlTable("submissionEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  submissionId: int("submissionId").notNull(),
+  workspaceId: int("workspaceId").notNull(),
+  fromStatus: mysqlEnum("fromStatus", submissionStatus),
+  toStatus: mysqlEnum("toStatus", submissionStatus).notNull(),
+  note: text("note"),
+  changedByUserId: int("changedByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [index("submission_event_submission_created_idx").on(table.submissionId, table.createdAt), index("submission_event_workspace_idx").on(table.workspaceId)]);
+
 export const reportVersions = mysqlTable("reportVersions", {
   id: int("id").autoincrement().primaryKey(),
   findingId: int("findingId").notNull(),

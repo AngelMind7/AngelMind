@@ -329,6 +329,7 @@ export const aiRuns = mysqlTable("aiRuns", {
   errorCode: varchar("errorCode", { length: 120 }),
   startedAt: timestamp("startedAt"),
   completedAt: timestamp("completedAt"),
+  retentionUntil: timestamp("retentionUntil"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [index("ai_run_workspace_created_idx").on(table.workspaceId, table.createdAt), index("ai_run_trace_idx").on(table.traceId), index("ai_run_status_idx").on(table.status, table.createdAt)]);
 

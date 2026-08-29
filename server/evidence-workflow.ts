@@ -90,6 +90,8 @@ export async function completeFindingRetest(userId: number, input: { retestId: n
   const resultSummary = input.resultSummary.trim();
   if (resultSummary.length < 3) throw new Error("Retest result summary is required.");
   await db.update(findingRetests).set({ status: input.status, resultSummary, evidenceArtifactId: input.evidenceArtifactId ?? null, reviewedByUserId: userId, completedAt: input.status === "passed" || input.status === "failed" || input.status === "inconclusive" || input.status === "cancelled" ? new Date() : null }).where(eq(findingRetests.id, retest.id));
+  if (input.status === "passed") await db.update(findings).set({ status: "validated", humanReviewStatus: "pending", updatedAt: new Date() }).where(eq(findings.id, retest.findingId));
+  if (input.status === "failed" || input.status === "inconclusive") await db.update(findings).set({ status: "inconclusive", humanReviewStatus: "pending", updatedAt: new Date() }).where(eq(findings.id, retest.findingId));
   return { success: true as const, retestId: retest.id, status: input.status };
 }
 

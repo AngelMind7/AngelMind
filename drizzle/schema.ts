@@ -452,6 +452,17 @@ export const evidenceProvenance = mysqlTable("evidenceProvenance", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [uniqueIndex("evidence_provenance_artifact_uq").on(table.evidenceArtifactId), index("evidence_provenance_workspace_idx").on(table.workspaceId, table.createdAt)]);
 
+export const researchEvidenceLinks = mysqlTable("researchEvidenceLinks", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  evidenceArtifactId: int("evidenceArtifactId").notNull(),
+  observationId: int("observationId"),
+  hypothesisId: int("hypothesisId"),
+  linkType: varchar("linkType", { length: 40 }).notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [index("research_evidence_link_workspace_idx").on(table.workspaceId, table.createdAt), index("research_evidence_link_artifact_idx").on(table.evidenceArtifactId), index("research_evidence_link_observation_idx").on(table.observationId), index("research_evidence_link_hypothesis_idx").on(table.hypothesisId)]);
+
 export const findingRelations = mysqlTable("findingRelations", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull(),

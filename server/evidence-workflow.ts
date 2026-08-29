@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { and, desc, eq, like, ne, or } from "drizzle-orm";
-import { evidenceArtifacts, evidenceProvenance, findingRelations, findingRetests, findings, reportVersions, workspaces } from "../drizzle/schema";
+import { evidenceArtifacts, evidenceProvenance, findingRelations, findingRetests, findings, researchEvidenceLinks, researchHypotheses, researchObservations, reportVersions, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 
@@ -22,6 +22,22 @@ async function loadFinding(userId: number, findingId: number, intent: "read" | "
   const [finding] = await db.select().from(findings).where(eq(findings.id, findingId)).limit(1);
   if (!finding || !(await canAccessWorkspace(userId, finding.workspaceId, intent))) throw new Error("Finding tidak ditemukan atau tidak dapat diakses.");
   return { db, finding };
+}
+
+export async function linkEvidenceToResearchNode(userId: number, input: { evidenceArtifactId: number; observationId?: number; hypothesisId?: number; linkType: string }) {
+  const { db, artifact } = await loadArtifact(userId, input.evidenceArtifactId, "respond");
+  if ((input.observationId ? 1 : 0) + (input.hypothesisId ? 1 : 0) !== 1) throw new Error("Exactly one research target is required.");
+  if (input.linkType.trim().length < 2) throw new Error("Evidence link type is required.");
+  if (input.observationId) {
+    const [observation] = await db.select({ id: researchObservations.id }).from(researchObservations).where(and(eq(researchObservations.id, input.observationId), eq(researchObservations.workspaceId, artifact.workspaceId))).limit(1);
+    if (!observation) throw new Error("Observation tidak ditemukan pada workspace evidence.");
+  }
+  if (input.hypothesisId) {
+    const [hypothesis] = await db.select({ id: researchHypotheses.id }).from(researchHypotheses).where(and(eq(researchHypotheses.id, input.hypothesisId), eq(researchHypotheses.workspaceId, artifact.workspaceId))).limit(1);
+    if (!hypothesis) throw new Error("Hypothesis tidak ditemukan pada workspace evidence.");
+  }
+  await db.insert(researchEvidenceLinks).values({ workspaceId: artifact.workspaceId, evidenceArtifactId: artifact.id, observationId: input.observationId ?? null, hypothesisId: input.hypothesisId ?? null, linkType: input.linkType.trim(), createdByUserId: userId });
+  return { success: true as const, evidenceArtifactId: artifact.id, observationId: input.observationId ?? null, hypothesisId: input.hypothesisId ?? null };
 }
 
 export async function listEvidenceWithProvenance(userId: number, workspaceId: number) {

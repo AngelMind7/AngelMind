@@ -50,12 +50,12 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 
 | Area | Status awal | Target commit evidence |
 |---|---|---|
-| Public website | Partial | Blueprint route inventory, reviewed content, legal/trust/status boundaries. |
+| Public website | Partial | Blueprint route inventory, reviewed content, legal/trust/status boundaries, and synthetic read-only `/demo` route with passing desktop/mobile E2E safety checks. |
 | Developer platform | Implemented (core) | Public API docs/playground routes, scoped API key create/rotation/revocation, workspace authorization, and hashed secrets. |
 | Integrations | Blocked/Partial | Credential scopes, sync state, webhook/audit contracts; external activation requires secrets and review. |
 | Billing/usage/invoices | Partial/Blocked | Data model and usage contracts can be implemented; payment provider activation requires account configuration. |
 | Observability/incident/backup | Implemented (core) | Health/readiness/metrics endpoints, trace IDs, incident workflow, signed archive/restore contracts; provider backup drill remains deployment dependent. |
-| Accessibility/performance/i18n | Implemented (core) | Localization/accessibility inventories, lazy routes, PWA checks, and vendor chunk splitting; automated browser/a11y performance budgets remain partial. |
+| Accessibility/performance/i18n | Implemented (core) | Localization/accessibility inventories, lazy routes, PWA checks, vendor chunk splitting, passing public safety E2E across desktop/mobile, and enforced JavaScript gzip/raw bundle budgets; full automated axe/Lighthouse CI remains partial. |
 
 ## Definition of 100 percent
 

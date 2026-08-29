@@ -1,6 +1,7 @@
 import { and, asc, desc, eq } from "drizzle-orm";
 import { getDb, getUserByEmail } from "./db";
-import { organizationMembers, organizations, programs, workspaces } from "../drizzle/schema";
+import { programs, organizationMembers, organizations, workspaces } from "../drizzle/schema";
+import { normalizeProgramScope } from "./control-plane/program-scope";
 
 const organizationRoles = ["owner", "admin", "researcher", "reviewer", "auditor"] as const;
 type OrganizationRole = (typeof organizationRoles)[number];
@@ -63,8 +64,8 @@ export async function createProgram(userId: number, input: { organizationId: num
   const { db } = await requireMembership(userId, input.organizationId, "manage");
   const name = input.name.trim();
   if (name.length < 3) throw new Error("Program name is required.");
-  if (!input.safeHarbor.trim() || input.includedAssets.length === 0) throw new Error("Program safe harbor and at least one included asset are required.");
-  await db.insert(programs).values({ organizationId: input.organizationId, createdByUserId: userId, name, description: input.description.trim(), status: "draft", includedAssets: JSON.stringify(input.includedAssets.map(value => value.trim()).filter(Boolean)), excludedAssets: JSON.stringify(input.excludedAssets.map(value => value.trim()).filter(Boolean)), rules: JSON.stringify(input.rules.map(value => value.trim()).filter(Boolean)), safeHarbor: input.safeHarbor.trim(), currentVersion: 1 });
+  const scope = normalizeProgramScope({ includedAssets: input.includedAssets, excludedAssets: input.excludedAssets, rules: input.rules, safeHarbor: input.safeHarbor });
+  await db.insert(programs).values({ organizationId: input.organizationId, createdByUserId: userId, name, description: input.description.trim(), status: "draft", includedAssets: JSON.stringify(scope.includedAssets), excludedAssets: JSON.stringify(scope.excludedAssets), rules: JSON.stringify(scope.rules), safeHarbor: scope.safeHarbor, currentVersion: scope.version });
   const [program] = await db.select().from(programs).where(and(eq(programs.organizationId, input.organizationId), eq(programs.name, name))).limit(1);
   if (!program) throw new Error("Program could not be created.");
   return program;

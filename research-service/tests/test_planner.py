@@ -1,4 +1,4 @@
-from angelmind.contracts import Asset, Observation, Scope
+from angelmind.contracts import Observation, Scope
 from angelmind.planner import build_hypotheses, plan_research
 
 

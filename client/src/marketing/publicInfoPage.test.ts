@@ -3,7 +3,25 @@ import { publicInfoPageDefinitions } from "./PublicInfoPage";
 
 describe("public information pages", () => {
   it("defines every registered informational route with meaningful content", () => {
-    const expected = ["/pricing", "/changelog", "/roadmap", "/status", "/contact", "/academy", "/privacy", "/terms", "/cookies"];
+    const expected = [
+      "/pricing",
+      "/changelog",
+      "/roadmap",
+      "/status",
+      "/contact",
+      "/academy",
+      "/privacy",
+      "/terms",
+      "/cookies",
+      "/how-it-works",
+      "/programs",
+      "/researchers",
+      "/blog",
+      "/api-playground",
+      "/acceptable-use",
+      "/responsible-disclosure",
+      "/data-processing",
+    ];
     expect(Object.keys(publicInfoPageDefinitions).sort()).toEqual(expected.sort());
     for (const page of Object.values(publicInfoPageDefinitions)) {
       expect(page.eyebrow.length).toBeGreaterThan(2);

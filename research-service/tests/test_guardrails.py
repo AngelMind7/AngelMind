@@ -1,4 +1,5 @@
-from hypothesis import given, strategies as st
+from hypothesis import given
+from hypothesis import strategies as st
 
 from angelmind.contracts import GovernanceTier, Scope, Task
 from angelmind.guardrails import evaluate_task, in_scope

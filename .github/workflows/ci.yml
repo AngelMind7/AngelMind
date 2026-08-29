@@ -48,5 +48,7 @@ jobs:
       - name: Test research foundation
         working-directory: research-service
         run: |
-          python -m pip install --upgrade pip pytest hypothesis
-          PYTHONPATH=src python -m pytest
+          python -m pip install --upgrade pip
+          python -m pip install -e '.[dev]'
+          python -m pytest
+          ruff check .

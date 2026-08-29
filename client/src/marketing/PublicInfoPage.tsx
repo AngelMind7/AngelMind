@@ -13,6 +13,86 @@ type PageDefinition = {
 };
 
 const pages: Record<string, PageDefinition> = {
+  "/how-it-works": {
+    eyebrow: "How it works",
+    title: "Governed research, from scope to evidence.",
+    description: "AngelMind keeps authorization, policy, human review, evidence, and audit visible before a workflow can move forward.",
+    sections: [
+      { title: "01 / Define scope", body: "Record allowlists, exclusions, safe harbor, code of conduct, budget, and accountable workspace ownership." },
+      { title: "02 / Rehearse safely", body: "Plan and review deterministic, network-free workflows before any future capability is considered." },
+      { title: "03 / Review evidence", body: "Connect observations, hypotheses, evidence, findings, reports, and audit history for human review." },
+    ],
+  },
+  "/programs": {
+    eyebrow: "Programs",
+    title: "Programs begin with rules, not a blank target field.",
+    description: "Program discovery is currently a public, informational surface. Active program execution remains workspace-scoped and authorization-bound.",
+    sections: [
+      { title: "Scope first", body: "Every program should make included assets, exclusions, safe harbor, and out-of-scope actions explicit." },
+      { title: "Researcher clarity", body: "Researchers need readable policy, reward, update, and reporting expectations before starting work." },
+      { title: "No implied access", body: "A public program description never grants permission to test a system or access data." },
+    ],
+  },
+  "/researchers": {
+    eyebrow: "Researchers",
+    title: "A researcher profile should show accountable work.",
+    description: "AngelMind is designed to make specialization, research history, evidence quality, and review context more useful than raw activity volume.",
+    sections: [
+      { title: "Specialization", body: "Profiles can describe research areas, skills, experience, and preferences without exposing private workspace records." },
+      { title: "Quality over volume", body: "Reputation should reflect valid findings, accepted reports, review quality, and responsible collaboration." },
+      { title: "Privacy by boundary", body: "Public profile information must remain separate from organization, workspace, evidence, and security events." },
+    ],
+  },
+  "/blog": {
+    eyebrow: "Research / Blog",
+    title: "Explain the operating model before the feature list.",
+    description: "This public editorial surface is intentionally static until a reviewed content workflow and publication ownership are configured.",
+    sections: [
+      { title: "Safety notes", body: "Publish clear explanations of authorization, scope, evidence integrity, and human review." },
+      { title: "Research practice", body: "Share defensive methodology and lessons without turning public content into unauthorized testing instructions." },
+      { title: "Change history", body: "Keep product and policy changes dated, reviewable, and consistent with the deployed control plane." },
+    ],
+  },
+  "/api-playground": {
+    eyebrow: "API playground",
+    title: "Explore contracts without executing operations.",
+    description: "The public API playground is read-only by design. It must not accept credentials, send requests to customer workspaces, or invoke target-facing capabilities.",
+    sections: [
+      { title: "Schema preview", body: "Document versioned request and response contracts with representative, non-sensitive examples." },
+      { title: "Permission-aware", body: "Authenticated API operations require server-side identity, workspace authorization, validation, and audit." },
+      { title: "No hidden execution", body: "Public examples remain synthetic until a separately reviewed developer platform is enabled." },
+    ],
+  },
+  "/acceptable-use": {
+    eyebrow: "Acceptable use",
+    title: "Use AngelMind only for authorized security research.",
+    description: "The control plane supports accountable operations; it is not a license to access, probe, exploit, exfiltrate, or disrupt systems.",
+    sections: [
+      { title: "Allowed", body: "Use verified scope, safe harbor, human ownership, and approved workflows for defensive research." },
+      { title: "Prohibited", body: "Do not use the product for unauthorized access, credential abuse, destructive activity, or evasion of controls." },
+      { title: "Report concerns", body: "Escalate suspected abuse, policy bypass, or security issues through the deployment's designated contact." },
+    ],
+  },
+  "/responsible-disclosure": {
+    eyebrow: "Responsible disclosure",
+    title: "Disclose security issues with care and traceability.",
+    description: "A deployment must publish its real security contact and policy. This page provides the product boundary without collecting submissions by itself.",
+    sections: [
+      { title: "Minimize impact", body: "Stop when evidence is sufficient, avoid data access, and do not continue beyond explicit authorization." },
+      { title: "Preserve evidence", body: "Record timestamps, scope, observed behavior, and reproducible details without including unnecessary sensitive data." },
+      { title: "Use the configured channel", body: "Follow the deployment's published contact, encryption, response, and coordination expectations." },
+    ],
+  },
+  "/data-processing": {
+    eyebrow: "Data processing",
+    title: "Processing boundaries should be explicit.",
+    description: "The deployment operator must document lawful basis, retention, residency, subprocessors, access, export, deletion, and incident contacts.",
+    sections: [
+      { title: "Source of truth", body: "Workspace records, evidence metadata, audit events, and policy versions are managed through controlled server-side paths." },
+      { title: "Retention and deletion", body: "Define retention schedules and verified deletion behavior for users, workspaces, evidence, reports, and derived records." },
+      { title: "Operator responsibility", body: "Deployment-specific legal and privacy review is required before processing customer or research-sensitive data." },
+    ],
+  },
   "/pricing": {
     eyebrow: "Transparent plans",
     title: "Choose the control surface your team can defend.",

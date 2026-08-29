@@ -64,10 +64,8 @@ pnpm check
 pnpm test
 pnpm build
 pnpm test:e2e
-
-cd research-service
-python -m pip install -e '.[dev]'
-PYTHONPATH=src pytest
+pnpm test:python
+pnpm lint:python
 ```
 
 Frontend development berjalan pada mode Vite, sedangkan server production menggunakan bundle `dist/index.js`. Jangan gunakan `pnpm dev` sebagai start command production.
@@ -160,9 +158,10 @@ Fitur target-facing hanya boleh dipertimbangkan sebagai capability terpisah sete
 | [`docs/webhook-drafts.md`](docs/webhook-drafts.md) | Outbound delivery boundary |
 | [`docs/readiness-roadmap.md`](docs/readiness-roadmap.md) | Gap production-readiness yang masih tersisa |
 | [`docs/master-blueprint-alignment.md`](docs/master-blueprint-alignment.md) | Mapping blueprint ke implementasi |
+| [`docs/repository-structure.md`](docs/repository-structure.md) | Folder aktif, boundary runtime, dan aturan struktur |
 
 ## Status validasi
 
-Validasi terakhir yang dijalankan pada repository ini mencakup **TypeScript type-check, unit test, production build, E2E desktop/mobile, Python research foundation tests, PWA manifest validation, dan `git diff --check`**. CI menjalankan type-check, test, build, manifest validation, dan Python tests pada push serta pull request.
+Validasi repository mencakup **TypeScript type-check, unit test, production build, Python research foundation tests, Python Ruff lint, PWA manifest validation, dan `git diff --check`**. Browser E2E tetap dijalankan terhadap deployment melalui workflow manual karena membutuhkan `E2E_BASE_URL`. CI menjalankan type-check, test, build, manifest validation, Python tests, dan Python lint pada push serta pull request.
 
 README ini menjelaskan kondisi kode yang benar-benar ada. Integrasi production tetap memerlukan konfigurasi provider, secret manager, domain, database, retention policy, dan approval organisasi dari operator deployment.

@@ -10,6 +10,7 @@ dev = ["hypothesis>=6.0", "pytest>=8.0", "ruff>=0.8"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+pythonpath = ["src"]
 addopts = "-q"
 
 [tool.ruff]

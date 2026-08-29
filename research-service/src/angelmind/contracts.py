@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
 from hashlib import sha256
-from typing import Mapping
 from uuid import uuid4
 
 
@@ -86,7 +86,7 @@ class Evidence:
     recorded_at: datetime = field(default_factory=utc_now)
 
     @classmethod
-    def from_summary(cls, workspace_id: str, finding_id: str, storage_reference: str, summary: str) -> "Evidence":
+    def from_summary(cls, workspace_id: str, finding_id: str, storage_reference: str, summary: str) -> Evidence:
         return cls(
             workspace_id=workspace_id,
             finding_id=finding_id,
@@ -104,7 +104,7 @@ class Finding:
     confidence: int = 0
     finding_id: str = field(default_factory=lambda: f"fnd_{uuid4().hex}")
 
-    def advance(self, target: FindingStatus, human_review_approved: bool = False) -> "Finding":
+    def advance(self, target: FindingStatus, human_review_approved: bool = False) -> Finding:
         if target is FindingStatus.SUBMITTED and not human_review_approved:
             raise PermissionError("A finding cannot be submitted before human review approval.")
         return Finding(

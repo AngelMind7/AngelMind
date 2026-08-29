@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 
 from .contracts import Scope, Task
-from .guardrails import GuardrailDecision, evaluate_task
+from .guardrails import evaluate_task
 
 
 class ActionClass(StrEnum):

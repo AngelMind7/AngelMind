@@ -18,6 +18,8 @@ export async function addFindingComment(userId: number, input: { findingId: numb
   if (!db) throw new Error("Database tidak tersedia.");
   const [finding] = await db.select({ id: findings.id }).from(findings).where(and(eq(findings.id, input.findingId), eq(findings.workspaceId, input.workspaceId))).limit(1);
   if (!finding) throw new Error("Finding tidak ditemukan pada workspace ini.");
-  const result = await db.insert(findingComments).values({ findingId: input.findingId, workspaceId: input.workspaceId, authorUserId: userId, body: input.body.trim() });
-  return { id: Number(result[0].insertId), success: true as const };
+  const body = input.body.trim();
+  const mentions = Array.from(new Set(Array.from(body.matchAll(/@([a-zA-Z0-9_.-]{2,64})/g), match => match[1].toLowerCase())));
+  const result = await db.insert(findingComments).values({ findingId: input.findingId, workspaceId: input.workspaceId, authorUserId: userId, body, mentions: JSON.stringify(mentions) });
+  return { id: Number(result[0].insertId), mentions, success: true as const };
 }

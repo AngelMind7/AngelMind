@@ -695,6 +695,7 @@ export const findingComments = mysqlTable("findingComments", {
   workspaceId: int("workspaceId").notNull(),
   authorUserId: int("authorUserId").notNull(),
   body: text("body").notNull(),
+  mentions: text("mentions").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [index("finding_comment_finding_created_idx").on(table.findingId, table.createdAt), index("finding_comment_workspace_idx").on(table.workspaceId)]);
 

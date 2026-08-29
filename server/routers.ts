@@ -19,6 +19,7 @@ import * as evidenceWorkflow from "./evidence-workflow";
 import * as aiPlatform from "./ai-platform";
 import * as securityPlatform from "./security-platform";
 import * as submissionWorkflow from "./submission-workflow";
+import * as globalSearch from "./global-search";
 import * as profile from "./profile";
 
 const workspaceInput = z.object({
@@ -125,6 +126,9 @@ export const appRouter = router({
     enqueueJob: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive().optional(), kind: z.string().min(2).max(80), idempotencyKey: z.string().min(8).max(180), payload: z.record(z.string(), z.unknown()), maxAttempts: z.number().int().min(1).max(10).optional() })).mutation(({ ctx, input }) => aiPlatform.enqueueJob(ctx.user.id, input)),
     jobs: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive().optional() }).optional()).query(({ ctx, input }) => aiPlatform.listJobs(ctx.user.id, input?.workspaceId)),
     publishEvent: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive().optional(), eventType: z.string().min(3).max(120), aggregateType: z.string().min(2).max(80), aggregateId: z.number().int().positive(), idempotencyKey: z.string().min(8).max(180), payload: z.record(z.string(), z.unknown()) })).mutation(({ ctx, input }) => aiPlatform.publishOutboxEvent(ctx.user.id, input)),
+  }),
+  search: router({
+    global: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), query: z.string().trim().min(2).max(120), limit: z.number().int().min(1).max(50).optional() })).query(({ ctx, input }) => globalSearch.searchWorkspace(ctx.user.id, input)),
   }),
   evidence: router({
     list: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => evidenceWorkflow.listEvidenceWithProvenance(ctx.user.id, input.workspaceId)),

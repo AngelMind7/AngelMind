@@ -303,6 +303,9 @@ export const aiModels = mysqlTable("aiModels", {
   version: varchar("version", { length: 80 }),
   inputCostPerMillionCents: int("inputCostPerMillionCents").default(0).notNull(),
   outputCostPerMillionCents: int("outputCostPerMillionCents").default(0).notNull(),
+  lastHealthCheckAt: timestamp("lastHealthCheckAt"),
+  lastLatencyMs: int("lastLatencyMs"),
+  lastErrorCode: varchar("lastErrorCode", { length: 120 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => [uniqueIndex("ai_model_key_uq").on(table.modelKey), index("ai_model_status_idx").on(table.status, table.updatedAt)]);

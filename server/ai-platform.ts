@@ -29,6 +29,16 @@ export async function registerModel(userId: number, input: { modelKey: string; p
   return model;
 }
 
+export async function recordModelHealth(userId: number, input: { modelKey: string; status: "active" | "degraded" | "disabled"; latencyMs?: number; errorCode?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [model] = await db.select().from(aiModels).where(eq(aiModels.modelKey, input.modelKey.trim())).limit(1);
+  if (!model) throw new Error("AI model tidak ditemukan.");
+  await db.update(aiModels).set({ status: input.status, lastHealthCheckAt: new Date(), lastLatencyMs: input.latencyMs ?? null, lastErrorCode: input.errorCode?.trim() || null, updatedAt: new Date() }).where(eq(aiModels.id, model.id));
+  const [updated] = await db.select().from(aiModels).where(eq(aiModels.id, model.id)).limit(1);
+  return updated;
+}
+
 export async function startAiRun(userId: number, input: { workspaceId: number; sessionId?: number; taskId?: number; modelKey: string; gateway: string; purpose: string; inputReference: string; estimatedCostCents?: number }) {
   const { db, workspace } = await requireWorkspace(userId, input.workspaceId, "respond");
   const estimatedCostCents = Math.max(0, input.estimatedCostCents ?? 0);

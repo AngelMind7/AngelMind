@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, desc, eq, lte, sql } from "drizzle-orm";
+import { and, asc, desc, eq, lte, lt, or, sql } from "drizzle-orm";
 import { aiModels, aiRuns, jobs, outboxEvents, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
@@ -94,7 +94,34 @@ export async function publishOutboxEvent(userId: number, input: { workspaceId?: 
 export async function claimPendingJobs(limit = 25) {
   const db = await getDb();
   if (!db) return [];
-  const available = await db.select().from(jobs).where(and(eq(jobs.status, "queued"), lte(jobs.availableAt, new Date()))).orderBy(asc(jobs.availableAt)).limit(Math.min(100, Math.max(1, limit)));
-  for (const job of available) await db.update(jobs).set({ status: "running", attempts: job.attempts + 1, lockedAt: new Date(), updatedAt: new Date() }).where(and(eq(jobs.id, job.id), eq(jobs.status, "queued")));
-  return available;
+  const now = new Date();
+  const staleBefore = new Date(now.getTime() - 10 * 60 * 1_000);
+  await db.update(jobs).set({ status: "retrying", lockedAt: null, availableAt: now, lastError: "Worker lease expired.", updatedAt: now }).where(and(eq(jobs.status, "running"), lt(jobs.lockedAt, staleBefore)));
+  const available = await db.select().from(jobs).where(and(or(eq(jobs.status, "queued"), eq(jobs.status, "retrying")), lte(jobs.availableAt, now))).orderBy(asc(jobs.availableAt)).limit(Math.min(100, Math.max(1, limit)));
+  const claimed = [];
+  for (const job of available) {
+    await db.update(jobs).set({ status: "running", attempts: job.attempts + 1, lockedAt: now, updatedAt: now }).where(and(eq(jobs.id, job.id), or(eq(jobs.status, "queued"), eq(jobs.status, "retrying"))));
+    claimed.push({ ...job, status: "running" as const, attempts: job.attempts + 1, lockedAt: now });
+  }
+  return claimed;
+}
+
+export async function completeJob(jobId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  await db.update(jobs).set({ status: "succeeded", lockedAt: null, completedAt: new Date(), updatedAt: new Date() }).where(and(eq(jobs.id, jobId), eq(jobs.status, "running")));
+  return { success: true as const, jobId, status: "succeeded" as const };
+}
+
+export async function failJob(jobId: number, errorMessage: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [job] = await db.select().from(jobs).where(eq(jobs.id, jobId)).limit(1);
+  if (!job) throw new Error("Job tidak ditemukan.");
+  const lastError = errorMessage.trim().slice(0, 4_000) || "Worker failed.";
+  const terminal = job.attempts >= job.maxAttempts;
+  const nextStatus = terminal ? "dead_letter" : "retrying";
+  const backoffMs = Math.min(60 * 60 * 1_000, 2 ** Math.max(0, job.attempts - 1) * 5_000);
+  await db.update(jobs).set({ status: nextStatus, lockedAt: null, lastError, availableAt: terminal ? job.availableAt : new Date(Date.now() + backoffMs), completedAt: terminal ? new Date() : null, updatedAt: new Date() }).where(and(eq(jobs.id, jobId), eq(jobs.status, "running")));
+  return { success: true as const, jobId, status: nextStatus };
 }

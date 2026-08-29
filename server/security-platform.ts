@@ -2,6 +2,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
 import { apiKeys, organizationEntitlements, organizationMembers, privacyRequests, users } from "../drizzle/schema";
 import { getDb } from "./db";
+import { canAccessWorkspace } from "./control-plane/operations";
 
 function hashSecret(secret: string) {
   return createHash("sha256").update(secret).digest("hex");
@@ -37,9 +38,12 @@ export async function createApiKey(userId: number, input: { name: string; worksp
   if (!db) throw new Error("Database tidak tersedia.");
   const name = input.name.trim();
   if (name.length < 3) throw new Error("API key name is required.");
+  const scopes = Array.from(new Set(input.scopes.map(scope => scope.trim()).filter(Boolean)));
+  if (scopes.length === 0) throw new Error("At least one API key scope is required.");
+  if (input.workspaceId !== undefined && !(await canAccessWorkspace(userId, input.workspaceId, "manage"))) throw new Error("API key workspace access denied.");
   const rawSecret = `am_${randomBytes(24).toString("base64url")}`;
   const prefix = rawSecret.slice(0, 10);
-  await db.insert(apiKeys).values({ userId, workspaceId: input.workspaceId ?? null, name, prefix, secretHash: hashSecret(rawSecret), scopes: JSON.stringify(Array.from(new Set(input.scopes))), status: "active", expiresAt: input.expiresAt ?? null });
+  await db.insert(apiKeys).values({ userId, workspaceId: input.workspaceId ?? null, name, prefix, secretHash: hashSecret(rawSecret), scopes: JSON.stringify(scopes), status: "active", expiresAt: input.expiresAt ?? null });
   const [created] = await db.select({ id: apiKeys.id, name: apiKeys.name, prefix: apiKeys.prefix, workspaceId: apiKeys.workspaceId, scopes: apiKeys.scopes, status: apiKeys.status, expiresAt: apiKeys.expiresAt, createdAt: apiKeys.createdAt }).from(apiKeys).where(eq(apiKeys.secretHash, hashSecret(rawSecret))).limit(1);
   if (!created) throw new Error("API key could not be created.");
   return { ...created, secret: rawSecret };

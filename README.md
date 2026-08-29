@@ -1,215 +1,211 @@
 <div align="center">
 
-<img src="assets/readme/angelmind-banner.gif" alt="AngelMind abstract blue and violet guardian banner" width="100%" />
+<img src="assets/readme/angelmind-banner.gif" alt="AngelMind colorful animated banner" width="100%" />
 
 # AngelMind
 
-### Building safer security research through clarity, accountability, and human review.
+### Find deeper. Prove clearly. Report responsibly.
 
-**Governed security research operations for teams that take trust seriously.**
+**Bug bounty and authorized offensive security research, organized for real-world impact.**
 
 </div>
 
 ---
 
-## Tentang AngelMind
+## What is AngelMind?
 
-AngelMind adalah inisiatif yang berfokus pada **security research yang bertanggung jawab, terotorisasi, dan dapat dipertanggungjawabkan**. Kami membantu tim, organisasi, dan researcher menjaga agar setiap pekerjaan security research dimulai dari scope yang jelas, berlangsung dengan batas yang aman, dan berakhir dengan evidence serta keputusan yang dapat ditinjau.
+AngelMind adalah platform untuk **bug bounty, vulnerability discovery, dan authorized offensive security research**. AngelMind membantu security researcher, bug hunter, program owner, dan security team mengelola seluruh perjalanan sebuah vulnerability: memahami scope, menemukan weakness, mengumpulkan bukti, memvalidasi dampak, membuat report, melakukan retest, dan berkomunikasi sampai issue terselesaikan.
 
-Kami percaya bahwa security research yang baik bukan hanya tentang menemukan masalah. Security research juga membutuhkan konteks, komunikasi, reproducibility, penghormatan terhadap privasi, serta tanggung jawab terhadap sistem dan pengguna yang terdampak.
+AngelMind bukan produk defensive monitoring, SIEM, SOC dashboard, atau endpoint protection. Fokus kami adalah sisi **offensive security yang sah**: membantu researcher menemukan dan membuktikan kelemahan sebelum kelemahan tersebut disalahgunakan.
 
-> **Clarity before action. Evidence before conclusion. Human accountability at every important boundary.**
-
----
-
-## Misi kami
-
-Misi AngelMind adalah membantu ekosistem security research menjadi lebih aman, lebih transparan, dan lebih mudah dipertanggungjawabkan.
-
-Kami ingin mendorong budaya di mana:
-
-- authorization dan scope selalu dipahami sebelum research dimulai;
-- researcher dapat bekerja dengan ekspektasi dan batas yang jelas;
-- evidence dicatat secara rapi tanpa mengumpulkan data sensitif yang tidak diperlukan;
-- finding dinilai berdasarkan kualitas dan dampak, bukan hanya jumlah laporan;
-- organisasi dapat meninjau keputusan, perubahan, dan responsibility secara transparan;
-- tindakan penting tetap membutuhkan human review dan approval yang sesuai.
+> **AngelMind turns offensive security research into clear, reproducible, and responsible vulnerability reports.**
 
 ---
 
-## Apa yang kami bangun
+## The mission
 
-AngelMind membangun pengalaman dan proses untuk mendukung lifecycle security research yang bertanggung jawab, mulai dari persiapan hingga review hasil.
+Misi AngelMind adalah membuat bug bounty dan offensive security research menjadi lebih mudah diikuti, lebih adil bagi researcher, dan lebih berguna bagi organisasi.
 
-| Fokus | Nilai yang kami utamakan |
+Banyak security finding kehilangan nilainya bukan karena vulnerability-nya tidak nyata, melainkan karena scope tidak jelas, evidence tidak lengkap, impact sulit dipahami, duplicate tidak terdeteksi, atau komunikasi antara researcher dan program owner tidak terstruktur. AngelMind dibangun untuk memperbaiki bagian tersebut.
+
+Kami ingin setiap vulnerability report dapat menjawab dengan jelas:
+
+- apa yang ditemukan;
+- di mana dan dalam scope apa issue tersebut terjadi;
+- bagaimana issue dapat direproduksi secara aman;
+- apa dampak security yang masuk akal;
+- evidence apa yang mendukung klaim tersebut;
+- apa yang perlu diperbaiki; dan
+- bagaimana perbaikannya diverifikasi melalui retest.
+
+---
+
+## For bug hunters
+
+AngelMind membantu bug hunter bekerja dengan konteks yang lebih baik dan mengurangi waktu yang hilang karena proses yang tidak jelas.
+
+Researcher dapat mengorganisasi program scope, asset, observation, hypothesis, task, evidence, finding, duplicate candidate, report draft, dan retest history. Dengan struktur tersebut, researcher dapat fokus pada kualitas research dan kejelasan laporan, bukan mengulang informasi yang sama atau menebak-nebak ekspektasi program.
+
+### Researcher experience yang kami prioritaskan
+
+| Kebutuhan researcher | Dukungan AngelMind |
 |---|---|
-| **Program clarity** | Scope, aturan, safe harbor, exclusions, dan ekspektasi pelaporan harus mudah dipahami. |
-| **Research organization** | Catatan research, asset, observation, hypothesis, dan task perlu memiliki konteks yang jelas. |
-| **Evidence quality** | Evidence harus relevan, reproducible, terbatas pada kebutuhan, dan dapat ditinjau. |
-| **Finding lifecycle** | Finding perlu melewati proses triage, validasi, deduplication, retest, dan review. |
-| **Responsible reporting** | Report harus jelas, berdampak, dapat diverifikasi, dan tidak melebih-lebihkan klaim. |
-| **Governance** | Keputusan penting harus memiliki owner, reviewer, alasan, dan jejak yang dapat ditelusuri. |
-| **Team collaboration** | Researcher, reviewer, operator, dan stakeholder perlu berbagi konteks tanpa mengorbankan privacy. |
+| Memahami batas program | Scope, allowlist, exclusion, safe harbor, dan rules of engagement yang lebih eksplisit. |
+| Menjaga alur research | Catatan dari observation hingga validated finding tetap memiliki konteks. |
+| Membuktikan vulnerability | Evidence, reproducibility, impact, confidence, dan timeline dapat ditata bersama. |
+| Menghindari duplicate | Finding fingerprint dan duplicate candidate membantu triage yang lebih konsisten. |
+| Menulis report lebih baik | Report draft, review context, dan version history membantu memperjelas laporan. |
+| Mengikuti perbaikan | Retest dan perubahan status menjaga lifecycle tetap terlihat. |
+| Berkomunikasi dengan aman | Comment, mention, review, dan notification mendukung kolaborasi yang terarah. |
 
 ---
 
-## Untuk siapa AngelMind
+## For bug bounty programs
 
-AngelMind ditujukan bagi organisasi dan komunitas yang ingin membangun proses security research dengan standar tanggung jawab yang tinggi.
+Program owner membutuhkan lebih dari sekadar inbox berisi laporan. Mereka membutuhkan cara untuk menerbitkan ekspektasi yang jelas, menilai kualitas finding secara konsisten, mengurangi duplicate, dan memberikan feedback yang dapat dipahami researcher.
 
-### Untuk program owner dan organisasi
+AngelMind membantu program owner mengelola:
 
-AngelMind membantu program owner menjelaskan rules of engagement, menjaga scope tetap eksplisit, mengelola review, dan memahami status pekerjaan tanpa kehilangan accountability.
+- program policy dan rules of engagement;
+- in-scope assets dan exclusions;
+- safe harbor serta batas pengujian;
+- report intake dan triage;
+- severity, impact, confidence, dan evidence review;
+- duplicate handling;
+- researcher communication;
+- remediation status dan retest;
+- audit trail serta perubahan keputusan.
 
-### Untuk security researcher
-
-AngelMind dirancang agar researcher dapat bekerja dengan konteks yang lebih jelas: apa yang in scope, apa yang excluded, evidence seperti apa yang dibutuhkan, dan bagaimana finding akan ditinjau.
-
-### Untuk reviewer dan security team
-
-AngelMind membantu reviewer memeriksa kualitas evidence, menilai dampak, membandingkan finding, mendokumentasikan keputusan, dan menjaga agar laporan tidak bergerak terlalu cepat tanpa validasi manusia.
-
-### Untuk engineering dan product team
-
-AngelMind membantu menghubungkan security finding dengan komunikasi yang jelas, remediation context, retest, dan riwayat keputusan yang dapat dipahami oleh stakeholder non-security.
+AngelMind tidak menentukan reward secara otomatis atau menggantikan kebijakan program. Setiap program tetap memiliki kewenangan untuk menetapkan severity model, reward policy, disclosure timeline, dan keputusan akhir.
 
 ---
 
-## Prinsip kami
+## For security teams
 
-### 1. Authorized research only
+Untuk security team, AngelMind menyediakan workspace untuk mengubah raw research menjadi informasi yang dapat ditindaklanjuti. Observation, hypothesis, evidence, finding, report, review, dan retest dapat dipisahkan dengan jelas sehingga tim engineering maupun product menerima konteks yang mereka perlukan tanpa harus membaca ulang seluruh catatan research.
 
-Semua aktivitas security research harus berada dalam authorization dan scope yang sah. Keberadaan sebuah program atau tool tidak pernah dapat dianggap sebagai izin untuk mengakses, menguji, atau memengaruhi sistem di luar batas yang ditentukan.
-
-### 2. Safety is a product requirement
-
-Safety bukan tambahan setelah fitur selesai. Scope, exclusions, privacy, evidence handling, review, dan escalation adalah bagian dari cara produk harus digunakan sejak awal.
-
-### 3. Human review matters
-
-Automation dapat membantu mengorganisasi informasi, tetapi keputusan yang memiliki konsekuensi penting harus tetap dapat ditinjau dan dipertanggungjawabkan oleh manusia.
-
-### 4. Evidence over speculation
-
-Klaim security sebaiknya didukung evidence yang cukup, relevan, dan dapat diverifikasi. Kami mengutamakan kualitas, reproducibility, dan konteks daripada sensasionalisme.
-
-### 5. Privacy by restraint
-
-Kumpulkan, simpan, dan bagikan hanya informasi yang memang diperlukan. Data pribadi, credential, secret, dan informasi internal bukan bahan untuk dipublikasikan di repository, issue, report, atau channel umum.
-
-### 6. Respect for researchers and operators
-
-Researcher membutuhkan kejelasan dan fair treatment. Operator membutuhkan konteks yang dapat ditindaklanjuti. Kedua pihak berhak mendapatkan komunikasi yang profesional dan proses yang konsisten.
-
-### 7. Honest communication
-
-Kami tidak mengklaim certification, customer adoption, uptime, active capability, atau partnership yang belum diverifikasi secara resmi. Status yang belum aktif akan dijelaskan sebagai belum aktif.
+Tujuannya bukan membuat research terlihat lebih rumit. Tujuannya adalah membuat **vulnerability yang nyata menjadi lebih mudah dipercaya, diprioritaskan, diperbaiki, dan diverifikasi**.
 
 ---
 
-## Cara kami memandang security finding
+## The AngelMind workflow
 
-Finding yang baik bukan sekadar output teknis. Finding yang berguna biasanya menjawab beberapa pertanyaan penting:
+```text
+Program scope
+     ↓
+Asset discovery and research notes
+     ↓
+Observation and hypothesis
+     ↓
+Safe validation and evidence
+     ↓
+Finding triage and duplicate review
+     ↓
+Report and human review
+     ↓
+Remediation tracking and retest
+     ↓
+Resolution and responsible disclosure
+```
 
-1. **Apa yang terjadi?** Jelaskan perilaku atau kondisi yang diamati secara faktual.
-2. **Mengapa hal itu penting?** Hubungkan dengan security impact dan pihak yang berisiko.
-3. **Apa batas evidence-nya?** Bedakan fakta, asumsi, dan hal yang belum terverifikasi.
-4. **Bagaimana organisasi dapat memvalidasinya?** Berikan langkah yang aman dan sesuai authorization.
-5. **Apa yang dapat diperbaiki?** Sampaikan remediation direction tanpa klaim yang tidak perlu.
-6. **Apa yang harus dihindari?** Jangan menyertakan data sensitif, credential, atau bukti yang melampaui kebutuhan validasi.
+Setiap tahap memiliki konteks dan statusnya sendiri. Dengan begitu, laporan tidak langsung melompat dari dugaan menjadi klaim final tanpa evidence dan review yang memadai.
 
-Kami mendorong laporan yang jelas, tenang, reproducible, dan membantu organisasi memperbaiki masalah tanpa memperbesar risiko.
+---
+
+## What makes a strong finding?
+
+AngelMind mendorong finding yang faktual, reproducible, dan proporsional. Finding yang kuat biasanya memiliki:
+
+1. **Clear scope** — target atau asset yang diuji memang berada dalam authorization.
+2. **Reproducible steps** — langkah validasi cukup jelas untuk ditinjau tanpa memperbesar dampak.
+3. **Relevant evidence** — bukti mendukung klaim dan tidak menyertakan data sensitif yang tidak diperlukan.
+4. **Accurate impact** — dampak dijelaskan berdasarkan hal yang benar-benar dapat dibuktikan.
+5. **Useful remediation direction** — organisasi mendapat arah perbaikan yang masuk akal.
+6. **Responsible handling** — researcher menghentikan aktivitas ketika evidence sudah memadai dan mengikuti disclosure policy.
+
+Kami tidak mendorong overclaiming, sensational severity, data hoarding, atau pengujian yang melampaui kebutuhan validasi.
+
+---
+
+## Offensive by purpose, responsible by design
+
+AngelMind memang dibuat untuk offensive security research. Researcher perlu mencari weakness, menguji asumsi keamanan, memvalidasi attack path yang diizinkan, dan menunjukkan dampak yang relevan. Namun offensive tidak berarti tanpa batas.
+
+Semua research harus dilakukan hanya pada asset yang memiliki authorization dan sesuai rules of engagement. AngelMind menempatkan scope, exclusions, safe harbor, evidence boundaries, approval, dan human review sebagai bagian dari workflow agar aktivitas menemukan vulnerability tidak berubah menjadi akses yang tidak sah atau tindakan yang merugikan.
+
+### Hal yang tidak boleh dilakukan
+
+AngelMind tidak boleh digunakan untuk unauthorized access, credential abuse, destructive testing, data exfiltration, denial of service, persistence, evasion, harassment, atau pengujian terhadap target di luar scope. Keberadaan platform tidak pernah menjadi pengganti izin dari pemilik sistem.
 
 ---
 
 ## Responsible disclosure
 
-Jika Anda menemukan security issue pada layanan atau deployment AngelMind, gunakan **security contact resmi yang dipublikasikan oleh deployment terkait**. Jangan memasukkan detail sensitif ke public issue, pull request, komentar, screenshot publik, atau repository.
+Jika Anda menemukan vulnerability pada layanan atau deployment AngelMind, gunakan security contact resmi yang dipublikasikan oleh deployment terkait. Jangan mempublikasikan detail exploit, credential, token, data pribadi, atau informasi internal melalui public issue, pull request, screenshot, atau channel umum.
 
-Saat melakukan disclosure:
+Berikan informasi secukupnya agar issue dapat divalidasi secara aman. Minimalkan dampak, jangan mengakses data pengguna yang tidak diperlukan, dan hentikan pengujian ketika bukti yang memadai telah diperoleh.
 
-- pastikan Anda memiliki authorization yang sesuai;
-- hindari akses atau pengumpulan data pengguna;
-- hentikan aktivitas ketika evidence yang cukup telah diperoleh;
-- minimalkan dampak dan jangan melakukan destructive testing;
-- simpan informasi sensitif hanya pada channel yang aman;
-- berikan waktu dan konteks yang wajar untuk review serta remediation;
-- ikuti kebijakan disclosure yang berlaku pada organisasi pemilik sistem.
-
-Halaman ini tidak memberikan izin untuk menguji sistem apa pun. Untuk deployment tertentu, selalu ikuti kebijakan, scope, dan contact channel yang secara resmi ditetapkan oleh operatornya.
+Untuk program atau target lain, selalu ikuti disclosure policy, scope, safe harbor, dan contact channel resmi yang ditetapkan oleh pemilik sistem.
 
 ---
 
-## Komitmen terhadap researcher
+## Our principles
 
-Kami menghargai researcher yang bekerja secara etis dan bertanggung jawab. Kami percaya bahwa researcher berhak mendapatkan:
-
-- program rules yang dapat dipahami;
-- scope dan exclusions yang tidak ambigu;
-- jalur komunikasi yang wajar;
-- proses review yang konsisten;
-- feedback yang profesional;
-- pengakuan terhadap kontribusi yang valid;
-- perlindungan terhadap privacy dan data yang tidak relevan.
-
-Kami juga percaya bahwa researcher memiliki tanggung jawab untuk menghormati scope, menjaga kerahasiaan, meminimalkan dampak, dan tidak menggunakan akses yang diperoleh untuk tujuan di luar authorization.
-
----
-
-## Komitmen terhadap organisasi
-
-Kami membantu organisasi membangun proses yang lebih dapat ditinjau tanpa mengubah security research menjadi aktivitas yang tidak terkendali. Fokus kami adalah membantu organisasi:
-
-- membuat ekspektasi program lebih mudah dipahami;
-- memisahkan evidence dari opini dan asumsi;
-- meningkatkan kualitas triage serta report;
-- menjaga decision trail yang dapat ditelusuri;
-- mengurangi duplikasi dan miskomunikasi;
-- mempertahankan human accountability;
-- meningkatkan kesiapan remediation dan retest.
-
-AngelMind bukan pengganti security team, legal counsel, incident response process, atau keputusan organisasi. AngelMind adalah pendukung proses agar keputusan tersebut dibuat dengan konteks yang lebih baik.
+| Prinsip | Arti bagi AngelMind |
+|---|---|
+| **Researcher first** | Researcher berhak mendapatkan scope, policy, dan feedback yang jelas. |
+| **Evidence over hype** | Finding dinilai dari bukti dan dampak yang dapat dipertanggungjawabkan. |
+| **Offensive with authorization** | Penemuan vulnerability hanya dilakukan pada target dan batas yang disetujui. |
+| **Fair triage** | Duplicate, severity, impact, dan status perlu dinilai secara konsisten. |
+| **Privacy by restraint** | Data yang tidak diperlukan tidak dikumpulkan, disimpan, atau dibagikan. |
+| **Human judgment** | Automation membantu proses; keputusan penting tetap membutuhkan review manusia. |
+| **Transparent communication** | Researcher dan program owner perlu berbagi konteks secara profesional. |
+| **No invented claims** | Kami tidak mengklaim program, reward, partnership, atau capability yang belum resmi aktif. |
 
 ---
 
-## Batas penggunaan
+## Who should use AngelMind?
 
-AngelMind **tidak boleh digunakan** untuk unauthorized access, credential abuse, destructive testing, data exfiltration, evasion of controls, harassment, atau aktivitas lain yang melanggar hukum maupun kebijakan pemilik sistem.
+AngelMind cocok untuk:
 
-AngelMind juga bukan jaminan bahwa sebuah program, finding, atau keputusan otomatis benar. Pengguna tetap bertanggung jawab untuk memastikan authorization, scope, legal context, evidence quality, dan external action yang dilakukan.
+- bug bounty hunter dan independent security researcher;
+- internal offensive security team;
+- application security dan product security team;
+- bug bounty program manager;
+- vulnerability triage dan remediation team;
+- organisasi yang ingin membangun vulnerability disclosure program;
+- security consultant yang bekerja dengan authorization tertulis.
 
-> Tidak ada tool, platform, badge, atau repository yang menggantikan authorization tertulis dan penilaian manusia yang bertanggung jawab.
-
----
-
-## Status publik
-
-AngelMind berkembang secara bertahap dengan prioritas pada safety, evidence integrity, privacy, dan operational clarity. Kemampuan yang memerlukan provider, account, deployment, atau approval organisasi akan diaktifkan secara terpisah setelah prasyaratnya terpenuhi.
-
-Kami memilih untuk tidak menampilkan klaim yang belum terverifikasi. Untuk informasi publik mengenai deployment tertentu, gunakan website, Trust Center, policy, atau contact channel resmi dari deployment tersebut.
+AngelMind tidak ditujukan untuk aktivitas ilegal, anonymous abuse, atau operasi yang sengaja menghindari kontrol dan accountability.
 
 ---
 
-## Berkolaborasi dengan kami
+## Collaboration
 
-Kami terbuka terhadap percakapan dengan security researcher, program owner, security team, engineering team, privacy professional, dan organisasi yang ingin meningkatkan kualitas security research operations.
+Kami terbuka terhadap kolaborasi dengan bug hunter, program owner, security researcher, application security team, product security team, dan organisasi yang ingin meningkatkan kualitas vulnerability management mereka.
 
-Topik kolaborasi yang relevan meliputi governance, responsible disclosure, evidence quality, researcher experience, privacy-respecting workflows, security program design, dan human-in-the-loop review.
+Topik kolaborasi yang relevan meliputi bug bounty program design, researcher experience, vulnerability triage, evidence quality, responsible disclosure, retest workflow, dan human-in-the-loop offensive security operations.
 
-Untuk memulai percakapan, gunakan contact channel resmi yang tersedia pada deployment atau organisasi AngelMind yang Anda gunakan. Jangan mengirim credential, private key, token, data pribadi, atau informasi rahasia melalui README, public issue, atau channel publik.
+Gunakan contact channel resmi AngelMind atau deployment terkait untuk memulai percakapan. Jangan mengirim credential, private key, token, data pribadi, atau informasi rahasia melalui channel publik.
 
 ---
 
-## Ringkasan
+## Public status
 
-AngelMind dibangun untuk satu gagasan sederhana:
+AngelMind dikembangkan secara bertahap dengan fokus pada pengalaman bug hunter, kualitas report, scope clarity, evidence integrity, privacy, dan responsible disclosure. Detail program, reward, target, availability, dan contact channel hanya berlaku jika dipublikasikan secara resmi oleh operator terkait.
 
-> **Security research yang lebih baik membutuhkan lebih dari sekadar kemampuan teknis. Ia membutuhkan kejelasan, batas, evidence, empati, dan tanggung jawab.**
+README ini adalah pengenalan publik terhadap AngelMind. Ia tidak memberikan authorization untuk menguji sistem apa pun dan tidak menggantikan policy program, kontrak, safe harbor, atau approval dari pemilik target.
 
-Jika Anda membangun program security, meneliti sistem secara sah, meninjau finding, atau membantu organisasi mengambil keputusan yang lebih aman, AngelMind dibuat untuk mendukung proses tersebut.
+---
+
+## Summary
+
+> **AngelMind is for the people who look for what others miss—and take responsibility for what they find.**
+
+Kami membangun tempat di mana bug hunter dapat melakukan research dengan lebih jelas, program owner dapat melakukan triage dengan lebih adil, dan vulnerability report dapat menghasilkan perbaikan nyata.
 
 <div align="center">
 
-**Clarity. Evidence. Accountability.**
+**Find deeper. Prove clearly. Report responsibly.**
 
 </div>

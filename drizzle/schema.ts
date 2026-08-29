@@ -332,6 +332,20 @@ export const aiRuns = mysqlTable("aiRuns", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [index("ai_run_workspace_created_idx").on(table.workspaceId, table.createdAt), index("ai_run_trace_idx").on(table.traceId), index("ai_run_status_idx").on(table.status, table.createdAt)]);
 
+export const aiEvaluationVerdict = ["pass", "fail", "needs_review"] as const;
+
+export const aiRunEvaluations = mysqlTable("aiRunEvaluations", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull(),
+  runId: int("runId").notNull(),
+  rubric: varchar("rubric", { length: 160 }).notNull(),
+  score: int("score").notNull(),
+  verdict: mysqlEnum("verdict", aiEvaluationVerdict).notNull(),
+  notes: text("notes").notNull(),
+  evaluatedByUserId: int("evaluatedByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("ai_run_evaluation_rubric_uq").on(table.runId, table.rubric), index("ai_evaluation_workspace_created_idx").on(table.workspaceId, table.createdAt)]);
+
 export const promptVersions = mysqlTable("promptVersions", {
   id: int("id").autoincrement().primaryKey(),
   purpose: varchar("purpose", { length: 120 }).notNull(),

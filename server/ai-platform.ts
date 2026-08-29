@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq, lte, lt, or, sql } from "drizzle-orm";
-import { aiModels, aiRuns, jobs, outboxEvents, workspaces } from "../drizzle/schema";
+import { aiModels, aiRunEvaluations, aiRuns, jobs, outboxEvents, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 
@@ -62,6 +62,27 @@ export async function updateAiRun(userId: number, input: { runId: number; status
   if ((input.status === "completed" || input.status === "partial") && !terminalBeforeUpdate) await db.update(workspaces).set({ spentCents: sql`${workspaces.spentCents} + ${costCents}` }).where(eq(workspaces.id, run.workspaceId));
   const [updated] = await db.select().from(aiRuns).where(eq(aiRuns.id, run.id)).limit(1);
   return updated;
+}
+
+export async function evaluateAiRun(userId: number, input: { runId: number; rubric: string; score: number; verdict: "pass" | "fail" | "needs_review"; notes: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, input.runId)).limit(1);
+  if (!run || !(await canAccessWorkspace(userId, run.workspaceId, "review"))) throw new Error("AI run tidak ditemukan atau tidak dapat direview.");
+  const rubric = input.rubric.trim();
+  const notes = input.notes.trim();
+  if (rubric.length < 2 || notes.length < 2 || input.score < 0 || input.score > 100) throw new Error("Evaluation rubric, notes, dan score harus valid.");
+  await db.insert(aiRunEvaluations).values({ workspaceId: run.workspaceId, runId: run.id, rubric, score: input.score, verdict: input.verdict, notes, evaluatedByUserId: userId }).onDuplicateKeyUpdate({ set: { score: input.score, verdict: input.verdict, notes, evaluatedByUserId: userId, createdAt: new Date() } });
+  const [evaluation] = await db.select().from(aiRunEvaluations).where(and(eq(aiRunEvaluations.runId, run.id), eq(aiRunEvaluations.rubric, rubric))).limit(1);
+  return evaluation;
+}
+
+export async function listAiRunEvaluations(userId: number, runId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, runId)).limit(1);
+  if (!run || !(await canAccessWorkspace(userId, run.workspaceId, "read"))) throw new Error("AI run tidak ditemukan atau tidak dapat diakses.");
+  return db.select().from(aiRunEvaluations).where(eq(aiRunEvaluations.runId, runId)).orderBy(desc(aiRunEvaluations.createdAt));
 }
 
 export async function listAiRuns(userId: number, workspaceId: number) {

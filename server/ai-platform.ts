@@ -90,13 +90,13 @@ export async function listJobs(userId: number, workspaceId?: number) {
   return rows;
 }
 
-export async function publishOutboxEvent(userId: number, input: { workspaceId?: number; eventType: string; aggregateType: string; aggregateId: number; idempotencyKey: string; payload: Record<string, unknown> }) {
+export async function publishOutboxEvent(userId: number, input: { workspaceId?: number; eventType: string; aggregateType: string; aggregateId: number; idempotencyKey: string; schemaVersion?: number; payload: Record<string, unknown> }) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   if (input.workspaceId) await requireWorkspace(userId, input.workspaceId, "respond");
   const existing = await db.select().from(outboxEvents).where(eq(outboxEvents.idempotencyKey, input.idempotencyKey)).limit(1);
   if (existing[0]) return existing[0];
-  await db.insert(outboxEvents).values({ workspaceId: input.workspaceId ?? null, eventType: input.eventType.trim(), aggregateType: input.aggregateType.trim(), aggregateId: input.aggregateId, idempotencyKey: input.idempotencyKey.trim(), payload: JSON.stringify(input.payload), status: "pending", attempts: 0 });
+  await db.insert(outboxEvents).values({ workspaceId: input.workspaceId ?? null, eventType: input.eventType.trim(), aggregateType: input.aggregateType.trim(), aggregateId: input.aggregateId, idempotencyKey: input.idempotencyKey.trim(), schemaVersion: input.schemaVersion ?? 1, payload: JSON.stringify(input.payload), status: "pending", attempts: 0 });
   const [event] = await db.select().from(outboxEvents).where(eq(outboxEvents.idempotencyKey, input.idempotencyKey)).limit(1);
   return event;
 }

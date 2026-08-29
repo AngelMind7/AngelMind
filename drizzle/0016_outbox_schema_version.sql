@@ -1,0 +1,1 @@
+ALTER TABLE `outboxEvents` ADD `schemaVersion` int DEFAULT 1 NOT NULL;

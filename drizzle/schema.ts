@@ -367,6 +367,7 @@ export const outboxEvents = mysqlTable("outboxEvents", {
   aggregateType: varchar("aggregateType", { length: 80 }).notNull(),
   aggregateId: int("aggregateId").notNull(),
   idempotencyKey: varchar("idempotencyKey", { length: 180 }).notNull(),
+  schemaVersion: int("schemaVersion").default(1).notNull(),
   payload: text("payload").notNull(),
   status: mysqlEnum("status", outboxEventStatus).default("pending").notNull(),
   attempts: int("attempts").default(0).notNull(),

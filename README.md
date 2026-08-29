@@ -1,5 +1,7 @@
 <div align="center">
 
+<img src="assets/readme/angelmind-banner.gif" alt="AngelMind abstract blue and violet guardian banner" width="100%" />
+
 # AngelMind
 
 ### Building safer security research through clarity, accountability, and human review.

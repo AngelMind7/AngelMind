@@ -104,7 +104,7 @@ export async function getFindingQualityGate(userId: number, findingId: number) {
     latestReportReady: latestReport?.readyForReview === 1,
     latestReportId: latestReport?.id ?? null,
     readyForHumanReview: finding.status === "validated" && finding.humanReviewStatus === "pending" && latestReport?.readyForReview === 1,
-    canSubmitExternally: false as const,
-    requiredNextStep: finding.humanReviewStatus === "pending" ? "human-review" : latestReport?.readyForReview !== 1 ? "complete-report" : "no-external-submit-permission",
+    canSubmitExternally: finding.humanReviewStatus === "approved" && latestReport?.readyForReview === 1,
+    requiredNextStep: finding.humanReviewStatus !== "approved" ? "human-review" : latestReport?.readyForReview !== 1 ? "complete-report" : "ready-for-external-submission",
   };
 }

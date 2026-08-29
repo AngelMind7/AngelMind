@@ -31,7 +31,7 @@ export async function createSubmission(userId: number, input: { findingId: numbe
   const [finding] = await db.select().from(findings).where(eq(findings.id, input.findingId)).limit(1);
   if (!report || !finding || report.findingId !== finding.id || report.workspaceId !== finding.workspaceId) throw new Error("Finding dan report version harus berasal dari workspace yang sama.");
   if (!(await canAccessWorkspace(userId, finding.workspaceId, "respond"))) throw new Error("Submission permission denied.");
-  if (report.readyForReview !== 1) throw new Error("Report version must pass the quality gate before submission.");
+  if (report.readyForReview !== 1 || finding.humanReviewStatus !== "approved") throw new Error("Finding must pass report readiness and human review approval before submission.");
   const externalReference = input.externalReference?.trim() || null;
   await db.insert(submissions).values({ findingId: finding.id, workspaceId: finding.workspaceId, reportVersionId: report.id, platform: report.platform, externalReference, status: "submitted", submittedByUserId: userId });
   const [submission] = await db.select().from(submissions).where(and(eq(submissions.findingId, finding.id), eq(submissions.reportVersionId, report.id))).orderBy(desc(submissions.submittedAt)).limit(1);

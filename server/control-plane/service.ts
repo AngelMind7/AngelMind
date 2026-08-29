@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import { and, desc, eq, inArray, isNotNull, isNull } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNotNull, isNull } from "drizzle-orm";
 import { auditEvents, approvals, credentialReferences, evidenceArtifacts, findings, notificationPreferences, notifications, runs, workspaceChangeSnapshots, workspaceMemberships, workspaces } from "../../drizzle/schema";
 import { getDb, getOwnedWorkspace } from "../db";
 import { notifyOwner } from "../_core/notification";
@@ -310,6 +310,14 @@ export async function listNotifications(userId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(notifications).where(eq(notifications.userId, userId)).orderBy(desc(notifications.createdAt)).limit(100);
+}
+
+export async function listNotificationsSince(userId: number, input: { afterId?: number; limit?: number }) {
+  const db = await getDb();
+  if (!db) return [];
+  const limit = Math.min(100, Math.max(1, input.limit ?? 50));
+  const condition = input.afterId && input.afterId > 0 ? and(eq(notifications.userId, userId), gt(notifications.id, input.afterId)) : eq(notifications.userId, userId);
+  return db.select().from(notifications).where(condition).orderBy(notifications.id).limit(limit);
 }
 
 export async function listNotificationPreferences(userId: number) {

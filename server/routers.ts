@@ -75,6 +75,7 @@ export const appRouter = router({
   }),
   notification: router({
     list: protectedProcedure.query(({ ctx }) => controlPlane.listNotifications(ctx.user.id)),
+    listSince: protectedProcedure.input(z.object({ afterId: z.number().int().positive().optional(), limit: z.number().int().min(1).max(100).optional() })).query(({ ctx, input }) => controlPlane.listNotificationsSince(ctx.user.id, input)),
     preferences: protectedProcedure.query(({ ctx }) => controlPlane.listNotificationPreferences(ctx.user.id)),
     setPreference: protectedProcedure.input(z.object({ eventType: z.enum(["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check", "policy_review_required", "incident_created", "webhook_activation_requested"]), inAppEnabled: z.boolean() })).mutation(({ ctx, input }) => controlPlane.setNotificationPreference(ctx.user.id, input.eventType, input.inAppEnabled)),
     markRead: protectedProcedure.input(z.object({ notificationId: z.number().int().positive() })).mutation(({ ctx, input }) => controlPlane.markNotificationRead(ctx.user.id, input.notificationId)),

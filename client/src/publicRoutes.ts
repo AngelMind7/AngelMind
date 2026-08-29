@@ -15,6 +15,7 @@ export const publicRoutes = [
   { path: "/api-playground", component: PublicInfoPage, boundary: "read-only-no-execution" },
   { path: "/security", component: MarketingHome, boundary: "reviewed-static-copy" },
   { path: "/pricing", component: PublicInfoPage, boundary: "informational-no-billing" },
+  { path: "/demo", component: PublicInfoPage, boundary: "synthetic-read-only" },
   { path: "/changelog", component: PublicInfoPage, boundary: "reviewed-static-copy" },
   { path: "/roadmap", component: PublicInfoPage, boundary: "reviewed-static-copy" },
   { path: "/status", component: PublicInfoPage, boundary: "non-live-status-disclosure" },

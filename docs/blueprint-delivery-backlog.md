@@ -19,18 +19,18 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 | Programs and scope engine | Implemented (core) | `program-scope.ts`, normalization/overlap guard, version diff, preview API, create-program integration. |
 | Research session state machine | Partial | Explicit transition rules, permission, validation, event, audit. |
 | Asset intelligence | Implemented (core) | Server-derived scope validation, typed asset categories, provenance-ready metadata, and workspace isolation. |
-| Task dependency graph | Partial | Dependency validation, block/unblock, retry, cancellation, priority. |
-| Observation → hypothesis → evidence → finding | Partial | Provenance links and quality gates; no direct AI-output-to-finding shortcut. |
+| Task dependency graph | Partial | Dependency validation plus ResearchWorkspace dependency input and run/pause/retry/cancel controls; full visual DAG/worker orchestration remains partial. |
+| Observation → hypothesis → evidence → finding | Partial | Evidence can now link to workspace-scoped observations/hypotheses, with quality gates; full observation-to-finding UI lifecycle remains partial. |
 | Retest and duplicate intelligence | Implemented (core) | Duplicate candidate query, relation linking, retest evidence/result, and finding status synchronization. |
 
 ## Commit group C — reports and collaboration
 
 | Area | Status awal | Target commit evidence |
 |---|---|---|
-| Report builder/versioning | Partial | Autosave/version/diff/preview/export contracts and UI path. |
+| Report builder/versioning | Partial | Persisted draft autosave/restore, version/diff APIs, preview/export contracts, and ReportStudio autosave path; richer collaborative diff remains partial. |
 | Submission tracking | Implemented (core) | `submissions` + `submissionEvents` migration, transition API, readiness/human-review gate. |
-| Comments/mentions/review | Partial | Workspace-scoped collaboration and distinct reviewer checks. |
-| Notifications | Partial | Event → notification → queue/delivery/retry/failure model; outbound delivery remains gated. |
+| Comments/mentions/review | Partial | Workspace-scoped comments, persisted mention metadata, in-app mention notifications, and distinct reviewer checks; full comment threading remains partial. |
+| Notifications | Partial | Cursor polling, comment mention delivery, event preferences, and outbound boundary; provider retry/failure delivery remains gated. |
 | Search/saved views/tags/notes | Implemented (core) | Workspace-scoped global search across findings, assets, sessions, programs, and reports. Saved views/tags/notes remain partial. |
 | Knowledge graph/intelligence | Partial | Explicit relationship records and change detection signals. |
 
@@ -38,13 +38,13 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 
 | Area | Status awal | Target commit evidence |
 |---|---|---|
-| Model registry/gateway health | Partial | Provider/model capability metadata, health, cost, latency, error state. |
+| Model registry/gateway health | Partial | Provider/model capability metadata plus admin health status, latency, and error metadata; live provider probes remain environment-dependent. |
 | AI orchestration | Partial | Planner, task graph, assignment, aggregation, cross-check, validation, synthesis. |
-| AI provenance/memory | Partial | Run trace, input/output references, scope isolation, retention. |
+| AI provenance/memory | Partial | Run trace, input/output references, workspace isolation, and configurable 1–3650 day retentionUntil policy; purge worker/memory retrieval remains partial. |
 | Job queue/retry/DLQ | Implemented (core) | Persistent claim lease recovery, retry backoff, max-attempt dead-letter, and completion/failure helpers. |
-| Events/outbox/idempotency | Partial | Versioned schemas, transactional outbox, dedupe/idempotency keys. |
+| Events/outbox/idempotency | Partial | Versioned schemaVersion, transactional persistence, dedupe/idempotency keys, bounded delivery transitions; production dispatcher remains partial. |
 | Scheduler/realtime | Partial | Safe scheduled metadata jobs and realtime event delivery boundaries. |
-| Cost governance/evaluation | Implemented (core) | Workspace budget ceiling and idempotent terminal AI billing; quality/latency evaluation remains partial. |
+| Cost governance/evaluation | Partial | Workspace budget ceiling, idempotent terminal billing, model health metadata, and rubric-based AI run evaluations; live evaluation dashboards remain partial. |
 
 ## Commit group E — product surface and operations
 

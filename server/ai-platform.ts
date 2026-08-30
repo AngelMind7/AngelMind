@@ -5,6 +5,7 @@ import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { planMultiAgentRun } from "./ai-orchestration";
 import { invokeLLM, type Message } from "./_core/llm";
+import { selectBestRegisteredModel } from "./ai-routing";
 
 async function requireWorkspace(userId: number, workspaceId: number, intent: "read" | "respond" = "read") {
   const db = await getDb();
@@ -19,6 +20,13 @@ export async function listModels() {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(aiModels).where(eq(aiModels.status, "active")).orderBy(asc(aiModels.provider), asc(aiModels.modelKey));
+}
+
+export async function selectRegisteredModel(requirements: { capabilities?: string[]; minimumContextWindow?: number; maxCostCentsPerMillionTokens?: number; allowDegraded?: boolean }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const rows = await db.select().from(aiModels);
+  return selectBestRegisteredModel(rows.map(model => ({ ...model, capabilities: JSON.parse(model.capabilities) as string[] })), requirements);
 }
 
 export async function registerModel(userId: number, input: { modelKey: string; provider: string; gateway: string; capabilities: string[]; contextWindow: number; version?: string; inputCostPerMillionCents?: number; outputCostPerMillionCents?: number }) {

@@ -448,8 +448,8 @@ export const auditEvents = mysqlTable("auditEvents", {
 
 export const evidenceArtifacts = mysqlTable("evidenceArtifacts", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
-  findingId: int("findingId"),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  findingId: int("findingId").references(() => findings.id, { onDelete: "set null" }),
   artifactType: varchar("artifactType", { length: 80 }).notNull(),
   storageReference: text("storageReference").notNull(),
   sha256: varchar("sha256", { length: 64 }).notNull(),
@@ -458,8 +458,8 @@ export const evidenceArtifacts = mysqlTable("evidenceArtifacts", {
 
 export const evidenceProvenance = mysqlTable("evidenceProvenance", {
   id: int("id").autoincrement().primaryKey(),
-  evidenceArtifactId: int("evidenceArtifactId").notNull(),
-  workspaceId: int("workspaceId").notNull(),
+  evidenceArtifactId: int("evidenceArtifactId").notNull().references(() => evidenceArtifacts.id, { onDelete: "cascade" }),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   sourceType: varchar("sourceType", { length: 64 }).notNull(),
   sourceReference: varchar("sourceReference", { length: 512 }).notNull(),
   capturedAt: timestamp("capturedAt").notNull(),
@@ -665,9 +665,9 @@ export const reportPlatform = ["hackerone", "bugcrowd", "intigriti", "markdown"]
 export const submissionStatus = ["submitted", "acknowledged", "triaged", "accepted", "rejected", "duplicate", "resolved", "retest"] as const;
 export const submissions = mysqlTable("submissions", {
   id: int("id").autoincrement().primaryKey(),
-  findingId: int("findingId").notNull(),
-  workspaceId: int("workspaceId").notNull(),
-  reportVersionId: int("reportVersionId").notNull(),
+  findingId: int("findingId").notNull().references(() => findings.id, { onDelete: "cascade" }),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  reportVersionId: int("reportVersionId").notNull().references(() => reportVersions.id, { onDelete: "restrict" }),
   platform: mysqlEnum("platform", reportPlatform).notNull(),
   externalReference: varchar("externalReference", { length: 240 }),
   status: mysqlEnum("status", submissionStatus).default("submitted").notNull(),
@@ -678,8 +678,8 @@ export const submissions = mysqlTable("submissions", {
 
 export const submissionEvents = mysqlTable("submissionEvents", {
   id: int("id").autoincrement().primaryKey(),
-  submissionId: int("submissionId").notNull(),
-  workspaceId: int("workspaceId").notNull(),
+  submissionId: int("submissionId").notNull().references(() => submissions.id, { onDelete: "cascade" }),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   fromStatus: mysqlEnum("fromStatus", submissionStatus),
   toStatus: mysqlEnum("toStatus", submissionStatus).notNull(),
   note: text("note"),
@@ -689,8 +689,8 @@ export const submissionEvents = mysqlTable("submissionEvents", {
 
 export const reportVersions = mysqlTable("reportVersions", {
   id: int("id").autoincrement().primaryKey(),
-  findingId: int("findingId").notNull(),
-  workspaceId: int("workspaceId").notNull(),
+  findingId: int("findingId").notNull().references(() => findings.id, { onDelete: "cascade" }),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   platform: mysqlEnum("platform", reportPlatform).notNull(),
   title: varchar("title", { length: 240 }).notNull(),
   body: text("body").notNull(),
@@ -702,8 +702,8 @@ export const reportVersions = mysqlTable("reportVersions", {
 
 export const reportDrafts = mysqlTable("reportDrafts", {
   id: int("id").autoincrement().primaryKey(),
-  findingId: int("findingId").notNull(),
-  workspaceId: int("workspaceId").notNull(),
+  findingId: int("findingId").notNull().references(() => findings.id, { onDelete: "cascade" }),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   platform: mysqlEnum("platform", reportPlatform).notNull(),
   reportJson: text("reportJson").notNull(),
   lastSavedByUserId: int("lastSavedByUserId").notNull(),

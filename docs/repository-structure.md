@@ -13,7 +13,7 @@ AngelMind saat ini adalah satu control-plane repository dengan dua runtime utama
 | `docs/` | Architecture, governance, deployment, readiness, dan blueprint mapping | Aktif |
 | `.github/workflows/` | CI, container validation, E2E smoke, dependency/security checks | Aktif |
 | `infrastructure/` | Prometheus scrape configuration dan infrastructure notes | Aktif |
-| `ai-core/`, `api/`, `web/` | Placeholder/scaffold documentation dari rencana struktur awal | Belum menjadi package source of truth |
+| `ai-core/`, `api/`, `web/` | Dokumentasi boundary arsitektur masa depan; runtime source of truth tetap `research-service/`, `server/`, dan `client/` | Sengaja belum menjadi package/runtime terpisah |
 
 ## Boundary yang wajib dipertahankan
 
@@ -21,7 +21,7 @@ AngelMind saat ini adalah satu control-plane repository dengan dua runtime utama
 
 `research-service/` saat ini bersifat network-free. Ia boleh membuat plan, mengevaluasi guardrail, dan melakukan rehearsal deterministik, tetapi tidak boleh berubah menjadi target-facing capability tanpa scope tertulis, approval, egress policy, independent audit, dan deployment boundary terpisah.
 
-`ai-core/`, `api/`, dan `web/` tidak boleh menerima implementasi baru secara ad hoc. Jika nantinya monorepo package split benar-benar dilakukan, migration plan harus memindahkan source dan tests secara atomik. Sampai saat itu, contributor harus menaruh perubahan pada folder aktif yang tercantum di tabel.
+`ai-core/`, `api/`, dan `web/` adalah boundary dokumentasi yang sengaja dipertahankan agar blueprint dan keputusan arsitektur dapat ditelusuri; ketiganya tidak boleh menerima implementasi runtime baru secara ad hoc. Jika nantinya monorepo package split benar-benar dilakukan, migration plan harus memindahkan source dan tests secara atomik. Sampai saat itu, contributor harus menaruh perubahan pada folder aktif yang tercantum di tabel.
 
 ## Aturan pemeliharaan
 

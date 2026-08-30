@@ -20,7 +20,7 @@ Dokumen ini memetakan 115 area pada `Angelmindstrukturjelas.pdf` terhadap implem
 
 | Surface | Route | Fungsi |
 | --- | --- | --- |
-| Security Center | `/security` | Device registry, security events, onboarding state, API key create/revoke, dan account identity. |
+| Security Center | `/app/security` | Authenticated device registry, security events, onboarding state, API key create/revoke, dan account identity. Public security information tetap berada di `/security`. |
 | Profile | `/profile` | Username, bio, specialization, skills, experience, visibility, serta research statistics/history. |
 | Organization Hub | `/organizations` | Organization selector, member roles, program scope, status program, dan entitlement boundary. |
 | Research Workspace | `/research` | Session lifecycle, assets, observations, hypotheses, dan tasks dengan server-backed state. |

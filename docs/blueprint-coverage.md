@@ -20,7 +20,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 1 | Prinsip utama dan capability chain | **Partial** | Jalur UI–API–authz–validation–domain–DB/storage–audit sudah ada untuk core; event/worker/AI penuh belum merata. |
 | 2 | Website public | **Partial** | Product, features, docs, trust, security, pricing, legal, status, contact, academy, roadmap, changelog tersedia; blog/program/researcher public belum menjadi fitur penuh. |
 | 3 | Authentication | **Partial** | Firebase Google Sign-In, token verification, session, logout tersedia; register/email verification/password reset/MFA/passkey belum lengkap. |
-| 4 | Account security | **Planned** | Belum ada security center lengkap untuk MFA, passkey, device, API key, connected apps, login history, recovery. |
+| 4 | Account security | **Partial** | Device registry, login/security event ledger, API key lifecycle, revocation, and security page are implemented; MFA/passkey/connected-app recovery remains incomplete. |
 | 5 | User profile | **Partial** | Identitas dasar tersedia; profil researcher, skill, reputation, achievements, privacy controls belum lengkap. |
 | 6 | Onboarding | **Partial** | Workspace onboarding dan policy gate tersedia; lifecycle register–verify–profile–preferences–security setup belum end-to-end. |
 | 7 | Organization/workspace | **Partial** | Workspace, membership, owner/operator/reviewer/auditor, isolation, settings, audit tersedia; organization/team hierarchy penuh belum. |
@@ -35,7 +35,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 16 | Asset intelligence | **Partial** | Passive assets/import dan scope filtering tersedia; relationship graph domains/technologies/services belum. |
 | 17 | Attack-surface model | **Deferred** | Tidak ada active discovery; model relasional offline belum lengkap. |
 | 18 | Task engine | **Partial** | Rehearsal planning dan scheduled metadata checks ada; task persistence/status worker penuh belum. |
-| 19 | Task dependency graph | **Planned** | Belum ada dependency/parallel/block/retry graph production. |
+| 19 | Task dependency graph | **Partial** | Dependency validation, deterministic cycle-safe graph/readiness layout, task status transitions, and Research Workspace visualization are implemented; durable parallel worker orchestration remains incomplete. |
 | 20 | Hypothesis engine | **Partial** | AI evidence analyst mengeluarkan hypotheses; lifecycle persisted PROPOSED–VALIDATED belum. |
 | 21 | Observation engine | **Partial** | Passive inventory dan evidence intake ada; entity Observation terpisah sebelum hypothesis/evidence/finding belum. |
 | 22 | Evidence vault | **Implemented** | Upload validation, workspace authorization, SHA-256 reference, Supabase storage, metadata, audit tersedia; quarantine/security scan penuh belum. |
@@ -51,11 +51,11 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 27 | Report builder | **Implemented** | Compose, validate, save versions, preview/export Markdown/JSON, evidence references tersedia. |
 | 28 | Report version control | **Implemented** | `reportVersions` menyimpan versi, creator, content, validation state, dan timestamps. |
 | 29 | Submission tracking | **Deferred** | External submission tidak diaktifkan; status preparation/internal review tersedia secara terbatas. |
-| 30 | Retest | **Planned** | Belum ada entity dan lifecycle retest terpisah. |
-| 31 | Knowledge graph | **Planned** | Relationship evidence/finding/workspace ada secara terbatas; graph object dan query belum. |
+| 30 | Retest | **Partial** | `findingRetests`, retest evidence/result, relation linking, and status synchronization are implemented; full retest UI and end-to-end OPEN → VERIFIED_FIXED/STILL_PRESENT flow remain incomplete. |
+| 31 | Knowledge graph | **Partial** | Workspace-scoped relationship/evidence/finding records, search documents, and intelligence feed persistence exist; generic graph nodes/edges/traversal/temporal provenance engine remains incomplete. |
 | 32 | Intelligence center | **Partial** | Coverage dan analytics tersedia; correlation, historical intelligence, recommendation center belum. |
 | 33 | Change detection | **Implemented** | Workspace policy/configuration change detection tersedia; asset/technology change belum. |
-| 34 | Global search | **Planned** | Belum ada permission-aware search lintas program, asset, finding, evidence, report, activity. |
+| 34 | Global search | **Partial** | `searchDocuments` and rebuild/index persistence exist; permission-aware search UI and complete cross-domain query coverage remain incomplete. |
 | 35 | Command palette | **Implemented** | Ctrl/Cmd+K authenticated navigation tersedia. |
 | 36 | Saved views | **Planned** | Belum ada saved query/view persistence. |
 | 37 | Tagging | **Planned** | Belum ada tag domain untuk technology, area, class, severity, program, custom. |
@@ -73,11 +73,11 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 
 | No. | Requirement | Status | Bukti/gap utama |
 |---:|---|---|---|
-| 47 | AI center | **Partial** | 9Router primary dan OmniRoute fallback configurable; registry/health/usage/cost/evaluation center belum lengkap. |
-| 48 | Model registry | **Planned** | Model name/config tersedia melalui env; registry capabilities/version/health/cost/evaluation belum persisted. |
+| 47 | AI center | **Partial** | 9Router primary, OmniRoute fallback, model registry/run trace/cost/evaluation foundations are implemented; complete multi-provider capability routing remains incomplete. |
+| 48 | Model registry | **Partial** | Persisted model registry, health, capability/cost metadata, and evaluation foundations exist; full provider inventory and routing policy remain incomplete. |
 | 49 | AI orchestrator | **Partial** | Evidence analysis terstruktur tersedia; planner/decomposer/task graph/parallel aggregation belum. |
 | 50 | AI failure isolation | **Partial** | Provider fallback dan bounded error handling tersedia; partial result/context overflow/contradiction handling belum penuh. |
-| 51 | AI run trace | **Planned** | Belum ada AI run entity dengan gateway/model/input/output/usage/trace ID lengkap. |
+| 51 | AI run trace | **Partial** | AI run entity, gateway/model references, usage, cost ceiling, outputs, retention, and evaluation foundations exist; distributed request correlation remains incomplete. |
 | 52 | AI provenance | **Partial** | AI output disimpan sebagai finding/report draft; lineage task–run–model–input–output belum. |
 | 53 | AI context | **Partial** | Workspace context dikirim ke evidence flow; hierarchical context isolation lengkap belum. |
 | 54 | AI memory | **Planned** | Belum ada session/research/user/program memory dengan permission boundary. |
@@ -85,12 +85,12 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 56 | AI evaluation | **Planned** | Belum ada quality/latency/failure/regression evaluation store. |
 | 57 | Prompt management | **Planned** | Prompt masih berada pada source code; versioned prompt registry belum. |
 | 58 | AI cost governance | **Partial** | Budget/workspace/session controls ada; provider usage, per-user/task budget, runaway detection belum. |
-| 59 | Job system | **Partial** | Scheduled maintenance dan rehearsal records ada; typed job queue untuk AI/research/evidence/report/indexing belum. |
-| 60 | Job reliability | **Planned** | Retry/backoff/dead-letter worker system belum. |
+| 59 | Job system | **Partial** | Durable job/outbox foundations, scheduled maintenance, rehearsal records, and worker contracts exist; full domain-wide queue coverage remains incomplete. |
+| 60 | Job reliability | **Partial** | Retry, lease, failed/dead-letter status, and worker safety contracts exist; production multi-process reliability and operational alerting remain incomplete. |
 | 61 | Scheduler | **Partial** | Administrative scheduled check tersedia; general scheduler belum. |
 | 62 | Real-time | **Planned** | UI memakai request refresh; event-driven real-time updates belum. |
 | 63 | Event architecture | **Partial** | Audit/notification events domain ada; versioned event schemas/publishers/consumers belum. |
-| 64 | Outbox pattern | **Planned** | Belum ada outbox transaction table dan consumer. |
+| 64 | Outbox pattern | **Partial** | Versioned outbox schema and event records exist; production publisher/consumer delivery loop remains incomplete. |
 | 65 | Idempotency | **Partial** | Beberapa workflow memiliki duplicate guards/idempotent escalation; generic idempotency key belum. |
 
 ## Requirement 66–89: data, security, admin, billing

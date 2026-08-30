@@ -114,3 +114,7 @@ __pycache__/
 *.py[cod]
 
 .project-config.json
+
+# Generated Python/runtime artifacts
+research-service/.pytest_cache/
+research-service/**/__pycache__/

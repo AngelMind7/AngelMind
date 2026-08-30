@@ -209,7 +209,8 @@ export async function executeOrchestrationPlanJob(payload: Record<string, unknow
   if (!model) throw new Error("No active AI model is available for orchestration.");
   for (const task of plan.tasks) {
     const inputReference = `orchestration:${planId}:${task.id}`;
-    await db.insert(aiRuns).values({ workspaceId, userId, modelKey: model.modelKey, gateway: model.gateway, purpose: `orchestration:${task.role}`, traceId: `${planId}:${task.id}`, inputReference, status: "queued", costCents: 0, retentionUntil: new Date(Date.now() + 90 * 86_400_000) });
+    const [existingRun] = await db.select().from(aiRuns).where(eq(aiRuns.inputReference, inputReference)).orderBy(desc(aiRuns.id)).limit(1);
+    if (!existingRun) await db.insert(aiRuns).values({ workspaceId, userId, modelKey: model.modelKey, gateway: model.gateway, purpose: `orchestration:${task.role}`, traceId: `${planId}:${task.id}`, inputReference, status: "queued", costCents: 0, retentionUntil: new Date(Date.now() + 90 * 86_400_000) });
     const [run] = await db.select().from(aiRuns).where(eq(aiRuns.inputReference, inputReference)).orderBy(desc(aiRuns.id)).limit(1);
     if (!run) throw new Error(`Could not persist orchestration task ${task.id}.`);
     const idempotencyKey = `orchestration:${planId}:${task.id}`;

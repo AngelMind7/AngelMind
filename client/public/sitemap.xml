@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://angelmind.app/</loc><priority>1.0</priority></url>
+  <url><loc>https://angelmind.app/product</loc><priority>0.8</priority></url>
+  <url><loc>https://angelmind.app/features</loc><priority>0.8</priority></url>
+  <url><loc>https://angelmind.app/how-it-works</loc><priority>0.7</priority></url>
+  <url><loc>https://angelmind.app/trust</loc><priority>0.8</priority></url>
+  <url><loc>https://angelmind.app/docs</loc><priority>0.7</priority></url>
+  <url><loc>https://angelmind.app/security</loc><priority>0.7</priority></url>
+  <url><loc>https://angelmind.app/pricing</loc><priority>0.7</priority></url>
+  <url><loc>https://angelmind.app/changelog</loc><priority>0.5</priority></url>
+  <url><loc>https://angelmind.app/roadmap</loc><priority>0.5</priority></url>
+  <url><loc>https://angelmind.app/status</loc><priority>0.6</priority></url>
+  <url><loc>https://angelmind.app/contact</loc><priority>0.6</priority></url>
+  <url><loc>https://angelmind.app/academy</loc><priority>0.6</priority></url>
+  <url><loc>https://angelmind.app/privacy</loc><priority>0.4</priority></url>
+  <url><loc>https://angelmind.app/terms</loc><priority>0.4</priority></url>
+  <url><loc>https://angelmind.app/cookies</loc><priority>0.4</priority></url>
+  <url><loc>https://angelmind.app/acceptable-use</loc><priority>0.4</priority></url>
+  <url><loc>https://angelmind.app/responsible-disclosure</loc><priority>0.4</priority></url>
+  <url><loc>https://angelmind.app/data-processing</loc><priority>0.4</priority></url>
+</urlset>

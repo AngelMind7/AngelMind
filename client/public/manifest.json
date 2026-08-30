@@ -2,7 +2,7 @@
   "name": "AngelMind Control Plane",
   "short_name": "AngelMind",
   "description": "Governed, evidence-led security research operations with human review boundaries.",
-  "start_url": "/product",
+  "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#05060b",

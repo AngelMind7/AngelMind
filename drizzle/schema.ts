@@ -287,6 +287,14 @@ export const researchTasks = mysqlTable("researchTasks", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => [index("research_task_session_status_priority_idx").on(table.sessionId, table.status, table.priority), index("research_task_owner_status_idx").on(table.ownerUserId, table.status)]);
 
+export const researchTaskDependencies = mysqlTable("researchTaskDependencies", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  taskId: int("taskId").notNull().references(() => researchTasks.id, { onDelete: "cascade" }),
+  dependsOnTaskId: int("dependsOnTaskId").notNull().references(() => researchTasks.id, { onDelete: "cascade" }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("research_task_dependency_pair_uq").on(table.taskId, table.dependsOnTaskId), index("research_task_dependency_workspace_idx").on(table.workspaceId, table.createdAt), index("research_task_dependency_parent_idx").on(table.dependsOnTaskId)]);
+
 export const failureKind = ["timeout", "dependency_failure", "partial_response", "error_state", "recovery_behavior", "retry_behavior", "concurrency", "race_condition", "transaction_failure", "degraded_mode", "cascading_failure"] as const;
 export const failureImpact = ["none", "low", "medium", "high", "critical"] as const;
 export const failureObservationStatus = ["observed", "triaged", "validated", "archived"] as const;

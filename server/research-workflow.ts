@@ -7,6 +7,7 @@ import {
   researchObservations,
   researchSessions,
   researchTasks,
+  researchTaskDependencies,
   workspaces,
 } from "../drizzle/schema";
 import { getDb } from "./db";
@@ -189,6 +190,9 @@ export async function createResearchTask(userId: number, input: { sessionId: num
   await db.insert(researchTasks).values({ workspaceId: session.workspaceId, sessionId: session.id, type: input.type.trim(), title: input.title.trim(), priority: input.priority, status: "queued", ownerUserId: input.ownerUserId ?? null, dependencies: JSON.stringify(dependencies), inputs: JSON.stringify(input.inputs ?? {}), outputs: "{}", retryCount: 0, createdByUserId: userId });
   const [task] = await db.select().from(researchTasks).where(and(eq(researchTasks.sessionId, session.id), eq(researchTasks.title, input.title.trim()))).orderBy(desc(researchTasks.createdAt)).limit(1);
   if (!task) throw new Error("Task could not be created.");
+  if (dependencies.length) {
+    await db.insert(researchTaskDependencies).values(dependencies.map(dependsOnTaskId => ({ workspaceId: session.workspaceId, taskId: task.id, dependsOnTaskId })));
+  }
   await addResearchAudit(db, session.workspaceId, userId, "research-task-created", { sessionId: session.id, taskId: task.id, dependencies });
   return task;
 }
@@ -200,10 +204,11 @@ export async function transitionResearchTask(userId: number, taskId: number, nex
   if (!task || !(await canAccessWorkspace(userId, task.workspaceId, "respond"))) throw new Error("Task tidak ditemukan atau tidak dapat diakses.");
   if (!taskTransitions[task.status]?.includes(nextStatus)) throw new Error(`Invalid task transition: ${task.status} -> ${nextStatus}`);
   if (nextStatus === "running") {
-    const dependencies = parseJson<number[]>(task.dependencies, []);
+    const relationalDependencies = await db.select({ dependsOnTaskId: researchTaskDependencies.dependsOnTaskId }).from(researchTaskDependencies).where(eq(researchTaskDependencies.taskId, task.id));
+    const dependencies = relationalDependencies.length ? relationalDependencies.map(row => row.dependsOnTaskId) : parseJson<number[]>(task.dependencies, []);
     if (dependencies.length) {
-      const dependencyRows = await db.select({ status: researchTasks.status }).from(researchTasks).where(inArray(researchTasks.id, dependencies));
-      if (dependencyRows.some(row => row.status !== "completed")) throw new Error("Task blocked: all dependencies must be completed first.");
+      const dependencyRows = await db.select({ status: researchTasks.status }).from(researchTasks).where(and(eq(researchTasks.sessionId, task.sessionId), inArray(researchTasks.id, dependencies)));
+      if (dependencyRows.length !== dependencies.length || dependencyRows.some(row => row.status !== "completed")) throw new Error("Task blocked: all dependencies must be completed first.");
     }
   }
   await db.update(researchTasks).set({ status: nextStatus, outputs: outputs ? JSON.stringify(outputs) : task.outputs, retryCount: nextStatus === "retrying" ? task.retryCount + 1 : task.retryCount, completedAt: nextStatus === "completed" || nextStatus === "cancelled" ? new Date() : null, updatedAt: new Date() }).where(eq(researchTasks.id, taskId));

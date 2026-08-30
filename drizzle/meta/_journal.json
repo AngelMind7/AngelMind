@@ -183,6 +183,13 @@
       "when": 1788067500000,
       "tag": "0025_ai_run_lineage_foreign_keys",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1788067600000,
+      "tag": "0026_research_task_dependencies",
+      "breakpoints": true
     }
   ]
 }

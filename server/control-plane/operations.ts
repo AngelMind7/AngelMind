@@ -193,3 +193,19 @@ export async function verifyAuditArchive(ownerUserId: number, archiveId: number)
   await addAudit(archive.workspaceId, "audit-archive", "archive-verified", { archiveId: archive.id, valid });
   return { valid, manifestHash: archive.manifestHash };
 }
+
+
+export async function runAuditArchiveDrill(ownerUserId: number, archiveId: number, destinationWorkspaceId?: number) {
+  const verification = await verifyAuditArchive(ownerUserId, archiveId);
+  if (!verification.valid) throw new Error("DR drill refused because archive integrity is invalid.");
+  const plan = await restoreAuditArchivePlan(ownerUserId, archiveId, destinationWorkspaceId);
+  return {
+    archiveId,
+    valid: plan.valid,
+    mode: "plan-only" as const,
+    requiresHumanConfirmation: plan.requiresHumanConfirmation,
+    recordsChecked: plan.recordCounts,
+    mutationPerformed: false as const,
+    rollbackRequired: false as const,
+  };
+}

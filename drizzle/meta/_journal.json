@@ -197,6 +197,13 @@
       "when": 1788067700000,
       "tag": "0027_worker_lease_heartbeat",
       "breakpoints": true
+    },
+    {
+      "idx": 28,
+      "version": "7",
+      "when": 1788067800000,
+      "tag": "0028_outbox_consumer_receipts",
+      "breakpoints": true
     }
   ]
 }

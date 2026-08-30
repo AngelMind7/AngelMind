@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq, lte, lt, or, sql } from "drizzle-orm";
-import { aiModels, aiRunEvaluations, aiRunOutputs, aiRuns, jobs, outboxEvents, workspaces } from "../drizzle/schema";
+import { aiModels, aiRunEvaluations, aiRunOutputs, aiRuns, jobs, outboxConsumerReceipts, outboxEvents, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { planMultiAgentRun } from "./ai-orchestration";
@@ -126,6 +126,21 @@ export async function publishOutboxEvent(userId: number, input: { workspaceId?: 
   await db.insert(outboxEvents).values({ workspaceId: input.workspaceId ?? null, eventType: input.eventType.trim(), aggregateType: input.aggregateType.trim(), aggregateId: input.aggregateId, idempotencyKey: input.idempotencyKey.trim(), schemaVersion: input.schemaVersion ?? 1, payload: JSON.stringify(input.payload), status: "pending", attempts: 0 });
   const [event] = await db.select().from(outboxEvents).where(eq(outboxEvents.idempotencyKey, input.idempotencyKey)).limit(1);
   return event;
+}
+
+export async function claimOutboxConsumer(eventId: number, consumerKey: string, resultHash?: string) {
+  const db = await getDb();
+  if (!db) return { claimed: false as const, reason: "database-unavailable" as const };
+  const normalizedKey = consumerKey.trim();
+  if (!normalizedKey) throw new Error("Consumer key is required.");
+  const existing = await db.select({ id: outboxConsumerReceipts.id }).from(outboxConsumerReceipts).where(and(eq(outboxConsumerReceipts.eventId, eventId), eq(outboxConsumerReceipts.consumerKey, normalizedKey))).limit(1);
+  if (existing[0]) return { claimed: false as const, reason: "already-processed" as const };
+  try {
+    await db.insert(outboxConsumerReceipts).values({ eventId, consumerKey: normalizedKey, resultHash: resultHash?.trim().slice(0, 64) || null });
+    return { claimed: true as const, eventId, consumerKey: normalizedKey };
+  } catch {
+    return { claimed: false as const, reason: "already-processed" as const };
+  }
 }
 
 export async function markOutboxEventPublished(eventId: number) {

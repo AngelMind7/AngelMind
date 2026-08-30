@@ -469,6 +469,14 @@ export const outboxEvents = mysqlTable("outboxEvents", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [uniqueIndex("outbox_event_idempotency_uq").on(table.idempotencyKey), index("outbox_event_status_created_idx").on(table.status, table.createdAt), index("outbox_event_workspace_idx").on(table.workspaceId, table.createdAt)]);
 
+export const outboxConsumerReceipts = mysqlTable("outboxConsumerReceipts", {
+  id: int("id").autoincrement().primaryKey(),
+  eventId: int("eventId").notNull().references(() => outboxEvents.id, { onDelete: "cascade" }),
+  consumerKey: varchar("consumerKey", { length: 160 }).notNull(),
+  processedAt: timestamp("processedAt").defaultNow().notNull(),
+  resultHash: varchar("resultHash", { length: 64 }),
+}, table => [uniqueIndex("outbox_consumer_event_uq").on(table.eventId, table.consumerKey), index("outbox_consumer_processed_idx").on(table.consumerKey, table.processedAt)]);
+
 export const searchDocuments = mysqlTable("searchDocuments", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),

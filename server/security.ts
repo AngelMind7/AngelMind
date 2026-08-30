@@ -1,4 +1,6 @@
 import type { Express, Request, Response, NextFunction } from "express";
+import { sql } from "drizzle-orm";
+import { getDb } from "./db";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -35,9 +37,22 @@ export function registerSecurityMiddleware(app: Express) {
 
 export function registerHealthRoutes(app: Express) {
   app.get("/healthz", (_req, res) => res.status(200).json({ status: "ok" }));
-  app.get("/readyz", (_req, res) => {
-    const ready = Boolean(process.env.NODE_ENV !== "production" || process.env.DATABASE_URL);
-    res.status(ready ? 200 : 503).json({ status: ready ? "ready" : "not-ready", databaseConfigured: Boolean(process.env.DATABASE_URL) });
+  app.get("/readyz", async (_req, res) => {
+    const databaseConfigured = Boolean(process.env.DATABASE_URL);
+    let databaseReachable = false;
+    if (databaseConfigured) {
+      try {
+        const db = await getDb();
+        if (db) {
+          await Promise.race([db.execute(sql`SELECT 1`), new Promise((_, reject) => setTimeout(() => reject(new Error("readiness timeout")), 2_000))]);
+          databaseReachable = true;
+        }
+      } catch {
+        databaseReachable = false;
+      }
+    }
+    const ready = process.env.NODE_ENV !== "production" ? true : databaseConfigured && databaseReachable;
+    res.status(ready ? 200 : 503).json({ status: ready ? "ready" : "not-ready", databaseConfigured, databaseReachable });
   });
 }
 
@@ -46,12 +61,18 @@ function metricName(value: string) {
 }
 
 export function registerMetricsRoute(app: Express) {
-  app.get("/metrics", (_req, res) => {
+  app.get("/metrics", async (_req, res) => {
     const memory = process.memoryUsage();
     const lines = [
       "# HELP angelmind_process_uptime_seconds Process uptime in seconds.",
       "# TYPE angelmind_process_uptime_seconds gauge",
       `angelmind_process_uptime_seconds ${process.uptime()}`,
+      "# HELP angelmind_database_configured Whether DATABASE_URL is configured.",
+      "# TYPE angelmind_database_configured gauge",
+      `angelmind_database_configured ${process.env.DATABASE_URL ? 1 : 0}`,
+      "# HELP angelmind_worker_enabled Whether this process runs the durable worker.",
+      "# TYPE angelmind_worker_enabled gauge",
+      `angelmind_worker_enabled ${process.env.RUN_WORKER === "true" ? 1 : 0}`,
       "# HELP angelmind_process_memory_bytes Node.js process memory by category.",
       "# TYPE angelmind_process_memory_bytes gauge",
       ...Object.entries(memory).map(([category, value]) => `angelmind_process_memory_bytes{category=\"${metricName(category)}\"} ${value}`),

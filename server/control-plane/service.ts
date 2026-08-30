@@ -13,6 +13,7 @@ import { canAcknowledgeNotification, planInAppDelivery, type NotificationEvent, 
 import { canAccessWorkspace, ensureOwnerMembership, getReadableWorkspaceIds, getReviewerWorkspaceIds, hasReviewerMembership } from "./operations";
 import { escalateOverdueIncidentsForWorkspace } from "./assurance";
 import type { ActionKind } from "./contracts";
+import { validateEvidenceBytes } from "./evidence-validation";
 
 const parseList = (serialized: string): string[] => {
   try {
@@ -291,11 +292,12 @@ export async function uploadEvidence(userId: number, input: { workspaceId: numbe
     if (!currentFindings.some(finding => finding.id === input.findingId)) throw new Error("Finding evidence tidak berada pada workspace ini.");
   }
   const cleanName = input.fileName.replace(/[^a-zA-Z0-9._-]/g, "_").slice(0, 120) || "evidence.bin";
-  const artifact = await storagePut(`workspace-${workspace.id}/evidence/${Date.now()}-${cleanName}`, bytes, input.contentType);
+  const validatedEvidence = validateEvidenceBytes({ contentType: input.contentType, fileName: cleanName, bytes });
+  const artifact = await storagePut(`workspace-${workspace.id}/evidence/${Date.now()}-${cleanName}`, bytes, validatedEvidence.contentType);
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
-  await db.insert(evidenceArtifacts).values({ workspaceId: workspace.id, findingId: input.findingId ?? null, artifactType: input.contentType, storageReference: artifact.url, sha256: createHash("sha256").update(bytes).digest("hex") });
-  await addAudit(workspace.id, "evidence", "artifact-stored", { fileName: cleanName, contentType: input.contentType, storageReference: artifact.url, findingId: input.findingId ?? null });
+  await db.insert(evidenceArtifacts).values({ workspaceId: workspace.id, findingId: input.findingId ?? null, artifactType: validatedEvidence.contentType, storageReference: artifact.url, sha256: createHash("sha256").update(bytes).digest("hex") });
+  await addAudit(workspace.id, "evidence", "artifact-stored", { fileName: cleanName, contentType: validatedEvidence.contentType, storageReference: artifact.url, findingId: input.findingId ?? null });
   return { storageReference: artifact.url };
 }
 

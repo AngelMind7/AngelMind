@@ -3,6 +3,7 @@ import { and, asc, desc, eq, lte, lt, or, sql } from "drizzle-orm";
 import { aiModels, aiRunEvaluations, aiRuns, jobs, outboxEvents, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
+import { planMultiAgentRun } from "./ai-orchestration";
 
 async function requireWorkspace(userId: number, workspaceId: number, intent: "read" | "respond" = "read") {
   const db = await getDb();
@@ -174,4 +175,21 @@ export async function failJob(jobId: number, errorMessage: string) {
   const backoffMs = Math.min(60 * 60 * 1_000, 2 ** Math.max(0, job.attempts - 1) * 5_000);
   await db.update(jobs).set({ status: nextStatus, lockedAt: null, lastError, availableAt: terminal ? job.availableAt : new Date(Date.now() + backoffMs), completedAt: terminal ? new Date() : null, updatedAt: new Date() }).where(and(eq(jobs.id, jobId), eq(jobs.status, "running")));
   return { success: true as const, jobId, status: nextStatus };
+}
+
+
+export async function enqueueOrchestrationPlan(userId: number, input: { workspaceId: number; objective: string; roles: ("scope" | "evidence" | "risk" | "report")[]; evidenceReferences?: string[]; idempotencyKey: string }) {
+  const plan = planMultiAgentRun(input);
+  const job = await enqueueJob(userId, {
+    workspaceId: input.workspaceId,
+    kind: "orchestration.plan",
+    idempotencyKey: input.idempotencyKey,
+    payload: {
+      type: "orchestration_plan",
+      planId: input.idempotencyKey,
+      workspaceId: input.workspaceId,
+      plan,
+    },
+  });
+  return { job, plan };
 }

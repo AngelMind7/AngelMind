@@ -141,6 +141,27 @@
       "when": 1788066478609,
       "tag": "0019_relational_integrity_hardening",
       "breakpoints": true
+    },
+    {
+      "idx": 20,
+      "version": "7",
+      "when": 1788067000000,
+      "tag": "0020_ai_run_outputs",
+      "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1788067100000,
+      "tag": "0021_search_documents",
+      "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1788067200000,
+      "tag": "0022_workspace_foreign_keys",
+      "breakpoints": true
     }
   ]
 }

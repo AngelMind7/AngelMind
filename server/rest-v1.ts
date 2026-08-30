@@ -5,6 +5,7 @@ import { getDb } from "./db";
 import { getAiRunOutput, listAiRuns } from "./ai-platform";
 import { searchWorkspace } from "./global-search";
 import { sdk } from "./_core/sdk";
+import { canAccessWorkspace } from "./control-plane/operations";
 
 async function requireUser(req: Request) {
   const user = await sdk.authenticateRequest(req);
@@ -47,6 +48,7 @@ export function registerRestV1Routes(app: Express) {
       if (!db) return res.json({ data: null, apiVersion: "v1" });
       const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, runId)).limit(1);
       if (!run) return res.status(404).json({ error: { code: "NOT_FOUND", message: "AI run tidak ditemukan." }, apiVersion: "v1" });
+      if (!(await canAccessWorkspace(user.id, run.workspaceId, "read"))) return res.status(404).json({ error: { code: "NOT_FOUND", message: "AI run tidak ditemukan." }, apiVersion: "v1" });
       const output = await getAiRunOutput(user.id, runId);
       res.json({ data: { ...run, output }, apiVersion: "v1" });
     } catch (error) {

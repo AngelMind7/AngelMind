@@ -1,4 +1,4 @@
-import { claimPendingJobs, completeJob, executeAiRunJob, failJob } from "./ai-platform";
+import { claimPendingJobs, completeJob, executeAiRunJob, executeOrchestrationPlanJob, failJob } from "./ai-platform";
 
 export type WorkerJob = {
   id: number;
@@ -83,7 +83,7 @@ export function orchestrationPlanHandler(onPlan: (payload: Record<string, unknow
 if (process.env.RUN_WORKER === "true") {
   createWorkerLoop({
     "orchestration.plan": orchestrationPlanHandler(async payload => {
-      console.info(`[worker] orchestration plan ${String(payload.planId ?? "unknown")} accepted for durable processing`);
+      await executeOrchestrationPlanJob(payload);
     }),
     "ai.run.execute": async (_job, payload) => executeAiRunJob(payload),
   });

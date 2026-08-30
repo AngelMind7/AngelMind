@@ -188,6 +188,7 @@ export async function enqueueOrchestrationPlan(userId: number, input: { workspac
     payload: {
       type: "orchestration_plan",
       planId: input.idempotencyKey,
+      userId,
       workspaceId: input.workspaceId,
       plan,
     },
@@ -196,8 +197,33 @@ export async function enqueueOrchestrationPlan(userId: number, input: { workspac
 }
 
 
-export async function startDurableAiRun(userId: number, input: { workspaceId: number; sessionId?: number; taskId?: number; modelKey: string; gateway: string; purpose: string; inputReference: string; messages: Message[]; estimatedCostCents?: number; retentionDays?: number; idempotencyKey: string }) {
-  const run = await startAiRun(userId, input);
+export async function executeOrchestrationPlanJob(payload: Record<string, unknown>) {
+  const plan = payload.plan as { objective?: string; evidenceReferences?: string[]; tasks?: Array<{ id: string; role: string; objective: string; dependsOn: string[]; status: string }> };
+  const userId = Number(payload.userId);
+  const workspaceId = Number(payload.workspaceId);
+  const planId = String(payload.planId ?? "").trim();
+  if (!plan || !Number.isInteger(userId) || !Number.isInteger(workspaceId) || !planId || !Array.isArray(plan.tasks) || plan.tasks.length === 0) throw new Error("Invalid orchestration plan payload.");
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [model] = await db.select().from(aiModels).where(eq(aiModels.status, "active")).orderBy(asc(aiModels.updatedAt)).limit(1);
+  if (!model) throw new Error("No active AI model is available for orchestration.");
+  for (const task of plan.tasks) {
+    const inputReference = `orchestration:${planId}:${task.id}`;
+    await db.insert(aiRuns).values({ workspaceId, userId, modelKey: model.modelKey, gateway: model.gateway, purpose: `orchestration:${task.role}`, traceId: `${planId}:${task.id}`, inputReference, status: "queued", costCents: 0, retentionUntil: new Date(Date.now() + 90 * 86_400_000) });
+    const [run] = await db.select().from(aiRuns).where(eq(aiRuns.inputReference, inputReference)).orderBy(desc(aiRuns.id)).limit(1);
+    if (!run) throw new Error(`Could not persist orchestration task ${task.id}.`);
+    const idempotencyKey = `orchestration:${planId}:${task.id}`;
+    await db.insert(jobs).values({ workspaceId, kind: "ai.run.execute", idempotencyKey, payload: JSON.stringify({ type: "ai_run_execute", runId: run.id, userId, messages: [{ role: "system", content: `You are the ${task.role} agent in a governed orchestration. Respect dependencies and never perform target-facing actions.` }, { role: "user", content: JSON.stringify({ objective: task.objective, dependsOn: task.dependsOn, evidenceReferences: plan.evidenceReferences ?? [] }) }] }), status: "queued", attempts: 0, maxAttempts: 3, availableAt: new Date() }).onDuplicateKeyUpdate({ set: { updatedAt: new Date() } });
+  }
+  return { planId, tasksQueued: plan.tasks.length, modelKey: model.modelKey };
+}
+
+export async function startDurableAiRun(userId: number, input: { workspaceId: number; sessionId?: number; taskId?: number; modelKey: string; purpose: string; inputReference: string; messages: Message[]; estimatedCostCents?: number; retentionDays?: number; idempotencyKey: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [model] = await db.select().from(aiModels).where(eq(aiModels.modelKey, input.modelKey.trim())).limit(1);
+  if (!model || model.status !== "active") throw new Error("AI model tidak terdaftar atau tidak aktif.");
+  const run = await startAiRun(userId, { ...input, gateway: model.gateway });
   const job = await enqueueJob(userId, {
     workspaceId: input.workspaceId,
     kind: "ai.run.execute",
@@ -207,8 +233,7 @@ export async function startDurableAiRun(userId: number, input: { workspaceId: nu
       runId: run.id,
       userId,
       workspaceId: input.workspaceId,
-      modelKey: input.modelKey.trim(),
-      gateway: input.gateway.trim(),
+      modelKey: model.modelKey,
       messages: input.messages,
     },
   });
@@ -218,17 +243,18 @@ export async function startDurableAiRun(userId: number, input: { workspaceId: nu
 export async function executeAiRunJob(payload: Record<string, unknown>) {
   const runId = Number(payload.runId);
   const userId = Number(payload.userId);
-  const workspaceId = Number(payload.workspaceId);
-  const modelKey = String(payload.modelKey ?? "").trim();
-  const gateway = String(payload.gateway ?? "").trim();
   const messages = payload.messages as Message[];
-  if (!Number.isInteger(runId) || !Number.isInteger(userId) || !Number.isInteger(workspaceId) || !modelKey || !gateway || !Array.isArray(messages) || messages.length === 0) throw new Error("Invalid AI run job payload.");
+  if (!Number.isInteger(runId) || !Number.isInteger(userId) || !Array.isArray(messages) || messages.length === 0) throw new Error("Invalid AI run job payload.");
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, runId)).limit(1);
+  if (!run || run.userId !== userId) throw new Error("AI run tidak ditemukan.");
+  const [model] = await db.select().from(aiModels).where(eq(aiModels.modelKey, run.modelKey)).limit(1);
+  if (!model || model.status !== "active" || model.gateway !== run.gateway) throw new Error("AI model registry validation failed.");
   await updateAiRun(userId, { runId, status: "running" });
   try {
-    const response = await invokeLLM({ model: modelKey, messages });
-    const db = await getDb();
-    if (!db) throw new Error("Database tidak tersedia.");
-    await db.insert(aiRunOutputs).values({ workspaceId, runId, outputJson: JSON.stringify(response) }).onDuplicateKeyUpdate({ set: { outputJson: JSON.stringify(response), createdAt: new Date() } });
+    const response = await invokeLLM({ model: model.modelKey, messages });
+    await db.insert(aiRunOutputs).values({ workspaceId: run.workspaceId, runId, outputJson: JSON.stringify(response) }).onDuplicateKeyUpdate({ set: { outputJson: JSON.stringify(response), createdAt: new Date() } });
     const outputReference = `ai-run-output:${runId}`;
     await updateAiRun(userId, { runId, status: "completed", outputReference, inputTokens: response.usage?.prompt_tokens ?? 0, outputTokens: response.usage?.completion_tokens ?? 0 });
   } catch (error) {

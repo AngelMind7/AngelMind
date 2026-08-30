@@ -1,4 +1,4 @@
-import { claimPendingJobs, completeJob, executeAiRunJob, executeOrchestrationPlanJob, failJob } from "./ai-platform";
+import { claimPendingJobs, completeJob, executeAiRunJob, executeOrchestrationPlanJob, failJob, refreshModelCatalog } from "./ai-platform";
 
 export type WorkerJob = {
   id: number;
@@ -11,6 +11,7 @@ export type WorkerJob = {
 export type JobHandler = (job: WorkerJob, payload: Record<string, unknown>) => Promise<void>;
 
 export const DEFAULT_POLL_INTERVAL_MS = 5_000;
+export const MODEL_CATALOG_REFRESH_INTERVAL_MS = 15 * 60_000;
 
 export function computeRetryDelayMs(attempts: number, capMs = 60 * 60 * 1_000) {
   const safeAttempts = Math.max(1, Math.floor(attempts));
@@ -81,6 +82,17 @@ export function orchestrationPlanHandler(onPlan: (payload: Record<string, unknow
 }
 
 if (process.env.RUN_WORKER === "true") {
+  const refreshCatalog = async () => {
+    try {
+      const result = await refreshModelCatalog();
+      console.info(`[worker] model catalog refresh discovered=${result.discovered} errors=${result.errors.length}`);
+    } catch (error) {
+      console.error(`[worker] model catalog refresh failed: ${error instanceof Error ? error.message : "unknown error"}`);
+    }
+  };
+  void refreshCatalog();
+  const catalogTimer = setInterval(() => void refreshCatalog(), MODEL_CATALOG_REFRESH_INTERVAL_MS);
+  catalogTimer.unref?.();
   createWorkerLoop({
     "orchestration.plan": orchestrationPlanHandler(async payload => {
       await executeOrchestrationPlanJob(payload);

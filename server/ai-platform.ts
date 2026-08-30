@@ -263,12 +263,14 @@ export async function executeOrchestrationPlanJob(payload: Record<string, unknow
   return { planId, tasksQueued: plan.tasks.length, modelKey: model.modelKey };
 }
 
-export async function startDurableAiRun(userId: number, input: { workspaceId: number; sessionId?: number; taskId?: number; modelKey: string; purpose: string; inputReference: string; messages: Message[]; estimatedCostCents?: number; retentionDays?: number; idempotencyKey: string }) {
+export async function startDurableAiRun(userId: number, input: { workspaceId: number; sessionId?: number; taskId?: number; modelKey?: string; capabilities?: string[]; minimumContextWindow?: number; maxCostCentsPerMillionTokens?: number; allowDegraded?: boolean; purpose: string; inputReference: string; messages: Message[]; estimatedCostCents?: number; retentionDays?: number; idempotencyKey: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
-  const [model] = await db.select().from(aiModels).where(eq(aiModels.modelKey, input.modelKey.trim())).limit(1);
+  const model = input.modelKey?.trim()
+    ? (await db.select().from(aiModels).where(eq(aiModels.modelKey, input.modelKey.trim())).limit(1))[0]
+    : (await selectRegisteredModel({ capabilities: input.capabilities, minimumContextWindow: input.minimumContextWindow, maxCostCentsPerMillionTokens: input.maxCostCentsPerMillionTokens, allowDegraded: input.allowDegraded })).model;
   if (!model || model.status !== "active") throw new Error("AI model tidak terdaftar atau tidak aktif.");
-  const run = await startAiRun(userId, { ...input, gateway: model.gateway });
+  const run = await startAiRun(userId, { ...input, modelKey: model.modelKey, gateway: model.gateway });
   const job = await enqueueJob(userId, {
     workspaceId: input.workspaceId,
     kind: "ai.run.execute",

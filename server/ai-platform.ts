@@ -6,6 +6,7 @@ import { canAccessWorkspace } from "./control-plane/operations";
 import { planMultiAgentRun } from "./ai-orchestration";
 import { invokeLLM, type Message } from "./_core/llm";
 import { selectBestRegisteredModel } from "./ai-routing";
+import { discoverGatewayModels } from "./ai-catalog";
 
 async function requireWorkspace(userId: number, workspaceId: number, intent: "read" | "respond" = "read") {
   const db = await getDb();
@@ -22,10 +23,21 @@ export async function listModels() {
   return db.select().from(aiModels).where(eq(aiModels.status, "active")).orderBy(asc(aiModels.provider), asc(aiModels.modelKey));
 }
 
+export async function refreshModelCatalog() {
+  const db = await getDb();
+  if (!db) return { discovered: 0, errors: ["database-unavailable"] };
+  const discovery = await discoverGatewayModels();
+  for (const model of discovery.models) {
+    await db.insert(aiModels).values({ modelKey: model.modelKey, provider: model.provider, gateway: model.gateway, capabilities: JSON.stringify(model.capabilities), contextWindow: model.contextWindow, status: "active", inputCostPerMillionCents: model.inputCostPerMillionCents, outputCostPerMillionCents: model.outputCostPerMillionCents }).onDuplicateKeyUpdate({ set: { provider: model.provider, gateway: model.gateway, capabilities: JSON.stringify(model.capabilities), contextWindow: model.contextWindow, inputCostPerMillionCents: model.inputCostPerMillionCents, outputCostPerMillionCents: model.outputCostPerMillionCents, status: "active", updatedAt: new Date() } });
+  }
+  return { discovered: discovery.models.length, errors: discovery.errors };
+}
+
 export async function selectRegisteredModel(requirements: { capabilities?: string[]; minimumContextWindow?: number; maxCostCentsPerMillionTokens?: number; allowDegraded?: boolean }) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
-  const rows = await db.select().from(aiModels);
+  const existing = await db.select().from(aiModels);
+  const rows = existing.length ? existing : (await refreshModelCatalog(), await db.select().from(aiModels));
   return selectBestRegisteredModel(rows.map(model => ({ ...model, capabilities: JSON.parse(model.capabilities) as string[] })), requirements);
 }
 

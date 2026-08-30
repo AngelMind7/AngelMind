@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq, lte, lt, or, sql } from "drizzle-orm";
-import { aiModels, aiRunEvaluations, aiRunOutputs, aiRuns, jobs, outboxConsumerReceipts, outboxEvents, workspaces } from "../drizzle/schema";
+import { aiModels, aiRunEvaluations, aiRunOutputs, aiRuns, jobs, outboxConsumerReceipts, outboxEvents, researchSessions, researchTasks, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { planMultiAgentRun } from "./ai-orchestration";
@@ -53,6 +53,14 @@ export async function startAiRun(userId: number, input: { workspaceId: number; s
   const { db, workspace } = await requireWorkspace(userId, input.workspaceId, "respond");
   const [registeredModel] = await db.select().from(aiModels).where(eq(aiModels.modelKey, input.modelKey.trim())).limit(1);
   if (!registeredModel || registeredModel.status !== "active") throw new Error("AI model tidak terdaftar atau tidak aktif.");
+  if (input.sessionId) {
+    const [session] = await db.select({ workspaceId: researchSessions.workspaceId }).from(researchSessions).where(eq(researchSessions.id, input.sessionId)).limit(1);
+    if (!session || session.workspaceId !== workspace.id) throw new Error("Research session tidak cocok dengan workspace AI run.");
+  }
+  if (input.taskId) {
+    const [task] = await db.select({ workspaceId: researchTasks.workspaceId }).from(researchTasks).where(eq(researchTasks.id, input.taskId)).limit(1);
+    if (!task || task.workspaceId !== workspace.id) throw new Error("Research task tidak cocok dengan workspace AI run.");
+  }
   const estimatedCostCents = Math.max(0, input.estimatedCostCents ?? 0);
   if (workspace.budgetCents > 0 && workspace.spentCents + estimatedCostCents > workspace.budgetCents) throw new Error("AI run blocked by workspace budget ceiling.");
   const traceId = randomUUID();

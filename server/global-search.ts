@@ -1,5 +1,5 @@
 import { and, desc, eq, like, or } from "drizzle-orm";
-import { findings, reportVersions, researchAssets, researchSessions, searchDocuments } from "../drizzle/schema";
+import { findings, programs, reportVersions, researchAssets, researchSessions, searchDocuments, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 
@@ -17,14 +17,18 @@ export async function rebuildWorkspaceSearchIndex(userId: number, workspaceId: n
   if (!(await canAccessWorkspace(userId, workspaceId, "respond"))) throw new Error("Workspace tidak dapat dikelola.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
-  const [findingRows, assetRows, sessionRows, reportRows] = await Promise.all([
+  const [workspaceRow, findingRows, assetRows, sessionRows, reportRows] = await Promise.all([
+    db.select({ programId: workspaces.programId }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1),
     db.select({ id: findings.id, title: findings.title, body: findings.impactSummary }).from(findings).where(eq(findings.workspaceId, workspaceId)),
     db.select({ id: researchAssets.id, title: researchAssets.hostname, body: researchAssets.value }).from(researchAssets).where(eq(researchAssets.workspaceId, workspaceId)),
     db.select({ id: researchSessions.id, title: researchSessions.title, body: researchSessions.scopeDigest }).from(researchSessions).where(eq(researchSessions.workspaceId, workspaceId)),
     db.select({ id: reportVersions.id, title: reportVersions.title, body: reportVersions.body }).from(reportVersions).where(eq(reportVersions.workspaceId, workspaceId)),
   ]);
   await db.delete(searchDocuments).where(eq(searchDocuments.workspaceId, workspaceId));
+  const programId = workspaceRow[0]?.programId;
+  const programRows = programId ? await db.select({ id: programs.id, title: programs.name, body: programs.description }).from(programs).where(eq(programs.id, programId)) : [];
   const rows = [
+    ...programRows.map(row => ({ workspaceId, entityType: "program", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
     ...findingRows.map(row => ({ workspaceId, entityType: "finding", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
     ...assetRows.map(row => ({ workspaceId, entityType: "asset", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
     ...sessionRows.map(row => ({ workspaceId, entityType: "session", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
@@ -51,6 +55,6 @@ export async function searchWorkspace(userId: number, input: { workspaceId: numb
     assets: byType("asset"),
     sessions: byType("session"),
     reports: byType("report"),
-    programs: [],
+    programs: byType("program"),
   };
 }

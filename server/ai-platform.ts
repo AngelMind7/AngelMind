@@ -43,12 +43,14 @@ export async function recordModelHealth(userId: number, input: { modelKey: strin
 
 export async function startAiRun(userId: number, input: { workspaceId: number; sessionId?: number; taskId?: number; modelKey: string; gateway: string; purpose: string; inputReference: string; estimatedCostCents?: number; retentionDays?: number }) {
   const { db, workspace } = await requireWorkspace(userId, input.workspaceId, "respond");
+  const [registeredModel] = await db.select().from(aiModels).where(eq(aiModels.modelKey, input.modelKey.trim())).limit(1);
+  if (!registeredModel || registeredModel.status !== "active") throw new Error("AI model tidak terdaftar atau tidak aktif.");
   const estimatedCostCents = Math.max(0, input.estimatedCostCents ?? 0);
   if (workspace.budgetCents > 0 && workspace.spentCents + estimatedCostCents > workspace.budgetCents) throw new Error("AI run blocked by workspace budget ceiling.");
   const traceId = randomUUID();
   const retentionDays = Math.min(3_650, Math.max(1, input.retentionDays ?? 90));
   const retentionUntil = new Date(Date.now() + retentionDays * 86_400_000);
-  await db.insert(aiRuns).values({ workspaceId: workspace.id, sessionId: input.sessionId ?? null, taskId: input.taskId ?? null, userId, modelKey: input.modelKey.trim(), gateway: input.gateway.trim(), purpose: input.purpose.trim(), traceId, inputReference: input.inputReference.trim(), status: "queued", costCents: estimatedCostCents, retentionUntil });
+  await db.insert(aiRuns).values({ workspaceId: workspace.id, sessionId: input.sessionId ?? null, taskId: input.taskId ?? null, userId, modelKey: registeredModel.modelKey, gateway: registeredModel.gateway, purpose: input.purpose.trim(), traceId, inputReference: input.inputReference.trim(), status: "queued", costCents: estimatedCostCents, retentionUntil });
   const [run] = await db.select().from(aiRuns).where(eq(aiRuns.traceId, traceId)).limit(1);
   if (!run) throw new Error("AI run could not be created.");
   return run;

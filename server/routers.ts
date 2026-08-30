@@ -22,6 +22,7 @@ import * as submissionWorkflow from "./submission-workflow";
 import * as globalSearch from "./global-search";
 import * as profile from "./profile";
 import * as researchIntelligence from "./research-intelligence";
+import * as toolCatalog from "./tool-catalog";
 
 const workspaceInput = z.object({
   name: z.string().min(2).max(120),
@@ -82,6 +83,11 @@ export const appRouter = router({
     saveReportVersion: protectedProcedure.input(z.object({ findingId: z.number().int().positive(), workspaceId: z.number().int().positive(), platform: z.enum(["hackerone", "bugcrowd", "intigriti", "markdown"]), report: z.object({ title: z.string().min(3).max(240), severity: z.enum(["informational", "low", "medium", "high", "critical"]), summary: z.string().max(12_000), impact: z.string().max(12_000), evidence: z.array(z.string().max(4_000)).max(100), reproductionNotes: z.array(z.string().max(4_000)).max(100), remediation: z.string().max(12_000).optional() }) })).mutation(({ ctx, input }) => workflowPersistence.createReportVersion(ctx.user.id, input)),
     listReportVersions: protectedProcedure.input(z.object({ findingId: z.number().int().positive(), workspaceId: z.number().int().positive() })).query(({ ctx, input }) => workflowPersistence.listReportVersions(ctx.user.id, input.findingId, input.workspaceId)),
     compareReportVersions: protectedProcedure.input(z.object({ findingId: z.number().int().positive(), workspaceId: z.number().int().positive(), fromVersionId: z.number().int().positive(), toVersionId: z.number().int().positive() })).query(({ ctx, input }) => workflowPersistence.compareReportVersions(ctx.user.id, input)),
+  }),
+  tools: router({
+    catalog: protectedProcedure.input(z.object({ category: z.string().trim().min(1).max(120).optional(), disposition: z.enum(["candidate_offline_or_artifact", "candidate_passive_review", "disabled_high_risk", "disabled_review_required"]).optional(), riskClass: z.enum(["low", "medium", "high", "critical", "unknown"]).optional() }).optional()).query(({ input }) => toolCatalog.listToolCatalog(input)),
+    search: protectedProcedure.input(z.object({ query: z.string().trim().min(1).max(120) })).query(({ input }) => toolCatalog.searchToolCatalog(input.query)),
+    summary: protectedProcedure.query(() => toolCatalog.getToolCatalogSummary()),
   }),
   control: router({
     dashboard: protectedProcedure.query(({ ctx }) => controlPlane.getDashboard(ctx.user.id)),

@@ -52,9 +52,9 @@ External platform submission remains a human action. Any proposed target-facing 
 
 ## Durable worker and migrations
 
-After deploying the application image, apply Drizzle migrations before accepting durable AI jobs. The runtime has two processes: the web API (`node dist/index.js`) and the queue worker (`node dist/worker.js` with `RUN_WORKER=true`). The worker claims leased jobs, retries transient failures with bounded exponential backoff, and moves exhausted jobs to `dead_letter`. It must use the same database, storage, and server-side LLM provider secrets as the web API; those secrets must never be placed in browser variables.
+After deploying the application image, apply Drizzle migrations before accepting durable AI jobs. The runtime has two processes: the web API (`node dist/index.js`) and the queue worker (`node dist/worker.js` with `RUN_WORKER=true`). The worker claims jobs with a worker identity, lease expiry, and heartbeat, recovers stale leases, retries transient failures with bounded exponential backoff, and moves exhausted jobs to `dead_letter`. Outbox consumers must claim an event/consumer receipt before applying side effects. It must use the same database, storage, and server-side LLM provider secrets as the web API; those secrets must never be placed in browser variables.
 
-The new migrations add `aiRunOutputs`, `searchDocuments`, and workspace foreign keys. Run the migration process during a controlled deployment window and verify existing workspace IDs before applying foreign-key constraints. Rebuild each workspace search index through the protected `agent.rebuildSearchIndex` procedure after migration and after bulk imports.
+The migrations through `0028_outbox_consumer_receipts.sql` add AI run lineage foreign keys, relational research task dependencies, worker lease/heartbeat fields, outbox consumer receipts, `aiRunOutputs`, `searchDocuments`, and workspace foreign keys. Run the migration process during a controlled deployment window, perform orphan-data and workspace-consistency preflight checks before applying foreign-key constraints, and verify existing workspace IDs. Rebuild each workspace search index through the protected `agent.rebuildSearchIndex` procedure after migration and after bulk imports.
 
 ## Versioned API
 

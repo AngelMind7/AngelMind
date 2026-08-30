@@ -19,7 +19,7 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 | Programs and scope engine | Implemented (core) | `program-scope.ts`, normalization/overlap guard, version diff, preview API, create-program integration. |
 | Research session state machine | Partial | Explicit transition rules, permission, validation, event, audit. |
 | Asset intelligence | Implemented (core) | Server-derived scope validation, typed asset categories, provenance-ready metadata, and workspace isolation. |
-| Task dependency graph | Partial | Dependency validation plus ResearchWorkspace dependency input and run/pause/retry/cancel controls; full visual DAG/worker orchestration remains partial. |
+| Task dependency graph | Implemented (presentation slice) | Dependency validation, lifecycle controls, cycle-safe deterministic graph layout, readiness indicators, and ResearchWorkspace dependency view; persistent worker orchestration remains environment/deployment dependent. |
 | Observation → hypothesis → evidence → finding | Partial | Evidence can now link to workspace-scoped observations/hypotheses, with quality gates; full observation-to-finding UI lifecycle remains partial. |
 | Retest and duplicate intelligence | Implemented (core) | Duplicate candidate query, relation linking, retest evidence/result, and finding status synchronization. |
 

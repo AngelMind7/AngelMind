@@ -373,8 +373,8 @@ export const aiModels = mysqlTable("aiModels", {
 export const aiRuns = mysqlTable("aiRuns", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  sessionId: int("sessionId"),
-  taskId: int("taskId"),
+  sessionId: int("sessionId").references(() => researchSessions.id, { onDelete: "set null" }),
+  taskId: int("taskId").references(() => researchTasks.id, { onDelete: "set null" }),
   userId: int("userId").notNull(),
   modelKey: varchar("modelKey", { length: 160 }).notNull(),
   gateway: varchar("gateway", { length: 120 }).notNull(),
@@ -406,7 +406,7 @@ export const aiEvaluationVerdict = ["pass", "fail", "needs_review"] as const;
 export const aiRunEvaluations = mysqlTable("aiRunEvaluations", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  runId: int("runId").notNull(),
+  runId: int("runId").notNull().references(() => aiRuns.id, { onDelete: "cascade" }),
   rubric: varchar("rubric", { length: 160 }).notNull(),
   score: int("score").notNull(),
   verdict: mysqlEnum("verdict", aiEvaluationVerdict).notNull(),

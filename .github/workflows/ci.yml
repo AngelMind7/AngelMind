@@ -33,6 +33,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Verify provider-neutral source
         run: node scripts/check-provider-neutral.mjs
+      - name: Migration journal consistency
+        run: node scripts/check-migration-journal.mjs
       - name: Typecheck
         run: pnpm check
       - name: Test

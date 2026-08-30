@@ -226,7 +226,7 @@ export const researchSessions = mysqlTable("researchSessions", {
 export const researchAssets = mysqlTable("researchAssets", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  sessionId: int("sessionId").notNull(),
+  sessionId: int("sessionId").notNull().references(() => researchSessions.id, { onDelete: "cascade" }),
   assetType: mysqlEnum("assetType", researchAssetType).notNull(),
   value: varchar("value", { length: 512 }).notNull(),
   hostname: varchar("hostname", { length: 255 }),
@@ -240,8 +240,8 @@ export const researchAssets = mysqlTable("researchAssets", {
 export const researchObservations = mysqlTable("researchObservations", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  sessionId: int("sessionId").notNull(),
-  assetId: int("assetId"),
+  sessionId: int("sessionId").notNull().references(() => researchSessions.id, { onDelete: "cascade" }),
+  assetId: int("assetId").references(() => researchAssets.id, { onDelete: "set null" }),
   title: varchar("title", { length: 240 }).notNull(),
   content: text("content").notNull(),
   status: mysqlEnum("status", researchObservationStatus).default("new").notNull(),
@@ -253,9 +253,9 @@ export const researchObservations = mysqlTable("researchObservations", {
 export const researchHypotheses = mysqlTable("researchHypotheses", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  sessionId: int("sessionId").notNull(),
-  assetId: int("assetId"),
-  observationId: int("observationId"),
+  sessionId: int("sessionId").notNull().references(() => researchSessions.id, { onDelete: "cascade" }),
+  assetId: int("assetId").references(() => researchAssets.id, { onDelete: "set null" }),
+  observationId: int("observationId").references(() => researchObservations.id, { onDelete: "set null" }),
   description: text("description").notNull(),
   reason: text("reason").notNull(),
   priority: int("priority").default(50).notNull(),
@@ -271,7 +271,7 @@ export const researchHypotheses = mysqlTable("researchHypotheses", {
 export const researchTasks = mysqlTable("researchTasks", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  sessionId: int("sessionId").notNull(),
+  sessionId: int("sessionId").notNull().references(() => researchSessions.id, { onDelete: "cascade" }),
   type: varchar("type", { length: 80 }).notNull(),
   title: varchar("title", { length: 240 }).notNull(),
   priority: int("priority").default(50).notNull(),
@@ -545,14 +545,14 @@ export const evidenceProvenance = mysqlTable("evidenceProvenance", {
   capturedByUserId: int("capturedByUserId").notNull(),
   metadata: text("metadata").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-}, table => [uniqueIndex("evidence_provenance_artifact_uq").on(table.evidenceArtifactId), index("evidence_provenance_workspace_idx").on(table.workspaceId, table.createdAt)]);
+}, table => [index("evidence_provenance_workspace_idx").on(table.workspaceId, table.createdAt), index("evidence_provenance_artifact_created_idx").on(table.evidenceArtifactId, table.createdAt)]);
 
 export const researchEvidenceLinks = mysqlTable("researchEvidenceLinks", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  evidenceArtifactId: int("evidenceArtifactId").notNull(),
-  observationId: int("observationId"),
-  hypothesisId: int("hypothesisId"),
+  evidenceArtifactId: int("evidenceArtifactId").notNull().references(() => evidenceArtifacts.id, { onDelete: "cascade" }),
+  observationId: int("observationId").references(() => researchObservations.id, { onDelete: "set null" }),
+  hypothesisId: int("hypothesisId").references(() => researchHypotheses.id, { onDelete: "set null" }),
   linkType: varchar("linkType", { length: 40 }).notNull(),
   createdByUserId: int("createdByUserId").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -561,8 +561,8 @@ export const researchEvidenceLinks = mysqlTable("researchEvidenceLinks", {
 export const findingRelations = mysqlTable("findingRelations", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  findingId: int("findingId").notNull(),
-  relatedFindingId: int("relatedFindingId").notNull(),
+  findingId: int("findingId").notNull().references(() => findings.id, { onDelete: "cascade" }),
+  relatedFindingId: int("relatedFindingId").notNull().references(() => findings.id, { onDelete: "cascade" }),
   relationType: mysqlEnum("relationType", ["duplicate", "related", "supersedes"] as const).notNull(),
   createdByUserId: int("createdByUserId").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -571,12 +571,12 @@ export const findingRelations = mysqlTable("findingRelations", {
 export const findingRetests = mysqlTable("findingRetests", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
-  findingId: int("findingId").notNull(),
+  findingId: int("findingId").notNull().references(() => findings.id, { onDelete: "cascade" }),
   requestedByUserId: int("requestedByUserId").notNull(),
   status: mysqlEnum("status", ["requested", "in_progress", "passed", "failed", "inconclusive", "cancelled"] as const).default("requested").notNull(),
   scopeDigest: varchar("scopeDigest", { length: 128 }).notNull(),
   resultSummary: text("resultSummary"),
-  evidenceArtifactId: int("evidenceArtifactId"),
+  evidenceArtifactId: int("evidenceArtifactId").references(() => evidenceArtifacts.id, { onDelete: "set null" }),
   reviewedByUserId: int("reviewedByUserId"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   completedAt: timestamp("completedAt"),

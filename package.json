@@ -7,7 +7,7 @@
     "dev": "NODE_ENV=development tsx watch server/_core/index.ts",
     "build": "vite build && esbuild server/_core/index.ts server/worker.ts --platform=node --packages=external --bundle --format=esm --outdir=dist",
     "check:budget": "node scripts/check-bundle-budget.mjs",
-    "start": "NODE_ENV=production node dist/index.js",
+    "start": "NODE_ENV=production node dist/_core/index.js",
     "start:worker": "NODE_ENV=production RUN_WORKER=true node dist/worker.js",
     "check": "tsc --noEmit",
     "format": "prettier --write .",

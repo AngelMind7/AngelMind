@@ -39,7 +39,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 20 | Hypothesis engine | **Partial** | AI evidence analyst mengeluarkan hypotheses; lifecycle persisted PROPOSED–VALIDATED belum. |
 | 21 | Observation engine | **Partial** | Passive inventory dan evidence intake ada; entity Observation terpisah sebelum hypothesis/evidence/finding belum. |
 | 22 | Evidence vault | **Implemented** | Upload validation, workspace authorization, SHA-256 reference, Supabase storage, metadata, audit tersedia; quarantine/security scan penuh belum. |
-| 23 | Evidence provenance | **Partial** | Storage reference/hash/audit ada; source–acquisition–transformation lineage penuh belum. |
+| 23 | Evidence provenance | **Partial** | Storage reference/hash/audit and multi-event provenance records are implemented; full source–acquisition–transformation lineage semantics remain incomplete. |
 
 ## Requirement 24–46: findings, reports, collaboration, API, dan integrations
 
@@ -76,7 +76,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 47 | AI center | **Partial** | 9Router primary, OmniRoute fallback, model registry/run trace/cost/evaluation foundations are implemented; complete multi-provider capability routing remains incomplete. |
 | 48 | Model registry | **Partial** | Persisted model registry, health, capability/cost metadata, and evaluation foundations exist; full provider inventory and routing policy remain incomplete. |
 | 49 | AI orchestrator | **Partial** | Evidence analysis terstruktur tersedia; planner/decomposer/task graph/parallel aggregation belum. |
-| 50 | AI failure isolation | **Partial** | Provider fallback dan bounded error handling tersedia; partial result/context overflow/contradiction handling belum penuh. |
+| 50 | AI failure isolation | **Partial** | Provider fallback, provider-specific fallback model, bounded transient retry statuses, and bounded error handling are implemented; partial result/context overflow/contradiction handling remains incomplete. |
 | 51 | AI run trace | **Partial** | AI run entity, gateway/model references, usage, cost ceiling, outputs, retention, and evaluation foundations exist; distributed request correlation remains incomplete. |
 | 52 | AI provenance | **Partial** | AI output disimpan sebagai finding/report draft; lineage task–run–model–input–output belum. |
 | 53 | AI context | **Partial** | Workspace context dikirim ke evidence flow; hierarchical context isolation lengkap belum. |
@@ -98,7 +98,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | No. | Requirement | Status | Bukti/gap utama |
 |---:|---|---|---|
 | 66 | Database | **Implemented** | MySQL/Drizzle schema dan forward migrations tersedia. |
-| 67 | Database integrity | **Partial** | Unique indexes, validations, transaction-oriented service checks ada; FK/check/index review menyeluruh belum. |
+| 67 | Database integrity | **Partial** | Research session/asset/observation/hypothesis/task, finding relation/retest, evidence link, and multi-event provenance foreign keys are now enforced through migration `0024`; complete data preflight/load verification remains deployment work. |
 | 68 | Concurrency | **Planned** | Belum ada optimistic locking/version conflict workflow umum. |
 | 69 | Pagination | **Partial** | List queries terbatas dan workspace-scoped; cursor pagination global belum. |
 | 70 | Cache | **Deferred** | Belum ada cache layer; tidak ditambahkan tanpa workload requirement dan invalidation design. |

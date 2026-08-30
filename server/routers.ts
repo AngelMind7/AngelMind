@@ -222,6 +222,8 @@ export const appRouter = router({
     list: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => controlPlane.listAudit(ctx.user.id, input.workspaceId)),
     evidence: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => controlPlane.listEvidence(ctx.user.id, input.workspaceId)),
     uploadEvidence: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), findingId: z.number().int().positive().optional(), fileName: z.string().min(1).max(120), contentType: z.string().min(3).max(100), contentBase64: z.string().min(4).max(7_000_000) })).mutation(({ ctx, input }) => controlPlane.uploadEvidence(ctx.user.id, input)),
+    markEvidenceScanned: protectedProcedure.input(z.object({ evidenceArtifactId: z.number().int().positive(), scanPassed: z.boolean(), reason: z.string().max(2_000).optional() })).mutation(({ ctx, input }) => controlPlane.markEvidenceScanned(ctx.user.id, input.evidenceArtifactId, input.scanPassed, input.reason)),
+    promoteEvidence: protectedProcedure.input(z.object({ evidenceArtifactId: z.number().int().positive() })).mutation(({ ctx, input }) => controlPlane.promoteEvidence(ctx.user.id, input.evidenceArtifactId)),
   }),
 });
 

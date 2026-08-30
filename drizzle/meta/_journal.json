@@ -204,6 +204,13 @@
       "when": 1788067800000,
       "tag": "0028_outbox_consumer_receipts",
       "breakpoints": true
+    },
+    {
+      "idx": 29,
+      "version": "7",
+      "when": 1788067900000,
+      "tag": "0029_evidence_quarantine_lifecycle",
+      "breakpoints": true
     }
   ]
 }

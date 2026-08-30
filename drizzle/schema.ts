@@ -544,6 +544,8 @@ export const auditEvents = mysqlTable("auditEvents", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [index("audit_workspace_created_idx").on(table.workspaceId, table.createdAt)]);
 
+export const evidenceArtifactStatus = ["quarantined", "scanned", "promoted", "rejected"] as const;
+
 export const evidenceArtifacts = mysqlTable("evidenceArtifacts", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
@@ -551,6 +553,12 @@ export const evidenceArtifacts = mysqlTable("evidenceArtifacts", {
   artifactType: varchar("artifactType", { length: 80 }).notNull(),
   storageReference: text("storageReference").notNull(),
   sha256: varchar("sha256", { length: 64 }).notNull(),
+  status: mysqlEnum("status", evidenceArtifactStatus).default("quarantined").notNull(),
+  contentType: varchar("contentType", { length: 160 }),
+  sizeBytes: int("sizeBytes").default(0).notNull(),
+  quarantineReason: text("quarantineReason"),
+  scannedAt: timestamp("scannedAt"),
+  promotedAt: timestamp("promotedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [index("evidence_workspace_created_idx").on(table.workspaceId, table.createdAt)]);
 

@@ -299,9 +299,31 @@ export async function uploadEvidence(userId: number, input: { workspaceId: numbe
   const artifact = await storagePut(`workspace-${workspace.id}/evidence/${Date.now()}-${cleanName}`, bytes, validatedEvidence.contentType);
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
-  await db.insert(evidenceArtifacts).values({ workspaceId: workspace.id, findingId: input.findingId ?? null, artifactType: validatedEvidence.contentType, storageReference: artifact.url, sha256: createHash("sha256").update(bytes).digest("hex") });
+  await db.insert(evidenceArtifacts).values({ workspaceId: workspace.id, findingId: input.findingId ?? null, artifactType: validatedEvidence.contentType, contentType: validatedEvidence.contentType, sizeBytes: bytes.length, storageReference: artifact.url, sha256: createHash("sha256").update(bytes).digest("hex"), status: "quarantined", quarantineReason: "Awaiting content/security scan." });
   await addAudit(workspace.id, "evidence", "artifact-stored", { fileName: cleanName, contentType: validatedEvidence.contentType, storageReference: artifact.url, findingId: input.findingId ?? null });
   return { storageReference: artifact.url };
+}
+
+export async function markEvidenceScanned(userId: number, evidenceArtifactId: number, scanPassed: boolean, reason?: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [artifact] = await db.select().from(evidenceArtifacts).where(eq(evidenceArtifacts.id, evidenceArtifactId)).limit(1);
+  if (!artifact || !(await canAccessWorkspace(userId, artifact.workspaceId, "review"))) throw new Error("Evidence tidak ditemukan atau reviewer permission diperlukan.");
+  const status = scanPassed ? "scanned" : "rejected";
+  await db.update(evidenceArtifacts).set({ status, scannedAt: new Date(), quarantineReason: scanPassed ? null : (reason?.trim().slice(0, 2_000) || "Security scan rejected artifact.") }).where(eq(evidenceArtifacts.id, artifact.id));
+  await addAudit(artifact.workspaceId, "evidence", scanPassed ? "artifact-scanned" : "artifact-rejected", { evidenceArtifactId: artifact.id, reason: reason?.trim() || null });
+  return { success: true as const, evidenceArtifactId: artifact.id, status };
+}
+
+export async function promoteEvidence(userId: number, evidenceArtifactId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [artifact] = await db.select().from(evidenceArtifacts).where(eq(evidenceArtifacts.id, evidenceArtifactId)).limit(1);
+  if (!artifact || !(await canAccessWorkspace(userId, artifact.workspaceId, "review"))) throw new Error("Evidence tidak ditemukan atau reviewer permission diperlukan.");
+  if (artifact.status !== "scanned") throw new Error("Evidence must pass a security scan before promotion.");
+  await db.update(evidenceArtifacts).set({ status: "promoted", promotedAt: new Date(), quarantineReason: null }).where(eq(evidenceArtifacts.id, artifact.id));
+  await addAudit(artifact.workspaceId, "evidence", "artifact-promoted", { evidenceArtifactId: artifact.id });
+  return { success: true as const, evidenceArtifactId: artifact.id, status: "promoted" as const };
 }
 
 export async function listAudit(userId: number, workspaceId: number) {

@@ -127,7 +127,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | No. | Requirement | Status | Bukti/gap utama |
 |---:|---|---|---|
 | 90 | Observability | **Partial** | Health, readiness, metrics, logs, audit tersedia; traces/alerts/SLO dashboards belum. |
-| 91 | Traceability | **Planned** | Request/trace correlation lintas browser–API–worker–AI–DB belum. |
+| 91 | Traceability | **Partial** | tRPC context now propagates bounded `x-request-id` and `x-trace-id` response headers with generated UUID fallback; resource/job/AI/database correlation fields remain to be threaded through every workflow. |
 | 92 | Incident management | **Implemented** | Incident create/acknowledge/resolve, escalation, evidence links, audit tersedia; post-incident review belum. |
 | 93 | Status page | **Partial** | Public posture/status disclosure ada; live component telemetry belum. |
 | 94 | Disaster recovery | **Partial** | Signed archive, verify, restore plan ada; tested restore execution/recovery environment belum. |

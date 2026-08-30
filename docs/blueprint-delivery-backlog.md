@@ -20,6 +20,8 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 | Research session state machine | Partial | Explicit transition rules, permission, validation, event, audit. |
 | Asset intelligence | Implemented (core) | Server-derived scope validation, typed asset categories, provenance-ready metadata, and workspace isolation. |
 | Task dependency graph | Implemented (presentation slice) | Dependency validation, lifecycle controls, cycle-safe deterministic graph layout, readiness indicators, and ResearchWorkspace dependency view; persistent worker orchestration remains environment/deployment dependent. |
+| Failure domain | Implemented (contract) | Typed failure observations, impact levels, evidence references, deduplication, and validation contract in `server/control-plane/intelligence-engine.ts`; persistence/UI lifecycle remains next slice. |
+| Evolution and intelligence foundation | Implemented (contract) | Deterministic asset snapshot comparison, playbook matching, and normalized confidence-bounded intelligence feed contract; provider adapters and persistence remain environment-dependent. |
 | Observation → hypothesis → evidence → finding | Partial | Evidence can now link to workspace-scoped observations/hypotheses, with quality gates; full observation-to-finding UI lifecycle remains partial. |
 | Retest and duplicate intelligence | Implemented (core) | Duplicate candidate query, relation linking, retest evidence/result, and finding status synchronization. |
 

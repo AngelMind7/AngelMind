@@ -9,7 +9,7 @@ Dokumen ini memetakan 115 area pada `Angelmindstrukturjelas.pdf` terhadap implem
 | Public website | Sebagian besar tersedia | Route publik, legal pages, trust, security, documentation, pricing, status, contact, dan marketing copy tersedia. |
 | Authentication dan identity | Vertical slice selesai | Firebase ID token verification, Firebase login/logout, device registry, login/security event ledger, onboarding profile, API key lifecycle dengan hash, serta profile/privacy visibility. |
 | Organization dan authorization | Vertical slice selesai | Organization tenant, member roles, program catalog, scope manifest, entitlements, workspace organization/program references, dan admin membership checks. Workspace authorization lama tetap dipakai sebagai boundary utama. |
-| Research workflow | Vertical slice selesai | Research session state machine, scope digest, asset intelligence, observation, hypothesis, task dependency graph dengan visual readiness layout cycle-safe, task transitions, audit metadata, serta Research Workspace UI. |
+| Research workflow | Vertical slice selesai | Research session state machine, scope digest, asset intelligence, observation, hypothesis, task dependency graph dengan visual readiness layout cycle-safe, task transitions, audit metadata, serta Research Workspace UI. Failure-domain validation, evolution diff, playbook matching, dan intelligence normalization contract juga tersedia di `server/control-plane/intelligence-engine.ts`. |
 | Evidence dan findings | Diperluas | Existing evidence upload, finding lifecycle, report version, validation, archive, dan analytics dipertahankan; provenance, duplicate/related/supersedes relation, retest lifecycle, dan quality gate ditambahkan. |
 | AI Center | Vertical slice selesai | Model registry, AI run trace, trace ID, model/gateway references, cost ceiling, usage accounting, prompt version table, durable jobs, idempotency key, dan outbox event table/API. AI tidak memiliki target execution atau credential access. |
 | Platform dan integrations | Sebagian besar tersedia | tRPC API, Firebase, Supabase Storage, Railway deployment/Cron, GitHub CI, webhook policy, audit archive, provider-neutral guard, API key authentication fallback, dan privacy request lifecycle. Versioned REST gateway, search index, tagging, dan collaboration lanjutan masih perlu iterasi. |
@@ -32,7 +32,7 @@ Schema terbaru berada pada rangkaian migration sampai `drizzle/0018_ai_run_reten
 
 ## Validasi
 
-Validasi baseline branch main mencakup `pnpm check`, seluruh test suite Vitest dengan 40 test files dan 87 tests, `pnpm build`, `pnpm check:budget`, dan `git diff --check`. Perubahan task graph menambahkan 3 regression tests untuk ordering, readiness, malformed dependency input, dan cycle safety. Build dapat memberikan warning tooling yang tidak menggagalkan proses.
+Validasi baseline branch main mencakup `pnpm check`, seluruh test suite Vitest dengan 40 test files dan 87 tests, `pnpm build`, `pnpm check:budget`, dan `git diff --check`. Perubahan task graph menambahkan 3 regression tests untuk ordering, readiness, malformed dependency input, dan cycle safety. V2 menambahkan 4 tests untuk failure validation, snapshot evolution diff, playbook matching, dan intelligence feed normalization. Build dapat memberikan warning tooling yang tidak menggagalkan proses.
 
 ## Batas yang disengaja
 

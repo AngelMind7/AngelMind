@@ -35,6 +35,35 @@ services:
     tmpfs:
       - /tmp
 
+  worker:
+    build:
+      context: .
+      target: runtime
+    command: ["node", "dist/worker.js"]
+    environment:
+      NODE_ENV: production
+      RUN_WORKER: "true"
+      DATABASE_URL: mysql://angelmind:${MYSQL_PASSWORD:?set MYSQL_PASSWORD}@db:3306/angelmind
+      APP_ENCRYPTION_KEY: ${APP_ENCRYPTION_KEY:?set APP_ENCRYPTION_KEY}
+      LLM_PRIMARY_API_BASE_URL: ${LLM_PRIMARY_API_BASE_URL:-}
+      LLM_PRIMARY_API_KEY: ${LLM_PRIMARY_API_KEY:-}
+      LLM_PRIMARY_MODEL: ${LLM_PRIMARY_MODEL:-}
+      LLM_FALLBACK_API_BASE_URL: ${LLM_FALLBACK_API_BASE_URL:-}
+      LLM_FALLBACK_API_KEY: ${LLM_FALLBACK_API_KEY:-}
+      LLM_FALLBACK_MODEL: ${LLM_FALLBACK_MODEL:-}
+      SUPABASE_URL: ${SUPABASE_URL:-}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:-}
+      SUPABASE_STORAGE_BUCKET: ${SUPABASE_STORAGE_BUCKET:-angelmind-files}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
+
   db:
     image: mysql:8.4
     environment:

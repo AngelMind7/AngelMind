@@ -253,8 +253,10 @@ const assertApiKey = () => {
   }
 };
 
-const shouldFallback = (status: number) =>
-  status === 408 || status === 409 || status === 425 || status === 429 || status >= 500;
+const isRetryableStatus = (status: number) =>
+  status === 408 || status === 425 || status === 429 || (status >= 500 && status <= 504);
+
+const shouldFallback = (status: number) => isRetryableStatus(status);
 
 const normalizeResponseFormat = ({
   responseFormat,
@@ -341,7 +343,7 @@ const fetchWithBackoff = async (
   for (let attempt = 0; attempt <= RETRY_MAX_RETRIES; attempt++) {
     try {
       const response = await fetch(url, init);
-      if (response.ok || attempt === RETRY_MAX_RETRIES) {
+      if (response.ok || !isRetryableStatus(response.status) || attempt === RETRY_MAX_RETRIES) {
         return response;
       }
 
@@ -436,7 +438,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     const provider = providers[providerIndex];
     const providerPayload = {
       ...payload,
-      ...(model || provider.model ? { model: model || provider.model } : {}),
+      ...(model || provider.model ? { model: providerIndex === 0 ? (model || provider.model) : provider.model } : {}),
     };
 
     try {
@@ -474,6 +476,7 @@ export type ModelInfo = {
   object: string;
   created: number;
   owned_by: string;
+  provider?: "9router" | "omniroute";
 };
 
 export type ModelsResponse = {
@@ -484,31 +487,26 @@ export type ModelsResponse = {
 export async function listLLMModels(): Promise<ModelsResponse> {
   assertApiKey();
   const providers = getLlmProviders();
+  const catalogs: ModelInfo[] = [];
   let lastError: Error | null = null;
 
-  for (let providerIndex = 0; providerIndex < providers.length; providerIndex++) {
-    const provider = providers[providerIndex];
+  for (const provider of providers) {
     try {
       const response = await fetchWithBackoff(resolveApiUrl(provider, "models"), {
         headers: { authorization: `Bearer ${provider.apiKey}` },
       });
-
-      if (response.ok) return (await response.json()) as ModelsResponse;
-
-      const errorText = await response.text();
-      lastError = new Error(
-        `${provider.name} model listing failed: ${response.status} ${response.statusText} – ${errorText}`
-      );
-      if (!shouldFallback(response.status) || providerIndex === providers.length - 1) {
-        throw lastError;
+      if (!response.ok) {
+        const errorText = await response.text();
+        throw new Error(`${provider.name} model listing failed: ${response.status} ${response.statusText} – ${errorText}`);
       }
-      console.warn(`${provider.name} model listing failed; trying the next LLM provider`);
+      const payload = (await response.json()) as ModelsResponse;
+      catalogs.push(...(payload.data ?? []).map(model => ({ ...model, provider: provider.name })));
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      if (providerIndex === providers.length - 1) throw lastError;
-      console.warn(`${provider.name} model listing request failed; trying the next LLM provider`);
+      console.warn(`${provider.name} model listing unavailable; continuing with other gateways`);
     }
   }
 
-  throw lastError ?? new Error("No LLM provider is configured");
+  if (catalogs.length === 0) throw lastError ?? new Error("No LLM models are available");
+  return { object: "list", data: catalogs };
 }

@@ -398,6 +398,17 @@ export const outboxEvents = mysqlTable("outboxEvents", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [uniqueIndex("outbox_event_idempotency_uq").on(table.idempotencyKey), index("outbox_event_status_created_idx").on(table.status, table.createdAt), index("outbox_event_workspace_idx").on(table.workspaceId, table.createdAt)]);
 
+export const searchDocuments = mysqlTable("searchDocuments", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  entityType: varchar("entityType", { length: 60 }).notNull(),
+  entityId: int("entityId").notNull(),
+  title: varchar("title", { length: 512 }).notNull(),
+  body: text("body").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("search_document_entity_uq").on(table.workspaceId, table.entityType, table.entityId), index("search_document_workspace_updated_idx").on(table.workspaceId, table.updatedAt)]);
+
 export const runs = mysqlTable("runs", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull(),

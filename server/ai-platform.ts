@@ -1,9 +1,10 @@
 import { randomUUID } from "node:crypto";
 import { and, asc, desc, eq, lte, lt, or, sql } from "drizzle-orm";
-import { aiModels, aiRunEvaluations, aiRuns, jobs, outboxEvents, workspaces } from "../drizzle/schema";
+import { aiModels, aiRunEvaluations, aiRunOutputs, aiRuns, jobs, outboxEvents, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { planMultiAgentRun } from "./ai-orchestration";
+import { invokeLLM, type Message } from "./_core/llm";
 
 async function requireWorkspace(userId: number, workspaceId: number, intent: "read" | "respond" = "read") {
   const db = await getDb();
@@ -192,4 +193,55 @@ export async function enqueueOrchestrationPlan(userId: number, input: { workspac
     },
   });
   return { job, plan };
+}
+
+
+export async function startDurableAiRun(userId: number, input: { workspaceId: number; sessionId?: number; taskId?: number; modelKey: string; gateway: string; purpose: string; inputReference: string; messages: Message[]; estimatedCostCents?: number; retentionDays?: number; idempotencyKey: string }) {
+  const run = await startAiRun(userId, input);
+  const job = await enqueueJob(userId, {
+    workspaceId: input.workspaceId,
+    kind: "ai.run.execute",
+    idempotencyKey: input.idempotencyKey,
+    payload: {
+      type: "ai_run_execute",
+      runId: run.id,
+      userId,
+      workspaceId: input.workspaceId,
+      modelKey: input.modelKey.trim(),
+      gateway: input.gateway.trim(),
+      messages: input.messages,
+    },
+  });
+  return { run, job };
+}
+
+export async function executeAiRunJob(payload: Record<string, unknown>) {
+  const runId = Number(payload.runId);
+  const userId = Number(payload.userId);
+  const workspaceId = Number(payload.workspaceId);
+  const modelKey = String(payload.modelKey ?? "").trim();
+  const gateway = String(payload.gateway ?? "").trim();
+  const messages = payload.messages as Message[];
+  if (!Number.isInteger(runId) || !Number.isInteger(userId) || !Number.isInteger(workspaceId) || !modelKey || !gateway || !Array.isArray(messages) || messages.length === 0) throw new Error("Invalid AI run job payload.");
+  await updateAiRun(userId, { runId, status: "running" });
+  try {
+    const response = await invokeLLM({ model: modelKey, messages });
+    const db = await getDb();
+    if (!db) throw new Error("Database tidak tersedia.");
+    await db.insert(aiRunOutputs).values({ workspaceId, runId, outputJson: JSON.stringify(response) }).onDuplicateKeyUpdate({ set: { outputJson: JSON.stringify(response), createdAt: new Date() } });
+    const outputReference = `ai-run-output:${runId}`;
+    await updateAiRun(userId, { runId, status: "completed", outputReference, inputTokens: response.usage?.prompt_tokens ?? 0, outputTokens: response.usage?.completion_tokens ?? 0 });
+  } catch (error) {
+    await updateAiRun(userId, { runId, status: "failed", errorCode: error instanceof Error ? error.message.slice(0, 120) : "AI_RUN_FAILED" });
+    throw error;
+  }
+}
+
+export async function getAiRunOutput(userId: number, runId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, runId)).limit(1);
+  if (!run || !(await canAccessWorkspace(userId, run.workspaceId, "read"))) throw new Error("AI run tidak ditemukan atau tidak dapat diakses.");
+  const [output] = await db.select().from(aiRunOutputs).where(eq(aiRunOutputs.runId, runId)).limit(1);
+  return output ? { ...output, output: JSON.parse(output.outputJson) as unknown } : null;
 }

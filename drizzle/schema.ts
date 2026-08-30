@@ -333,6 +333,14 @@ export const aiRuns = mysqlTable("aiRuns", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [index("ai_run_workspace_created_idx").on(table.workspaceId, table.createdAt), index("ai_run_trace_idx").on(table.traceId), index("ai_run_status_idx").on(table.status, table.createdAt)]);
 
+export const aiRunOutputs = mysqlTable("aiRunOutputs", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  runId: int("runId").notNull().references(() => aiRuns.id, { onDelete: "cascade" }),
+  outputJson: text("outputJson").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("ai_run_output_run_uq").on(table.runId), index("ai_run_output_workspace_created_idx").on(table.workspaceId, table.createdAt)]);
+
 export const aiEvaluationVerdict = ["pass", "fail", "needs_review"] as const;
 
 export const aiRunEvaluations = mysqlTable("aiRunEvaluations", {

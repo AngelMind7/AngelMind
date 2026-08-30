@@ -1,6 +1,15 @@
 import { initializeAppCheck, ReCaptchaEnterpriseProvider, type AppCheck } from "firebase/app-check";
 import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
-import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, type Auth } from "firebase/auth";
+import {
+  getAuth,
+  getRedirectResult,
+  GoogleAuthProvider,
+  signInWithPopup,
+  signInWithRedirect,
+  signOut,
+  type Auth,
+  type User,
+} from "firebase/auth";
 
 const config = {
   apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
@@ -48,11 +57,8 @@ export async function getFirebaseIdToken(): Promise<string | null> {
   return user.getIdToken();
 }
 
-export async function signInWithGoogle() {
-  const client = getFirebaseClient();
-  if (!client) throw new Error("Firebase Google Login is not configured.");
-  const result = await signInWithPopup(client.auth, new GoogleAuthProvider());
-  const idToken = await result.user.getIdToken(true);
+async function exchangeFirebaseUser(user: User) {
+  const idToken = await user.getIdToken(true);
   const response = await fetch("/api/auth/firebase", {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -62,7 +68,48 @@ export async function signInWithGoogle() {
     const payload = await response.json().catch(() => null) as { error?: string } | null;
     throw new Error(payload?.error || "Firebase Google Login failed.");
   }
-  return result.user;
+  return user;
+}
+
+function shouldUseRedirectSignIn() {
+  return typeof navigator !== "undefined" && /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent);
+}
+
+function canFallbackToRedirect(error: unknown) {
+  if (!error || typeof error !== "object" || !("code" in error)) return false;
+  const code = String((error as { code?: unknown }).code);
+  return code === "auth/popup-blocked" || code === "auth/operation-not-supported-in-this-environment";
+}
+
+export async function completeGoogleRedirectSignIn() {
+  const client = getFirebaseClient();
+  if (!client) return false;
+  const result = await getRedirectResult(client.auth);
+  if (!result?.user) return false;
+  await exchangeFirebaseUser(result.user);
+  return true;
+}
+
+export async function signInWithGoogle(): Promise<User | null> {
+  const client = getFirebaseClient();
+  if (!client) throw new Error("Firebase Google Login is not configured.");
+  const provider = new GoogleAuthProvider();
+
+  // Firebase recommends redirect sign-in on mobile browsers because popups are
+  // frequently blocked or provide a poor experience on small screens.
+  if (shouldUseRedirectSignIn()) {
+    await signInWithRedirect(client.auth, provider);
+    return null;
+  }
+
+  try {
+    const result = await signInWithPopup(client.auth, provider);
+    return exchangeFirebaseUser(result.user);
+  } catch (error) {
+    if (!canFallbackToRedirect(error)) throw error;
+    await signInWithRedirect(client.auth, provider);
+    return null;
+  }
 }
 
 export async function signOutFirebase() {

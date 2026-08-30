@@ -47,9 +47,9 @@
     "@radix-ui/react-tooltip": "^1.2.8",
     "@supabase/supabase-js": "^2.112.4",
     "@tanstack/react-query": "^5.90.2",
-    "@trpc/client": "^11.6.0",
-    "@trpc/react-query": "^11.6.0",
-    "@trpc/server": "^11.6.0",
+    "@trpc/client": "^11.18.0",
+    "@trpc/react-query": "^11.18.0",
+    "@trpc/server": "^11.18.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
@@ -113,7 +113,7 @@
     "overrides": {
       "lodash": "^4.18.0",
       "lodash-es": "^4.18.0",
-      "path-to-regexp@<0.1.13": ">=0.1.13"
+      "path-to-regexp@<0.1.13": "0.1.13"
     }
   }
 }

@@ -28,7 +28,7 @@ Salin `.env.example` ke secret manager atau environment variables Railway. Janga
 
 ## Railway
 
-Repository sudah menyediakan `Dockerfile` multi-stage dan `railway.toml`. Hubungkan service Railway ke repository GitHub, pilih deploy dari `main`, lalu set environment variables di Railway. Health check menggunakan `/healthz`; readiness menggunakan `/readyz`. Railway memberikan nilai `PORT`, dan server membacanya secara dinamis.
+Repository sudah menyediakan `Dockerfile` multi-stage dan `railway.toml`. Hubungkan service Railway ke repository GitHub, pilih deploy dari `main`, lalu set environment variables di Railway. **Isi seluruh `VITE_FIREBASE_*` sebelum deploy ulang** karena nilainya dimasukkan ke bundle browser pada tahap Docker build; kredensial `FIREBASE_*` tanpa prefix `VITE_` tetap dibaca saat runtime oleh Firebase Admin. Pastikan domain Railway publik juga terdaftar di Firebase Authentication → Settings → Authorized domains, dan Google diaktifkan sebagai provider. Health check menggunakan `/healthz`; readiness menggunakan `/readyz`. Railway memberikan nilai `PORT`, dan server membacanya secara dinamis.
 
 Untuk maintenance terjadwal, konfigurasi Railway Cron pada `railway.toml` menjalankan batch setiap 15 menit. Scheduler eksternal juga dapat memanggil endpoint yang sama. Tanpa body, endpoint memproses semua workspace aktif yang memiliki task reference; untuk retry terarah, kirim body berikut:
 

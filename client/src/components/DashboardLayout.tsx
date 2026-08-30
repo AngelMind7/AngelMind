@@ -73,7 +73,7 @@ export default function DashboardLayout({
   const [authError, setAuthError] = useState<string | null>(null);
   const handleGoogleSignIn = () => {
     setAuthError(null);
-    void signInWithGoogle().then(() => window.location.reload()).catch(error => setAuthError(error instanceof Error ? error.message : "Google Login failed."));
+    void signInWithGoogle().then(user => { if (user) window.location.reload(); }).catch(error => setAuthError(error instanceof Error ? error.message : "Google Login failed."));
   };
 
   useEffect(() => {

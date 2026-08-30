@@ -7,7 +7,8 @@ const securityHeaders = {
   "X-Frame-Options": "DENY",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
-  "Cross-Origin-Opener-Policy": "same-origin",
+  // Firebase Google popup authentication needs the opener relationship preserved.
+  "Cross-Origin-Opener-Policy": "same-origin-allow-popups",
   "Cross-Origin-Resource-Policy": "same-origin",
 };
 

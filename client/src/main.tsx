@@ -5,7 +5,7 @@ import superjson from "superjson";
 import App from "./App";
 import "./index.css";
 import { registerServiceWorker } from "./pwa/registerServiceWorker";
-import { getFirebaseIdToken } from "./firebase";
+import { completeGoogleRedirectSignIn, getFirebaseIdToken } from "./firebase";
 import { trpc } from "./lib/trpc";
 
 const queryClient = new QueryClient();
@@ -72,10 +72,20 @@ const trpcClient = trpc.createClient({
   ],
 });
 
-createRoot(document.getElementById("root")!).render(
-  <trpc.Provider client={trpcClient} queryClient={queryClient}>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </trpc.Provider>,
-);
+async function bootstrap() {
+  try {
+    await completeGoogleRedirectSignIn();
+  } catch (error) {
+    console.error("[Firebase Auth] Redirect sign-in failed", error);
+  }
+
+  createRoot(document.getElementById("root")!).render(
+    <trpc.Provider client={trpcClient} queryClient={queryClient}>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </trpc.Provider>,
+  );
+}
+
+void bootstrap();

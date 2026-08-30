@@ -145,17 +145,28 @@ export async function failOutboxEvent(eventId: number, errorMessage: string) {
   return { success: false as const, eventId, status: "failed" as const, attempts: event.attempts + 1, error: errorMessage.trim().slice(0, 4_000) };
 }
 
+const WORKER_ID = process.env.WORKER_ID?.trim() || randomUUID();
+const WORKER_LEASE_MS = 10 * 60 * 1_000;
+
+export async function heartbeatJob(jobId: number) {
+  const db = await getDb();
+  if (!db) return { success: false as const, jobId };
+  await db.update(jobs).set({ heartbeatAt: new Date(), leaseExpiresAt: new Date(Date.now() + WORKER_LEASE_MS), updatedAt: new Date() }).where(and(eq(jobs.id, jobId), eq(jobs.status, "running"), eq(jobs.workerId, WORKER_ID)));
+  return { success: true as const, jobId };
+}
+
 export async function claimPendingJobs(limit = 25) {
   const db = await getDb();
   if (!db) return [];
   const now = new Date();
-  const staleBefore = new Date(now.getTime() - 10 * 60 * 1_000);
-  await db.update(jobs).set({ status: "retrying", lockedAt: null, availableAt: now, lastError: "Worker lease expired.", updatedAt: now }).where(and(eq(jobs.status, "running"), lt(jobs.lockedAt, staleBefore)));
+  const staleBefore = new Date(now.getTime() - WORKER_LEASE_MS);
+  await db.update(jobs).set({ status: "retrying", lockedAt: null, leaseExpiresAt: null, heartbeatAt: null, workerId: null, availableAt: now, lastError: "Worker lease expired.", updatedAt: now }).where(and(eq(jobs.status, "running"), or(lt(jobs.leaseExpiresAt, now), lt(jobs.lockedAt, staleBefore))));
   const available = await db.select().from(jobs).where(and(or(eq(jobs.status, "queued"), eq(jobs.status, "retrying")), lte(jobs.availableAt, now))).orderBy(asc(jobs.availableAt)).limit(Math.min(100, Math.max(1, limit)));
   const claimed = [];
   for (const job of available) {
-    await db.update(jobs).set({ status: "running", attempts: job.attempts + 1, lockedAt: now, updatedAt: now }).where(and(eq(jobs.id, job.id), or(eq(jobs.status, "queued"), eq(jobs.status, "retrying"))));
-    claimed.push({ ...job, status: "running" as const, attempts: job.attempts + 1, lockedAt: now });
+    const leaseExpiresAt = new Date(now.getTime() + WORKER_LEASE_MS);
+    await db.update(jobs).set({ status: "running", attempts: job.attempts + 1, lockedAt: now, heartbeatAt: now, leaseExpiresAt, workerId: WORKER_ID, updatedAt: now }).where(and(eq(jobs.id, job.id), or(eq(jobs.status, "queued"), eq(jobs.status, "retrying"))));
+    claimed.push({ ...job, status: "running" as const, attempts: job.attempts + 1, lockedAt: now, heartbeatAt: now, leaseExpiresAt, workerId: WORKER_ID });
   }
   return claimed;
 }
@@ -163,7 +174,7 @@ export async function claimPendingJobs(limit = 25) {
 export async function completeJob(jobId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
-  await db.update(jobs).set({ status: "succeeded", lockedAt: null, completedAt: new Date(), updatedAt: new Date() }).where(and(eq(jobs.id, jobId), eq(jobs.status, "running")));
+  await db.update(jobs).set({ status: "succeeded", lockedAt: null, leaseExpiresAt: null, heartbeatAt: null, workerId: null, completedAt: new Date(), updatedAt: new Date() }).where(and(eq(jobs.id, jobId), eq(jobs.status, "running"), eq(jobs.workerId, WORKER_ID)));
   return { success: true as const, jobId, status: "succeeded" as const };
 }
 
@@ -176,7 +187,7 @@ export async function failJob(jobId: number, errorMessage: string) {
   const terminal = job.attempts >= job.maxAttempts;
   const nextStatus = terminal ? "dead_letter" : "retrying";
   const backoffMs = Math.min(60 * 60 * 1_000, 2 ** Math.max(0, job.attempts - 1) * 5_000);
-  await db.update(jobs).set({ status: nextStatus, lockedAt: null, lastError, availableAt: terminal ? job.availableAt : new Date(Date.now() + backoffMs), completedAt: terminal ? new Date() : null, updatedAt: new Date() }).where(and(eq(jobs.id, jobId), eq(jobs.status, "running")));
+  await db.update(jobs).set({ status: nextStatus, lockedAt: null, leaseExpiresAt: null, heartbeatAt: null, workerId: null, lastError, availableAt: terminal ? job.availableAt : new Date(Date.now() + backoffMs), completedAt: terminal ? new Date() : null, updatedAt: new Date() }).where(and(eq(jobs.id, jobId), eq(jobs.status, "running"), eq(jobs.workerId, WORKER_ID)));
   return { success: true as const, jobId, status: nextStatus };
 }
 

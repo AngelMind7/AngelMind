@@ -445,11 +445,14 @@ export const jobs = mysqlTable("jobs", {
   maxAttempts: int("maxAttempts").default(3).notNull(),
   availableAt: timestamp("availableAt").defaultNow().notNull(),
   lockedAt: timestamp("lockedAt"),
+  leaseExpiresAt: timestamp("leaseExpiresAt"),
+  heartbeatAt: timestamp("heartbeatAt"),
+  workerId: varchar("workerId", { length: 128 }),
   lastError: text("lastError"),
   completedAt: timestamp("completedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-}, table => [uniqueIndex("job_idempotency_key_uq").on(table.idempotencyKey), index("job_status_available_idx").on(table.status, table.availableAt), index("job_workspace_created_idx").on(table.workspaceId, table.createdAt)]);
+}, table => [uniqueIndex("job_idempotency_key_uq").on(table.idempotencyKey), index("job_status_available_idx").on(table.status, table.availableAt), index("job_lease_expiry_idx").on(table.status, table.leaseExpiresAt), index("job_workspace_created_idx").on(table.workspaceId, table.createdAt)]);
 
 export const outboxEvents = mysqlTable("outboxEvents", {
   id: int("id").autoincrement().primaryKey(),

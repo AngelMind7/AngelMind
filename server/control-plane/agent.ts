@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { invokeLLM } from "../_core/llm";
 import { createFinding } from "./service";
+import { canAccessWorkspace } from "./operations";
 
 export type EvidenceAnalysis = {
   summary: string;
@@ -45,8 +46,13 @@ export async function analyzeEvidence(input: { scopeSummary: string; evidence: s
   return { ...parsed, safety: { networkCalls: 0, toolsExecuted: 0, autonomousSubmission: false } };
 }
 
+export async function analyzeEvidenceForWorkspace(userId: number, input: { workspaceId: number; scopeSummary: string; evidence: string; findingTitle?: string }): Promise<EvidenceAnalysis> {
+  if (!(await canAccessWorkspace(userId, input.workspaceId, "respond"))) throw new Error("Workspace tidak ditemukan atau tidak dapat diakses.");
+  return analyzeEvidence(input);
+}
+
 export async function analyzeAndCreateFinding(userId: number, input: { workspaceId: number; scopeSummary: string; evidence: string; findingTitle: string }) {
-  const analysis = await analyzeEvidence(input);
+  const analysis = await analyzeEvidenceForWorkspace(userId, input);
   const fingerprint = createHash("sha256").update(`${input.workspaceId}:${input.findingTitle}:${input.evidence}`).digest("hex").slice(0, 64);
   const finding = await createFinding(userId, { workspaceId: input.workspaceId, fingerprint, title: input.findingTitle, impactSummary: analysis.summary, reportDraft: analysis.reportDraft, confidence: analysis.confidence });
   return { ...finding, analysis, fingerprint };

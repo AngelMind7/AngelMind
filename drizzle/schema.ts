@@ -68,7 +68,7 @@ export const authDevices = mysqlTable("authDevices", {
 export const apiKeys = mysqlTable("apiKeys", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  workspaceId: int("workspaceId"),
+  workspaceId: int("workspaceId").references(() => workspaces.id, { onDelete: "set null" }),
   name: varchar("name", { length: 120 }).notNull(),
   prefix: varchar("prefix", { length: 16 }).notNull(),
   secretHash: varchar("secretHash", { length: 64 }).notNull(),
@@ -213,7 +213,7 @@ export const researchHypothesisStatus = ["proposed", "investigating", "supported
 
 export const researchSessions = mysqlTable("researchSessions", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   ownerUserId: int("ownerUserId").notNull(),
   title: varchar("title", { length: 200 }).notNull(),
   state: mysqlEnum("state", researchSessionState).default("draft").notNull(),
@@ -225,7 +225,7 @@ export const researchSessions = mysqlTable("researchSessions", {
 
 export const researchAssets = mysqlTable("researchAssets", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   sessionId: int("sessionId").notNull(),
   assetType: mysqlEnum("assetType", researchAssetType).notNull(),
   value: varchar("value", { length: 512 }).notNull(),
@@ -239,7 +239,7 @@ export const researchAssets = mysqlTable("researchAssets", {
 
 export const researchObservations = mysqlTable("researchObservations", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   sessionId: int("sessionId").notNull(),
   assetId: int("assetId"),
   title: varchar("title", { length: 240 }).notNull(),
@@ -252,7 +252,7 @@ export const researchObservations = mysqlTable("researchObservations", {
 
 export const researchHypotheses = mysqlTable("researchHypotheses", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   sessionId: int("sessionId").notNull(),
   assetId: int("assetId"),
   observationId: int("observationId"),
@@ -270,7 +270,7 @@ export const researchHypotheses = mysqlTable("researchHypotheses", {
 
 export const researchTasks = mysqlTable("researchTasks", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   sessionId: int("sessionId").notNull(),
   type: varchar("type", { length: 80 }).notNull(),
   title: varchar("title", { length: 240 }).notNull(),
@@ -312,7 +312,7 @@ export const aiModels = mysqlTable("aiModels", {
 
 export const aiRuns = mysqlTable("aiRuns", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   sessionId: int("sessionId"),
   taskId: int("taskId"),
   userId: int("userId").notNull(),
@@ -345,7 +345,7 @@ export const aiEvaluationVerdict = ["pass", "fail", "needs_review"] as const;
 
 export const aiRunEvaluations = mysqlTable("aiRunEvaluations", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   runId: int("runId").notNull(),
   rubric: varchar("rubric", { length: 160 }).notNull(),
   score: int("score").notNull(),
@@ -368,7 +368,7 @@ export const promptVersions = mysqlTable("promptVersions", {
 
 export const jobs = mysqlTable("jobs", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId"),
+  workspaceId: int("workspaceId").references(() => workspaces.id, { onDelete: "set null" }),
   kind: varchar("kind", { length: 80 }).notNull(),
   idempotencyKey: varchar("idempotencyKey", { length: 180 }).notNull(),
   payload: text("payload").notNull(),
@@ -385,7 +385,7 @@ export const jobs = mysqlTable("jobs", {
 
 export const outboxEvents = mysqlTable("outboxEvents", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId"),
+  workspaceId: int("workspaceId").references(() => workspaces.id, { onDelete: "set null" }),
   eventType: varchar("eventType", { length: 120 }).notNull(),
   aggregateType: varchar("aggregateType", { length: 80 }).notNull(),
   aggregateId: int("aggregateId").notNull(),
@@ -411,7 +411,7 @@ export const searchDocuments = mysqlTable("searchDocuments", {
 
 export const runs = mysqlTable("runs", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   mode: mysqlEnum("mode", ["dry_run", "administrative"] as const).notNull(),
   status: mysqlEnum("status", runStatus).notNull(),
   governanceTier: mysqlEnum("governanceTier", ["tier1", "tier2", "tier3"] as const).notNull(),
@@ -426,7 +426,7 @@ export const runs = mysqlTable("runs", {
 
 export const findings = mysqlTable("findings", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   fingerprint: varchar("fingerprint", { length: 96 }).notNull(),
   title: varchar("title", { length: 240 }).notNull(),
   status: mysqlEnum("status", findingStatus).default("discovered").notNull(),
@@ -443,7 +443,7 @@ export const findings = mysqlTable("findings", {
 
 export const approvals = mysqlTable("approvals", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   runId: int("runId"),
   actionName: varchar("actionName", { length: 160 }).notNull(),
   tier: mysqlEnum("tier", ["tier1", "tier2", "tier3"] as const).notNull(),
@@ -457,7 +457,7 @@ export const approvals = mysqlTable("approvals", {
 
 export const auditEvents = mysqlTable("auditEvents", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   category: varchar("category", { length: 80 }).notNull(),
   subject: varchar("subject", { length: 160 }).notNull(),
   evidenceHash: varchar("evidenceHash", { length: 64 }).notNull(),
@@ -489,7 +489,7 @@ export const evidenceProvenance = mysqlTable("evidenceProvenance", {
 
 export const researchEvidenceLinks = mysqlTable("researchEvidenceLinks", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   evidenceArtifactId: int("evidenceArtifactId").notNull(),
   observationId: int("observationId"),
   hypothesisId: int("hypothesisId"),
@@ -500,7 +500,7 @@ export const researchEvidenceLinks = mysqlTable("researchEvidenceLinks", {
 
 export const findingRelations = mysqlTable("findingRelations", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   findingId: int("findingId").notNull(),
   relatedFindingId: int("relatedFindingId").notNull(),
   relationType: mysqlEnum("relationType", ["duplicate", "related", "supersedes"] as const).notNull(),
@@ -510,7 +510,7 @@ export const findingRelations = mysqlTable("findingRelations", {
 
 export const findingRetests = mysqlTable("findingRetests", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   findingId: int("findingId").notNull(),
   requestedByUserId: int("requestedByUserId").notNull(),
   status: mysqlEnum("status", ["requested", "in_progress", "passed", "failed", "inconclusive", "cancelled"] as const).default("requested").notNull(),
@@ -524,7 +524,7 @@ export const findingRetests = mysqlTable("findingRetests", {
 
 export const credentialReferences = mysqlTable("credentialReferences", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   label: varchar("label", { length: 120 }).notNull(),
   secretReference: varchar("secretReference", { length: 200 }).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -535,7 +535,7 @@ export const credentialReferences = mysqlTable("credentialReferences", {
 
 export const workspaceChangeSnapshots = mysqlTable("workspaceChangeSnapshots", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   configurationDigest: varchar("configurationDigest", { length: 64 }).notNull(),
   checkedAt: timestamp("checkedAt").defaultNow().notNull(),
 }, table => [
@@ -557,7 +557,7 @@ export const notificationPreferences = mysqlTable("notificationPreferences", {
 export const notifications = mysqlTable("notifications", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
-  workspaceId: int("workspaceId"),
+  workspaceId: int("workspaceId").references(() => workspaces.id, { onDelete: "set null" }),
   eventType: mysqlEnum("eventType", notificationEventType).notNull(),
   severity: mysqlEnum("severity", ["info", "warning", "critical"] as const).default("info").notNull(),
   title: varchar("title", { length: 180 }).notNull(),
@@ -571,7 +571,7 @@ export const notifications = mysqlTable("notifications", {
 
 export const workspaceMemberships = mysqlTable("workspaceMemberships", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   userId: int("userId").notNull(),
   role: mysqlEnum("role", workspaceMemberRole).notNull(),
   addedByUserId: int("addedByUserId").notNull(),
@@ -583,7 +583,7 @@ export const workspaceMemberships = mysqlTable("workspaceMemberships", {
 
 export const webhookConfigurations = mysqlTable("webhookConfigurations", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   endpoint: varchar("endpoint", { length: 2_048 }).notNull(),
   signingSecretReference: varchar("signingSecretReference", { length: 240 }),
   eventTypes: text("eventTypes").notNull(),
@@ -595,7 +595,7 @@ export const webhookConfigurations = mysqlTable("webhookConfigurations", {
 
 export const auditArchives = mysqlTable("auditArchives", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   storageKey: varchar("storageKey", { length: 512 }).notNull(),
   storageReference: text("storageReference").notNull(),
   manifestHash: varchar("manifestHash", { length: 64 }).notNull(),
@@ -606,7 +606,7 @@ export const auditArchives = mysqlTable("auditArchives", {
 
 export const policyVersions = mysqlTable("policyVersions", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   version: int("version").notNull(),
   safeHarbor: text("safeHarbor").notNull(),
   codeOfConduct: text("codeOfConduct").notNull(),
@@ -628,7 +628,7 @@ export const policyVersions = mysqlTable("policyVersions", {
 
 export const incidents = mysqlTable("incidents", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   title: varchar("title", { length: 200 }).notNull(),
   description: text("description").notNull(),
   severity: mysqlEnum("severity", incidentSeverity).notNull(),
@@ -646,7 +646,7 @@ export const incidents = mysqlTable("incidents", {
 
 export const webhookActivationRequests = mysqlTable("webhookActivationRequests", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   webhookConfigurationId: int("webhookConfigurationId").notNull(),
   status: mysqlEnum("status", approvalStatus).default("pending").notNull(),
   requestedByUserId: int("requestedByUserId").notNull(),
@@ -670,7 +670,7 @@ export const incidentEvidenceLinks = mysqlTable("incidentEvidenceLinks", {
 export const passiveAssetSource = ["csv", "json"] as const;
 export const passiveAssets = mysqlTable("passiveAssets", {
   id: int("id").autoincrement().primaryKey(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   value: varchar("value", { length: 512 }).notNull(),
   hostname: varchar("hostname", { length: 255 }).notNull(),
   source: mysqlEnum("source", passiveAssetSource).notNull(),
@@ -738,7 +738,7 @@ export type Approval = typeof approvals.$inferSelect;
 export const findingComments = mysqlTable("findingComments", {
   id: int("id").autoincrement().primaryKey(),
   findingId: int("findingId").notNull(),
-  workspaceId: int("workspaceId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   authorUserId: int("authorUserId").notNull(),
   body: text("body").notNull(),
   mentions: text("mentions").notNull(),

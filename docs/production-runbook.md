@@ -49,3 +49,17 @@ If a release introduces a regression, stop new workspace activity, preserve the 
 ## Security boundary
 
 External platform submission remains a human action. Any proposed target-facing capability requires a new threat model, egress policy, least-privilege design, capability-specific rate limit, program authorization, independent review, and additional audit tests before implementation.
+
+## Durable worker and migrations
+
+After deploying the application image, apply Drizzle migrations before accepting durable AI jobs. The runtime has two processes: the web API (`node dist/index.js`) and the queue worker (`node dist/worker.js` with `RUN_WORKER=true`). The worker claims leased jobs, retries transient failures with bounded exponential backoff, and moves exhausted jobs to `dead_letter`. It must use the same database, storage, and server-side LLM provider secrets as the web API; those secrets must never be placed in browser variables.
+
+The new migrations add `aiRunOutputs`, `searchDocuments`, and workspace foreign keys. Run the migration process during a controlled deployment window and verify existing workspace IDs before applying foreign-key constraints. Rebuild each workspace search index through the protected `agent.rebuildSearchIndex` procedure after migration and after bulk imports.
+
+## Versioned API
+
+Read-only REST endpoints are available under `/api/v1`. Health is exposed at `/api/v1/health`; workspace search is `/api/v1/workspaces/:workspaceId/search?q=...`; and AI run status is available at `/api/v1/ai-runs/:runId`. All non-health endpoints require the same Firebase bearer authentication and workspace authorization as the dashboard. Future breaking changes must use `/api/v2` rather than changing the v1 response contract.
+
+## Automated DR rehearsal
+
+Use `operations.runDrDrill` with a verified archive and a separate destination workspace during a scheduled recovery exercise. The drill verifies the signed archive, validates the manifest identity, returns record counts, and explicitly reports `mutationPerformed=false`. It is intentionally plan-only: a human-approved recovery executor and an isolated recovery environment are still required before records can be written.

@@ -14,6 +14,7 @@ import { canAccessWorkspace, ensureOwnerMembership, getReadableWorkspaceIds, get
 import { escalateOverdueIncidentsForWorkspace } from "./assurance";
 import type { ActionKind } from "./contracts";
 import { validateEvidenceBytes } from "./evidence-validation";
+import { upsertSearchDocument } from "../global-search";
 
 const parseList = (serialized: string): string[] => {
   try {
@@ -251,6 +252,8 @@ export async function createFinding(userId: number, input: { workspaceId: number
     status: "discovered",
     humanReviewStatus: "pending",
   });
+  const [createdFinding] = await db.select().from(findings).where(and(eq(findings.workspaceId, workspace.id), eq(findings.fingerprint, input.fingerprint.trim()))).limit(1);
+  if (createdFinding) await upsertSearchDocument({ workspaceId: workspace.id, entityType: "finding", entityId: createdFinding.id, title: createdFinding.title, body: createdFinding.impactSummary });
   await addAudit(workspace.id, "finding", "finding-discovered", { fingerprint: input.fingerprint.trim(), title: input.title.trim(), confidence: input.confidence });
   return { success: true };
 }

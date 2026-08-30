@@ -7,6 +7,12 @@ function clean(value: string | null | undefined, max = 20_000) {
   return String(value ?? "").trim().slice(0, max);
 }
 
+export async function upsertSearchDocument(input: { workspaceId: number; entityType: string; entityId: number; title: string; body: string }) {
+  const db = await getDb();
+  if (!db) return;
+  await db.insert(searchDocuments).values({ workspaceId: input.workspaceId, entityType: input.entityType, entityId: input.entityId, title: clean(input.title, 512), body: clean(input.body) }).onDuplicateKeyUpdate({ set: { title: clean(input.title, 512), body: clean(input.body), updatedAt: new Date() } });
+}
+
 export async function rebuildWorkspaceSearchIndex(userId: number, workspaceId: number) {
   if (!(await canAccessWorkspace(userId, workspaceId, "respond"))) throw new Error("Workspace tidak dapat dikelola.");
   const db = await getDb();

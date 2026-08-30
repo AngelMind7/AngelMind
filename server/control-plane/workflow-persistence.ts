@@ -4,6 +4,7 @@ import { getDb } from "../db";
 import { canAccessWorkspace } from "./operations";
 import { composeReport, type ReportInput, type ReportPlatform } from "./report-composer";
 import { parsePassiveInventory, type PassiveAsset } from "./passive-inventory";
+import { upsertSearchDocument } from "../global-search";
 
 export async function importPassiveAssets(userId: number, input: { workspaceId: number; content: string; format: "csv" | "json"; allowlist: string[]; exclusions: string[] }): Promise<PassiveAsset[]> {
   if (!(await canAccessWorkspace(userId, input.workspaceId, "respond"))) throw new Error("Workspace tidak dapat dikelola oleh user ini.");
@@ -54,6 +55,8 @@ export async function createReportVersion(userId: number, input: { findingId: nu
   await ensureFindingInWorkspace(db, input.findingId, input.workspaceId);
   const composed = composeReport(input.report, input.platform);
   await db.insert(reportVersions).values({ findingId: input.findingId, workspaceId: input.workspaceId, platform: composed.platform, title: composed.title, body: composed.body, missingFields: JSON.stringify(composed.missingFields), readyForReview: composed.readyForReview ? 1 : 0, createdByUserId: userId });
+  const [version] = await db.select().from(reportVersions).where(and(eq(reportVersions.findingId, input.findingId), eq(reportVersions.workspaceId, input.workspaceId))).orderBy(desc(reportVersions.id)).limit(1);
+  if (version) await upsertSearchDocument({ workspaceId: input.workspaceId, entityType: "report", entityId: version.id, title: version.title, body: version.body });
   return composed;
 }
 

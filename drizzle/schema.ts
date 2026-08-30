@@ -287,6 +287,66 @@ export const researchTasks = mysqlTable("researchTasks", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => [index("research_task_session_status_priority_idx").on(table.sessionId, table.status, table.priority), index("research_task_owner_status_idx").on(table.ownerUserId, table.status)]);
 
+export const failureKind = ["timeout", "dependency_failure", "partial_response", "error_state", "recovery_behavior", "retry_behavior", "concurrency", "race_condition", "transaction_failure", "degraded_mode", "cascading_failure"] as const;
+export const failureImpact = ["none", "low", "medium", "high", "critical"] as const;
+export const failureObservationStatus = ["observed", "triaged", "validated", "archived"] as const;
+
+export const failureObservations = mysqlTable("failureObservations", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  sessionId: int("sessionId").notNull().references(() => researchSessions.id, { onDelete: "cascade" }),
+  kind: mysqlEnum("kind", failureKind).notNull(),
+  normalState: varchar("normalState", { length: 240 }).notNull(),
+  condition: text("condition").notNull(),
+  observedBehavior: text("observedBehavior").notNull(),
+  impact: mysqlEnum("impact", failureImpact).default("low").notNull(),
+  evidenceRefs: text("evidenceRefs").notNull(),
+  status: mysqlEnum("status", failureObservationStatus).default("observed").notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [index("failure_observation_workspace_status_idx").on(table.workspaceId, table.status), index("failure_observation_session_created_idx").on(table.sessionId, table.createdAt)]);
+
+export const evolutionSnapshots = mysqlTable("evolutionSnapshots", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  sessionId: int("sessionId").references(() => researchSessions.id, { onDelete: "set null" }),
+  assetRef: varchar("assetRef", { length: 512 }).notNull(),
+  version: varchar("version", { length: 120 }).notNull(),
+  capturedAt: timestamp("capturedAt").notNull(),
+  attributes: text("attributes").notNull(),
+  source: varchar("source", { length: 120 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [index("evolution_snapshot_workspace_asset_idx").on(table.workspaceId, table.assetRef, table.capturedAt)]);
+
+export const intelligenceFeedItems = mysqlTable("intelligenceFeedItems", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  source: varchar("source", { length: 120 }).notNull(),
+  assetRef: varchar("assetRef", { length: 512 }).notNull(),
+  observedAt: timestamp("observedAt").notNull(),
+  confidence: int("confidence").notNull(),
+  reference: varchar("reference", { length: 512 }),
+  data: text("data").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [index("intelligence_feed_workspace_asset_idx").on(table.workspaceId, table.assetRef, table.observedAt), index("intelligence_feed_source_idx").on(table.source, table.observedAt)]);
+
+export const playbookStatus = ["draft", "active", "deprecated"] as const;
+export const playbooks = mysqlTable("playbooks", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  slug: varchar("slug", { length: 160 }).notNull(),
+  version: varchar("version", { length: 40 }).notNull(),
+  status: mysqlEnum("status", playbookStatus).default("draft").notNull(),
+  domains: text("domains").notNull(),
+  assetTypes: text("assetTypes").notNull(),
+  technologies: text("technologies").notNull(),
+  taskTemplates: text("taskTemplates").notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [uniqueIndex("playbook_workspace_slug_version_uq").on(table.workspaceId, table.slug, table.version), index("playbook_workspace_status_idx").on(table.workspaceId, table.status)]);
+
 export const aiModelStatus = ["active", "degraded", "disabled"] as const;
 export const aiRunStatus = ["queued", "running", "completed", "failed", "partial", "cancelled"] as const;
 export const jobStatus = ["queued", "running", "succeeded", "failed", "retrying", "dead_letter", "cancelled"] as const;

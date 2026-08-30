@@ -9,7 +9,7 @@ Dokumen ini memetakan 115 area pada `Angelmindstrukturjelas.pdf` terhadap implem
 | Public website | Sebagian besar tersedia | Route publik, legal pages, trust, security, documentation, pricing, status, contact, dan marketing copy tersedia. |
 | Authentication dan identity | Vertical slice selesai | Firebase ID token verification, Firebase login/logout, device registry, login/security event ledger, onboarding profile, API key lifecycle dengan hash, serta profile/privacy visibility. |
 | Organization dan authorization | Vertical slice selesai | Organization tenant, member roles, program catalog, scope manifest, entitlements, workspace organization/program references, dan admin membership checks. Workspace authorization lama tetap dipakai sebagai boundary utama. |
-| Research workflow | Vertical slice selesai | Research session state machine, scope digest, asset intelligence, observation, hypothesis, task dependency graph dengan visual readiness layout cycle-safe, task transitions, audit metadata, serta Research Workspace UI. Failure-domain validation, evolution diff, playbook matching, dan intelligence normalization contract juga tersedia di `server/control-plane/intelligence-engine.ts`. |
+| Research workflow | Vertical slice diperluas | Research session state machine, scope digest, asset intelligence, observation, hypothesis, task dependency graph dengan visual readiness layout cycle-safe, task transitions, audit metadata, serta Research Workspace UI. Failure Domain sekarang memiliki persistence/API/UI; evolution snapshots, intelligence feeds, dan versioned playbooks memiliki migration serta workspace-scoped service/API. |
 | Evidence dan findings | Diperluas | Existing evidence upload, finding lifecycle, report version, validation, archive, dan analytics dipertahankan; provenance, duplicate/related/supersedes relation, retest lifecycle, dan quality gate ditambahkan. |
 | AI Center | Vertical slice selesai | Model registry, AI run trace, trace ID, model/gateway references, cost ceiling, usage accounting, prompt version table, durable jobs, idempotency key, dan outbox event table/API. AI tidak memiliki target execution atau credential access. |
 | Platform dan integrations | Sebagian besar tersedia | tRPC API, Firebase, Supabase Storage, Railway deployment/Cron, GitHub CI, webhook policy, audit archive, provider-neutral guard, API key authentication fallback, dan privacy request lifecycle. Versioned REST gateway, search index, tagging, dan collaboration lanjutan masih perlu iterasi. |
@@ -28,7 +28,7 @@ Dokumen ini memetakan 115 area pada `Angelmindstrukturjelas.pdf` terhadap implem
 
 ## Migration
 
-Schema terbaru berada pada rangkaian migration sampai `drizzle/0018_ai_run_retention.sql`, termasuk identity, tenant, research, evidence, reports, collaboration, outbox versioning, AI evaluations, dan AI run retention. Jalankan migration pada environment yang memiliki `DATABASE_URL` setelah meninjau SQL tersebut; sandbox tidak mengeksekusi migration ke database produksi.
+Schema terbaru berada pada rangkaian migration sampai `drizzle/0023_v2_intelligence_foundation.sql`, termasuk identity, tenant, research, failure observations, evolution snapshots, intelligence feeds, playbooks, evidence, reports, collaboration, outbox versioning, AI evaluations, dan AI run retention. Jalankan migration pada environment yang memiliki `DATABASE_URL` setelah meninjau SQL tersebut; sandbox tidak mengeksekusi migration ke database produksi.
 
 ## Validasi
 

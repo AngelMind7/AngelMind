@@ -36,6 +36,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
        binwalk \
        binutils \
        ca-certificates \
+       curl \
        cppcheck \
        dc3dd \
        flawfinder \
@@ -61,6 +62,12 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
        yara \
        whois \
     && rm -rf /var/lib/apt/lists/* \
+    && curl -fsSL https://github.com/anchore/grype/releases/download/v0.118.0/grype_0.118.0_linux_amd64.tar.gz | tar -xz -C /usr/local/bin grype \
+    && curl -fsSL https://github.com/anchore/syft/releases/download/v1.51.1/syft_1.51.1_linux_amd64.tar.gz | tar -xz -C /usr/local/bin syft \
+    && curl -fsSL -o /usr/local/bin/osv-scanner https://github.com/google/osv-scanner/releases/download/v2.5.1/osv-scanner_linux_amd64 \
+    && curl -fsSL https://github.com/aquasecurity/trivy/releases/download/v0.74.0/trivy_0.74.0_Linux-64bit.tar.gz | tar -xz -C /usr/local/bin trivy \
+    && curl -fsSL https://github.com/aquasecurity/tfsec/releases/download/v1.28.14/tfsec_1.28.14_linux_amd64.tar.gz | tar -xz -C /usr/local/bin tfsec \
+    && chmod 0755 /usr/local/bin/grype /usr/local/bin/syft /usr/local/bin/osv-scanner /usr/local/bin/trivy /usr/local/bin/tfsec \
     && corepack enable \
     && useradd --create-home --shell /usr/sbin/nologin angelmind
 COPY --from=build --chown=angelmind:angelmind /app/dist ./dist

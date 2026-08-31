@@ -41,7 +41,12 @@ type SupportedToolKey =
   | "traffic_analysis.10"
   | "email_dns_security.1"
   | "email_dns_security.2"
-  | "configuration.1";
+  | "configuration.1"
+  | "configuration.17"
+  | "dependencies.3"
+  | "dependencies.6"
+  | "dependencies.11"
+  | "dependencies.12";
 
 export type ToolRuntimeRequest = {
   toolKey: string;
@@ -321,6 +326,36 @@ const adapters: readonly Adapter[] = [
     toolKey: "configuration.1",
     binary: "checkov",
     args: inputPath => ["-f", inputPath, "--output", "json"],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "configuration.17",
+    binary: "tfsec",
+    args: inputPath => [inputPath, "--format", "json"],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "dependencies.3",
+    binary: "grype",
+    args: inputPath => [inputPath, "-o", "json"],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "dependencies.6",
+    binary: "osv-scanner",
+    args: inputPath => ["scan", "source", "-r", inputPath, "--format", "json"],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "dependencies.11",
+    binary: "syft",
+    args: inputPath => [`file:${inputPath}`, "-o", "json"],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "dependencies.12",
+    binary: "trivy",
+    args: inputPath => ["fs", "--quiet", "--format", "json", inputPath],
     allowedModes: ["offline_artifact"],
   },
 ];

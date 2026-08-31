@@ -165,6 +165,31 @@ describe("registered tool runtime", () => {
         binary: "checkov",
         allowedModes: ["offline_artifact"],
       },
+      {
+        toolKey: "configuration.17",
+        binary: "tfsec",
+        allowedModes: ["offline_artifact"],
+      },
+      {
+        toolKey: "dependencies.3",
+        binary: "grype",
+        allowedModes: ["offline_artifact"],
+      },
+      {
+        toolKey: "dependencies.6",
+        binary: "osv-scanner",
+        allowedModes: ["offline_artifact"],
+      },
+      {
+        toolKey: "dependencies.11",
+        binary: "syft",
+        allowedModes: ["offline_artifact"],
+      },
+      {
+        toolKey: "dependencies.12",
+        binary: "trivy",
+        allowedModes: ["offline_artifact"],
+      },
     ]);
   });
 

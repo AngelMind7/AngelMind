@@ -25,7 +25,10 @@ type SupportedToolKey =
   | "binary_artifact_analysis.8"
   | "binary_artifact_analysis.2"
   | "binary_artifact_analysis.3"
-  | "binary_artifact_analysis.23";
+  | "binary_artifact_analysis.23"
+  | "source_code.23"
+  | "secrets_detection.8"
+  | "dependencies.20";
 
 export type ToolRuntimeRequest = {
   toolKey: string;
@@ -177,6 +180,30 @@ const adapters: readonly Adapter[] = [
     toolKey: "binary_artifact_analysis.23",
     binary: "python3",
     args: inputPath => ["/app/runtime/unicorn_probe.py", inputPath],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "source_code.23",
+    binary: "njsscan",
+    args: inputPath => ["--json", inputPath],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "secrets_detection.8",
+    binary: "detect-secrets",
+    args: inputPath => [
+      "scan",
+      "--all-files",
+      "--force-use-all-plugins",
+      "--json",
+      inputPath,
+    ],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "dependencies.20",
+    binary: "pip-audit",
+    args: inputPath => ["-r", inputPath, "-f", "json"],
     allowedModes: ["offline_artifact"],
   },
 ];

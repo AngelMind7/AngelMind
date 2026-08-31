@@ -44,6 +44,7 @@ RUN apt-get update \
        gitleaks \
        dnsutils \
        python3 \
+       python3-pip \
        python3-capstone \
        python3-unicorn \
        file \
@@ -63,7 +64,12 @@ COPY --from=build --chown=angelmind:angelmind /app/package.json /app/pnpm-lock.y
 COPY --chown=angelmind:angelmind config/tool-runtime-packs.yaml ./config/tool-runtime-packs.yaml
 COPY --chown=angelmind:angelmind runtime/rules.yar /etc/angelmind/rules.yar
 COPY --chown=angelmind:angelmind runtime/capstone_inspect.py runtime/unicorn_probe.py ./runtime/
-RUN pnpm install --prod --frozen-lockfile && chown -R angelmind:angelmind /app
+RUN python3 -m pip install --no-cache-dir --break-system-packages \
+       detect-secrets==1.5.0 \
+       njsscan==1.0.0 \
+       pip-audit==2.10.1 \
+    && pnpm install --prod --frozen-lockfile \
+    && chown -R angelmind:angelmind /app
 USER angelmind
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 CMD node -e "const port=process.env.PORT||3000; fetch('http://127.0.0.1:'+port+'/healthz').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"

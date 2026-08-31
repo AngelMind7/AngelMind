@@ -84,6 +84,21 @@ describe("registered tool runtime", () => {
         binary: "python3",
         allowedModes: ["offline_artifact"],
       },
+      {
+        toolKey: "source_code.23",
+        binary: "njsscan",
+        allowedModes: ["offline_artifact"],
+      },
+      {
+        toolKey: "secrets_detection.8",
+        binary: "detect-secrets",
+        allowedModes: ["offline_artifact"],
+      },
+      {
+        toolKey: "dependencies.20",
+        binary: "pip-audit",
+        allowedModes: ["offline_artifact"],
+      },
     ]);
   });
 

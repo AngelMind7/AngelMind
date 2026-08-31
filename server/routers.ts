@@ -564,6 +564,9 @@ export const appRouter = router({
     runtimeAdapters: protectedProcedure.query(() =>
       toolRuntime.listRegisteredAdapters()
     ),
+    runtimeHealth: protectedProcedure.query(() =>
+      toolRuntime.checkRegisteredAdapterHealth()
+    ),
     run: protectedProcedure
       .input(
         z.object({

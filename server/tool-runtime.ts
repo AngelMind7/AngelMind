@@ -155,6 +155,51 @@ export function listRegisteredAdapters() {
   }));
 }
 
+function probeBinary(binary: string) {
+  return new Promise<{ available: boolean; version?: string }>(resolve => {
+    const child = spawn(binary, ["--version"], {
+      cwd: "/tmp",
+      env: {
+        PATH: process.env.PATH ?? "/usr/bin:/bin",
+        LANG: "C",
+        LC_ALL: "C",
+      },
+      shell: false,
+      stdio: ["ignore", "pipe", "ignore"],
+    });
+    let stdout = "";
+    const timer = setTimeout(() => {
+      child.kill("SIGKILL");
+      resolve({ available: false });
+    }, 5_000);
+    child.stdout.on("data", chunk => {
+      stdout += chunk.toString();
+    });
+    child.once("error", () => {
+      clearTimeout(timer);
+      resolve({ available: false });
+    });
+    child.once("close", code => {
+      clearTimeout(timer);
+      resolve({
+        available: code === 0,
+        version: code === 0 ? boundedText(stdout.trim(), 512) : undefined,
+      });
+    });
+  });
+}
+
+export async function checkRegisteredAdapterHealth() {
+  const health = await Promise.all(
+    adapters.map(async adapter => ({
+      toolKey: adapter.toolKey,
+      binary: adapter.binary,
+      ...(await probeBinary(adapter.binary)),
+    }))
+  );
+  return health;
+}
+
 export async function runRegisteredTool(
   request: ToolRuntimeRequest
 ): Promise<ToolRuntimeResult> {

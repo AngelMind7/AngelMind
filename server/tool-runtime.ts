@@ -22,7 +22,10 @@ type SupportedToolKey =
   | "source_code.19"
   | "source_code.22"
   | "source_code.9"
-  | "binary_artifact_analysis.8";
+  | "binary_artifact_analysis.8"
+  | "binary_artifact_analysis.2"
+  | "binary_artifact_analysis.3"
+  | "binary_artifact_analysis.23";
 
 export type ToolRuntimeRequest = {
   toolKey: string;
@@ -156,6 +159,24 @@ const adapters: readonly Adapter[] = [
     toolKey: "binary_artifact_analysis.8",
     binary: "gdb",
     args: inputPath => ["--batch", "--nx", "-ex", "info files", inputPath],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "binary_artifact_analysis.2",
+    binary: "binwalk",
+    args: inputPath => ["--quiet", inputPath],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "binary_artifact_analysis.3",
+    binary: "python3",
+    args: inputPath => ["/app/runtime/capstone_inspect.py", inputPath],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "binary_artifact_analysis.23",
+    binary: "python3",
+    args: inputPath => ["/app/runtime/unicorn_probe.py", inputPath],
     allowedModes: ["offline_artifact"],
   },
 ];

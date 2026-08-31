@@ -69,6 +69,21 @@ describe("registered tool runtime", () => {
         binary: "gdb",
         allowedModes: ["offline_artifact"],
       },
+      {
+        toolKey: "binary_artifact_analysis.2",
+        binary: "binwalk",
+        allowedModes: ["offline_artifact"],
+      },
+      {
+        toolKey: "binary_artifact_analysis.3",
+        binary: "python3",
+        allowedModes: ["offline_artifact"],
+      },
+      {
+        toolKey: "binary_artifact_analysis.23",
+        binary: "python3",
+        allowedModes: ["offline_artifact"],
+      },
     ]);
   });
 

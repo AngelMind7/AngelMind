@@ -33,6 +33,7 @@ ENV NODE_ENV=production
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
        bandit \
+       binwalk \
        binutils \
        ca-certificates \
        cppcheck \
@@ -42,6 +43,9 @@ RUN apt-get update \
        gdb \
        gitleaks \
        dnsutils \
+       python3 \
+       python3-capstone \
+       python3-unicorn \
        file \
        jq \
        python3-plaso \
@@ -58,6 +62,7 @@ COPY --from=build --chown=angelmind:angelmind /app/dist ./dist
 COPY --from=build --chown=angelmind:angelmind /app/package.json /app/pnpm-lock.yaml ./
 COPY --chown=angelmind:angelmind config/tool-runtime-packs.yaml ./config/tool-runtime-packs.yaml
 COPY --chown=angelmind:angelmind runtime/rules.yar /etc/angelmind/rules.yar
+COPY --chown=angelmind:angelmind runtime/capstone_inspect.py runtime/unicorn_probe.py ./runtime/
 RUN pnpm install --prod --frozen-lockfile && chown -R angelmind:angelmind /app
 USER angelmind
 EXPOSE 3000

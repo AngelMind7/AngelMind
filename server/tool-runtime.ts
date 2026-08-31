@@ -39,7 +39,8 @@ type SupportedToolKey =
   | "traffic_analysis.17"
   | "traffic_analysis.8"
   | "traffic_analysis.10"
-  | "email_dns_security.1";
+  | "email_dns_security.1"
+  | "email_dns_security.2";
 
 export type ToolRuntimeRequest = {
   toolKey: string;
@@ -308,6 +309,12 @@ const adapters: readonly Adapter[] = [
     },
     allowedModes: ["passive_readonly"],
     requiresTarget: true,
+  },
+  {
+    toolKey: "email_dns_security.2",
+    binary: "python3",
+    args: inputPath => ["/app/runtime/dkim_verify.py", inputPath],
+    allowedModes: ["passive_readonly"],
   },
 ];
 

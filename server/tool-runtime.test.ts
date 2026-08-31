@@ -155,6 +155,11 @@ describe("registered tool runtime", () => {
         allowedModes: ["passive_readonly"],
         requiresTarget: true,
       },
+      {
+        toolKey: "email_dns_security.2",
+        binary: "python3",
+        allowedModes: ["passive_readonly"],
+      },
     ]);
   });
 

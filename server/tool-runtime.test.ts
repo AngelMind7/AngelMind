@@ -119,6 +119,16 @@ describe("registered tool runtime", () => {
         binary: "sigmac",
         allowedModes: ["offline_artifact"],
       },
+      {
+        toolKey: "traffic_analysis.12",
+        binary: "tshark",
+        allowedModes: ["passive_readonly"],
+      },
+      {
+        toolKey: "traffic_analysis.17",
+        binary: "tcpdump",
+        allowedModes: ["passive_readonly"],
+      },
     ]);
   });
 

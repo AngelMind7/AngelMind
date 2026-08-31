@@ -32,7 +32,9 @@ type SupportedToolKey =
   | "source_code.18"
   | "supply_chain.3"
   | "validation.17"
-  | "log_analysis.13";
+  | "log_analysis.13"
+  | "traffic_analysis.12"
+  | "traffic_analysis.17";
 
 export type ToolRuntimeRequest = {
   toolKey: string;
@@ -233,6 +235,18 @@ const adapters: readonly Adapter[] = [
     binary: "sigmac",
     args: inputPath => ["--target", "json", inputPath],
     allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "traffic_analysis.12",
+    binary: "tshark",
+    args: inputPath => ["-r", inputPath, "-c", "100", "-T", "json"],
+    allowedModes: ["passive_readonly"],
+  },
+  {
+    toolKey: "traffic_analysis.17",
+    binary: "tcpdump",
+    args: inputPath => ["-nn", "-r", inputPath, "-c", "100"],
+    allowedModes: ["passive_readonly"],
   },
 ];
 

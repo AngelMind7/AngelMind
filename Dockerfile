@@ -30,7 +30,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 # Safe offline/passive utilities only. Active scanners, exploit frameworks,
 # credential tooling, phishing tooling, and remote execution tools are excluded.
-RUN apt-get update \
+RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && apt-get install --no-install-recommends -y \
        bandit \
        binwalk \
@@ -47,6 +47,8 @@ RUN apt-get update \
        python3-pip \
        python3-capstone \
        python3-unicorn \
+       tcpdump \
+       tshark \
        file \
        jq \
        python3-plaso \

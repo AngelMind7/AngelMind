@@ -69,6 +69,7 @@ COPY --chown=angelmind:angelmind config/tool-runtime-packs.yaml ./config/tool-ru
 COPY --chown=angelmind:angelmind runtime/rules.yar /etc/angelmind/rules.yar
 COPY --chown=angelmind:angelmind runtime/capstone_inspect.py runtime/unicorn_probe.py runtime/dkim_verify.py ./runtime/
 RUN python3 -m pip install --no-cache-dir --break-system-packages \
+       checkov==3.3.16 \
        checkdmarc==6.0.0 \
        cyclonedx-bom==7.3.1 \
        dkimpy==1.1.8 \

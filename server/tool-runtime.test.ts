@@ -160,6 +160,11 @@ describe("registered tool runtime", () => {
         binary: "python3",
         allowedModes: ["passive_readonly"],
       },
+      {
+        toolKey: "configuration.1",
+        binary: "checkov",
+        allowedModes: ["offline_artifact"],
+      },
     ]);
   });
 

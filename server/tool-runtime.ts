@@ -40,7 +40,8 @@ type SupportedToolKey =
   | "traffic_analysis.8"
   | "traffic_analysis.10"
   | "email_dns_security.1"
-  | "email_dns_security.2";
+  | "email_dns_security.2"
+  | "configuration.1";
 
 export type ToolRuntimeRequest = {
   toolKey: string;
@@ -315,6 +316,12 @@ const adapters: readonly Adapter[] = [
     binary: "python3",
     args: inputPath => ["/app/runtime/dkim_verify.py", inputPath],
     allowedModes: ["passive_readonly"],
+  },
+  {
+    toolKey: "configuration.1",
+    binary: "checkov",
+    args: inputPath => ["-f", inputPath, "--output", "json"],
+    allowedModes: ["offline_artifact"],
   },
 ];
 

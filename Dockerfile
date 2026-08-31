@@ -28,7 +28,21 @@ RUN pnpm check && pnpm build
 FROM node:22-bookworm-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
-RUN corepack enable && useradd --create-home --shell /usr/sbin/nologin angelmind
+# Safe offline/passive utilities only. Active scanners, exploit frameworks,
+# credential tooling, phishing tooling, and remote execution tools are excluded.
+RUN apt-get update \
+    && apt-get install --no-install-recommends -y \
+       binutils \
+       ca-certificates \
+       dnsutils \
+       file \
+       jq \
+       ripgrep \
+       yara \
+       whois \
+    && rm -rf /var/lib/apt/lists/* \
+    && corepack enable \
+    && useradd --create-home --shell /usr/sbin/nologin angelmind
 COPY --from=build --chown=angelmind:angelmind /app/dist ./dist
 COPY --from=build --chown=angelmind:angelmind /app/package.json /app/pnpm-lock.yaml ./
 RUN pnpm install --prod --frozen-lockfile && chown -R angelmind:angelmind /app

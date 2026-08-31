@@ -50,6 +50,12 @@ Gunakan `docker compose up --build` setelah mengisi `MYSQL_PASSWORD`, `MYSQL_ROO
 
 Sebelum merge atau deploy, jalankan `pnpm check`, `pnpm test -- --run`, `pnpm build`, dan `git diff --check`. Pipeline GitHub Actions menjalankan type-check, test, production build, PWA manifest validation, Python safety tests, container build, dependency audit, dan smoke test sesuai workflow yang tersedia.
 
+## Safe passive runtime binaries
+
+The runtime image includes only low-risk offline/passive utilities from Debian packages: `binutils`, `ca-certificates`, `dnsutils`, `file`, `jq`, `ripgrep`, `yara`, and `whois`. They are installed during the runtime Docker stage and are available to future isolated adapters through explicit allowlisting. Active scanners, exploit frameworks, credential tooling, phishing tooling, remote execution, lateral movement, persistence, and C2 binaries are intentionally excluded from the Railway image.
+
+Installing a binary does not grant execution permission. The catalog and tool API remain metadata-only until a tool has a canonical source, pinned version, dependency review, adapter contract, scope policy, and passing health test.
+
 ## Operational boundaries
 
 No target-facing integration is shipped or activated by this dashboard. Any future authorized research worker must obtain only policy-approved, workspace-scoped work from the control plane and must treat a missing, blocked, or expired approval as a hard stop.

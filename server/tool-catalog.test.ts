@@ -17,6 +17,8 @@ const verifiedRuntimeKeys = new Set([
   "log_analysis.13",
   "traffic_analysis.12",
   "traffic_analysis.17",
+  "traffic_analysis.8",
+  "traffic_analysis.10",
   "secrets_detection.8",
   "source_code.1",
   "source_code.9",

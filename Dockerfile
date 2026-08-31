@@ -32,14 +32,17 @@ ENV NODE_ENV=production
 # credential tooling, phishing tooling, and remote execution tools are excluded.
 RUN apt-get update \
     && apt-get install --no-install-recommends -y \
+       bandit \
        binutils \
        ca-certificates \
+       dc3dd \
        foremost \
        gitleaks \
        dnsutils \
        file \
        jq \
        ripgrep \
+       shellcheck \
        sleuthkit \
        yara \
        whois \

@@ -25,8 +25,23 @@ describe("registered tool runtime", () => {
         allowedModes: ["offline_artifact"],
       },
       {
+        toolKey: "validation.19",
+        binary: "dc3dd",
+        allowedModes: ["offline_artifact"],
+      },
+      {
         toolKey: "secrets_detection.1",
         binary: "gitleaks",
+        allowedModes: ["offline_artifact"],
+      },
+      {
+        toolKey: "source_code.1",
+        binary: "bandit",
+        allowedModes: ["offline_artifact"],
+      },
+      {
+        toolKey: "source_code.19",
+        binary: "shellcheck",
         allowedModes: ["offline_artifact"],
       },
     ]);

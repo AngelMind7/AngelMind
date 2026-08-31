@@ -14,7 +14,10 @@ type SupportedToolKey =
   | "binary_artifact_analysis.30"
   | "validation.6"
   | "validation.13"
-  | "secrets_detection.1";
+  | "validation.19"
+  | "secrets_detection.1"
+  | "source_code.1"
+  | "source_code.19";
 
 export type ToolRuntimeRequest = {
   toolKey: string;
@@ -82,6 +85,12 @@ const adapters: readonly Adapter[] = [
     allowedModes: ["offline_artifact"],
   },
   {
+    toolKey: "validation.19",
+    binary: "dc3dd",
+    args: inputPath => ["if=" + inputPath, "of=/dev/null", "hash=sha256"],
+    allowedModes: ["offline_artifact"],
+  },
+  {
     toolKey: "secrets_detection.1",
     binary: "gitleaks",
     args: inputPath => [
@@ -94,6 +103,18 @@ const adapters: readonly Adapter[] = [
       "-",
       inputPath,
     ],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "source_code.1",
+    binary: "bandit",
+    args: inputPath => ["-q", "-f", "json", inputPath],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "source_code.19",
+    binary: "shellcheck",
+    args: inputPath => ["--format=json", inputPath],
     allowedModes: ["offline_artifact"],
   },
 ];

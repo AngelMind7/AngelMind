@@ -7,6 +7,7 @@ import {
   router,
 } from "./_core/trpc";
 import * as controlPlane from "./control-plane/service";
+import { isTargetInScope } from "./control-plane/guardrails";
 import * as operations from "./control-plane/operations";
 import * as assurance from "./control-plane/assurance";
 import * as agent from "./control-plane/agent";
@@ -571,6 +572,7 @@ export const appRouter = router({
       .input(
         z.object({
           workspaceId: z.number().int().positive(),
+          target: z.string().trim().min(1).max(255).optional(),
           toolKey: z.string().trim().min(1).max(160),
           mode: z.enum(["offline_artifact", "passive_readonly"]),
           humanApproval: z.boolean(),
@@ -594,6 +596,21 @@ export const appRouter = router({
             stderr: "",
             durationMs: 0,
             reason: context.reason,
+          };
+        }
+        if (
+          input.target &&
+          !isTargetInScope(input.target, context.allowlist, context.exclusions)
+        ) {
+          return {
+            requestId: "",
+            toolKey: input.toolKey,
+            status: "blocked" as const,
+            exitCode: null,
+            stdout: "",
+            stderr: "",
+            durationMs: 0,
+            reason: "target_out_of_scope",
           };
         }
         return toolRuntime.runRegisteredTool({

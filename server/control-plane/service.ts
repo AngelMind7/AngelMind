@@ -137,6 +137,8 @@ export async function getToolExecutionContext(userId: number, workspaceId: numbe
   return {
     allowed: true as const,
     workspaceId: workspace.id,
+    allowlist,
+    exclusions,
     scopeDigest: digest({ allowlist, exclusions, safeHarbor: workspace.safeHarbor, codeOfConduct: workspace.codeOfConduct }),
   };
 }

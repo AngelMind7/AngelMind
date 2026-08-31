@@ -20,7 +20,9 @@ type SupportedToolKey =
   | "secrets_detection.1"
   | "source_code.1"
   | "source_code.19"
-  | "source_code.22";
+  | "source_code.22"
+  | "source_code.9"
+  | "binary_artifact_analysis.8";
 
 export type ToolRuntimeRequest = {
   toolKey: string;
@@ -142,6 +144,18 @@ const adapters: readonly Adapter[] = [
     toolKey: "source_code.22",
     binary: "cppcheck",
     args: inputPath => ["--enable=all", "--xml", "--xml-version=2", inputPath],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "source_code.9",
+    binary: "flawfinder",
+    args: inputPath => ["--quiet", "--dataonly", inputPath],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "binary_artifact_analysis.8",
+    binary: "gdb",
+    args: inputPath => ["--batch", "--nx", "-ex", "info files", inputPath],
     allowedModes: ["offline_artifact"],
   },
 ];

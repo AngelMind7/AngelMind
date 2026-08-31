@@ -37,7 +37,9 @@ RUN apt-get update \
        ca-certificates \
        cppcheck \
        dc3dd \
+       flawfinder \
        foremost \
+       gdb \
        gitleaks \
        dnsutils \
        file \

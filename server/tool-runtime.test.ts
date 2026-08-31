@@ -59,6 +59,16 @@ describe("registered tool runtime", () => {
         binary: "cppcheck",
         allowedModes: ["offline_artifact"],
       },
+      {
+        toolKey: "source_code.9",
+        binary: "flawfinder",
+        allowedModes: ["offline_artifact"],
+      },
+      {
+        toolKey: "binary_artifact_analysis.8",
+        binary: "gdb",
+        allowedModes: ["offline_artifact"],
+      },
     ]);
   });
 

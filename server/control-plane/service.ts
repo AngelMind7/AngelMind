@@ -128,6 +128,19 @@ export async function setWorkspaceStatus(userId: number, workspaceId: number, st
   return { success: true };
 }
 
+export async function getToolExecutionContext(userId: number, workspaceId: number) {
+  const workspace = await ownedWorkspaceOrThrow(userId, workspaceId);
+  const eligibility = getRunEligibility(workspace);
+  if (!eligibility.eligible) return { allowed: false as const, reason: eligibility.reason };
+  const allowlist = parseList(workspace.allowlist);
+  const exclusions = parseList(workspace.exclusions);
+  return {
+    allowed: true as const,
+    workspaceId: workspace.id,
+    scopeDigest: digest({ allowlist, exclusions, safeHarbor: workspace.safeHarbor, codeOfConduct: workspace.codeOfConduct }),
+  };
+}
+
 export async function rehearseWorkspace(userId: number, workspaceId: number) {
   const workspace = await ownedWorkspaceOrThrow(userId, workspaceId);
   const eligibility = getRunEligibility(workspace);

@@ -567,16 +567,37 @@ export const appRouter = router({
     run: protectedProcedure
       .input(
         z.object({
+          workspaceId: z.number().int().positive(),
           toolKey: z.string().trim().min(1).max(160),
           mode: z.enum(["offline_artifact", "passive_readonly"]),
-          scopeValidated: z.boolean(),
           humanApproval: z.boolean(),
           input: z.string().max(2_000_000),
           timeoutMs: z.number().int().min(1_000).max(120_000).optional(),
           maxOutputBytes: z.number().int().min(1_024).max(2_000_000).optional(),
         })
       )
-      .mutation(({ input }) => toolRuntime.runRegisteredTool(input)),
+      .mutation(async ({ ctx, input }) => {
+        const context = await controlPlane.getToolExecutionContext(
+          ctx.user.id,
+          input.workspaceId
+        );
+        if (!context.allowed) {
+          return {
+            requestId: "",
+            toolKey: input.toolKey,
+            status: "blocked" as const,
+            exitCode: null,
+            stdout: "",
+            stderr: "",
+            durationMs: 0,
+            reason: context.reason,
+          };
+        }
+        return toolRuntime.runRegisteredTool({
+          ...input,
+          scopeValidated: true,
+        });
+      }),
   }),
   control: router({
     dashboard: protectedProcedure.query(({ ctx }) =>

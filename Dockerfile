@@ -45,6 +45,8 @@ RUN apt-get update \
     && useradd --create-home --shell /usr/sbin/nologin angelmind
 COPY --from=build --chown=angelmind:angelmind /app/dist ./dist
 COPY --from=build --chown=angelmind:angelmind /app/package.json /app/pnpm-lock.yaml ./
+COPY --chown=angelmind:angelmind config/tool-runtime-packs.yaml ./config/tool-runtime-packs.yaml
+COPY --chown=angelmind:angelmind runtime/rules.yar /etc/angelmind/rules.yar
 RUN pnpm install --prod --frozen-lockfile && chown -R angelmind:angelmind /app
 USER angelmind
 EXPOSE 3000

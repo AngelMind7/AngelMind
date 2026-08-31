@@ -29,6 +29,8 @@ type SupportedToolKey =
   | "source_code.23"
   | "secrets_detection.8"
   | "dependencies.20"
+  | "dependencies.9"
+  | "secrets_detection.6"
   | "source_code.18"
   | "supply_chain.3"
   | "validation.17"
@@ -212,6 +214,18 @@ const adapters: readonly Adapter[] = [
     toolKey: "dependencies.20",
     binary: "pip-audit",
     args: inputPath => ["-r", inputPath, "-f", "json"],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "dependencies.9",
+    binary: "safety",
+    args: inputPath => ["check", "--file", inputPath, "--json"],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "secrets_detection.6",
+    binary: "trufflehog",
+    args: inputPath => ["--regex", "--entropy=False", "--json", inputPath],
     allowedModes: ["offline_artifact"],
   },
   {

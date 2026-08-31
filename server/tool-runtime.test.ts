@@ -100,6 +100,16 @@ describe("registered tool runtime", () => {
         allowedModes: ["offline_artifact"],
       },
       {
+        toolKey: "dependencies.9",
+        binary: "safety",
+        allowedModes: ["offline_artifact"],
+      },
+      {
+        toolKey: "secrets_detection.6",
+        binary: "trufflehog",
+        allowedModes: ["offline_artifact"],
+      },
+      {
         toolKey: "source_code.18",
         binary: "semgrep",
         allowedModes: ["offline_artifact"],

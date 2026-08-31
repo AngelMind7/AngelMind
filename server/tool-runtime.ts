@@ -42,6 +42,7 @@ type SupportedToolKey =
   | "email_dns_security.1"
   | "email_dns_security.2"
   | "asset_intelligence.30"
+  | "asset_intelligence.31"
   | "configuration.1"
   | "configuration.17"
   | "dependencies.3"
@@ -347,6 +348,22 @@ const adapters: readonly Adapter[] = [
         "AngelMind-passive-review/1.0",
         "https://crt.sh/?q=%25." + domain + "&output=json",
       ];
+    },
+    allowedModes: ["passive_readonly"],
+    requiresTarget: true,
+  },
+  {
+    toolKey: "asset_intelligence.31",
+    binary: "dnsrecon",
+    args: (_inputPath, input) => {
+      const domain = input.trim().toLowerCase();
+      if (
+        !/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$/.test(
+          domain
+        )
+      )
+        return null;
+      return ["-d", domain, "-t", "std", "--threads", "1"];
     },
     allowedModes: ["passive_readonly"],
     requiresTarget: true,

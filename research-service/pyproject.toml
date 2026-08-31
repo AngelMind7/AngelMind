@@ -3,7 +3,10 @@ name = "angelmind-research-foundation"
 version = "0.1.0"
 description = "Safety-first, network-free research orchestration foundation for AngelMind."
 requires-python = ">=3.12"
-dependencies = []
+dependencies = [
+  "checkdmarc==5.17.5",
+  "dnspython==2.8.0",
+]
 
 [project.optional-dependencies]
 dev = ["hypothesis>=6.0", "pytest>=8.0", "ruff>=0.8"]

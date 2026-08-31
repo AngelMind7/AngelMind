@@ -52,7 +52,9 @@ Sebelum merge atau deploy, jalankan `pnpm check`, `pnpm test -- --run`, `pnpm bu
 
 ## Safe passive runtime binaries
 
-The runtime image includes only low-risk offline/passive utilities from Debian packages: `binutils`, `ca-certificates`, `dnsutils`, `file`, `jq`, `ripgrep`, `yara`, and `whois`. They are installed during the runtime Docker stage and are available to future isolated adapters through explicit allowlisting. Active scanners, exploit frameworks, credential tooling, phishing tooling, remote execution, lateral movement, persistence, and C2 binaries are intentionally excluded from the Railway image.
+The Node runtime image includes only low-risk offline/passive utilities from Debian packages: `binutils`, `ca-certificates`, `dnsutils`, `file`, `jq`, `ripgrep`, `yara`, and `whois`. They are installed during the runtime Docker stage and are available to future isolated adapters through explicit allowlisting. Active scanners, exploit frameworks, credential tooling, phishing tooling, remote execution, lateral movement, persistence, and C2 binaries are intentionally excluded from the Railway image.
+
+Python-based passive tooling is deliberately separated into `Dockerfile.research`, based on Python 3.12. The image installs the pinned `checkdmarc==5.17.5` and `dnspython==2.8.0` dependencies from `research-service/`. This avoids pretending that a Node image can provide the correct Python runtime and keeps Python dependencies out of the web process. Deploy it as a separate Railway worker/service only after adding a scoped worker command and service-level network policy.
 
 Installing a binary does not grant execution permission. The catalog and tool API remain metadata-only until a tool has a canonical source, pinned version, dependency review, adapter contract, scope policy, and passing health test.
 

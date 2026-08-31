@@ -26,6 +26,7 @@ type SupportedToolKey =
   | "binary_artifact_analysis.2"
   | "binary_artifact_analysis.3"
   | "binary_artifact_analysis.23"
+  | "source_code.10"
   | "source_code.23"
   | "secrets_detection.8"
   | "dependencies.20"
@@ -203,6 +204,17 @@ const adapters: readonly Adapter[] = [
     toolKey: "binary_artifact_analysis.23",
     binary: "python3",
     args: inputPath => ["/app/runtime/unicorn_probe.py", inputPath],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "source_code.10",
+    binary: "gosec",
+    args: inputPath => [
+      "-fmt=json",
+      "-no-fail",
+      "-exclude-generated",
+      inputPath,
+    ],
     allowedModes: ["offline_artifact"],
   },
   {

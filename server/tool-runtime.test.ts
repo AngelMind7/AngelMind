@@ -85,6 +85,11 @@ describe("registered tool runtime", () => {
         allowedModes: ["offline_artifact"],
       },
       {
+        toolKey: "source_code.10",
+        binary: "gosec",
+        allowedModes: ["offline_artifact"],
+      },
+      {
         toolKey: "source_code.23",
         binary: "njsscan",
         allowedModes: ["offline_artifact"],

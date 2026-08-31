@@ -36,6 +36,7 @@ const verifiedRuntimeKeys = new Set([
   "secrets_detection.1",
   "secrets_detection.6",
   "source_code.1",
+  "source_code.10",
   "source_code.9",
   "source_code.18",
   "source_code.19",

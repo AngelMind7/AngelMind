@@ -4186,9 +4186,9 @@ export const generatedToolCatalog = [
     "category": "Source Code",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "source_code.11",

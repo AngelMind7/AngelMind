@@ -10,6 +10,7 @@ const verifiedRuntimeKeys = new Set([
   "asset_intelligence.28",
   "asset_intelligence.30",
   "asset_intelligence.31",
+  "asset_intelligence.33",
   "binary_artifact_analysis.2",
   "binary_artifact_analysis.3",
   "binary_artifact_analysis.8",

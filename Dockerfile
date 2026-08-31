@@ -67,6 +67,12 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && curl -fsSL https://github.com/anchore/grype/releases/download/v0.118.0/grype_0.118.0_linux_amd64.tar.gz | tar -xz -C /usr/local/bin grype \
     && curl -fsSL https://github.com/anchore/syft/releases/download/v1.51.1/syft_1.51.1_linux_amd64.tar.gz | tar -xz -C /usr/local/bin syft \
     && curl -fsSL -o /usr/local/bin/osv-scanner https://github.com/google/osv-scanner/releases/download/v2.5.1/osv-scanner_linux_amd64 \
+    && curl -fsSL -o /tmp/dnsx.zip https://github.com/projectdiscovery/dnsx/releases/download/v1.3.1/dnsx_1.3.1_linux_amd64.zip \
+    && curl -fsSL -o /tmp/dnsx_checksums.txt https://github.com/projectdiscovery/dnsx/releases/download/v1.3.1/dnsx_1.3.1_checksums.txt \
+    && grep 'dnsx_1.3.1_linux_amd64.zip' /tmp/dnsx_checksums.txt | sha256sum -c - \
+    && unzip -q /tmp/dnsx.zip -d /tmp/dnsx \
+    && install -m 0755 /tmp/dnsx/dnsx /usr/local/bin/dnsx \
+    && rm -rf /tmp/dnsx /tmp/dnsx.zip /tmp/dnsx_checksums.txt \
     && curl -fsSL -o /tmp/subfinder.zip https://github.com/projectdiscovery/subfinder/releases/download/v2.16.0/subfinder_2.16.0_linux_amd64.zip \
     && curl -fsSL -o /tmp/subfinder_checksums.txt https://github.com/projectdiscovery/subfinder/releases/download/v2.16.0/subfinder_2.16.0_checksums.txt \
     && grep 'subfinder_2.16.0_linux_amd64.zip' /tmp/subfinder_checksums.txt | sha256sum -c - \
@@ -75,7 +81,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && rm -rf /tmp/subfinder /tmp/subfinder.zip /tmp/subfinder_checksums.txt \
     && curl -fsSL https://github.com/aquasecurity/trivy/releases/download/v0.74.0/trivy_0.74.0_Linux-64bit.tar.gz | tar -xz -C /usr/local/bin trivy \
     && curl -fsSL https://github.com/aquasecurity/tfsec/releases/download/v1.28.14/tfsec_1.28.14_linux_amd64.tar.gz | tar -xz -C /usr/local/bin tfsec \
-    && chmod 0755 /usr/local/bin/grype /usr/local/bin/syft /usr/local/bin/osv-scanner /usr/local/bin/trivy /usr/local/bin/tfsec /usr/local/bin/subfinder \
+    && chmod 0755 /usr/local/bin/grype /usr/local/bin/syft /usr/local/bin/osv-scanner /usr/local/bin/trivy /usr/local/bin/tfsec /usr/local/bin/subfinder /usr/local/bin/dnsx \
     && corepack enable \
     && useradd --create-home --shell /usr/sbin/nologin angelmind
 COPY --from=build --chown=angelmind:angelmind /app/dist ./dist

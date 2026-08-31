@@ -161,6 +161,12 @@ describe("registered tool runtime", () => {
         allowedModes: ["passive_readonly"],
       },
       {
+        toolKey: "asset_intelligence.33",
+        binary: "dnsx",
+        allowedModes: ["passive_readonly"],
+        requiresTarget: true,
+      },
+      {
         toolKey: "asset_intelligence.28",
         binary: "subfinder",
         allowedModes: ["passive_readonly"],
@@ -215,6 +221,7 @@ describe("registered tool runtime", () => {
     for (const toolKey of [
       "asset_intelligence.28",
       "asset_intelligence.30",
+      "asset_intelligence.33",
       "asset_intelligence.31",
     ]) {
       await expect(

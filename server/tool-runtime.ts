@@ -41,6 +41,7 @@ type SupportedToolKey =
   | "traffic_analysis.10"
   | "email_dns_security.1"
   | "email_dns_security.2"
+  | "asset_intelligence.28"
   | "asset_intelligence.30"
   | "asset_intelligence.31"
   | "configuration.1"
@@ -323,6 +324,22 @@ const adapters: readonly Adapter[] = [
     binary: "python3",
     args: inputPath => ["/app/runtime/dkim_verify.py", inputPath],
     allowedModes: ["passive_readonly"],
+  },
+  {
+    toolKey: "asset_intelligence.28",
+    binary: "subfinder",
+    args: (_inputPath, input) => {
+      const domain = input.trim().toLowerCase();
+      if (
+        !/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$/.test(
+          domain
+        )
+      )
+        return null;
+      return ["-silent", "-d", domain, "-json", "-timeout", "20"];
+    },
+    allowedModes: ["passive_readonly"],
+    requiresTarget: true,
   },
   {
     toolKey: "asset_intelligence.30",

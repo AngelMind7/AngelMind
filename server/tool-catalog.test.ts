@@ -7,6 +7,7 @@ import {
 } from "./tool-catalog";
 
 const verifiedRuntimeKeys = new Set([
+  "asset_intelligence.28",
   "asset_intelligence.30",
   "asset_intelligence.31",
   "binary_artifact_analysis.2",

@@ -161,6 +161,12 @@ describe("registered tool runtime", () => {
         allowedModes: ["passive_readonly"],
       },
       {
+        toolKey: "asset_intelligence.28",
+        binary: "subfinder",
+        allowedModes: ["passive_readonly"],
+        requiresTarget: true,
+      },
+      {
         toolKey: "asset_intelligence.30",
         binary: "curl",
         allowedModes: ["passive_readonly"],
@@ -206,7 +212,11 @@ describe("registered tool runtime", () => {
   });
 
   it("blocks malformed passive DNS domain input before spawning a process", async () => {
-    for (const toolKey of ["asset_intelligence.30", "asset_intelligence.31"]) {
+    for (const toolKey of [
+      "asset_intelligence.28",
+      "asset_intelligence.30",
+      "asset_intelligence.31",
+    ]) {
       await expect(
         runRegisteredTool({
           toolKey,

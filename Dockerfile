@@ -65,9 +65,11 @@ COPY --chown=angelmind:angelmind config/tool-runtime-packs.yaml ./config/tool-ru
 COPY --chown=angelmind:angelmind runtime/rules.yar /etc/angelmind/rules.yar
 COPY --chown=angelmind:angelmind runtime/capstone_inspect.py runtime/unicorn_probe.py ./runtime/
 RUN python3 -m pip install --no-cache-dir --break-system-packages \
+       cyclonedx-bom==7.3.1 \
        detect-secrets==1.5.0 \
        njsscan==1.0.0 \
        pip-audit==2.10.1 \
+       semgrep==1.175.0 \
     && pnpm install --prod --frozen-lockfile \
     && chown -R angelmind:angelmind /app
 USER angelmind

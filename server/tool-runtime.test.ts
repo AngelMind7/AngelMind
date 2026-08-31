@@ -99,6 +99,16 @@ describe("registered tool runtime", () => {
         binary: "pip-audit",
         allowedModes: ["offline_artifact"],
       },
+      {
+        toolKey: "source_code.18",
+        binary: "semgrep",
+        allowedModes: ["offline_artifact"],
+      },
+      {
+        toolKey: "supply_chain.3",
+        binary: "cyclonedx-py",
+        allowedModes: ["offline_artifact"],
+      },
     ]);
   });
 

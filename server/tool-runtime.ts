@@ -28,7 +28,9 @@ type SupportedToolKey =
   | "binary_artifact_analysis.23"
   | "source_code.23"
   | "secrets_detection.8"
-  | "dependencies.20";
+  | "dependencies.20"
+  | "source_code.18"
+  | "supply_chain.3";
 
 export type ToolRuntimeRequest = {
   toolKey: string;
@@ -204,6 +206,18 @@ const adapters: readonly Adapter[] = [
     toolKey: "dependencies.20",
     binary: "pip-audit",
     args: inputPath => ["-r", inputPath, "-f", "json"],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "source_code.18",
+    binary: "semgrep",
+    args: inputPath => ["--config", "auto", "--json", "--quiet", inputPath],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "supply_chain.3",
+    binary: "cyclonedx-py",
+    args: inputPath => ["requirements", inputPath, "--output-format", "json"],
     allowedModes: ["offline_artifact"],
   },
 ];

@@ -636,9 +636,9 @@ export const generatedToolCatalog = [
     "category": "Asset Intelligence",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_passive_review",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "asset_intelligence.31",
@@ -1336,9 +1336,9 @@ export const generatedToolCatalog = [
     "category": "Configuration",
     "riskClass": "medium",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
-    "disposition": "disabled_review_required",
-    "enabledByDefault": false
+    "verificationStatus": "verified",
+    "disposition": "candidate_offline_or_artifact",
+    "enabledByDefault": true
   },
   {
     "toolKey": "configuration.2",
@@ -1496,9 +1496,9 @@ export const generatedToolCatalog = [
     "category": "Configuration",
     "riskClass": "medium",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
-    "disposition": "disabled_review_required",
-    "enabledByDefault": false
+    "verificationStatus": "verified",
+    "disposition": "candidate_offline_or_artifact",
+    "enabledByDefault": true
   },
   {
     "toolKey": "containers.1",
@@ -1806,9 +1806,9 @@ export const generatedToolCatalog = [
     "category": "Dependencies",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "dependencies.4",
@@ -1836,9 +1836,9 @@ export const generatedToolCatalog = [
     "category": "Dependencies",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "dependencies.7",
@@ -1886,9 +1886,9 @@ export const generatedToolCatalog = [
     "category": "Dependencies",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "dependencies.12",
@@ -1896,9 +1896,9 @@ export const generatedToolCatalog = [
     "category": "Dependencies",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "dependencies.13",

@@ -41,6 +41,7 @@ type SupportedToolKey =
   | "traffic_analysis.10"
   | "email_dns_security.1"
   | "email_dns_security.2"
+  | "asset_intelligence.30"
   | "configuration.1"
   | "configuration.17"
   | "dependencies.3"
@@ -321,6 +322,34 @@ const adapters: readonly Adapter[] = [
     binary: "python3",
     args: inputPath => ["/app/runtime/dkim_verify.py", inputPath],
     allowedModes: ["passive_readonly"],
+  },
+  {
+    toolKey: "asset_intelligence.30",
+    binary: "curl",
+    args: (_inputPath, input) => {
+      const domain = input.trim().toLowerCase();
+      if (
+        !/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$/.test(
+          domain
+        )
+      )
+        return null;
+      return [
+        "--fail",
+        "--silent",
+        "--show-error",
+        "--location",
+        "--max-time",
+        "20",
+        "--retry",
+        "1",
+        "--user-agent",
+        "AngelMind-passive-review/1.0",
+        "https://crt.sh/?q=%25." + domain + "&output=json",
+      ];
+    },
+    allowedModes: ["passive_readonly"],
+    requiresTarget: true,
   },
   {
     toolKey: "configuration.1",

@@ -161,6 +161,12 @@ describe("registered tool runtime", () => {
         allowedModes: ["passive_readonly"],
       },
       {
+        toolKey: "asset_intelligence.30",
+        binary: "curl",
+        allowedModes: ["passive_readonly"],
+        requiresTarget: true,
+      },
+      {
         toolKey: "configuration.1",
         binary: "checkov",
         allowedModes: ["offline_artifact"],
@@ -191,6 +197,21 @@ describe("registered tool runtime", () => {
         allowedModes: ["offline_artifact"],
       },
     ]);
+  });
+
+  it("blocks malformed crt.sh domain input before spawning a process", async () => {
+    await expect(
+      runRegisteredTool({
+        toolKey: "asset_intelligence.30",
+        mode: "passive_readonly",
+        scopeValidated: true,
+        humanApproval: false,
+        input: "https://example.com",
+      })
+    ).resolves.toMatchObject({
+      status: "blocked",
+      reason: "invalid_adapter_input",
+    });
   });
 
   it("blocks unregistered provisional catalog entries before spawning a process", async () => {

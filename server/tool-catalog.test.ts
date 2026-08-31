@@ -7,12 +7,19 @@ import {
 } from "./tool-catalog";
 
 const verifiedRuntimeKeys = new Set([
+  "asset_intelligence.30",
   "binary_artifact_analysis.2",
   "binary_artifact_analysis.3",
   "binary_artifact_analysis.8",
   "binary_artifact_analysis.23",
   "binary_artifact_analysis.24",
   "binary_artifact_analysis.30",
+  "configuration.1",
+  "configuration.17",
+  "dependencies.3",
+  "dependencies.6",
+  "dependencies.11",
+  "dependencies.12",
   "dependencies.20",
   "dependencies.9",
   "email_dns_security.1",
@@ -165,7 +172,7 @@ describe("tool catalog safety boundary", () => {
   it("filters safe candidate classes without enabling them", () => {
     expect(
       listToolCatalog({ disposition: "candidate_offline_or_artifact" })
-    ).toHaveLength(161);
+    ).toHaveLength(163);
     expect(
       listToolCatalog({ disposition: "candidate_passive_review" })
     ).toHaveLength(72);
@@ -181,7 +188,8 @@ describe("tool catalog safety boundary", () => {
           toolKey,
           mode:
             toolKey.startsWith("traffic_analysis.") ||
-            toolKey.startsWith("email_dns_security.")
+            toolKey.startsWith("email_dns_security.") ||
+            toolKey.startsWith("asset_intelligence.")
               ? "passive_readonly"
               : "offline_artifact",
           scopeValidated: true,

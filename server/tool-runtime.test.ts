@@ -122,18 +122,18 @@ describe("registered tool runtime", () => {
     ]);
   });
 
-  it("blocks provisional catalog entries before spawning a process", async () => {
+  it("blocks unregistered provisional catalog entries before spawning a process", async () => {
     await expect(
       runRegisteredTool({
-        toolKey: "binary_artifact_analysis.30",
+        toolKey: "ai_llm_security.1",
         mode: "offline_artifact",
         scopeValidated: true,
         humanApproval: false,
         input: "not an executable",
       })
     ).resolves.toMatchObject({
-      status: "blocked",
-      reason: "tool_not_verified",
+      status: "unavailable",
+      reason: "adapter_not_registered",
     });
   });
 

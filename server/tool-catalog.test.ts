@@ -6,6 +6,31 @@ import {
   toolCatalog,
 } from "./tool-catalog";
 
+const verifiedRuntimeKeys = new Set([
+  "binary_artifact_analysis.2",
+  "binary_artifact_analysis.3",
+  "binary_artifact_analysis.8",
+  "binary_artifact_analysis.23",
+  "binary_artifact_analysis.24",
+  "binary_artifact_analysis.30",
+  "dependencies.20",
+  "log_analysis.13",
+  "secrets_detection.8",
+  "source_code.1",
+  "source_code.9",
+  "source_code.18",
+  "source_code.19",
+  "source_code.22",
+  "source_code.23",
+  "supply_chain.3",
+  "validation.6",
+  "validation.8",
+  "validation.12",
+  "validation.13",
+  "validation.17",
+  "validation.19",
+]);
+
 const addendumToolsByCategory = {
   "Social Engineering": [
     "Gophish",
@@ -69,15 +94,22 @@ const addendumToolsByCategory = {
 } as const;
 
 describe("tool catalog safety boundary", () => {
-  it("loads the complete manifest as disabled provisional metadata", () => {
+  it("loads the complete manifest with only verified runtime adapters enabled", () => {
     expect(toolCatalog).toHaveLength(556);
-    expect(toolCatalog.every(tool => tool.enabledByDefault === false)).toBe(
-      true
-    );
     expect(
-      toolCatalog.every(
-        tool => tool.verificationStatus === "provisional_from_user_pdf"
-      )
+      toolCatalog
+        .filter(tool => tool.enabledByDefault)
+        .map(tool => tool.toolKey)
+        .sort()
+    ).toEqual([...verifiedRuntimeKeys].sort());
+    expect(
+      toolCatalog
+        .filter(tool => !verifiedRuntimeKeys.has(tool.toolKey))
+        .every(
+          tool =>
+            tool.enabledByDefault === false &&
+            tool.verificationStatus === "provisional_from_user_pdf"
+        )
     ).toBe(true);
   });
 
@@ -111,8 +143,13 @@ describe("tool catalog safety boundary", () => {
         const tool = toolCatalog.find(candidate => candidate.name === name);
         expect(tool, `${name} should be present`).toBeDefined();
         expect(tool?.category).toBe(category);
-        expect(tool?.enabledByDefault).toBe(false);
-        expect(tool?.verificationStatus).toBe("provisional_from_user_pdf");
+        if (tool && verifiedRuntimeKeys.has(tool.toolKey)) {
+          expect(tool.enabledByDefault).toBe(true);
+          expect(tool.verificationStatus).toBe("verified");
+        } else {
+          expect(tool?.enabledByDefault).toBe(false);
+          expect(tool?.verificationStatus).toBe("provisional_from_user_pdf");
+        }
       }
     }
   });
@@ -127,6 +164,19 @@ describe("tool catalog safety boundary", () => {
     expect(listToolCatalog({ disposition: "disabled_high_risk" })).toHaveLength(
       123
     );
+  });
+
+  it("allows only verified safe runtime adapters", () => {
+    for (const toolKey of verifiedRuntimeKeys) {
+      expect(
+        canExecuteTool({
+          toolKey,
+          mode: "offline_artifact",
+          scopeValidated: true,
+          humanApproval: false,
+        })
+      ).toMatchObject({ allowed: true });
+    }
   });
 
   it("rejects every provisional tool before execution", () => {

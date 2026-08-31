@@ -706,9 +706,9 @@ export const generatedToolCatalog = [
     "category": "Binary/Artifact Analysis",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "binary_artifact_analysis.3",
@@ -716,9 +716,9 @@ export const generatedToolCatalog = [
     "category": "Binary/Artifact Analysis",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "binary_artifact_analysis.4",
@@ -766,9 +766,9 @@ export const generatedToolCatalog = [
     "category": "Binary/Artifact Analysis",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "binary_artifact_analysis.9",
@@ -916,9 +916,9 @@ export const generatedToolCatalog = [
     "category": "Binary/Artifact Analysis",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "binary_artifact_analysis.24",
@@ -926,9 +926,9 @@ export const generatedToolCatalog = [
     "category": "Binary/Artifact Analysis",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "binary_artifact_analysis.25",
@@ -986,9 +986,9 @@ export const generatedToolCatalog = [
     "category": "Binary/Artifact Analysis",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "binary_artifact_analysis.31",
@@ -1976,9 +1976,9 @@ export const generatedToolCatalog = [
     "category": "Dependencies",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "dependencies.21",
@@ -3026,9 +3026,9 @@ export const generatedToolCatalog = [
     "category": "Log Analysis",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "log_analysis.14",
@@ -3966,9 +3966,9 @@ export const generatedToolCatalog = [
     "category": "Secrets Detection",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "secrets_detection.9",
@@ -4096,9 +4096,9 @@ export const generatedToolCatalog = [
     "category": "Source Code",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "source_code.2",
@@ -4176,9 +4176,9 @@ export const generatedToolCatalog = [
     "category": "Source Code",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "source_code.10",
@@ -4266,9 +4266,9 @@ export const generatedToolCatalog = [
     "category": "Source Code",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "source_code.19",
@@ -4276,9 +4276,9 @@ export const generatedToolCatalog = [
     "category": "Source Code",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "source_code.20",
@@ -4306,9 +4306,9 @@ export const generatedToolCatalog = [
     "category": "Source Code",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "source_code.23",
@@ -4316,9 +4316,9 @@ export const generatedToolCatalog = [
     "category": "Source Code",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "supply_chain.1",
@@ -4346,9 +4346,9 @@ export const generatedToolCatalog = [
     "category": "Supply Chain",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "supply_chain.4",
@@ -4816,9 +4816,9 @@ export const generatedToolCatalog = [
     "category": "Validation",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "validation.7",
@@ -4836,9 +4836,9 @@ export const generatedToolCatalog = [
     "category": "Validation",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "validation.9",
@@ -4876,9 +4876,9 @@ export const generatedToolCatalog = [
     "category": "Validation",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "validation.13",
@@ -4886,9 +4886,9 @@ export const generatedToolCatalog = [
     "category": "Validation",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "validation.14",
@@ -4926,9 +4926,9 @@ export const generatedToolCatalog = [
     "category": "Validation",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "validation.18",
@@ -4946,9 +4946,9 @@ export const generatedToolCatalog = [
     "category": "Validation",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "web.1",

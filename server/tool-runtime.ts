@@ -15,6 +15,7 @@ type SupportedToolKey =
   | "validation.6"
   | "validation.13"
   | "validation.19"
+  | "validation.12"
   | "secrets_detection.1"
   | "source_code.1"
   | "source_code.19";
@@ -88,6 +89,18 @@ const adapters: readonly Adapter[] = [
     toolKey: "validation.19",
     binary: "dc3dd",
     args: inputPath => ["if=" + inputPath, "of=/dev/null", "hash=sha256"],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "validation.12",
+    binary: "scalpel",
+    args: inputPath => [
+      "-q",
+      "-o",
+      "/tmp/angelmind-scalpel-output",
+      "-i",
+      inputPath,
+    ],
     allowedModes: ["offline_artifact"],
   },
   {

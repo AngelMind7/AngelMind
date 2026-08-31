@@ -42,6 +42,7 @@ RUN apt-get update \
        file \
        jq \
        ripgrep \
+       scalpel \
        shellcheck \
        sleuthkit \
        yara \

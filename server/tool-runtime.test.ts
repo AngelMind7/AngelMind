@@ -30,6 +30,11 @@ describe("registered tool runtime", () => {
         allowedModes: ["offline_artifact"],
       },
       {
+        toolKey: "validation.12",
+        binary: "scalpel",
+        allowedModes: ["offline_artifact"],
+      },
+      {
         toolKey: "secrets_detection.1",
         binary: "gitleaks",
         allowedModes: ["offline_artifact"],

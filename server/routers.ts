@@ -599,8 +599,14 @@ export const appRouter = router({
           };
         }
         if (
-          input.target &&
-          !isTargetInScope(input.target, context.allowlist, context.exclusions)
+          toolRuntime.adapterRequiresTargetScope(input.toolKey) &&
+          (!input.target ||
+            !isTargetInScope(
+              input.target,
+              context.allowlist,
+              context.exclusions
+            ) ||
+            input.input.trim().toLowerCase() !== input.target.toLowerCase())
         ) {
           return {
             requestId: "",
@@ -610,7 +616,7 @@ export const appRouter = router({
             stdout: "",
             stderr: "",
             durationMs: 0,
-            reason: "target_out_of_scope",
+            reason: "target_required_or_out_of_scope",
           };
         }
         return toolRuntime.runRegisteredTool({

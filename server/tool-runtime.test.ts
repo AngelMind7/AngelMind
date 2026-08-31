@@ -149,6 +149,12 @@ describe("registered tool runtime", () => {
         binary: "suricata",
         allowedModes: ["passive_readonly"],
       },
+      {
+        toolKey: "email_dns_security.1",
+        binary: "checkdmarc",
+        allowedModes: ["passive_readonly"],
+        requiresTarget: true,
+      },
     ]);
   });
 

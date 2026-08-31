@@ -38,7 +38,8 @@ type SupportedToolKey =
   | "traffic_analysis.12"
   | "traffic_analysis.17"
   | "traffic_analysis.8"
-  | "traffic_analysis.10";
+  | "traffic_analysis.10"
+  | "email_dns_security.1";
 
 export type ToolRuntimeRequest = {
   toolKey: string;
@@ -64,8 +65,9 @@ export type ToolRuntimeResult = {
 type Adapter = {
   toolKey: SupportedToolKey;
   binary: string;
-  args: (inputPath: string) => string[];
+  args: (inputPath: string, input: string) => string[] | null;
   allowedModes: ToolRuntimeRequest["mode"][];
+  requiresTarget?: boolean;
 };
 
 const adapters: readonly Adapter[] = [
@@ -291,6 +293,22 @@ const adapters: readonly Adapter[] = [
     ],
     allowedModes: ["passive_readonly"],
   },
+  {
+    toolKey: "email_dns_security.1",
+    binary: "checkdmarc",
+    args: (_inputPath, input) => {
+      const domain = input.trim().toLowerCase();
+      if (
+        !/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$/.test(
+          domain
+        )
+      )
+        return null;
+      return [domain, "--json"];
+    },
+    allowedModes: ["passive_readonly"],
+    requiresTarget: true,
+  },
 ];
 
 const DEFAULT_TIMEOUT_MS = 30_000;
@@ -311,6 +329,7 @@ function boundedText(value: string, maxBytes: number) {
 function executeAdapter(
   adapter: Adapter,
   inputPath: string,
+  input: string,
   timeoutMs: number,
   maxOutputBytes: number
 ) {
@@ -321,7 +340,18 @@ function executeAdapter(
     stderr: string;
     reason?: string;
   }>(resolve => {
-    const child = spawn(adapter.binary, adapter.args(inputPath), {
+    const args = adapter.args(inputPath, input);
+    if (!args) {
+      resolve({
+        status: "blocked",
+        exitCode: null,
+        stdout: "",
+        stderr: "",
+        reason: "invalid_adapter_input",
+      });
+      return;
+    }
+    const child = spawn(adapter.binary, args, {
       cwd: "/tmp",
       env: {
         PATH: process.env.PATH ?? "/usr/bin:/bin",
@@ -383,7 +413,12 @@ export function listRegisteredAdapters() {
     toolKey: adapter.toolKey,
     binary: adapter.binary,
     allowedModes: adapter.allowedModes,
+    ...(adapter.requiresTarget ? { requiresTarget: true } : {}),
   }));
+}
+
+export function adapterRequiresTargetScope(toolKey: string) {
+  return getAdapter(toolKey)?.requiresTarget ?? false;
 }
 
 function probeBinary(binary: string) {
@@ -490,6 +525,7 @@ export async function runRegisteredTool(
     const execution = await executeAdapter(
       adapter,
       inputPath,
+      request.input,
       timeoutMs,
       maxOutputBytes
     );

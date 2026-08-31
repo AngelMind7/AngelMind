@@ -11,7 +11,10 @@ import {
 
 type SupportedToolKey =
   | "binary_artifact_analysis.24"
-  | "binary_artifact_analysis.30";
+  | "binary_artifact_analysis.30"
+  | "validation.6"
+  | "validation.13"
+  | "secrets_detection.1";
 
 export type ToolRuntimeRequest = {
   toolKey: string;
@@ -58,6 +61,39 @@ const adapters: readonly Adapter[] = [
     toolKey: "binary_artifact_analysis.30",
     binary: "objdump",
     args: inputPath => ["-f", "-h", "--", inputPath],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "validation.6",
+    binary: "foremost",
+    args: inputPath => [
+      "-q",
+      "-i",
+      inputPath,
+      "-o",
+      "/tmp/angelmind-foremost-output",
+    ],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "validation.13",
+    binary: "mmls",
+    args: inputPath => ["-B", inputPath],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "secrets_detection.1",
+    binary: "gitleaks",
+    args: inputPath => [
+      "dir",
+      "--no-banner",
+      "--redact",
+      "--report-format",
+      "json",
+      "--report-path",
+      "-",
+      inputPath,
+    ],
     allowedModes: ["offline_artifact"],
   },
 ];

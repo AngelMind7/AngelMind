@@ -14,6 +14,21 @@ describe("registered tool runtime", () => {
         binary: "objdump",
         allowedModes: ["offline_artifact"],
       },
+      {
+        toolKey: "validation.6",
+        binary: "foremost",
+        allowedModes: ["offline_artifact"],
+      },
+      {
+        toolKey: "validation.13",
+        binary: "mmls",
+        allowedModes: ["offline_artifact"],
+      },
+      {
+        toolKey: "secrets_detection.1",
+        binary: "gitleaks",
+        allowedModes: ["offline_artifact"],
+      },
     ]);
   });
 

@@ -30,7 +30,9 @@ type SupportedToolKey =
   | "secrets_detection.8"
   | "dependencies.20"
   | "source_code.18"
-  | "supply_chain.3";
+  | "supply_chain.3"
+  | "validation.17"
+  | "log_analysis.13";
 
 export type ToolRuntimeRequest = {
   toolKey: string;
@@ -218,6 +220,18 @@ const adapters: readonly Adapter[] = [
     toolKey: "supply_chain.3",
     binary: "cyclonedx-py",
     args: inputPath => ["requirements", inputPath, "--output-format", "json"],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "validation.17",
+    binary: "vol",
+    args: inputPath => ["-f", inputPath, "windows.info"],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "log_analysis.13",
+    binary: "sigmac",
+    args: inputPath => ["--target", "json", inputPath],
     allowedModes: ["offline_artifact"],
   },
 ];

@@ -109,6 +109,16 @@ describe("registered tool runtime", () => {
         binary: "cyclonedx-py",
         allowedModes: ["offline_artifact"],
       },
+      {
+        toolKey: "validation.17",
+        binary: "vol",
+        allowedModes: ["offline_artifact"],
+      },
+      {
+        toolKey: "log_analysis.13",
+        binary: "sigmac",
+        allowedModes: ["offline_artifact"],
+      },
     ]);
   });
 

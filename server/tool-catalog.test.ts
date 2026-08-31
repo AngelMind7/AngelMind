@@ -15,6 +15,8 @@ const verifiedRuntimeKeys = new Set([
   "binary_artifact_analysis.30",
   "dependencies.20",
   "log_analysis.13",
+  "traffic_analysis.12",
+  "traffic_analysis.17",
   "secrets_detection.8",
   "source_code.1",
   "source_code.9",
@@ -171,7 +173,9 @@ describe("tool catalog safety boundary", () => {
       expect(
         canExecuteTool({
           toolKey,
-          mode: "offline_artifact",
+          mode: toolKey.startsWith("traffic_analysis.")
+            ? "passive_readonly"
+            : "offline_artifact",
           scopeValidated: true,
           humanApproval: false,
         })

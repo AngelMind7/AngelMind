@@ -4706,9 +4706,9 @@ export const generatedToolCatalog = [
     "category": "Traffic Analysis",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_passive_review",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "traffic_analysis.13",
@@ -4756,9 +4756,9 @@ export const generatedToolCatalog = [
     "category": "Traffic Analysis",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_passive_review",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "validation.1",

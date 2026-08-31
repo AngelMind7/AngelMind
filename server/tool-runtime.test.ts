@@ -129,6 +129,16 @@ describe("registered tool runtime", () => {
         binary: "tcpdump",
         allowedModes: ["passive_readonly"],
       },
+      {
+        toolKey: "traffic_analysis.8",
+        binary: "snort",
+        allowedModes: ["passive_readonly"],
+      },
+      {
+        toolKey: "traffic_analysis.10",
+        binary: "suricata",
+        allowedModes: ["passive_readonly"],
+      },
     ]);
   });
 

@@ -49,6 +49,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
        python3-unicorn \
        tcpdump \
        tshark \
+       snort \
+       suricata \
        file \
        jq \
        python3-plaso \

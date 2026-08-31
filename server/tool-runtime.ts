@@ -34,7 +34,9 @@ type SupportedToolKey =
   | "validation.17"
   | "log_analysis.13"
   | "traffic_analysis.12"
-  | "traffic_analysis.17";
+  | "traffic_analysis.17"
+  | "traffic_analysis.8"
+  | "traffic_analysis.10";
 
 export type ToolRuntimeRequest = {
   toolKey: string;
@@ -246,6 +248,33 @@ const adapters: readonly Adapter[] = [
     toolKey: "traffic_analysis.17",
     binary: "tcpdump",
     args: inputPath => ["-nn", "-r", inputPath, "-c", "100"],
+    allowedModes: ["passive_readonly"],
+  },
+  {
+    toolKey: "traffic_analysis.8",
+    binary: "snort",
+    args: inputPath => [
+      "-q",
+      "-A",
+      "console",
+      "-c",
+      "/etc/snort/snort.conf",
+      "-r",
+      inputPath,
+    ],
+    allowedModes: ["passive_readonly"],
+  },
+  {
+    toolKey: "traffic_analysis.10",
+    binary: "suricata",
+    args: inputPath => [
+      "-r",
+      inputPath,
+      "-l",
+      "/tmp/angelmind-suricata",
+      "-k",
+      "none",
+    ],
     allowedModes: ["passive_readonly"],
   },
 ];

@@ -45,6 +45,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
        gitleaks \
        dnsutils \
        dnsrecon \
+       dnstwist \
        python3 \
        python3-pip \
        python3-capstone \

@@ -656,9 +656,9 @@ export const generatedToolCatalog = [
     "category": "Asset Intelligence",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_passive_review",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "asset_intelligence.33",

@@ -184,6 +184,12 @@ describe("registered tool runtime", () => {
         requiresTarget: true,
       },
       {
+        toolKey: "asset_intelligence.32",
+        binary: "dnstwist",
+        allowedModes: ["passive_readonly"],
+        requiresTarget: true,
+      },
+      {
         toolKey: "asset_intelligence.31",
         binary: "dnsrecon",
         allowedModes: ["passive_readonly"],
@@ -226,8 +232,9 @@ describe("registered tool runtime", () => {
     for (const toolKey of [
       "asset_intelligence.28",
       "asset_intelligence.30",
-      "asset_intelligence.33",
       "asset_intelligence.31",
+      "asset_intelligence.32",
+      "asset_intelligence.33",
     ]) {
       await expect(
         runRegisteredTool({

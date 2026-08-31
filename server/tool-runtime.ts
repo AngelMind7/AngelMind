@@ -46,6 +46,7 @@ type SupportedToolKey =
   | "asset_intelligence.30"
   | "asset_intelligence.33"
   | "asset_intelligence.31"
+  | "asset_intelligence.32"
   | "configuration.1"
   | "configuration.17"
   | "dependencies.3"
@@ -413,6 +414,22 @@ const adapters: readonly Adapter[] = [
         "AngelMind-passive-review/1.0",
         "https://crt.sh/?q=%25." + domain + "&output=json",
       ];
+    },
+    allowedModes: ["passive_readonly"],
+    requiresTarget: true,
+  },
+  {
+    toolKey: "asset_intelligence.32",
+    binary: "dnstwist",
+    args: (_inputPath, input) => {
+      const domain = input.trim().toLowerCase();
+      if (
+        !/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$/.test(
+          domain
+        )
+      )
+        return null;
+      return ["--format", "json", "--registered", "--threads", "1", domain];
     },
     allowedModes: ["passive_readonly"],
     requiresTarget: true,

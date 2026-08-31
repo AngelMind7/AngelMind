@@ -16,6 +16,7 @@ type SupportedToolKey =
   | "validation.13"
   | "validation.19"
   | "validation.12"
+  | "validation.8"
   | "secrets_detection.1"
   | "source_code.1"
   | "source_code.19"
@@ -102,6 +103,12 @@ const adapters: readonly Adapter[] = [
       "-i",
       inputPath,
     ],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "validation.8",
+    binary: "log2timeline.py",
+    args: inputPath => ["--quiet", "/tmp/angelmind-plaso.plaso", inputPath],
     allowedModes: ["offline_artifact"],
   },
   {

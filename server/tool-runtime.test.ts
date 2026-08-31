@@ -35,6 +35,11 @@ describe("registered tool runtime", () => {
         allowedModes: ["offline_artifact"],
       },
       {
+        toolKey: "validation.8",
+        binary: "log2timeline.py",
+        allowedModes: ["offline_artifact"],
+      },
+      {
         toolKey: "secrets_detection.1",
         binary: "gitleaks",
         allowedModes: ["offline_artifact"],

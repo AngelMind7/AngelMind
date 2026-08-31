@@ -42,6 +42,7 @@ RUN apt-get update \
        dnsutils \
        file \
        jq \
+       python3-plaso \
        ripgrep \
        scalpel \
        shellcheck \

@@ -1,0 +1,90 @@
+version: 1
+platform: railway
+policy:
+  default_enabled: false
+  execution_requires_verified_tool: true
+  require_scope_validation: true
+  high_risk_requires_human_approval: true
+  critical_risk_requires_human_approval: true
+  prohibited_in_default_pack:
+    - credential_theft
+    - phishing
+    - persistence
+    - command_and_control
+    - destructive_execution
+
+packs:
+  - id: artifact-pack
+    railway_service: angelmind-runtime-artifact
+    purpose: Offline inspection of user-supplied artifacts only
+    allowed_dispositions:
+      - candidate_offline_or_artifact
+    network: disabled
+    categories:
+      - Binary/Artifact Analysis
+      - Source Code
+      - Dependencies
+      - Secrets Detection
+      - Data
+      - Reporting
+    install_strategy: apt_or_pinned_python_package
+
+  - id: analysis-pack
+    railway_service: angelmind-runtime-analysis
+    purpose: Offline and local analysis of normalized inputs
+    allowed_dispositions:
+      - candidate_offline_or_artifact
+    network: disabled
+    categories:
+      - AI/LLM Security
+      - Validation
+      - Configuration
+      - Supply Chain
+      - Containers
+      - Infrastructure
+    install_strategy: pinned_package_manifest
+
+  - id: passive-pack
+    railway_service: angelmind-runtime-passive
+    purpose: Scope-bound passive observation and public-data collection
+    allowed_dispositions:
+      - candidate_passive_review
+    network: restricted_by_policy
+    categories:
+      - Asset Intelligence
+      - Threat Intelligence
+      - Traffic Analysis
+      - Log Analysis
+      - Email/DNS Security
+    install_strategy: pinned_package_manifest
+
+  - id: review-required-pack
+    railway_service: angelmind-runtime-review
+    purpose: Quarantined metadata only; no execution in default deployment
+    allowed_dispositions:
+      - disabled_review_required
+      - disabled_high_risk
+    network: disabled
+    categories:
+      - Social Engineering
+      - Adversary Simulation
+      - Post-Exploitation
+      - Blockchain Security
+      - Physical/Hardware Security
+      - Web
+      - Wireless
+    install_strategy: none
+
+railway:
+  web_service: angelmind-web
+  worker_service: angelmind-worker
+  health_path: /healthz
+  required_runtime_env:
+    - NODE_ENV
+    - DATABASE_URL
+    - JWT_SECRET
+  optional_runtime_env:
+    - RUNTIME_PACK_ID
+    - RUNTIME_MAX_SECONDS
+    - RUNTIME_MAX_OUTPUT_BYTES
+    - RUNTIME_NETWORK_POLICY

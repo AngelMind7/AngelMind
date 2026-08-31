@@ -1996,9 +1996,9 @@ export const generatedToolCatalog = [
     "category": "Email/DNS Security",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_passive_review",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "email_dns_security.2",

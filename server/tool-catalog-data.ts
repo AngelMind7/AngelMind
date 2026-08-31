@@ -2916,9 +2916,9 @@ export const generatedToolCatalog = [
     "category": "Log Analysis",
     "riskClass": "low",
     "approvalGate": "scope_check",
-    "verificationStatus": "provisional_from_user_pdf",
+    "verificationStatus": "verified",
     "disposition": "candidate_offline_or_artifact",
-    "enabledByDefault": false
+    "enabledByDefault": true
   },
   {
     "toolKey": "log_analysis.3",

@@ -35,6 +35,7 @@ type SupportedToolKey =
   | "source_code.18"
   | "supply_chain.3"
   | "validation.17"
+  | "log_analysis.2"
   | "log_analysis.13"
   | "traffic_analysis.12"
   | "traffic_analysis.17"
@@ -270,6 +271,18 @@ const adapters: readonly Adapter[] = [
     toolKey: "validation.17",
     binary: "vol",
     args: inputPath => ["-f", inputPath, "windows.info"],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "log_analysis.2",
+    binary: "chainsaw",
+    args: inputPath => [
+      "analyse",
+      "gaps",
+      "--json",
+      "--skip-errors",
+      inputPath,
+    ],
     allowedModes: ["offline_artifact"],
   },
   {

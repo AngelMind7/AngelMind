@@ -28,6 +28,7 @@ const verifiedRuntimeKeys = new Set([
   "dependencies.9",
   "email_dns_security.1",
   "email_dns_security.2",
+  "log_analysis.2",
   "log_analysis.13",
   "traffic_analysis.12",
   "traffic_analysis.17",

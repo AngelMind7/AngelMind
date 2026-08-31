@@ -130,6 +130,11 @@ describe("registered tool runtime", () => {
         allowedModes: ["offline_artifact"],
       },
       {
+        toolKey: "log_analysis.2",
+        binary: "chainsaw",
+        allowedModes: ["offline_artifact"],
+      },
+      {
         toolKey: "log_analysis.13",
         binary: "sigmac",
         allowedModes: ["offline_artifact"],

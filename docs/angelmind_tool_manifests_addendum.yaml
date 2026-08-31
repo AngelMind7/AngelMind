@@ -1,0 +1,1899 @@
+# AngelMind — Tool Manifest ADDENDUM
+# 7 kategori baru yang belum ada di angelmind_tool_manifests_all.yaml
+# Social Engineering, Adversary Simulation, AI/LLM Security, Email/DNS Security,
+# Post-Exploitation, Blockchain Security, Physical/Hardware Security
+# Tinggal di-append ke 'tools:' list di file manifest utama
+
+tools:
+- tool:
+    name: Gophish
+    slug: gophish
+    version: TBD
+    source: TBD
+    license: MIT
+    category: Social Engineering
+    risk_class: high
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Open-source phishing simulation & campaign management framework
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: King Phisher
+    slug: king-phisher
+    version: TBD
+    source: TBD
+    license: GPL-3.0
+    category: Social Engineering
+    risk_class: high
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Phishing campaign toolkit dengan reporting & training
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Social-Engineer Toolkit (SET)
+    slug: social-engineer-toolkit-set
+    version: TBD
+    source: TBD
+    license: BSD-3-Clause
+    category: Social Engineering
+    risk_class: critical
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Framework serangan rekayasa sosial (spear-phishing, cloning site)
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Evilginx2
+    slug: evilginx2
+    version: TBD
+    source: TBD
+    license: GPL-3.0
+    category: Social Engineering
+    risk_class: critical
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Reverse-proxy phishing untuk capture credential & session token (bypass
+    MFA)
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Modlishka
+    slug: modlishka
+    version: TBD
+    source: TBD
+    license: MIT
+    category: Social Engineering
+    risk_class: critical
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Reverse-proxy phishing tool untuk simulasi advanced phishing/2FA bypass
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Muraena
+    slug: muraena
+    version: TBD
+    source: TBD
+    license: GPL-3.0
+    category: Social Engineering
+    risk_class: critical
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Transparent reverse proxy phishing framework
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: LUCY
+    slug: lucy
+    version: TBD
+    source: TBD
+    license: Commercial/Freemium
+    category: Social Engineering
+    risk_class: high
+    commercial: true
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Security awareness & phishing simulation platform
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Atomic Red Team
+    slug: atomic-red-team
+    version: TBD
+    source: TBD
+    license: MIT
+    category: Adversary Simulation
+    risk_class: high
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Library eksekusi teknik MITRE ATT&CK terkontrol untuk uji deteksi
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: MITRE Caldera
+    slug: mitre-caldera
+    version: TBD
+    source: TBD
+    license: Apache-2.0
+    category: Adversary Simulation
+    risk_class: high
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Platform otomatisasi adversary emulation berbasis ATT&CK
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Infection Monkey
+    slug: infection-monkey
+    version: TBD
+    source: TBD
+    license: GPL-3.0
+    category: Adversary Simulation
+    risk_class: high
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Breach & attack simulation (lateral movement) open-source dari Guardicore
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Metta
+    slug: metta
+    version: TBD
+    source: TBD
+    license: MIT
+    category: Adversary Simulation
+    risk_class: medium
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Adversary simulation framework dari Uber (deprecated tapi masih dipakai)
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Vectr
+    slug: vectr
+    version: TBD
+    source: TBD
+    license: Apache-2.0
+    category: Adversary Simulation
+    risk_class: low
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Purple team campaign tracking & reporting platform
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: APTSimulator
+    slug: aptsimulator
+    version: TBD
+    source: TBD
+    license: Apache-2.0
+    category: Adversary Simulation
+    risk_class: medium
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Simulasi indikator APT di Windows untuk uji deteksi blue team
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Prelude Operator
+    slug: prelude-operator
+    version: TBD
+    source: TBD
+    license: Freemium
+    category: Adversary Simulation
+    risk_class: high
+    commercial: true
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Automated adversary emulation platform
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Garak
+    slug: garak
+    version: TBD
+    source: TBD
+    license: Apache-2.0
+    category: AI/LLM Security
+    risk_class: medium
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: LLM vulnerability scanner (jailbreak, prompt injection, hallucination)
+    dari NVIDIA
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: PyRIT
+    slug: pyrit
+    version: TBD
+    source: TBD
+    license: MIT
+    category: AI/LLM Security
+    risk_class: medium
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Python Risk Identification Tool untuk generative AI dari Microsoft
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: promptmap
+    slug: promptmap
+    version: TBD
+    source: TBD
+    license: MIT
+    category: AI/LLM Security
+    risk_class: medium
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Automated prompt injection vulnerability scanner untuk LLM app
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Rebuff
+    slug: rebuff
+    version: TBD
+    source: TBD
+    license: Apache-2.0
+    category: AI/LLM Security
+    risk_class: low
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Prompt injection detection framework
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Vigil-LLM
+    slug: vigil-llm
+    version: TBD
+    source: TBD
+    license: Apache-2.0
+    category: AI/LLM Security
+    risk_class: low
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: LLM prompt injection & jailbreak detection scanner
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: LLM Guard
+    slug: llm-guard
+    version: TBD
+    source: TBD
+    license: MIT
+    category: AI/LLM Security
+    risk_class: low
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Toolkit keamanan untuk input/output LLM (sanitization, deteksi PII/injection)
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Adversarial Robustness Toolbox (ART)
+    slug: adversarial-robustness-toolbox-art
+    version: TBD
+    source: TBD
+    license: MIT
+    category: AI/LLM Security
+    risk_class: medium
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Toolkit adversarial ML dari IBM (evasion, poisoning, extraction testing)
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Counterfit
+    slug: counterfit
+    version: TBD
+    source: TBD
+    license: MIT
+    category: AI/LLM Security
+    risk_class: medium
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Automation layer untuk menyerang/menguji ketahanan model AI, dari Microsoft
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Giskard
+    slug: giskard
+    version: TBD
+    source: TBD
+    license: Apache-2.0
+    category: AI/LLM Security
+    risk_class: low
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Testing framework untuk ML/LLM (bias, robustness, security scan)
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: CheckDMARC
+    slug: checkdmarc
+    version: TBD
+    source: TBD
+    license: MIT
+    category: Email/DNS Security
+    risk_class: low
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Validator SPF/DKIM/DMARC record domain
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Spoofcheck
+    slug: spoofcheck
+    version: TBD
+    source: TBD
+    license: MIT
+    category: Email/DNS Security
+    risk_class: low
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Cek apakah domain rentan email spoofing (SPF/DMARC lemah)
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: DKIMpy
+    slug: dkimpy
+    version: TBD
+    source: TBD
+    license: BSD-3-Clause
+    category: Email/DNS Security
+    risk_class: low
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Library verifikasi/signing DKIM
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: MXToolbox
+    slug: mxtoolbox
+    version: TBD
+    source: TBD
+    license: Freemium
+    category: Email/DNS Security
+    risk_class: low
+    commercial: true
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Diagnostic email/DNS (blacklist, MX, SPF/DMARC check)
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: EmailRep
+    slug: emailrep
+    version: TBD
+    source: TBD
+    license: Freemium (API)
+    category: Email/DNS Security
+    risk_class: low
+    commercial: true
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Reputation lookup alamat email untuk deteksi phishing/fraud risk
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: PEASS-ng (WinPEAS/LinPEAS)
+    slug: peass-ng-winpeas-linpeas
+    version: TBD
+    source: TBD
+    license: GPL-3.0
+    category: Post-Exploitation
+    risk_class: high
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Enumerasi privilege escalation Windows/Linux pasca akses awal
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Seatbelt
+    slug: seatbelt
+    version: TBD
+    source: TBD
+    license: BSD-3-Clause
+    category: Post-Exploitation
+    risk_class: high
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Situational awareness collector Windows (bagian GhostPack)
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: SharpUp
+    slug: sharpup
+    version: TBD
+    source: TBD
+    license: BSD-3-Clause
+    category: Post-Exploitation
+    risk_class: high
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Privilege escalation enumeration Windows (GhostPack)
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Evil-WinRM
+    slug: evil-winrm
+    version: TBD
+    source: TBD
+    license: GPL-3.0
+    category: Post-Exploitation
+    risk_class: critical
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Shell WinRM untuk pasca-eksploitasi Windows
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: PowerSploit
+    slug: powersploit
+    version: TBD
+    source: TBD
+    license: BSD-3-Clause
+    category: Post-Exploitation
+    risk_class: critical
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Koleksi PowerShell module untuk post-exploitation
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Linikatz
+    slug: linikatz
+    version: TBD
+    source: TBD
+    license: AGPL-3.0
+    category: Post-Exploitation
+    risk_class: critical
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Ekstraksi kredensial di Linux (mirip Mimikatz untuk Linux)
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Slither
+    slug: slither
+    version: TBD
+    source: TBD
+    license: AGPL-3.0
+    category: Blockchain Security
+    risk_class: low
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Static analyzer Solidity dari Trail of Bits
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Mythril
+    slug: mythril
+    version: TBD
+    source: TBD
+    license: MIT
+    category: Blockchain Security
+    risk_class: low
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Analisis keamanan bytecode EVM (symbolic execution)
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Echidna
+    slug: echidna
+    version: TBD
+    source: TBD
+    license: AGPL-3.0
+    category: Blockchain Security
+    risk_class: medium
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Fuzzer property-based untuk smart contract, Trail of Bits
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Manticore
+    slug: manticore
+    version: TBD
+    source: TBD
+    license: AGPL-3.0
+    category: Blockchain Security
+    risk_class: medium
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Symbolic execution untuk analisis smart contract & binary
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Foundry (forge/cast)
+    slug: foundry-forge-cast
+    version: TBD
+    source: TBD
+    license: Apache-2.0/MIT
+    category: Blockchain Security
+    risk_class: low
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Toolkit development & testing smart contract Ethereum (termasuk fuzzing)
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Securify
+    slug: securify
+    version: TBD
+    source: TBD
+    license: Apache-2.0
+    category: Blockchain Security
+    risk_class: low
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Static analyzer keamanan smart contract dari ETH Zurich
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Proxmark3
+    slug: proxmark3
+    version: TBD
+    source: TBD
+    license: GPL-2.0 (open hardware+firmware)
+    category: Physical/Hardware Security
+    risk_class: high
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Tool riset & analisis RFID/NFC (butuh perangkat fisik)
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: ChipWhisperer
+    slug: chipwhisperer
+    version: TBD
+    source: TBD
+    license: GPL-3.0 (open hardware)
+    category: Physical/Hardware Security
+    risk_class: high
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Platform side-channel analysis & fault injection hardware
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: HackRF Tools
+    slug: hackrf-tools
+    version: TBD
+    source: TBD
+    license: GPL-2.0 (open hardware)
+    category: Physical/Hardware Security
+    risk_class: high
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: SDR untuk analisis/riset sinyal radio
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: true
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: JTAGulator
+    slug: jtagulator
+    version: TBD
+    source: TBD
+    license: CC-BY-SA (open hardware)
+    category: Physical/Hardware Security
+    risk_class: medium
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Identifikasi pinout JTAG/UART pada PCB
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered
+- tool:
+    name: Firmware Analysis Toolkit (FAT)
+    slug: firmware-analysis-toolkit-fat
+    version: TBD
+    source: TBD
+    license: GPL-3.0
+    category: Physical/Hardware Security
+    risk_class: medium
+    commercial: false
+  runtime:
+    type: TBD
+    artifact: null
+    resources:
+      cpu: TBD
+      memory: TBD
+      timeout_seconds: TBD
+  capabilities: []
+  description: Analisis & emulasi firmware IoT (berbasis Binwalk+Firmadyne)
+  dependencies:
+    runtime_dependency: null
+    credential_dependency: null
+  policy:
+    requires_human_approval: false
+  definition_of_done_status:
+    identity: true
+    source_verified: false
+    version_pinned: false
+    license_documented: true
+    runtime_built: false
+    dependencies_mapped: false
+    manifest_complete: false
+    adapter_implemented: false
+    parser_implemented: false
+    normalizer_implemented: false
+    health_check_configured: false
+    scope_integration: false
+    policy_integration: false
+    execution_tested: false
+    cleanup_verified: false
+    audit_logging: false
+    monitoring_attached: false
+  lifecycle_status: discovered

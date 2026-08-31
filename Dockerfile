@@ -35,6 +35,7 @@ RUN apt-get update \
        bandit \
        binutils \
        ca-certificates \
+       cppcheck \
        dc3dd \
        foremost \
        gitleaks \

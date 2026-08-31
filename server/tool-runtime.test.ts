@@ -49,6 +49,11 @@ describe("registered tool runtime", () => {
         binary: "shellcheck",
         allowedModes: ["offline_artifact"],
       },
+      {
+        toolKey: "source_code.22",
+        binary: "cppcheck",
+        allowedModes: ["offline_artifact"],
+      },
     ]);
   });
 

@@ -18,7 +18,8 @@ type SupportedToolKey =
   | "validation.12"
   | "secrets_detection.1"
   | "source_code.1"
-  | "source_code.19";
+  | "source_code.19"
+  | "source_code.22";
 
 export type ToolRuntimeRequest = {
   toolKey: string;
@@ -128,6 +129,12 @@ const adapters: readonly Adapter[] = [
     toolKey: "source_code.19",
     binary: "shellcheck",
     args: inputPath => ["--format=json", inputPath],
+    allowedModes: ["offline_artifact"],
+  },
+  {
+    toolKey: "source_code.22",
+    binary: "cppcheck",
+    args: inputPath => ["--enable=all", "--xml", "--xml-version=2", inputPath],
     allowedModes: ["offline_artifact"],
   },
 ];

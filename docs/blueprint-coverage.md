@@ -51,7 +51,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 27 | Report builder | **Implemented** | Compose, validate, save versions, preview/export Markdown/JSON, evidence references tersedia. |
 | 28 | Report version control | **Implemented** | `reportVersions` menyimpan versi, creator, content, validation state, dan timestamps. |
 | 29 | Submission tracking | **Deferred** | External submission tidak diaktifkan; status preparation/internal review tersedia secara terbatas. |
-| 30 | Retest | **Partial** | `findingRetests`, retest evidence/result, relation linking, and status synchronization are implemented; full retest UI and end-to-end OPEN → VERIFIED_FIXED/STILL_PRESENT flow remain incomplete. |
+| 30 | Retest | **Partial** | `findingRetests`, retest evidence/result, relation linking, status synchronization, and Findings UI request/result workflow are implemented; richer OPEN → VERIFIED_FIXED/STILL_PRESENT state semantics and evidence upload integration remain incomplete. |
 | 31 | Knowledge graph | **Partial** | Workspace-scoped relationship/evidence/finding records, search documents, and intelligence feed persistence exist; generic graph nodes/edges/traversal/temporal provenance engine remains incomplete. |
 | 32 | Intelligence center | **Partial** | Coverage dan analytics tersedia; correlation, historical intelligence, recommendation center belum. |
 | 33 | Change detection | **Implemented** | Workspace policy/configuration change detection tersedia; asset/technology change belum. |

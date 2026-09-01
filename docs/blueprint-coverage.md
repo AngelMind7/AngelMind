@@ -147,7 +147,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 106 | SEO | **Partial** | Title/manifest/public content ada; complete metadata/robots/sitemap/structured data belum. |
 | 107 | Performance | **Partial** | Lazy routes/PWA/cache ada; bundle masih memberi warning chunk besar dan performance budget belum. |
 | 108 | Database performance | **Partial** | Index dasar dan bounded queries ada; query profiling/load benchmark belum. |
-| 109 | Email system | **Partial** | Generic SMTP adapter, typed environment configuration, invitation/reset/verification templates, Indonesian/English locale fallback, and tests are implemented; invitation/auth flow wiring, durable email delivery queue, retry/status log, unsubscribe, and provider verification remain open. |
+| 109 | Email system | **Partial** | Generic SMTP adapter, typed environment configuration, invitation/reset/verification templates, Indonesian/English locale fallback, durable `emailDeliveries` ledger, idempotent enqueueing, retry-compatible worker status, and organization invitation queue wiring are implemented; password/reset/verification flow wiring, unsubscribe, and provider-level verification remain open. |
 | 110 | Documentation | **Partial** | README, architecture, governance, runbook, alignment, roadmap tersedia; API/domain/operator docs lengkap belum. |
 | 111 | Repository final | **Partial** | Runtime provider-neutral sudah dipakai: Firebase Auth, Supabase Storage, Railway-ready API, serta CI GitHub; remaining domain gaps tercatat di matrix ini. |
 | 112 | Aturan tim | **Implemented** | Safety boundary dan definition of done terdokumentasi; automation enforcement dapat diperluas. |

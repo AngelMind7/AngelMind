@@ -1680,6 +1680,9 @@ export const appRouter = router({
     ingestIntelligenceFeed: protectedProcedure
       .input(z.object({ workspaceId: z.number().int().positive(), items: z.array(z.object({ source: z.string().min(1).max(120), observedAt: z.coerce.date().transform(value => value.toISOString()), assetRef: z.string().min(1).max(512), confidence: z.number().min(0).max(100), reference: z.string().max(512).optional(), data: z.record(z.string(), z.unknown()) })).min(1).max(100) }))
       .mutation(({ ctx, input }) => researchIntelligence.ingestIntelligenceFeed(ctx.user.id, input)),
+    enqueueIntelligenceFetch: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), providerUrl: z.string().url().max(2_000), idempotencyKey: z.string().trim().min(8).max(180) }))
+      .mutation(({ ctx, input }) => researchIntelligence.enqueueIntelligenceFetch(ctx.user.id, input)),
     createIntelligenceFeed: protectedProcedure
       .input(
         z.object({

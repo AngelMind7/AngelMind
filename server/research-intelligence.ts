@@ -5,6 +5,8 @@ import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { compareAssetSnapshots, normalizeIntelligenceFeed, validateFailureObservation, type AssetSnapshot, type FailureObservation, type IntelligenceFeedItem } from "./control-plane/intelligence-engine";
 import { currentTraceContext } from "./_core/trace-context";
+import { enqueueJob } from "./ai-platform";
+import { fetchIntelligenceFeed } from "./intelligence-provider";
 
 async function requireWorkspace(userId: number, workspaceId: number, intent: "read" | "respond" | "manage" = "read") {
   if (!(await canAccessWorkspace(userId, workspaceId, intent))) throw new Error("Workspace tidak ditemukan atau tidak dapat diakses.");
@@ -80,6 +82,20 @@ export async function createIntelligenceFeedItem(userId: number, input: { worksp
   const [created] = await ingestIntelligenceFeed(userId, { workspaceId: input.workspaceId, items: [input] });
   if (!created) throw new Error("Intelligence feed item could not be created.");
   return created;
+}
+
+export async function enqueueIntelligenceFetch(userId: number, input: { workspaceId: number; providerUrl: string; idempotencyKey: string }) {
+  await requireWorkspace(userId, input.workspaceId, "respond");
+  return enqueueJob(userId, { workspaceId: input.workspaceId, kind: "intelligence.fetch", idempotencyKey: input.idempotencyKey, payload: { type: "intelligence_fetch", workspaceId: input.workspaceId, userId, providerUrl: input.providerUrl } });
+}
+
+export async function executeIntelligenceFetchJob(payload: Record<string, unknown>) {
+  const userId = Number(payload.userId);
+  const workspaceId = Number(payload.workspaceId);
+  const providerUrl = String(payload.providerUrl ?? "");
+  if (!Number.isInteger(userId) || !Number.isInteger(workspaceId) || !providerUrl) throw new Error("Invalid intelligence fetch job payload.");
+  const items = await fetchIntelligenceFeed(providerUrl);
+  return ingestIntelligenceFeed(userId, { workspaceId, items });
 }
 
 export async function ingestIntelligenceFeed(userId: number, input: { workspaceId: number; items: IntelligenceFeedItem[] }) {

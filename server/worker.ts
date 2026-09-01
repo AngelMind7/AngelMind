@@ -1,5 +1,6 @@
 import { claimPendingJobs, completeJob, dispatchPendingOutbox, executeAiRunJob, executeOrchestrationPlanJob, failJob, heartbeatJob, refreshModelCatalog, type OutboxEventHandler } from "./ai-platform";
 import { executeEvidenceScanJob } from "./control-plane/service";
+import { executeIntelligenceFetchJob } from "./research-intelligence";
 
 export type WorkerJob = {
   id: number;
@@ -107,6 +108,7 @@ if (process.env.RUN_WORKER === "true") {
     }),
     "ai.run.execute": async (_job, payload) => executeAiRunJob(payload),
     "evidence.scan": async (_job, payload) => executeEvidenceScanJob(payload),
+    "intelligence.fetch": async (_job, payload) => { await executeIntelligenceFetchJob(payload); },
   });
   console.info(`[worker] started; poll interval=${DEFAULT_POLL_INTERVAL_MS}ms`);
 }

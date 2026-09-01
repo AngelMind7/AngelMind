@@ -19,7 +19,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { signInWithGoogle } from "@/firebase";
+import { registerWithEmail, resetPassword, signInWithEmail, signInWithGoogle } from "@/firebase";
 import { useIsMobile } from "@/hooks/useMobile";
 import { Activity, BarChart3, BrainCircuit, Boxes, Building2, FileSearch, FileText, KeyRound, LayoutDashboard, LogOut, Network, PanelLeft, Radar, ScrollText, Settings2, ShieldCheck, ShieldEllipsis, UserRound } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -72,9 +72,32 @@ export default function DashboardLayout({
   const { loading, user } = useAuth();
   const { t } = useLocale();
   const [authError, setAuthError] = useState<string | null>(null);
+  const [authNotice, setAuthNotice] = useState<string | null>(null);
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authMode, setAuthMode] = useState<"sign-in" | "register">("sign-in");
+  const [authBusy, setAuthBusy] = useState(false);
   const handleGoogleSignIn = () => {
     setAuthError(null);
+    setAuthNotice(null);
     void signInWithGoogle().then(user => { if (user) window.location.reload(); }).catch(error => setAuthError(error instanceof Error ? error.message : "Google Login failed."));
+  };
+  const handleEmailAuth = (event: React.FormEvent) => {
+    event.preventDefault();
+    setAuthError(null);
+    setAuthNotice(null);
+    setAuthBusy(true);
+    const operation = authMode === "register"
+      ? registerWithEmail(authEmail, authPassword).then(result => setAuthNotice(`Verification email sent to ${result.email}. Verify it, then sign in.`))
+      : signInWithEmail(authEmail, authPassword).then(() => window.location.reload());
+    void operation.catch(error => setAuthError(error instanceof Error ? error.message : "Email authentication failed.")).finally(() => setAuthBusy(false));
+  };
+  const handlePasswordReset = () => {
+    setAuthError(null);
+    setAuthNotice(null);
+    if (!authEmail.trim()) { setAuthError("Enter your email address first."); return; }
+    setAuthBusy(true);
+    void resetPassword(authEmail).then(() => setAuthNotice("If that address exists, a password reset email has been sent.")).catch(error => setAuthError(error instanceof Error ? error.message : "Password reset failed.")).finally(() => setAuthBusy(false));
   };
 
   useEffect(() => {
@@ -97,14 +120,24 @@ export default function DashboardLayout({
               {t("auth.signInText")}
             </p>
           </div>
-            <Button
-            onClick={handleGoogleSignIn}
-            size="lg"
-            className="w-full shadow-lg hover:shadow-xl transition-all"
-          >
-            {t("auth.signIn")}
-          </Button>
-          {authError && <p role="alert" className="text-center text-sm text-destructive">{authError}</p>}
+            <Button onClick={handleGoogleSignIn} size="lg" className="w-full shadow-lg hover:shadow-xl transition-all" disabled={authBusy}>
+              {t("auth.signIn")} with Google
+            </Button>
+            <div className="w-full border-t pt-6">
+              <form onSubmit={handleEmailAuth} className="space-y-3" noValidate>
+                <label className="block text-sm font-medium" htmlFor="auth-email">Email</label>
+                <input id="auth-email" name="email" type="email" autoComplete="email" required value={authEmail} onChange={event => setAuthEmail(event.target.value)} className="w-full rounded-md border bg-background px-3 py-2 text-sm" placeholder="you@example.com" />
+                <label className="block text-sm font-medium" htmlFor="auth-password">Password</label>
+                <input id="auth-password" name="password" type="password" autoComplete={authMode === "register" ? "new-password" : "current-password"} minLength={6} required value={authPassword} onChange={event => setAuthPassword(event.target.value)} className="w-full rounded-md border bg-background px-3 py-2 text-sm" placeholder="At least 6 characters" />
+                <Button type="submit" size="lg" variant="outline" className="w-full" disabled={authBusy}>{authBusy ? "Working…" : authMode === "register" ? "Create account with email" : "Sign in with email"}</Button>
+              </form>
+              <div className="mt-3 flex flex-wrap justify-center gap-3 text-xs">
+                <button type="button" className="underline underline-offset-4" onClick={() => { setAuthMode(authMode === "register" ? "sign-in" : "register"); setAuthError(null); setAuthNotice(null); }}>{authMode === "register" ? "Already have an account? Sign in" : "Create an account"}</button>
+                {authMode === "sign-in" && <button type="button" className="underline underline-offset-4" onClick={handlePasswordReset} disabled={authBusy}>Reset password</button>}
+              </div>
+            </div>
+            {authNotice && <p role="status" className="text-center text-sm text-emerald-600">{authNotice}</p>}
+            {authError && <p role="alert" className="text-center text-sm text-destructive">{authError}</p>}
         </div>
       </div>
     );

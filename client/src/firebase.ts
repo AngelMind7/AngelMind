@@ -1,9 +1,13 @@
 import { initializeAppCheck, ReCaptchaEnterpriseProvider, type AppCheck } from "firebase/app-check";
 import { getApp, getApps, initializeApp, type FirebaseApp } from "firebase/app";
 import {
+  createUserWithEmailAndPassword,
   getAuth,
   getRedirectResult,
   GoogleAuthProvider,
+  sendEmailVerification,
+  sendPasswordResetEmail,
+  signInWithEmailAndPassword,
   signInWithPopup,
   signInWithRedirect,
   signOut,
@@ -88,6 +92,28 @@ export async function completeGoogleRedirectSignIn() {
   if (!result?.user) return false;
   await exchangeFirebaseUser(result.user);
   return true;
+}
+
+export async function signInWithEmail(email: string, password: string): Promise<User> {
+  const client = getFirebaseClient();
+  if (!client) throw new Error("Firebase authentication is not configured.");
+  const credential = await signInWithEmailAndPassword(client.auth, email.trim(), password);
+  return exchangeFirebaseUser(credential.user);
+}
+
+export async function registerWithEmail(email: string, password: string): Promise<{ verificationRequired: true; email: string }> {
+  const client = getFirebaseClient();
+  if (!client) throw new Error("Firebase authentication is not configured.");
+  const credential = await createUserWithEmailAndPassword(client.auth, email.trim(), password);
+  await sendEmailVerification(credential.user);
+  await signOut(client.auth);
+  return { verificationRequired: true, email: credential.user.email ?? email.trim() };
+}
+
+export async function resetPassword(email: string): Promise<void> {
+  const client = getFirebaseClient();
+  if (!client) throw new Error("Firebase authentication is not configured.");
+  await sendPasswordResetEmail(client.auth, email.trim());
 }
 
 export async function signInWithGoogle(): Promise<User | null> {

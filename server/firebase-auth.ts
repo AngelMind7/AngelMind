@@ -21,12 +21,12 @@ export function registerFirebaseAuthRoutes(app: Express) {
     try {
       const decoded = await verifyFirebaseIdToken(idToken);
       const provider = decoded.firebase?.sign_in_provider;
-      if (provider !== "google.com") {
-        res.status(403).json({ error: "Only Google Firebase sign-in is enabled." });
+      if (provider !== "google.com" && provider !== "password") {
+        res.status(403).json({ error: "This Firebase sign-in provider is not enabled." });
         return;
       }
       if (decoded.email_verified !== true) {
-        res.status(403).json({ error: "A verified Google email is required." });
+        res.status(403).json({ error: "A verified email is required." });
         return;
       }
 

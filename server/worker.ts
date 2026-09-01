@@ -20,6 +20,7 @@ export type JobHandler = (job: WorkerJob, payload: Record<string, unknown>) => P
 
 export const DEFAULT_POLL_INTERVAL_MS = 5_000;
 export const MODEL_CATALOG_REFRESH_INTERVAL_MS = 15 * 60_000;
+export const MEMORY_PURGE_INTERVAL_MS = 15 * 60_000;
 
 export function computeRetryDelayMs(attempts: number, capMs = 60 * 60 * 1_000) {
   const safeAttempts = Math.max(1, Math.floor(attempts));
@@ -115,6 +116,10 @@ if (process.env.RUN_WORKER === "true") {
   void refreshCatalog();
   const catalogTimer = setInterval(() => void refreshCatalog(), MODEL_CATALOG_REFRESH_INTERVAL_MS);
   catalogTimer.unref?.();
+  const retentionTimer = setInterval(() => {
+    void purgeExpiredAiRunMemory(100).catch(error => console.error(`[worker] memory purge failed: ${error instanceof Error ? error.message : "unknown error"}`));
+  }, MEMORY_PURGE_INTERVAL_MS);
+  retentionTimer.unref?.();
   createWorkerLoop({
     "orchestration.plan": orchestrationPlanHandler(async payload => {
       await executeOrchestrationPlanJob(payload);

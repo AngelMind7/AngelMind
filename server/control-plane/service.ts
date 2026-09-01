@@ -3,7 +3,7 @@ import { and, desc, eq, gt, inArray, isNotNull, isNull } from "drizzle-orm";
 import { auditEvents, approvals, credentialReferences, evidenceArtifacts, findings, notificationPreferences, notifications, runs, workspaceChangeSnapshots, workspaceMemberships, workspaces } from "../../drizzle/schema";
 import { getDb, getOwnedWorkspace } from "../db";
 import { notifyOwner } from "../_core/notification";
-import { storagePut } from "../storage";
+import { storageGetSignedUrl, storagePut } from "../storage";
 import { assertFindingTransition, type FindingWorkflowStatus } from "./finding-workflow";
 import { buildRehearsal } from "./rehearsal";
 import { getAdministrativeCheckEligibility } from "./scheduler";
@@ -320,25 +320,29 @@ export async function uploadEvidence(userId: number, input: { workspaceId: numbe
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const traceId = currentTraceContext()?.traceId ?? null;
-  await db.insert(evidenceArtifacts).values({ workspaceId: workspace.id, findingId: input.findingId ?? null, artifactType: validatedEvidence.contentType, contentType: validatedEvidence.contentType, sizeBytes: bytes.length, storageReference: artifact.url, sha256: createHash("sha256").update(bytes).digest("hex"), status: "quarantined", quarantineReason: "Awaiting content/security scan.", traceId });
-  const [storedArtifact] = await db.select().from(evidenceArtifacts).where(and(eq(evidenceArtifacts.workspaceId, workspace.id), eq(evidenceArtifacts.storageReference, artifact.url))).orderBy(desc(evidenceArtifacts.id)).limit(1);
+  const storageKey = artifact.key;
+  await db.insert(evidenceArtifacts).values({ workspaceId: workspace.id, findingId: input.findingId ?? null, artifactType: validatedEvidence.contentType, contentType: validatedEvidence.contentType, sizeBytes: bytes.length, storageKey, storageReference: storageKey, sha256: createHash("sha256").update(bytes).digest("hex"), status: "quarantined", quarantineReason: "Awaiting content/security scan.", traceId });
+  const [storedArtifact] = await db.select().from(evidenceArtifacts).where(and(eq(evidenceArtifacts.workspaceId, workspace.id), eq(evidenceArtifacts.storageKey, storageKey))).orderBy(desc(evidenceArtifacts.id)).limit(1);
   if (!storedArtifact) throw new Error("Evidence artifact could not be persisted.");
-  await enqueueJob(userId, { workspaceId: workspace.id, kind: "evidence.scan", idempotencyKey: `evidence-scan:${storedArtifact.id}`, payload: { type: "evidence_scan", artifactId: storedArtifact.id, storageReference: artifact.url, contentType: validatedEvidence.contentType, fileName: cleanName } });
-  await addAudit(workspace.id, "evidence", "artifact-stored", { fileName: cleanName, contentType: validatedEvidence.contentType, storageReference: artifact.url, findingId: input.findingId ?? null, scanJobIdempotencyKey: `evidence-scan:${storedArtifact.id}` });
-  return { storageReference: artifact.url, artifactId: storedArtifact.id, status: storedArtifact.status };
+  await enqueueJob(userId, { workspaceId: workspace.id, kind: "evidence.scan", idempotencyKey: `evidence-scan:${storedArtifact.id}`, payload: { type: "evidence_scan", artifactId: storedArtifact.id, storageKey, contentType: validatedEvidence.contentType, fileName: cleanName } });
+  await addAudit(workspace.id, "evidence", "artifact-stored", { fileName: cleanName, contentType: validatedEvidence.contentType, storageKey, findingId: input.findingId ?? null, scanJobIdempotencyKey: `evidence-scan:${storedArtifact.id}` });
+  return { storageReference: artifact.url, storageKey, artifactId: storedArtifact.id, status: storedArtifact.status };
 }
 
 export async function executeEvidenceScanJob(payload: Record<string, unknown>) {
   const artifactId = Number(payload.artifactId);
-  const storageReference = String(payload.storageReference ?? "");
+  const payloadStorageKey = String(payload.storageKey ?? "").trim();
+  const legacyStorageReference = String(payload.storageReference ?? "").trim();
   const contentType = String(payload.contentType ?? "application/octet-stream");
   const fileName = String(payload.fileName ?? "evidence.bin");
-  if (!Number.isInteger(artifactId) || artifactId < 1 || !storageReference.startsWith("http")) throw new Error("Invalid evidence scan job payload.");
+  if (!Number.isInteger(artifactId) || artifactId < 1 || (!payloadStorageKey && !legacyStorageReference.startsWith("http"))) throw new Error("Invalid evidence scan job payload.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const [artifact] = await db.select().from(evidenceArtifacts).where(eq(evidenceArtifacts.id, artifactId)).limit(1);
   if (!artifact || artifact.status !== "quarantined") return;
-  const response = await fetch(storageReference);
+  const storageKey = artifact.storageKey || payloadStorageKey;
+  const downloadUrl = storageKey ? await storageGetSignedUrl(storageKey, 300) : legacyStorageReference;
+  const response = await fetch(downloadUrl);
   if (!response.ok) throw new Error(`Evidence download failed with HTTP ${response.status}.`);
   const bytes = Buffer.from(await response.arrayBuffer());
   const result = scanEvidenceContent({ bytes, contentType, fileName });

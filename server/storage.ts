@@ -30,8 +30,14 @@ function getSupabaseStorage(): { client: SupabaseClient; bucket: string } {
   };
 }
 
-function normalizeKey(relKey: string): string {
-  return relKey.replace(/^\/+/, "");
+export function normalizeStorageKey(relKey: string): string {
+  const normalized = relKey.trim().replace(/\\/g, "/").replace(/^\/+/, "");
+  if (!normalized || normalized.includes("\0")) throw new Error("Storage object key is invalid.");
+  const segments = normalized.split("/");
+  if (segments.some(segment => !segment || segment === "." || segment === "..")) {
+    throw new Error("Storage object key must remain within its assigned prefix.");
+  }
+  return segments.join("/");
 }
 
 function appendHashSuffix(relKey: string): string {
@@ -63,7 +69,7 @@ export async function storagePut(
   contentType = "application/octet-stream",
 ): Promise<{ key: string; url: string }> {
   const { client, bucket } = getSupabaseStorage();
-  const key = appendHashSuffix(normalizeKey(relKey));
+  const key = appendHashSuffix(normalizeStorageKey(relKey));
   const { error } = await client.storage.from(bucket).upload(key, toUploadBody(data), {
     contentType,
     upsert: false,
@@ -78,12 +84,12 @@ export async function storagePut(
 
 export async function storageGet(relKey: string): Promise<{ key: string; url: string }> {
   const { client, bucket } = getSupabaseStorage();
-  const key = normalizeKey(relKey);
+  const key = normalizeStorageKey(relKey);
   return { key, url: await createSignedUrl(client, bucket, key) };
 }
 
 export async function storageGetSignedUrl(relKey: string, expiresInSeconds = SIGNED_URL_TTL_SECONDS): Promise<string> {
   const { client, bucket } = getSupabaseStorage();
   const ttl = Math.min(MAX_SIGNED_URL_TTL_SECONDS, Math.max(60, Math.floor(expiresInSeconds)));
-  return createSignedUrl(client, bucket, normalizeKey(relKey), ttl);
+  return createSignedUrl(client, bucket, normalizeStorageKey(relKey), ttl);
 }

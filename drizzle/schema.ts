@@ -634,6 +634,9 @@ export const evidenceArtifacts = mysqlTable("evidenceArtifacts", {
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   findingId: int("findingId").references(() => findings.id, { onDelete: "set null" }),
   artifactType: varchar("artifactType", { length: 80 }).notNull(),
+  /** Stable Supabase object key; signed URLs are minted only when needed. */
+  storageKey: varchar("storageKey", { length: 512 }),
+  /** Legacy/reference field retained for API compatibility. New rows store the stable key here. */
   storageReference: text("storageReference").notNull(),
   sha256: varchar("sha256", { length: 64 }).notNull(),
   status: mysqlEnum("status", evidenceArtifactStatus).default("quarantined").notNull(),

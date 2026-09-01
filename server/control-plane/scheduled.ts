@@ -29,9 +29,10 @@ export async function workspaceMaintenanceHandler(req: Request, res: Response) {
       : await runScheduledAdministrativeChecks();
     return res.json(result);
   } catch (error) {
+    console.error("[Scheduled] workspace maintenance failed", error);
     return res.status(500).json({
-      error: error instanceof Error ? error.message : "scheduled-check-failed",
-      context: { url: req.originalUrl },
+      error: "scheduled-check-failed",
+      requestId: req.headers["x-request-id"] || null,
       timestamp: new Date().toISOString(),
     });
   }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { compareAssetSnapshots, matchPlaybooks, normalizeIntelligenceFeed, validateFailureObservation } from "./intelligence-engine";
+import { assertPassivePlaybookTaskType, compareAssetSnapshots, matchPlaybooks, normalizeIntelligenceFeed, validateFailureObservation } from "./intelligence-engine";
 
 describe("intelligence engine", () => {
   it("deduplicates and validates failure evidence references", () => {
@@ -24,6 +24,12 @@ describe("intelligence engine", () => {
       { id: "api-next", version: "1", domains: ["api"], assetTypes: ["api"], technologies: ["next"], taskTemplates: [] },
     ];
     expect(matchPlaybooks(playbooks, { domain: "api", assetType: "api", technology: "next" }).map(playbook => playbook.id)).toEqual(["api-next"]);
+  });
+
+  it("rejects unsafe playbook task types", () => {
+    expect(assertPassivePlaybookTaskType("evidence_review")).toBe("evidence_review");
+    expect(() => assertPassivePlaybookTaskType("active_scan")).toThrow("passive research safety boundary");
+    expect(() => assertPassivePlaybookTaskType("credential_replay")).toThrow("passive research safety boundary");
   });
 
   it("normalizes and bounds intelligence feed metadata", () => {

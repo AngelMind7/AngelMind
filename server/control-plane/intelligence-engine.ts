@@ -56,6 +56,14 @@ export function compareAssetSnapshots(before: AssetSnapshot, after: AssetSnapsho
   });
 }
 
+const blockedPlaybookTaskTypePattern = /(exploit|payload|credential|password|brute|scan|attack|exfil|social|replay|shell|exec|probe)/i;
+
+export function assertPassivePlaybookTaskType(type: string): string {
+  const normalized = type.trim().toLowerCase();
+  if (!normalized || normalized.length > 80 || blockedPlaybookTaskTypePattern.test(normalized)) throw new Error("Playbook task type is outside the passive research safety boundary.");
+  return normalized;
+}
+
 export type Playbook = {
   id: string;
   version: string;

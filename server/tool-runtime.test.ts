@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { listRegisteredAdapters, runRegisteredTool, runtimePackAllows, runtimePackForMode } from "./tool-runtime";
+import { checkRuntimeReadiness, listRegisteredAdapters, runRegisteredTool, runtimePackAllows, runtimePackForMode } from "./tool-runtime";
 
 describe("registered tool runtime", () => {
   it("exposes only explicitly registered safe adapters", () => {
@@ -242,6 +242,22 @@ describe("registered tool runtime", () => {
     expect(runtimePackAllows("passive_readonly")).toBe(false);
     if (previous === undefined) delete process.env.RUNTIME_PACK_ID;
     else process.env.RUNTIME_PACK_ID = previous;
+  });
+
+  it("reports readiness when no required binary list is configured", async () => {
+    const previous = process.env.RUNTIME_REQUIRED_BINARIES;
+    delete process.env.RUNTIME_REQUIRED_BINARIES;
+    await expect(checkRuntimeReadiness()).resolves.toEqual({ configured: false, ready: true, missing: [] });
+    if (previous === undefined) delete process.env.RUNTIME_REQUIRED_BINARIES;
+    else process.env.RUNTIME_REQUIRED_BINARIES = previous;
+  });
+
+  it("fails readiness for missing or unregistered required binaries", async () => {
+    const previous = process.env.RUNTIME_REQUIRED_BINARIES;
+    process.env.RUNTIME_REQUIRED_BINARIES = "yara,missing-runtime-binary";
+    await expect(checkRuntimeReadiness()).resolves.toEqual({ configured: true, ready: false, missing: ["missing-runtime-binary"] });
+    if (previous === undefined) delete process.env.RUNTIME_REQUIRED_BINARIES;
+    else process.env.RUNTIME_REQUIRED_BINARIES = previous;
   });
 
   it("blocks execution when the configured pack does not match the mode", async () => {

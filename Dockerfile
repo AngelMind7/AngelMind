@@ -50,11 +50,10 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && curl -fsSL https://github.com/anchore/syft/releases/download/v1.51.1/syft_1.51.1_linux_amd64.tar.gz | tar -xz -C /usr/local/bin syft \
     && curl -fsSL -o /usr/local/bin/osv-scanner https://github.com/google/osv-scanner/releases/download/v2.5.1/osv-scanner_linux_amd64 \
     && curl -fsSL -o /tmp/chainsaw.tar.gz https://github.com/WithSecureLabs/chainsaw/releases/download/v2.16.5/chainsaw_x86_64-unknown-linux-gnu.tar.gz \
-    && curl -fsSL -o /tmp/chainsaw_checksums.txt https://github.com/WithSecureLabs/chainsaw/releases/download/v2.16.5/checksums.txt \
-    && grep 'chainsaw_x86_64-unknown-linux-gnu.tar.gz' /tmp/chainsaw_checksums.txt | sha256sum -c - \
+    && echo '7a7289d15f085af9bce39dfa3052adf0b4c78cab0dbfb91c2dbe38322909ce02  /tmp/chainsaw.tar.gz' | sha256sum -c - \
     && tar -xzf /tmp/chainsaw.tar.gz -C /tmp \
     && install -m 0755 /tmp/chainsaw/chainsaw /usr/local/bin/chainsaw \
-    && rm -rf /tmp/chainsaw /tmp/chainsaw.tar.gz /tmp/chainsaw_checksums.txt \
+    && rm -rf /tmp/chainsaw /tmp/chainsaw.tar.gz \
     && curl -fsSL -o /tmp/gosec.tar.gz https://github.com/securego/gosec/releases/download/v2.29.0/gosec_2.29.0_linux_amd64.tar.gz \
     && curl -fsSL -o /tmp/gosec_checksums.txt https://github.com/securego/gosec/releases/download/v2.29.0/gosec_2.29.0_checksums.txt \
     && grep 'gosec_2.29.0_linux_amd64.tar.gz' /tmp/gosec_checksums.txt | sha256sum -c - \

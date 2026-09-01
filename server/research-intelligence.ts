@@ -187,8 +187,12 @@ export async function transitionPlaybookRun(userId: number, input: { workspaceId
   }
   const checkpoint = JSON.stringify({ completedTaskIds: input.completedTaskIds ?? [], failedTaskIds: input.failedTaskIds ?? [], nextTaskIndex: Math.max(0, Math.trunc(input.nextTaskIndex ?? 0)) });
   const terminal = ["completed", "failed", "cancelled"].includes(input.status);
-  await db.update(playbookRuns).set({ status: input.status, checkpoint, retryCount: input.status === "queued" && run.status === "failed" ? run.retryCount + 1 : run.retryCount, lastError: input.error?.trim().slice(0, 4_000) || null, startedAt: input.status === "running" ? run.startedAt ?? new Date() : run.startedAt, completedAt: terminal ? new Date() : null, updatedAt: new Date() }).where(eq(playbookRuns.id, run.id));
-  await audit(db, input.workspaceId, userId, "playbook-run-transitioned", { playbookRunId: run.id, from: run.status, to: input.status, checkpoint: JSON.parse(checkpoint), error: input.error ?? null });
+  const nextRetryCount = input.status === "queued" && run.status === "failed" ? run.retryCount + 1 : run.retryCount;
+  await db.update(playbookRuns).set({ status: input.status, checkpoint, retryCount: nextRetryCount, lastError: input.error?.trim().slice(0, 4_000) || null, startedAt: input.status === "running" ? run.startedAt ?? new Date() : run.startedAt, completedAt: terminal ? new Date() : null, updatedAt: new Date() }).where(eq(playbookRuns.id, run.id));
+  if (input.status === "queued" || input.status === "running") {
+    await enqueueJob(userId, { workspaceId: input.workspaceId, kind: "playbook.run", idempotencyKey: `playbook-run:${run.id}:resume:${nextRetryCount}:${Date.now()}`, payload: playbookJobPayload(run.id), maxAttempts: 3 });
+  }
+  await audit(db, input.workspaceId, userId, "playbook-run-transitioned", { playbookRunId: run.id, from: run.status, to: input.status, checkpoint: JSON.parse(checkpoint), error: input.error ?? null, queuedExecution: input.status === "queued" || input.status === "running" });
   const [updated] = await db.select().from(playbookRuns).where(eq(playbookRuns.id, run.id)).limit(1);
   return updated;
 }

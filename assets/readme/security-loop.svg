@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 220" role="img" aria-labelledby="title desc">
+  <title id="title">AngelMind security research terminal</title>
+  <desc id="desc">Animated terminal prompt showing an authorized security research workflow.</desc>
+  <rect width="1200" height="220" rx="18" fill="#080b10"/>
+  <rect x="1" y="1" width="1198" height="218" rx="17" fill="none" stroke="#253244" stroke-width="2"/>
+  <circle cx="32" cy="30" r="7" fill="#ff5f56"/><circle cx="56" cy="30" r="7" fill="#ffbd2e"/><circle cx="80" cy="30" r="7" fill="#27c93f"/>
+  <text x="112" y="36" fill="#8b98a8" font-family="monospace" font-size="16">angelmind@research: ~/signal</text>
+  <text x="54" y="92" fill="#00ff9c" font-family="monospace" font-size="22">$</text>
+  <text x="82" y="92" fill="#e6edf3" font-family="monospace" font-size="22">scope --verify &amp;&amp; recon --passive</text>
+  <text x="54" y="132" fill="#00ff9c" font-family="monospace" font-size="18">[+] authorization confirmed</text>
+  <text x="54" y="162" fill="#00ff9c" font-family="monospace" font-size="18">[+] evidence discipline enabled</text>
+  <text x="54" y="192" fill="#00ff9c" font-family="monospace" font-size="18">[+] responsible disclosure ready</text>
+  <rect x="716" y="75" width="3" height="24" fill="#00ff9c">
+    <animate attributeName="opacity" values="1;0;1" dur="1s" repeatCount="indefinite"/>
+  </rect>
+  <path d="M1010 150h110" stroke="#00ff9c" stroke-width="2" stroke-dasharray="6 9" opacity=".7">
+    <animate attributeName="stroke-dashoffset" from="0" to="-30" dur="1.2s" repeatCount="indefinite"/>
+  </path>
+  <text x="1010" y="132" fill="#718096" font-family="monospace" font-size="13">STATUS</text>
+  <text x="1010" y="180" fill="#00ff9c" font-family="monospace" font-size="16">HUNTING_SIGNAL</text>
+</svg>

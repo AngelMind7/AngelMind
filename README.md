@@ -2,6 +2,8 @@
 
 <img src="assets/readme/angelmind-banner.gif" alt="AngelMind security research banner" width="100%" />
 
+<img src="assets/readme/security-loop.svg" alt="Animated AngelMind security research terminal" width="100%" />
+
 # `AngelMind`
 
 ### Security research. Bug bounty. Responsible disclosure.
@@ -42,6 +44,31 @@ Tampilan publik ini sengaja dibuat ringkas. Tidak ada credential, token, konfigu
 | `evidence` | Reproduction steps, request/response context, impact assessment, dan evidence yang relevan. |
 | `security-quality` | False-positive reduction, severity reasoning, remediation guidance, dan responsible reporting. |
 
+## `toolkit --loaded`
+
+<div align="center">
+
+<img src="https://img.shields.io/badge/Linux-0b0f14?style=for-the-badge&logo=linux&logoColor=00ff9c" alt="Linux" />
+<img src="https://img.shields.io/badge/Kali_Linux-0b0f14?style=for-the-badge&logo=kalilinux&logoColor=00ff9c" alt="Kali Linux" />
+<img src="https://img.shields.io/badge/Python-0b0f14?style=for-the-badge&logo=python&logoColor=00ff9c" alt="Python" />
+<img src="https://img.shields.io/badge/TypeScript-0b0f14?style=for-the-badge&logo=typescript&logoColor=00ff9c" alt="TypeScript" />
+<img src="https://img.shields.io/badge/JavaScript-0b0f14?style=for-the-badge&logo=javascript&logoColor=00ff9c" alt="JavaScript" />
+<img src="https://img.shields.io/badge/Node.js-0b0f14?style=for-the-badge&logo=nodedotjs&logoColor=00ff9c" alt="Node.js" />
+<img src="https://img.shields.io/badge/Docker-0b0f14?style=for-the-badge&logo=docker&logoColor=00ff9c" alt="Docker" />
+<img src="https://img.shields.io/badge/Git-0b0f14?style=for-the-badge&logo=git&logoColor=00ff9c" alt="Git" />
+<img src="https://img.shields.io/badge/GitHub-0b0f14?style=for-the-badge&logo=github&logoColor=00ff9c" alt="GitHub" />
+<img src="https://img.shields.io/badge/OWASP-0b0f14?style=for-the-badge&logo=owasp&logoColor=00ff9c" alt="OWASP" />
+<img src="https://img.shields.io/badge/Burp_Suite-0b0f14?style=for-the-badge&logo=burpsuite&logoColor=00ff9c" alt="Burp Suite" />
+<img src="https://img.shields.io/badge/Metasploit-0b0f14?style=for-the-badge&logo=metasploit&logoColor=00ff9c" alt="Metasploit" />
+
+</div>
+
+## `mindset --verbose`
+
+Security research is a discipline of **curiosity controlled by authorization**. The interesting part is not making the loudest request or collecting the most data; it is finding the smallest reproducible signal that explains a real security boundary, then communicating it with enough precision for someone else to fix.
+
+I value careful observation over noisy automation, evidence over assumptions, and responsible disclosure over public spectacle. Every useful finding should answer three questions: **what happened, why it matters, and how the risk can be reduced**. When the evidence is incomplete, the conclusion should remain appropriately cautious.
+
 ## `methodology --run`
 
 ```text
@@ -71,6 +98,12 @@ intent: improve_security
 Pengujian hanya dilakukan pada target yang memiliki **izin eksplisit** dan berada dalam scope yang berlaku. AngelMind tidak mendukung unauthorized access, credential abuse, destructive testing, denial-of-service, persistence, evasion, harassment, data exfiltration, atau pengujian di luar scope program.
 
 ## `signal.log`
+
+<div align="center">
+
+<img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&size=18&duration=2600&pause=900&color=00FF9C&center=true&vCenter=true&width=760&lines=Recon+quietly.+Validate+carefully.;Every+request+has+a+scope.;Evidence+over+assumptions.;Report+responsibly.+Improve+continuously." alt="Animated security research principles" />
+
+</div>
 
 ```text
 [+] Curiosity without authorization is noise.

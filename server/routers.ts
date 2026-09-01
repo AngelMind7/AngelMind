@@ -667,6 +667,9 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         controlPlane.listNotificationsSince(ctx.user.id, input)
       ),
+    deliveryLedger: protectedProcedure
+      .input(z.object({ limit: z.number().int().min(1).max(100).optional() }).optional())
+      .query(({ ctx, input }) => controlPlane.listNotificationDeliveries(ctx.user.id, input?.limit)),
     preferences: protectedProcedure.query(({ ctx }) =>
       controlPlane.listNotificationPreferences(ctx.user.id)
     ),

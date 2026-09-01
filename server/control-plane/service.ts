@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
 import { and, desc, eq, gt, inArray, isNotNull, isNull } from "drizzle-orm";
-import { auditEvents, approvals, credentialReferences, evidenceArtifacts, findings, notificationPreferences, notifications, runs, workspaceChangeSnapshots, workspaceMemberships, workspaces } from "../../drizzle/schema";
+import { auditEvents, approvals, credentialReferences, evidenceArtifacts, findings, notificationDeliveries, notificationPreferences, notifications, runs, workspaceChangeSnapshots, workspaceMemberships, workspaces } from "../../drizzle/schema";
 import { getDb, getOwnedWorkspace } from "../db";
 import { notifyOwner } from "../_core/notification";
 import { storageGetSignedUrl, storagePut } from "../storage";
@@ -18,6 +18,7 @@ import { upsertSearchDocument } from "../global-search";
 import { currentTraceContext } from "../_core/trace-context";
 import { enqueueJob } from "../ai-platform";
 import { scanEvidenceContent } from "../evidence-scanner";
+import { createNotificationDeliveryLedger } from "../notification-delivery";
 
 const parseList = (serialized: string): string[] => {
   try {
@@ -65,6 +66,8 @@ async function createInAppNotification(input: { userId: number; workspaceId: num
     return { delivered: false, reason: "preference-disabled" as const };
   }
   await db.insert(notifications).values(input);
+  const [notification] = await db.select().from(notifications).where(and(eq(notifications.userId, input.userId), eq(notifications.eventType, input.eventType), eq(notifications.title, input.title))).orderBy(desc(notifications.id)).limit(1);
+  if (notification) await createNotificationDeliveryLedger(notification);
   await addAudit(input.workspaceId, "notification", delivery.auditSubject, { eventType: input.eventType, userId: input.userId, severity: input.severity });
   return { delivered: true as const };
 }
@@ -408,6 +411,12 @@ export async function listNotificationsSince(userId: number, input: { afterId?: 
   const limit = Math.min(100, Math.max(1, input.limit ?? 50));
   const condition = input.afterId && input.afterId > 0 ? and(eq(notifications.userId, userId), gt(notifications.id, input.afterId)) : eq(notifications.userId, userId);
   return db.select().from(notifications).where(condition).orderBy(notifications.id).limit(limit);
+}
+
+export async function listNotificationDeliveries(userId: number, limit = 100) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(notificationDeliveries).where(eq(notificationDeliveries.userId, userId)).orderBy(desc(notificationDeliveries.createdAt)).limit(Math.min(100, Math.max(1, limit)));
 }
 
 export async function listNotificationPreferences(userId: number) {

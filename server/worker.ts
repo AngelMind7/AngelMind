@@ -5,6 +5,7 @@ import { executePrivacyRequest } from "./privacy-lifecycle";
 import { executeEmailDeliveryJob } from "./email-delivery";
 import { executePlaybookRunJob } from "./playbook-executor";
 import { withTraceContext } from "./_core/trace-context";
+import { executeNotificationDeliveryJob } from "./notification-delivery";
 
 export type WorkerJob = {
   id: number;
@@ -128,6 +129,10 @@ if (process.env.RUN_WORKER === "true") {
     "email.deliver": async (_job, payload) => {
       if (payload.type !== "email_delivery") throw new Error("Unsupported email delivery payload type.");
       await executeEmailDeliveryJob(payload);
+    },
+    "notification.deliver": async (_job, payload) => {
+      if (payload.type !== "notification_delivery") throw new Error("Unsupported notification delivery payload type.");
+      await executeNotificationDeliveryJob(payload);
     },
     "playbook.run": async (_job, payload) => {
       if (payload.type !== "playbook_run") throw new Error("Unsupported playbook run payload type.");

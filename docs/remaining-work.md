@@ -71,3 +71,7 @@ The assurance API now exposes `comparePolicies`, which validates that both immut
 ## M — Authenticated lifecycle contract and policy diff UI (2026-09-02)
 
 Added a staging-safe Playwright contract covering authenticated workspace creation, research session creation, passive asset registration, observation creation, finding promotion, and session visibility. The contract runs only when `ANGELMIND_E2E_TOKEN` is explicitly provided, so CI and local public E2E remain credential-free. Assurance now offers an interactive two-version policy selector backed by the same-workspace `comparePolicies` API and renders every changed field with previous/next values.
+
+## N — Notification delivery ledger and provider abstraction (2026-09-02)
+
+Notifications now create durable per-channel ledger rows for in-app, email, and webhook delivery with idempotency keys, status, attempt count, retry timestamp, provider reference, redacted payload, and last error. A provider registry and worker handler provide a common execution contract. In-app delivery is enabled; email remains delegated to the existing email delivery ledger, and webhook remains disabled until approved activation and provider configuration exist.

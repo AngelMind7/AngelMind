@@ -3,9 +3,10 @@ import { permissionNeedsWorkspaceRole, routedProcedurePermissions } from "./rout
 
 describe("routed procedure authorization contract", () => {
   it("contains every workspace-scoped operation with an explicit role requirement", () => {
-    expect(Object.keys(routedProcedurePermissions)).toHaveLength(79);
+    expect(Object.keys(routedProcedurePermissions)).toHaveLength(81);
     expect(routedProcedurePermissions["operations.addMember"]).toBe("owner");
     expect(routedProcedurePermissions["assurance.decidePolicy"]).toBe("admin-or-distinct-reviewer");
+    expect(routedProcedurePermissions["notification.deliveryLedger"]).toBe("self");
     expect(routedProcedurePermissions["assurance.comparePolicies"]).toBe("read-member");
     expect(routedProcedurePermissions["assurance.createIncident"]).toBe("responder");
     expect(routedProcedurePermissions["assurance.incidentReview"]).toBe("read-member");

@@ -755,6 +755,25 @@ export const notificationPreferences = mysqlTable("notificationPreferences", {
   index("notification_preference_user_idx").on(table.userId),
 ]);
 
+export const notificationDeliveryChannel = ["in_app", "email", "webhook"] as const;
+export const notificationDeliveryStatus = ["queued", "sending", "sent", "failed", "disabled"] as const;
+export const notificationDeliveries = mysqlTable("notificationDeliveries", {
+  id: int("id").autoincrement().primaryKey(),
+  notificationId: int("notificationId").notNull().references(() => notifications.id, { onDelete: "cascade" }),
+  userId: int("userId").notNull(),
+  workspaceId: int("workspaceId").references(() => workspaces.id, { onDelete: "set null" }),
+  channel: mysqlEnum("channel", notificationDeliveryChannel).notNull(),
+  status: mysqlEnum("status", notificationDeliveryStatus).default("queued").notNull(),
+  idempotencyKey: varchar("idempotencyKey", { length: 180 }).notNull(),
+  attempts: int("attempts").default(0).notNull(),
+  nextAttemptAt: timestamp("nextAttemptAt").defaultNow().notNull(),
+  providerMessageId: varchar("providerMessageId", { length: 512 }),
+  lastError: text("lastError"),
+  redactedPayload: text("redactedPayload").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [uniqueIndex("notification_delivery_idempotency_uq").on(table.idempotencyKey), uniqueIndex("notification_delivery_channel_uq").on(table.notificationId, table.channel), index("notification_delivery_status_attempt_idx").on(table.status, table.nextAttemptAt), index("notification_delivery_workspace_created_idx").on(table.workspaceId, table.createdAt)]);
+
 export const notifications = mysqlTable("notifications", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),

@@ -85,15 +85,14 @@ COPY --chown=angelmind:angelmind runtime/capstone_inspect.py runtime/unicorn_pro
 RUN python3 -m pip install --no-cache-dir --break-system-packages \
        checkov==3.3.16 \
        checkdmarc==6.0.0 \
-       cyclonedx-bom==7.3.1 \
+       cyclonedx-bom==4.6.1 \
        dkimpy==1.1.8 \
        detect-secrets==1.5.0 \
        njsscan==1.0.0 \
        pip-audit==2.10.1 \
-       semgrep==1.175.0 \
+       semgrep==1.172.0 \
        safety==3.8.1 \
        sigmatools==0.23.1 \
-       trufflehog==2.2.1 \
        volatility3==2.28.0 \
     && pnpm install --prod --frozen-lockfile \
     && chown -R angelmind:angelmind /app

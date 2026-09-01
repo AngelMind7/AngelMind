@@ -16,6 +16,7 @@ import { canAccessWorkspace } from "./control-plane/operations";
 import { isTargetInScope } from "./control-plane/guardrails";
 import { currentTraceContext } from "./_core/trace-context";
 import { assertExpectedRevision, decodePageCursor, nextRevision, pageResult } from "./_core/query-safety";
+import { upsertSearchDocument } from "./global-search";
 
 const sessionTransitions: Record<string, string[]> = {
   draft: ["ready", "archived"],
@@ -111,6 +112,7 @@ export async function createResearchSession(userId: number, input: { workspaceId
   const [session] = await db.select().from(researchSessions).where(and(eq(researchSessions.workspaceId, workspace.id), eq(researchSessions.ownerUserId, userId), eq(researchSessions.title, input.title.trim()))).orderBy(desc(researchSessions.createdAt)).limit(1);
   if (!session) throw new Error("Research session could not be created.");
   await addResearchAudit(db, workspace.id, userId, "research-session-created", { sessionId: session.id, scopeDigest });
+  await upsertSearchDocument({ workspaceId: workspace.id, entityType: "session", entityId: session.id, title: session.title, body: session.scopeDigest });
   return session;
 }
 
@@ -142,6 +144,7 @@ export async function createResearchAsset(userId: number, input: { sessionId: nu
   const [asset] = await db.select().from(researchAssets).where(and(eq(researchAssets.sessionId, session.id), eq(researchAssets.value, value))).limit(1);
   if (!asset) throw new Error("Asset could not be created.");
   await addResearchAudit(db, session.workspaceId, userId, "research-asset-created", { sessionId: session.id, assetId: asset.id, inScope, target });
+  await upsertSearchDocument({ workspaceId: session.workspaceId, entityType: "asset", entityId: asset.id, title: asset.hostname ?? asset.value, body: asset.value });
   return asset;
 }
 
@@ -161,6 +164,7 @@ export async function createResearchObservation(userId: number, input: { session
   const [observation] = await db.select().from(researchObservations).where(and(eq(researchObservations.sessionId, session.id), eq(researchObservations.title, input.title.trim()))).orderBy(desc(researchObservations.createdAt)).limit(1);
   if (!observation) throw new Error("Observation could not be created.");
   await addResearchAudit(db, session.workspaceId, userId, "research-observation-created", { sessionId: session.id, observationId: observation.id, assetId: input.assetId ?? null });
+  await upsertSearchDocument({ workspaceId: session.workspaceId, entityType: "observation", entityId: observation.id, title: observation.title, body: observation.content });
   return observation;
 }
 
@@ -196,6 +200,7 @@ export async function createResearchHypothesis(userId: number, input: { sessionI
   const [hypothesis] = await db.select().from(researchHypotheses).where(and(eq(researchHypotheses.sessionId, session.id), eq(researchHypotheses.description, input.description.trim()))).orderBy(desc(researchHypotheses.createdAt)).limit(1);
   if (!hypothesis) throw new Error("Hypothesis could not be created.");
   await addResearchAudit(db, session.workspaceId, userId, "research-hypothesis-created", { sessionId: session.id, hypothesisId: hypothesis.id });
+  await upsertSearchDocument({ workspaceId: session.workspaceId, entityType: "hypothesis", entityId: hypothesis.id, title: hypothesis.description, body: hypothesis.reason });
   return hypothesis;
 }
 
@@ -240,6 +245,7 @@ export async function createResearchTask(userId: number, input: { sessionId: num
     await db.insert(researchTaskDependencies).values(dependencies.map(dependsOnTaskId => ({ workspaceId: session.workspaceId, taskId: task.id, dependsOnTaskId })));
   }
   await addResearchAudit(db, session.workspaceId, userId, "research-task-created", { sessionId: session.id, taskId: task.id, dependencies });
+  await upsertSearchDocument({ workspaceId: session.workspaceId, entityType: "task", entityId: task.id, title: task.title, body: task.inputs });
   return task;
 }
 

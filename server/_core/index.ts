@@ -9,6 +9,7 @@ import { serveStatic } from "./static";
 import { workspaceMaintenanceHandler } from "../control-plane/scheduled";
 import { registerHealthRoutes, registerMetricsRoute, registerSecurityMiddleware } from "../security";
 import { registerFirebaseAuthRoutes } from "../firebase-auth";
+import { validateRuntimeConfig } from "./env";
 import { registerRestV1Routes } from "../rest-v1";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -31,6 +32,7 @@ async function findAvailablePort(startPort: number = 3000): Promise<number> {
 }
 
 async function startServer() {
+  validateRuntimeConfig();
   const app = express();
   const server = createServer(app);
   registerSecurityMiddleware(app);

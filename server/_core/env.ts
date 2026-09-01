@@ -35,6 +35,28 @@ export function getSmtpConfig() {
 
 export type SmtpConfig = NonNullable<ReturnType<typeof getSmtpConfig>>;
 
+export function validateRuntimeConfig(options: { production?: boolean } = {}) {
+  const production = options.production ?? ENV.isProduction;
+  if (!production) return { production: false as const, missing: [] as string[] };
+
+  const missing: string[] = [];
+  const required = (name: string, value: string) => { if (!value.trim()) missing.push(name); };
+  required("DATABASE_URL", ENV.databaseUrl);
+  required("APP_ENCRYPTION_KEY", process.env.APP_ENCRYPTION_KEY ?? "");
+  required("FIREBASE_PROJECT_ID", ENV.firebaseProjectId);
+  required("FIREBASE_CLIENT_EMAIL", ENV.firebaseClientEmail);
+  required("FIREBASE_PRIVATE_KEY", ENV.firebasePrivateKey);
+  required("SUPABASE_URL", ENV.supabaseUrl);
+  required("SUPABASE_SERVICE_ROLE_KEY", ENV.supabaseServiceRoleKey);
+  required("SUPABASE_STORAGE_BUCKET", ENV.supabaseStorageBucket);
+  required("RAILWAY_CRON_SECRET", ENV.railwayCronSecret);
+  if (ENV.supabaseUrl && (!ENV.supabaseUrl.startsWith("https://") || !ENV.supabaseUrl.includes(".supabase.co"))) missing.push("SUPABASE_URL(approved-https-host)");
+  if (ENV.railwayCronSecret && ENV.railwayCronSecret.length < 32) missing.push("RAILWAY_CRON_SECRET(min-32-chars)");
+  if (process.env.APP_ENCRYPTION_KEY && process.env.APP_ENCRYPTION_KEY.length < 32) missing.push("APP_ENCRYPTION_KEY(min-32-chars)");
+  if (missing.length) throw new Error(`Production runtime configuration incomplete: ${missing.join(", ")}`);
+  return { production: true as const, missing: [] as string[] };
+}
+
 export function isSmtpConfigured() {
   return Boolean(ENV.smtpHost && ENV.smtpFrom);
 }

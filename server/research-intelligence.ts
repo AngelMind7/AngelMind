@@ -174,6 +174,17 @@ export async function transitionPlaybookRun(userId: number, input: { workspaceId
   const [run] = await db.select().from(playbookRuns).where(and(eq(playbookRuns.id, input.runId), eq(playbookRuns.workspaceId, input.workspaceId))).limit(1);
   if (!run) throw new Error("Playbook run tidak ditemukan pada workspace ini.");
   assertPlaybookRunTransition(run.status as PlaybookRunTransitionStatus, input.status);
+  if (input.status === "completed") {
+    let taskIds: number[];
+    try {
+      const parsed = JSON.parse(run.taskIds) as unknown;
+      taskIds = Array.isArray(parsed) && parsed.every(id => Number.isInteger(id)) ? parsed as number[] : [];
+    } catch {
+      throw new Error("Playbook task list is invalid.");
+    }
+    const tasks = taskIds.length ? await db.select({ id: researchTasks.id, status: researchTasks.status }).from(researchTasks).where(and(eq(researchTasks.workspaceId, input.workspaceId), inArray(researchTasks.id, taskIds))) : [];
+    if (tasks.length !== taskIds.length || tasks.some(task => task.status !== "completed")) throw new Error("Playbook run cannot be completed before every generated task is completed.");
+  }
   const checkpoint = JSON.stringify({ completedTaskIds: input.completedTaskIds ?? [], failedTaskIds: input.failedTaskIds ?? [], nextTaskIndex: Math.max(0, Math.trunc(input.nextTaskIndex ?? 0)) });
   const terminal = ["completed", "failed", "cancelled"].includes(input.status);
   await db.update(playbookRuns).set({ status: input.status, checkpoint, retryCount: input.status === "queued" && run.status === "failed" ? run.retryCount + 1 : run.retryCount, lastError: input.error?.trim().slice(0, 4_000) || null, startedAt: input.status === "running" ? run.startedAt ?? new Date() : run.startedAt, completedAt: terminal ? new Date() : null, updatedAt: new Date() }).where(eq(playbookRuns.id, run.id));

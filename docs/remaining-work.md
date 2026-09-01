@@ -67,3 +67,7 @@ Incident post-incident review is now repository-backed through `incidentReviews`
 ## L — Structured policy comparison (2026-09-02)
 
 The assurance API now exposes `comparePolicies`, which validates that both immutable policy versions exist in the same workspace, enforces read access, parses stored allowlists/exclusions, and recomputes a structured field-level diff instead of trusting client-provided data.
+
+## M — Authenticated lifecycle contract and policy diff UI (2026-09-02)
+
+Added a staging-safe Playwright contract covering authenticated workspace creation, research session creation, passive asset registration, observation creation, finding promotion, and session visibility. The contract runs only when `ANGELMIND_E2E_TOKEN` is explicitly provided, so CI and local public E2E remain credential-free. Assurance now offers an interactive two-version policy selector backed by the same-workspace `comparePolicies` API and renders every changed field with previous/next values.

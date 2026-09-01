@@ -2,6 +2,7 @@ import type { Express, Request, Response, NextFunction } from "express";
 import { sql } from "drizzle-orm";
 import { getDb } from "./db";
 import { checkRuntimeReadiness } from "./tool-runtime";
+import { renderPurgeMetrics } from "./purge-metrics";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -83,6 +84,7 @@ export function registerMetricsRoute(app: Express) {
       "# HELP angelmind_process_memory_bytes Node.js process memory by category.",
       "# TYPE angelmind_process_memory_bytes gauge",
       ...Object.entries(memory).map(([category, value]) => `angelmind_process_memory_bytes{category=\"${metricName(category)}\"} ${value}`),
+      renderPurgeMetrics(),
     ];
     res.type("text/plain; version=0.0.4").send(`${lines.join("\\n")}\\n`);
   });

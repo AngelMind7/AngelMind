@@ -8,6 +8,7 @@ import { invokeLLM, type Message } from "./_core/llm";
 import { selectBestRegisteredModel } from "./ai-routing";
 import { discoverGatewayModels } from "./ai-catalog";
 import { currentTraceContext } from "./_core/trace-context";
+import { recordPurgeBatch } from "./purge-metrics";
 
 async function requireWorkspace(userId: number, workspaceId: number, intent: "read" | "respond" = "read") {
   const db = await getDb();
@@ -127,15 +128,25 @@ export async function listAiRuns(userId: number, workspaceId: number) {
 
 /** Purges expired AI memory payloads but preserves run metadata, cost, status, and trace lineage. */
 export async function purgeExpiredAiRunMemory(limit = 100) {
-  const db = await getDb();
-  if (!db) throw new Error("Database tidak tersedia.");
+  const startedAt = Date.now();
   const boundedLimit = Math.min(500, Math.max(1, limit));
-  const expired = await db.select({ id: aiRuns.id }).from(aiRuns).where(and(isNotNull(aiRuns.retentionUntil), lte(aiRuns.retentionUntil, new Date()))).orderBy(asc(aiRuns.retentionUntil), asc(aiRuns.id)).limit(boundedLimit);
-  const ids = expired.map(run => run.id);
-  if (!ids.length) return { inspected: 0, purged: 0 };
-  await db.delete(aiRunOutputs).where(inArray(aiRunOutputs.runId, ids));
-  await db.update(aiRuns).set({ inputReference: "retention://purged", outputReference: null }).where(and(inArray(aiRuns.id, ids), isNotNull(aiRuns.retentionUntil), lte(aiRuns.retentionUntil, new Date())));
-  return { inspected: ids.length, purged: ids.length };
+  try {
+    const db = await getDb();
+    if (!db) throw new Error("Database tidak tersedia.");
+    const expired = await db.select({ id: aiRuns.id }).from(aiRuns).where(and(isNotNull(aiRuns.retentionUntil), lte(aiRuns.retentionUntil, new Date()))).orderBy(asc(aiRuns.retentionUntil), asc(aiRuns.id)).limit(boundedLimit);
+    const ids = expired.map(run => run.id);
+    if (!ids.length) {
+      recordPurgeBatch(Date.now() - startedAt, 0);
+      return { inspected: 0, purged: 0 };
+    }
+    await db.delete(aiRunOutputs).where(inArray(aiRunOutputs.runId, ids));
+    await db.update(aiRuns).set({ inputReference: "retention://purged", outputReference: null }).where(and(inArray(aiRuns.id, ids), isNotNull(aiRuns.retentionUntil), lte(aiRuns.retentionUntil, new Date())));
+    recordPurgeBatch(Date.now() - startedAt, ids.length);
+    return { inspected: ids.length, purged: ids.length };
+  } catch (error) {
+    recordPurgeBatch(Date.now() - startedAt, 0, false);
+    throw error;
+  }
 }
 
 export async function enqueueJob(userId: number, input: { workspaceId?: number; kind: string; idempotencyKey: string; payload: Record<string, unknown>; maxAttempts?: number }) {

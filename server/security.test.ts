@@ -1,6 +1,7 @@
 import express from "express";
 import { describe, expect, it } from "vitest";
 import { registerHealthRoutes, registerMetricsRoute, registerSecurityMiddleware } from "./security";
+import { PURGE_DURATION_ALERT_MS, recordPurgeBatch, resetPurgeMetrics } from "./purge-metrics";
 
 async function request(app: express.Express, path: string) {
   const server = app.listen(0);
@@ -36,6 +37,23 @@ describe("security and health contracts", () => {
     expect(response.headers.get("content-type")).toContain("text/plain");
     expect(body).toContain("# TYPE angelmind_process_uptime_seconds gauge");
     expect(body).toContain("angelmind_process_memory_bytes{category=\"rss\"}");
+    expect(body).toContain("# TYPE angelmind_purge_batch_duration_ms gauge");
+    expect(body).toContain("angelmind_purge_duration_alert 0");
+  });
+
+  it("records purge duration and exposes a threshold alert", () => {
+    resetPurgeMetrics();
+    recordPurgeBatch(PURGE_DURATION_ALERT_MS + 1, 500);
+    const app = express();
+    registerMetricsRoute(app);
+    return request(app, "/metrics").then(async response => {
+      const body = await response.text();
+      expect(body).toContain("angelmind_purge_batches_total 1");
+      expect(body).toContain("angelmind_purge_records_total 500");
+      expect(body).toContain(`angelmind_purge_batch_duration_ms ${PURGE_DURATION_ALERT_MS + 1}`);
+      expect(body).toContain("angelmind_purge_duration_alert 1");
+      resetPurgeMetrics();
+    });
   });
 
   it("fails production readiness when a required runtime binary is unavailable", async () => {

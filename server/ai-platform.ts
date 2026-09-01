@@ -342,3 +342,33 @@ export async function getAiRunOutput(userId: number, runId: number) {
   const [output] = await db.select().from(aiRunOutputs).where(eq(aiRunOutputs.runId, runId)).limit(1);
   return output ? { ...output, output: JSON.parse(output.outputJson) as unknown } : null;
 }
+
+
+export type OutboxEventHandler = (event: { id: number; eventType: string; aggregateType: string; aggregateId: number; schemaVersion: number; payload: Record<string, unknown> }) => Promise<void>;
+
+export async function dispatchPendingOutbox(handlers: Record<string, OutboxEventHandler>, limit = 25) {
+  const db = await getDb();
+  if (!db) return { claimed: 0, published: 0, failed: 0 };
+  const pending = await db.select().from(outboxEvents).where(eq(outboxEvents.status, "pending")).orderBy(asc(outboxEvents.createdAt)).limit(Math.min(100, Math.max(1, limit)));
+  let claimed = 0;
+  let published = 0;
+  let failed = 0;
+  for (const event of pending) {
+    const handler = handlers[event.eventType];
+    if (!handler) continue;
+    const receipt = await claimOutboxConsumer(event.id, `dispatcher:${event.eventType}`);
+    if (!receipt.claimed) continue;
+    claimed += 1;
+    try {
+      const payload: unknown = JSON.parse(event.payload);
+      if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Outbox payload must be a JSON object.");
+      await handler({ id: event.id, eventType: event.eventType, aggregateType: event.aggregateType, aggregateId: event.aggregateId, schemaVersion: event.schemaVersion, payload: payload as Record<string, unknown> });
+      await markOutboxEventPublished(event.id);
+      published += 1;
+    } catch (error) {
+      await failOutboxEvent(event.id, error instanceof Error ? error.message : "Outbox handler failed.");
+      failed += 1;
+    }
+  }
+  return { claimed, published, failed };
+}

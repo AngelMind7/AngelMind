@@ -1,4 +1,4 @@
-import { index, int, mysqlEnum, mysqlTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
+import { foreignKey, index, int, mysqlEnum, mysqlTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -221,7 +221,7 @@ export const researchSessions = mysqlTable("researchSessions", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   completedAt: timestamp("completedAt"),
-}, table => [index("research_session_workspace_state_idx").on(table.workspaceId, table.state), index("research_session_owner_updated_idx").on(table.ownerUserId, table.updatedAt)]);
+}, table => [index("research_session_id_workspace_idx").on(table.id, table.workspaceId), index("research_session_workspace_state_idx").on(table.workspaceId, table.state), index("research_session_owner_updated_idx").on(table.ownerUserId, table.updatedAt)]);
 
 export const researchAssets = mysqlTable("researchAssets", {
   id: int("id").autoincrement().primaryKey(),
@@ -235,7 +235,7 @@ export const researchAssets = mysqlTable("researchAssets", {
   metadata: text("metadata").notNull(),
   createdByUserId: int("createdByUserId").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-}, table => [index("research_asset_session_state_idx").on(table.sessionId, table.state), uniqueIndex("research_asset_session_value_uq").on(table.sessionId, table.value)]);
+}, table => [index("research_asset_id_workspace_idx").on(table.id, table.workspaceId), index("research_asset_session_state_idx").on(table.sessionId, table.state), uniqueIndex("research_asset_session_value_uq").on(table.sessionId, table.value), foreignKey({ columns: [table.sessionId, table.workspaceId], foreignColumns: [researchSessions.id, researchSessions.workspaceId], name: "research_asset_session_workspace_fk" })]);
 
 export const researchObservations = mysqlTable("researchObservations", {
   id: int("id").autoincrement().primaryKey(),
@@ -248,7 +248,7 @@ export const researchObservations = mysqlTable("researchObservations", {
   createdByUserId: int("createdByUserId").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-}, table => [index("research_observation_session_created_idx").on(table.sessionId, table.createdAt), index("research_observation_asset_idx").on(table.assetId)]);
+}, table => [index("research_observation_id_workspace_idx").on(table.id, table.workspaceId), index("research_observation_session_created_idx").on(table.sessionId, table.createdAt), index("research_observation_asset_idx").on(table.assetId), foreignKey({ columns: [table.sessionId, table.workspaceId], foreignColumns: [researchSessions.id, researchSessions.workspaceId], name: "research_observation_session_workspace_fk" })]);
 
 export const researchHypotheses = mysqlTable("researchHypotheses", {
   id: int("id").autoincrement().primaryKey(),
@@ -266,7 +266,7 @@ export const researchHypotheses = mysqlTable("researchHypotheses", {
   createdByUserId: int("createdByUserId").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-}, table => [index("research_hypothesis_session_status_idx").on(table.sessionId, table.status), index("research_hypothesis_observation_idx").on(table.observationId)]);
+}, table => [index("research_hypothesis_session_status_idx").on(table.sessionId, table.status), index("research_hypothesis_observation_idx").on(table.observationId), foreignKey({ columns: [table.sessionId, table.workspaceId], foreignColumns: [researchSessions.id, researchSessions.workspaceId], name: "research_hypothesis_session_workspace_fk" })]);
 
 export const researchTasks = mysqlTable("researchTasks", {
   id: int("id").autoincrement().primaryKey(),
@@ -285,7 +285,7 @@ export const researchTasks = mysqlTable("researchTasks", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   completedAt: timestamp("completedAt"),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-}, table => [index("research_task_session_status_priority_idx").on(table.sessionId, table.status, table.priority), index("research_task_owner_status_idx").on(table.ownerUserId, table.status)]);
+}, table => [index("research_task_session_status_priority_idx").on(table.sessionId, table.status, table.priority), index("research_task_owner_status_idx").on(table.ownerUserId, table.status), foreignKey({ columns: [table.sessionId, table.workspaceId], foreignColumns: [researchSessions.id, researchSessions.workspaceId], name: "research_task_session_workspace_fk" })]);
 
 export const researchTaskDependencies = mysqlTable("researchTaskDependencies", {
   id: int("id").autoincrement().primaryKey(),

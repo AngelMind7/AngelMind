@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { listRegisteredAdapters, runRegisteredTool } from "./tool-runtime";
+import { listRegisteredAdapters, runRegisteredTool, runtimePackAllows, runtimePackForMode } from "./tool-runtime";
 
 describe("registered tool runtime", () => {
   it("exposes only explicitly registered safe adapters", () => {
@@ -231,6 +231,25 @@ describe("registered tool runtime", () => {
         allowedModes: ["offline_artifact"],
       },
     ]);
+  });
+
+  it("assigns modes to explicit runtime packs", () => {
+    expect(runtimePackForMode("offline_artifact")).toBe("artifact-pack");
+    expect(runtimePackForMode("passive_readonly")).toBe("passive-pack");
+    const previous = process.env.RUNTIME_PACK_ID;
+    process.env.RUNTIME_PACK_ID = "artifact-pack";
+    expect(runtimePackAllows("offline_artifact")).toBe(true);
+    expect(runtimePackAllows("passive_readonly")).toBe(false);
+    if (previous === undefined) delete process.env.RUNTIME_PACK_ID;
+    else process.env.RUNTIME_PACK_ID = previous;
+  });
+
+  it("blocks execution when the configured pack does not match the mode", async () => {
+    const previous = process.env.RUNTIME_PACK_ID;
+    process.env.RUNTIME_PACK_ID = "passive-pack";
+    await expect(runRegisteredTool({ toolKey: "binary_artifact_analysis.30", mode: "offline_artifact", scopeValidated: true, humanApproval: false, input: "data" })).resolves.toMatchObject({ status: "blocked", reason: "runtime_pack_mismatch" });
+    if (previous === undefined) delete process.env.RUNTIME_PACK_ID;
+    else process.env.RUNTIME_PACK_ID = previous;
   });
 
   it("blocks malformed passive DNS domain input before spawning a process", async () => {

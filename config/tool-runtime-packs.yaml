@@ -82,7 +82,7 @@ railway:
   required_runtime_env:
     - NODE_ENV
     - DATABASE_URL
-    - JWT_SECRET
+    - APP_ENCRYPTION_KEY
   optional_runtime_env:
     - RUNTIME_PACK_ID
     - RUNTIME_MAX_SECONDS

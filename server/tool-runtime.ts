@@ -611,6 +611,17 @@ export function adapterRequiresTargetScope(toolKey: string) {
   return getAdapter(toolKey)?.requiresTarget ?? false;
 }
 
+export type RuntimePackId = "artifact-pack" | "analysis-pack" | "passive-pack" | "review-required-pack";
+
+export function runtimePackForMode(mode: ToolRuntimeRequest["mode"]): RuntimePackId {
+  return mode === "passive_readonly" ? "passive-pack" : "artifact-pack";
+}
+
+export function runtimePackAllows(mode: ToolRuntimeRequest["mode"]): boolean {
+  const configured = process.env.RUNTIME_PACK_ID?.trim();
+  return !configured || configured === runtimePackForMode(mode);
+}
+
 function probeBinary(binary: string) {
   return new Promise<{ available: boolean; version?: string }>(resolve => {
     const child = spawn(binary, ["--version"], {
@@ -693,6 +704,8 @@ export async function runRegisteredTool(
   if (!adapter) return result("unavailable", "adapter_not_registered");
   if (!adapter.allowedModes.includes(request.mode))
     return result("blocked", "mode_not_supported");
+  if (!runtimePackAllows(request.mode))
+    return result("blocked", "runtime_pack_mismatch");
   if (
     request.input.length === 0 ||
     Buffer.byteLength(request.input, "utf8") > 2_000_000

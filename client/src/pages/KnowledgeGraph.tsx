@@ -1,0 +1,42 @@
+import { Eyebrow, NeonFrame } from "@/components/NeonFrame";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { trpc } from "@/lib/trpc";
+import { Network, Plus, RefreshCw, Route as RouteIcon } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
+
+const nodeTypes = ["asset", "observation", "hypothesis", "finding", "intelligence", "entity", "document"] as const;
+
+export default function KnowledgeGraph() {
+  const workspaces = trpc.workspace.list.useQuery();
+  const [workspaceId, setWorkspaceId] = useState<number>();
+  const selectedWorkspaceId = workspaceId ?? workspaces.data?.[0]?.id;
+  const graph = trpc.knowledge.graph.useQuery({ workspaceId: selectedWorkspaceId! }, { enabled: Boolean(selectedWorkspaceId) });
+  const [nodeType, setNodeType] = useState<(typeof nodeTypes)[number]>("entity");
+  const [externalId, setExternalId] = useState("");
+  const [label, setLabel] = useState("");
+  const [sourceNodeId, setSourceNodeId] = useState<number>();
+  const [targetNodeId, setTargetNodeId] = useState<number>();
+  const [relationType, setRelationType] = useState("related_to");
+  const [startNodeId, setStartNodeId] = useState<number>();
+  const [traversal, setTraversal] = useState<{ nodes: Array<{ node: { id: number; label: string }; depth: number }>; edges: Array<{ id: number; relationType: string }> }>();
+  const utils = trpc.useUtils();
+  const refresh = () => void graph.refetch();
+  const createNode = trpc.knowledge.upsertNode.useMutation({ onSuccess: () => { setExternalId(""); setLabel(""); void graph.refetch(); toast.success("Knowledge node tersimpan."); }, onError: error => toast.error(error.message) });
+  const createEdge = trpc.knowledge.createEdge.useMutation({ onSuccess: () => { void graph.refetch(); toast.success("Knowledge edge tersimpan."); }, onError: error => toast.error(error.message) });
+  const traverse = trpc.knowledge.traverse.useQuery({ workspaceId: selectedWorkspaceId!, startNodeId: startNodeId!, maxDepth: 3, limit: 100 }, { enabled: false });
+  const runTraversal = async () => { if (!selectedWorkspaceId || !startNodeId) return; const result = await traverse.refetch(); if (result.data) setTraversal(result.data); };
+  const nodes = graph.data?.nodes ?? [];
+  return <div className="mx-auto max-w-7xl space-y-6">
+    <header className="flex flex-col justify-between gap-4 lg:flex-row lg:items-end"><div><Eyebrow>Knowledge layer / governed graph</Eyebrow><h1 className="mt-2 font-display text-4xl font-black uppercase tracking-[-.05em] text-white">Knowledge <span className="neon-pink">Graph</span></h1><p className="mt-3 max-w-3xl text-sm leading-6 text-slate-400">Workspace-scoped nodes, typed relationships, provenance metadata, dan traversal deterministik. Semua data berasal dari database; tidak ada counter simulasi.</p></div><Button variant="outline" onClick={refresh} disabled={graph.isFetching}><RefreshCw className="mr-2 h-4 w-4" />Refresh graph</Button></header>
+    <NeonFrame className="p-5 sm:p-6"><div className="grid gap-5 lg:grid-cols-[1fr_auto]"><div className="space-y-2"><Label htmlFor="graph-workspace">Workspace</Label><select id="graph-workspace" value={selectedWorkspaceId ?? ""} onChange={event => setWorkspaceId(Number(event.target.value))} className="h-10 w-full border border-cyan-300/20 bg-[#0a0d19] px-3 text-sm text-slate-200"><option value="">Create a workspace first</option>{workspaces.data?.map(workspace => <option key={workspace.id} value={workspace.id}>{workspace.name} · {workspace.programName}</option>)}</select></div><div className="flex items-end gap-4 text-xs text-slate-400"><span><strong className="text-cyan-200">{nodes.length}</strong> nodes</span><span><strong className="text-fuchsia-200">{graph.data?.edges.length ?? 0}</strong> edges</span></div></div></NeonFrame>
+    <div className="grid gap-6 xl:grid-cols-2">
+      <NeonFrame className="p-5 sm:p-6"><div className="flex items-center gap-3"><Network className="h-5 w-5 text-cyan-300" /><div><Eyebrow>Graph mutation</Eyebrow><h2 className="mt-2 font-display text-2xl font-bold text-white">Add node</h2></div></div><div className="mt-5 grid gap-3 sm:grid-cols-2"><select aria-label="Node type" value={nodeType} onChange={event => setNodeType(event.target.value as (typeof nodeTypes)[number])} className="h-10 border border-cyan-300/20 bg-[#0a0d19] px-3 text-sm text-slate-200">{nodeTypes.map(type => <option key={type} value={type}>{type}</option>)}</select><Input aria-label="External ID" value={externalId} onChange={event => setExternalId(event.target.value)} placeholder="asset:example.com" maxLength={160} /><Input aria-label="Node label" value={label} onChange={event => setLabel(event.target.value)} placeholder="Human-readable label" maxLength={240} /><Button disabled={!selectedWorkspaceId || !externalId.trim() || !label.trim() || createNode.isPending} onClick={() => selectedWorkspaceId && createNode.mutate({ workspaceId: selectedWorkspaceId, nodeType, externalId, label })}><Plus className="mr-2 h-4 w-4" />Save node</Button></div></NeonFrame>
+      <NeonFrame className="p-5 sm:p-6"><div className="flex items-center gap-3"><RouteIcon className="h-5 w-5 text-fuchsia-300" /><div><Eyebrow>Relationship mutation</Eyebrow><h2 className="mt-2 font-display text-2xl font-bold text-white">Connect nodes</h2></div></div><div className="mt-5 grid gap-3 sm:grid-cols-2"><select aria-label="Source node" value={sourceNodeId ?? ""} onChange={event => setSourceNodeId(Number(event.target.value))} className="h-10 border border-cyan-300/20 bg-[#0a0d19] px-3 text-sm text-slate-200"><option value="">Source node</option>{nodes.map(node => <option key={node.id} value={node.id}>{node.id} · {node.label}</option>)}</select><select aria-label="Target node" value={targetNodeId ?? ""} onChange={event => setTargetNodeId(Number(event.target.value))} className="h-10 border border-cyan-300/20 bg-[#0a0d19] px-3 text-sm text-slate-200"><option value="">Target node</option>{nodes.map(node => <option key={node.id} value={node.id}>{node.id} · {node.label}</option>)}</select><Input aria-label="Relation type" value={relationType} onChange={event => setRelationType(event.target.value)} maxLength={80} /><Button disabled={!selectedWorkspaceId || !sourceNodeId || !targetNodeId || !relationType.trim() || createEdge.isPending} onClick={() => selectedWorkspaceId && sourceNodeId && targetNodeId && createEdge.mutate({ workspaceId: selectedWorkspaceId, sourceNodeId, targetNodeId, relationType })}>Connect</Button></div></NeonFrame>
+    </div>
+    <NeonFrame className="p-5 sm:p-6"><div className="flex flex-col justify-between gap-3 sm:flex-row sm:items-end"><div><Eyebrow>Persisted graph</Eyebrow><h2 className="mt-2 font-display text-2xl font-bold text-white">Nodes and edges</h2></div><div className="flex gap-2"><select aria-label="Traversal start" value={startNodeId ?? ""} onChange={event => setStartNodeId(Number(event.target.value))} className="h-10 border border-cyan-300/20 bg-[#0a0d19] px-3 text-sm text-slate-200"><option value="">Traversal start</option>{nodes.map(node => <option key={node.id} value={node.id}>{node.label}</option>)}</select><Button variant="outline" disabled={!startNodeId || traverse.isFetching} onClick={runTraversal}><RouteIcon className="mr-2 h-4 w-4" />Traverse</Button></div></div><div className="mt-5 grid gap-3 md:grid-cols-2">{nodes.length ? nodes.map(node => <div key={node.id} className="rounded-lg border border-white/10 p-3"><div className="flex items-center justify-between gap-3"><p className="truncate text-sm font-semibold text-white">{node.label}</p><Badge variant="outline" className="border-cyan-300/30 text-cyan-200">{node.nodeType}</Badge></div><p className="mt-1 font-mono text-[10px] text-slate-500">#{node.id} · {node.externalId}</p><p className="mt-2 text-xs text-slate-500">{graph.data?.edges.filter(edge => edge.sourceNodeId === node.id || edge.targetNodeId === node.id).length ?? 0} connected edges</p></div>) : <p className="py-10 text-center text-sm text-slate-500 md:col-span-2">Belum ada knowledge node pada workspace ini.</p>}</div>{traversal && <div className="mt-5 border-t border-white/10 pt-4"><Eyebrow>Traversal result</Eyebrow><p className="mt-2 text-sm text-slate-300">{traversal.nodes.length} nodes ditemukan dalam {traversal.edges.length} edges.</p></div>}</NeonFrame>
+  </div>;
+}

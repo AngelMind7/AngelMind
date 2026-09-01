@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { signInWithGoogle } from "@/firebase";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Activity, BarChart3, BrainCircuit, Boxes, Building2, FileSearch, FileText, KeyRound, LayoutDashboard, LogOut, PanelLeft, Radar, ScrollText, Settings2, ShieldCheck, ShieldEllipsis, UserRound } from "lucide-react";
+import { Activity, BarChart3, BrainCircuit, Boxes, Building2, FileSearch, FileText, KeyRound, LayoutDashboard, LogOut, Network, PanelLeft, Radar, ScrollText, Settings2, ShieldCheck, ShieldEllipsis, UserRound } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -42,6 +42,7 @@ const menuItems = [
   { icon: BrainCircuit, labelKey: "nav.researcher" as const, path: "/researcher" },
   { icon: BrainCircuit, labelKey: "nav.aiCenter" as const, path: "/ai-center" },
   { icon: Radar, labelKey: "nav.research" as const, path: "/research" },
+  { icon: Network, labelKey: "nav.knowledge" as const, path: "/knowledge" },
   { icon: FileText, labelKey: "nav.reports" as const, path: "/reports" },
   { icon: Boxes, labelKey: "nav.inventory" as const, path: "/inventory" },
   { icon: ShieldCheck, labelKey: "nav.governance" as const, path: "/governance" },

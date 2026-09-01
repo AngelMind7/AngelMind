@@ -7,14 +7,14 @@ Dokumen ini adalah antrean pekerjaan aktif. Status requirement otoritatif tetap 
 | Priority | Work item | Status terbaru |
 |---|---|---|
 | P0 | Composite workspace consistency di database boundary. | **Selesai untuk research lifecycle**: composite indexes dan foreign keys session/asset/observation/hypothesis/task sudah ada pada schema dan migration `0032`; relasi domain lain dapat diperluas bila diperlukan. |
-| P1 | End-to-end trace graph correlation. | **Terbuka**: request dan AI trace ID tersedia, tetapi correlation ID belum otomatis mengalir ke seluruh record research/evidence/finding/report. |
-| P1 | Worker dan outbox operational semantics. | **Sebagian tersedia**: claim lease, stale recovery, consumer receipts, dan heartbeat periodik selama handler berjalan tersedia; dispatcher outbox produksi, replay contract, dan integration test lintas worker masih perlu diselesaikan. |
-| P1 | Evidence security scanning. | **Sebagian tersedia**: quarantine, scan state, promote/reject, audit, serta validation tersedia; adapter MIME/content/malware nyata masih membutuhkan service/provider. |
-| P1 | Permission-aware ranked search. | **Sebagian tersedia**: workspace search, knowledge graph index, relevance ranking, dan permission boundary tersedia; semantic search, freshness scoring, dan cross-domain index penuh masih terbuka. |
+| P1 | End-to-end trace graph correlation. | **Selesai untuk record inti**: `traceId` dipersist pada session, asset, observation, hypothesis, task, finding, evidence artifact, dan playbook task; propagasi ke provider eksternal tetap bergantung pada adapter/provider. |
+| P1 | Worker dan outbox operational semantics. | **Selesai untuk core dispatcher**: job lease/heartbeat, stale recovery, retry/dead-letter, outbox lease, backoff, consumer receipt setelah sukses, serta automatic evidence-scan handler sudah tersedia. Integration test dengan database live dan deployment replay drill masih memerlukan environment. |
+| P1 | Evidence security scanning. | **Selesai untuk built-in safety scan**: upload masuk quarantine dan diproses worker melalui MIME, extension, magic-byte, ukuran, ZIP, dan control-character checks. Antivirus/malware provider eksternal masih opsional dan membutuhkan provider/credential. |
+| P1 | Permission-aware ranked search. | **Selesai untuk deterministic search**: workspace permission boundary, cross-domain index, token ranking, dan freshness scoring tersedia. Semantic/vector retrieval tetap merupakan enhancement opsional. |
 | P1 | Intelligence ingestion. | **Sebagian tersedia**: normalization, persistence, deterministic dedupe, audit, dan batch ingestion API tersedia; provider adapters dan scheduling fetch masih terbuka. |
-| P1 | Playbook execution. | **Sebagian tersedia**: versioned playbook, matching, task generation, dependency persistence, validation, dan audit tersedia; durable execution feedback/retry integration masih terbuka. |
+| P1 | Playbook execution. | **Sebagian tersedia**: versioned playbook, matching, task generation, dependency persistence, trace lineage, validation, dan audit tersedia; executor task nyata dan feedback dari adapter tool masih memerlukan implementasi/provider sesuai policy. |
 | P2 | Auth dan UI quality contracts. | **Sebagian tersedia**: Firebase foundation, localization, responsive UI, lazy routes, dan test contracts tersedia; MFA/passkey/recovery E2E, WCAG automation, load/performance, dan full critical-path E2E masih terbuka. |
-| P2 | API/domain/operator documentation. | **Terbuka sebagian**: runbook dan architecture docs tersedia; API reference dan operator procedures lengkap masih perlu ditulis. |
+| P2 | API/domain/operator documentation. | **Sebagian tersedia**: architecture, runbook, migration, worker, quarantine-scan, dan remaining-work notes sudah diperbarui; dokumentasi deployment production dan provider-specific procedures tetap membutuhkan konfigurasi environment yang dipilih owner. |
 
 ## C — Pekerjaan live environment
 

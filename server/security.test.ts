@@ -38,6 +38,26 @@ describe("security and health contracts", () => {
     expect(body).toContain("angelmind_process_memory_bytes{category=\"rss\"}");
   });
 
+  it("fails production readiness when a required runtime binary is unavailable", async () => {
+    const previousNodeEnv = process.env.NODE_ENV;
+    const previousRequiredBinaries = process.env.RUNTIME_REQUIRED_BINARIES;
+    process.env.NODE_ENV = "production";
+    process.env.RUNTIME_REQUIRED_BINARIES = "missing-runtime-binary";
+    try {
+      const app = express();
+      registerHealthRoutes(app);
+      const response = await request(app, "/readyz");
+      const body = await response.json();
+      expect(response.status).toBe(503);
+      expect(body).toMatchObject({ status: "not-ready", runtime: { configured: true, ready: false, missing: ["missing-runtime-binary"] } });
+    } finally {
+      if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = previousNodeEnv;
+      if (previousRequiredBinaries === undefined) delete process.env.RUNTIME_REQUIRED_BINARIES;
+      else process.env.RUNTIME_REQUIRED_BINARIES = previousRequiredBinaries;
+    }
+  });
+
   it("reports readiness in development without requiring a database", async () => {
     const app = express();
     registerHealthRoutes(app);

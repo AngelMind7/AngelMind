@@ -1,9 +1,10 @@
 import { createHash, randomBytes } from "node:crypto";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, lt, or } from "drizzle-orm";
 import { apiKeys, organizationEntitlements, organizationMembers, privacyRequests, users } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { storageGetSignedUrl } from "./storage";
+import { decodePageCursor, pageResult } from "./_core/query-safety";
 
 function hashSecret(secret: string) {
   return createHash("sha256").update(secret).digest("hex");
@@ -121,6 +122,17 @@ export async function listPrivacyRequests(userId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(privacyRequests).where(eq(privacyRequests.userId, userId)).orderBy(desc(privacyRequests.createdAt));
+}
+
+export async function listPrivacyRequestsPage(userId: number, input: { pageSize?: number; cursor?: string }) {
+  const db = await getDb();
+  if (!db) return { items: [], hasNextPage: false, nextCursor: null };
+  const cursor = decodePageCursor(input.cursor);
+  const where = cursor
+    ? and(eq(privacyRequests.userId, userId), or(lt(privacyRequests.createdAt, new Date(cursor.createdAt)), and(eq(privacyRequests.createdAt, new Date(cursor.createdAt)), lt(privacyRequests.id, cursor.id))))
+    : eq(privacyRequests.userId, userId);
+  const rows = await db.select().from(privacyRequests).where(where).orderBy(desc(privacyRequests.createdAt), desc(privacyRequests.id)).limit(Math.min(Math.max(input.pageSize ?? 25, 1), 100) + 1);
+  return pageResult(rows, input.pageSize ?? 25);
 }
 
 export async function getPrivacyExportDownloadUrl(userId: number, requestId: number) {

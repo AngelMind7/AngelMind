@@ -88,6 +88,9 @@ export const appRouter = router({
     privacyRequests: protectedProcedure.query(({ ctx }) =>
       securityPlatform.listPrivacyRequests(ctx.user.id)
     ),
+    privacyRequestsPage: protectedProcedure
+      .input(z.object({ pageSize: z.number().int().min(1).max(100).optional(), cursor: z.string().max(512).optional() }))
+      .query(({ ctx, input }) => securityPlatform.listPrivacyRequestsPage(ctx.user.id, input)),
     downloadPrivacyExport: protectedProcedure
       .input(z.object({ requestId: z.number().int().positive() }))
       .query(({ ctx, input }) =>

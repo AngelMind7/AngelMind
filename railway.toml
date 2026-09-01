@@ -1,8 +1,10 @@
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
+watchPatterns = ["client/**", "server/**", "drizzle/**", "shared/**", "runtime/**", "config/**", "Dockerfile", "package.json", "pnpm-lock.yaml", "railway.toml"]
 
 [deploy]
+startCommand = "node dist/_core/index.js"
 healthcheckPath = "/healthz"
 healthcheckTimeout = 30
 cronSchedule = "*/15 * * * *"

@@ -32,38 +32,19 @@ ENV NODE_ENV=production
 # credential tooling, phishing tooling, and remote execution tools are excluded.
 RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && apt-get install --no-install-recommends -y \
-       bandit \
-       binwalk \
        binutils \
        ca-certificates \
        curl \
-       cppcheck \
-       dc3dd \
-       flawfinder \
-       foremost \
-       gdb \
-       gitleaks \
        dnsutils \
-       dnsrecon \
-       dnstwist \
-       python3 \
-       python3-pip \
-       python3-capstone \
-       python3-unicorn \
-       tcpdump \
-       tshark \
-       unzip \
-       snort \
-       suricata \
        file \
        jq \
-       python3-plaso \
+       python3 \
+       python3-pip \
        ripgrep \
-       scalpel \
-       shellcheck \
-       sleuthkit \
-       yara \
-       whois \
+       unzip \
+    && for package in bandit binwalk cppcheck dc3dd flawfinder foremost gdb gitleaks dnsrecon dnstwist python3-capstone python3-unicorn tcpdump tshark snort suricata python3-plaso scalpel shellcheck sleuthkit yara whois; do \
+         if apt-cache show \"$package\" >/dev/null 2>&1; then apt-get install --no-install-recommends -y \"$package\"; else echo \"optional package unavailable in Bookworm repositories: $package\"; fi; \
+       done \
     && rm -rf /var/lib/apt/lists/* \
     && curl -fsSL https://github.com/anchore/grype/releases/download/v0.118.0/grype_0.118.0_linux_amd64.tar.gz | tar -xz -C /usr/local/bin grype \
     && curl -fsSL https://github.com/anchore/syft/releases/download/v1.51.1/syft_1.51.1_linux_amd64.tar.gz | tar -xz -C /usr/local/bin syft \

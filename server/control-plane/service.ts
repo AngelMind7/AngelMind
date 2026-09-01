@@ -392,11 +392,13 @@ export async function promoteEvidence(userId: number, evidenceArtifactId: number
   return { success: true as const, evidenceArtifactId: artifact.id, status: "promoted" as const };
 }
 
-export async function listAudit(userId: number, workspaceId: number) {
+export async function listAudit(userId: number, workspaceId: number, traceId?: string) {
   await readableWorkspaceIdOrThrow(userId, workspaceId);
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(auditEvents).where(eq(auditEvents.workspaceId, workspaceId)).orderBy(desc(auditEvents.createdAt)).limit(100);
+  const normalizedTraceId = traceId?.trim().slice(0, 128);
+  const condition = normalizedTraceId ? and(eq(auditEvents.workspaceId, workspaceId), eq(auditEvents.traceId, normalizedTraceId)) : eq(auditEvents.workspaceId, workspaceId);
+  return db.select().from(auditEvents).where(condition).orderBy(desc(auditEvents.createdAt)).limit(100);
 }
 
 export async function listNotifications(userId: number) {

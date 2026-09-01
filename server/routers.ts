@@ -1933,9 +1933,9 @@ export const appRouter = router({
   }),
   audit: router({
     list: protectedProcedure
-      .input(z.object({ workspaceId: z.number().int().positive() }))
+      .input(z.object({ workspaceId: z.number().int().positive(), traceId: z.string().trim().max(128).optional() }))
       .query(({ ctx, input }) =>
-        controlPlane.listAudit(ctx.user.id, input.workspaceId)
+        controlPlane.listAudit(ctx.user.id, input.workspaceId, input.traceId)
       ),
     evidence: protectedProcedure
       .input(z.object({ workspaceId: z.number().int().positive() }))

@@ -1701,6 +1701,12 @@ export const appRouter = router({
     runPlaybook: protectedProcedure
       .input(z.object({ workspaceId: z.number().int().positive(), sessionId: z.number().int().positive(), playbookId: z.number().int().positive() }))
       .mutation(({ ctx, input }) => researchIntelligence.runPlaybook(ctx.user.id, input)),
+    playbookRuns: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), sessionId: z.number().int().positive().optional() }))
+      .query(({ ctx, input }) => researchIntelligence.listPlaybookRuns(ctx.user.id, input.workspaceId, input.sessionId)),
+    transitionPlaybookRun: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), runId: z.number().int().positive(), status: z.enum(["queued", "running", "paused", "failed", "completed", "cancelled"]), error: z.string().max(4_000).optional(), completedTaskIds: z.array(z.number().int().positive()).max(200).optional(), failedTaskIds: z.array(z.number().int().positive()).max(200).optional(), nextTaskIndex: z.number().int().min(0).max(200).optional() }))
+      .mutation(({ ctx, input }) => researchIntelligence.transitionPlaybookRun(ctx.user.id, input)),
     createPlaybook: protectedProcedure
       .input(
         z.object({

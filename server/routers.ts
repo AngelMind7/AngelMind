@@ -54,6 +54,9 @@ export const appRouter = router({
     apiKeys: protectedProcedure.query(({ ctx }) =>
       securityPlatform.listApiKeys(ctx.user.id)
     ),
+    apiKeysPage: protectedProcedure
+      .input(z.object({ pageSize: z.number().int().min(1).max(100).optional(), cursor: z.string().max(512).optional() }))
+      .query(({ ctx, input }) => securityPlatform.listApiKeysPage(ctx.user.id, input)),
     createApiKey: protectedProcedure
       .input(
         z.object({

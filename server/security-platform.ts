@@ -41,6 +41,17 @@ export async function listApiKeys(userId: number) {
   return db.select({ id: apiKeys.id, name: apiKeys.name, prefix: apiKeys.prefix, workspaceId: apiKeys.workspaceId, scopes: apiKeys.scopes, status: apiKeys.status, expiresAt: apiKeys.expiresAt, lastUsedAt: apiKeys.lastUsedAt, revokedAt: apiKeys.revokedAt, createdAt: apiKeys.createdAt }).from(apiKeys).where(eq(apiKeys.userId, userId)).orderBy(desc(apiKeys.createdAt));
 }
 
+export async function listApiKeysPage(userId: number, input: { pageSize?: number; cursor?: string }) {
+  const db = await getDb();
+  if (!db) return { items: [], hasNextPage: false, nextCursor: null };
+  const cursor = decodePageCursor(input.cursor);
+  const where = cursor
+    ? and(eq(apiKeys.userId, userId), or(lt(apiKeys.createdAt, new Date(cursor.createdAt)), and(eq(apiKeys.createdAt, new Date(cursor.createdAt)), lt(apiKeys.id, cursor.id))))
+    : eq(apiKeys.userId, userId);
+  const rows = await db.select({ id: apiKeys.id, name: apiKeys.name, prefix: apiKeys.prefix, workspaceId: apiKeys.workspaceId, scopes: apiKeys.scopes, status: apiKeys.status, expiresAt: apiKeys.expiresAt, lastUsedAt: apiKeys.lastUsedAt, revokedAt: apiKeys.revokedAt, createdAt: apiKeys.createdAt }).from(apiKeys).where(where).orderBy(desc(apiKeys.createdAt), desc(apiKeys.id)).limit(Math.min(Math.max(input.pageSize ?? 25, 1), 100) + 1);
+  return pageResult(rows, input.pageSize ?? 25);
+}
+
 export async function createApiKey(userId: number, input: { name: string; workspaceId?: number; scopes: string[]; expiresAt?: Date }) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");

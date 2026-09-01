@@ -1,4 +1,4 @@
-import { claimPendingJobs, completeJob, executeAiRunJob, executeOrchestrationPlanJob, failJob, heartbeatJob, refreshModelCatalog } from "./ai-platform";
+import { claimPendingJobs, completeJob, dispatchPendingOutbox, executeAiRunJob, executeOrchestrationPlanJob, failJob, heartbeatJob, refreshModelCatalog, type OutboxEventHandler } from "./ai-platform";
 
 export type WorkerJob = {
   id: number;
@@ -53,7 +53,7 @@ export async function processAvailableJobs(handlers: Record<string, JobHandler>,
   return { claimed: jobs.length, succeeded, failed };
 }
 
-export function createWorkerLoop(handlers: Record<string, JobHandler>, options: { intervalMs?: number; batchSize?: number } = {}) {
+export function createWorkerLoop(handlers: Record<string, JobHandler>, options: { intervalMs?: number; batchSize?: number; outboxHandlers?: Record<string, OutboxEventHandler> } = {}) {
   const intervalMs = Math.max(250, options.intervalMs ?? DEFAULT_POLL_INTERVAL_MS);
   const batchSize = Math.min(100, Math.max(1, options.batchSize ?? 10));
   let stopped = false;
@@ -65,6 +65,7 @@ export function createWorkerLoop(handlers: Record<string, JobHandler>, options: 
     running = true;
     try {
       await processAvailableJobs(handlers, batchSize);
+      if (options.outboxHandlers) await dispatchPendingOutbox(options.outboxHandlers, batchSize);
     } finally {
       running = false;
       if (!stopped) timer = setTimeout(() => void tick(), intervalMs);

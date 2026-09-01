@@ -1,5 +1,6 @@
+import { createHash } from "node:crypto";
 import { and, desc, eq } from "drizzle-orm";
-import { evolutionSnapshots, failureObservations, intelligenceFeedItems, playbooks, researchSessions, workspaces } from "../drizzle/schema";
+import { evolutionSnapshots, failureObservations, intelligenceFeedItems, playbooks, researchSessions, researchTaskDependencies, researchTasks, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { compareAssetSnapshots, normalizeIntelligenceFeed, validateFailureObservation, type AssetSnapshot, type FailureObservation, type IntelligenceFeedItem } from "./control-plane/intelligence-engine";
@@ -70,7 +71,9 @@ export async function listIntelligenceFeed(userId: number, workspaceId: number, 
 export async function createIntelligenceFeedItem(userId: number, input: { workspaceId: number } & IntelligenceFeedItem) {
   const { db } = await requireWorkspace(userId, input.workspaceId, "respond");
   const valid = normalizeIntelligenceFeed(input);
-  await db.insert(intelligenceFeedItems).values({ workspaceId: input.workspaceId, source: valid.source, assetRef: valid.assetRef, observedAt: new Date(valid.observedAt), confidence: valid.confidence, reference: valid.reference ?? null, data: JSON.stringify(valid.data) });
+  const data = JSON.stringify(valid.data);
+  const dedupeKey = createHash("sha256").update(JSON.stringify({ source: valid.source, assetRef: valid.assetRef, observedAt: valid.observedAt, reference: valid.reference ?? null, data })).digest("hex");
+  await db.insert(intelligenceFeedItems).values({ workspaceId: input.workspaceId, source: valid.source, assetRef: valid.assetRef, observedAt: new Date(valid.observedAt), confidence: valid.confidence, reference: valid.reference ?? null, dedupeKey, data }).onDuplicateKeyUpdate({ set: { confidence: valid.confidence, reference: valid.reference ?? null, data, observedAt: new Date(valid.observedAt) } });
   const [created] = await db.select().from(intelligenceFeedItems).where(and(eq(intelligenceFeedItems.workspaceId, input.workspaceId), eq(intelligenceFeedItems.assetRef, valid.assetRef))).orderBy(desc(intelligenceFeedItems.createdAt)).limit(1);
   if (!created) throw new Error("Intelligence feed item could not be created.");
   await audit(db, input.workspaceId, userId, "intelligence-feed-created", { feedItemId: created.id, source: valid.source, assetRef: valid.assetRef });
@@ -80,6 +83,44 @@ export async function createIntelligenceFeedItem(userId: number, input: { worksp
 export async function listPlaybooks(userId: number, workspaceId: number) {
   const { db } = await requireWorkspace(userId, workspaceId);
   return db.select().from(playbooks).where(eq(playbooks.workspaceId, workspaceId)).orderBy(desc(playbooks.updatedAt));
+}
+
+export async function runPlaybook(userId: number, input: { workspaceId: number; sessionId: number; playbookId: number }) {
+  const { db, session } = await requireSessionInWorkspace(userId, input.sessionId, input.workspaceId);
+  const [playbook] = await db.select().from(playbooks).where(and(eq(playbooks.id, input.playbookId), eq(playbooks.workspaceId, input.workspaceId), eq(playbooks.status, "active"))).limit(1);
+  if (!playbook) throw new Error("Playbook aktif tidak ditemukan pada workspace ini.");
+  let templates: Array<Record<string, unknown>>;
+  try {
+    const parsed = JSON.parse(playbook.taskTemplates) as unknown;
+    templates = Array.isArray(parsed) ? parsed.filter((template): template is Record<string, unknown> => Boolean(template && typeof template === "object")) : [];
+  } catch {
+    throw new Error("Playbook task templates tidak valid.");
+  }
+  if (!templates.length) throw new Error("Playbook tidak memiliki task template.");
+  if (templates.length > 200) throw new Error("Playbook melebihi batas 200 task.");
+  const createdIds: number[] = [];
+  const dependenciesByTask: number[][] = [];
+  for (let index = 0; index < templates.length; index += 1) {
+    const template = templates[index];
+    const title = String(template.title ?? template.name ?? `Playbook task ${index + 1}`).trim();
+    const type = String(template.type ?? template.taskType ?? "research").trim();
+    if (title.length < 2 || title.length > 240 || type.length < 1 || type.length > 80) throw new Error(`Template task ${index + 1} memiliki title/type tidak valid.`);
+    const priority = Math.min(100, Math.max(0, Number.isFinite(Number(template.priority)) ? Math.trunc(Number(template.priority)) : 50));
+    const dependencyIndexes = Array.isArray(template.dependsOn) ? template.dependsOn.map(Number) : [];
+    if (dependencyIndexes.some(dependencyIndex => !Number.isInteger(dependencyIndex) || dependencyIndex < 0 || dependencyIndex >= index)) throw new Error(`Dependency task ${index + 1} harus menunjuk ke task sebelumnya.`);
+    await db.insert(researchTasks).values({ workspaceId: input.workspaceId, sessionId: session.id, type, title, priority, status: "queued", ownerUserId: null, dependencies: "[]", inputs: JSON.stringify(template.inputs && typeof template.inputs === "object" ? template.inputs : {}), outputs: "{}", retryCount: 0, createdByUserId: userId });
+    const [created] = await db.select({ id: researchTasks.id }).from(researchTasks).where(and(eq(researchTasks.sessionId, session.id), eq(researchTasks.title, title))).orderBy(desc(researchTasks.id)).limit(1);
+    if (!created) throw new Error(`Task ${index + 1} could not be created.`);
+    createdIds.push(created.id);
+    dependenciesByTask.push(dependencyIndexes.map(dependencyIndex => createdIds[dependencyIndex]));
+  }
+  const dependencyRows = createdIds.flatMap((taskId, index) => dependenciesByTask[index].map(dependsOnTaskId => ({ workspaceId: input.workspaceId, taskId, dependsOnTaskId })));
+  if (dependencyRows.length) await db.insert(researchTaskDependencies).values(dependencyRows);
+  for (let index = 0; index < createdIds.length; index += 1) {
+    await db.update(researchTasks).set({ dependencies: JSON.stringify(dependenciesByTask[index]), updatedAt: new Date() }).where(eq(researchTasks.id, createdIds[index]));
+  }
+  await audit(db, input.workspaceId, userId, "playbook-run-created", { playbookId: playbook.id, sessionId: session.id, taskIds: createdIds });
+  return { playbookId: playbook.id, sessionId: session.id, taskIds: createdIds, taskCount: createdIds.length };
 }
 
 export async function createPlaybook(userId: number, input: { workspaceId: number; slug: string; version: string; status?: "draft" | "active" | "deprecated"; domains: string[]; assetTypes: string[]; technologies?: string[]; taskTemplates: unknown[] }) {

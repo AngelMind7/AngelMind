@@ -1,5 +1,5 @@
 import { and, desc, eq, like, or } from "drizzle-orm";
-import { findings, programs, reportVersions, researchAssets, researchSessions, searchDocuments, workspaces } from "../drizzle/schema";
+import { findings, knowledgeNodes, programs, reportVersions, researchAssets, researchSessions, searchDocuments, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 
@@ -17,12 +17,13 @@ export async function rebuildWorkspaceSearchIndex(userId: number, workspaceId: n
   if (!(await canAccessWorkspace(userId, workspaceId, "respond"))) throw new Error("Workspace tidak dapat dikelola.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
-  const [workspaceRow, findingRows, assetRows, sessionRows, reportRows] = await Promise.all([
+  const [workspaceRow, findingRows, assetRows, sessionRows, reportRows, knowledgeRows] = await Promise.all([
     db.select({ programId: workspaces.programId }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1),
     db.select({ id: findings.id, title: findings.title, body: findings.impactSummary }).from(findings).where(eq(findings.workspaceId, workspaceId)),
     db.select({ id: researchAssets.id, title: researchAssets.hostname, body: researchAssets.value }).from(researchAssets).where(eq(researchAssets.workspaceId, workspaceId)),
     db.select({ id: researchSessions.id, title: researchSessions.title, body: researchSessions.scopeDigest }).from(researchSessions).where(eq(researchSessions.workspaceId, workspaceId)),
     db.select({ id: reportVersions.id, title: reportVersions.title, body: reportVersions.body }).from(reportVersions).where(eq(reportVersions.workspaceId, workspaceId)),
+    db.select({ id: knowledgeNodes.id, title: knowledgeNodes.label, body: knowledgeNodes.properties }).from(knowledgeNodes).where(and(eq(knowledgeNodes.workspaceId, workspaceId), eq(knowledgeNodes.status, "active"))),
   ]);
   await db.delete(searchDocuments).where(eq(searchDocuments.workspaceId, workspaceId));
   const programId = workspaceRow[0]?.programId;
@@ -33,6 +34,7 @@ export async function rebuildWorkspaceSearchIndex(userId: number, workspaceId: n
     ...assetRows.map(row => ({ workspaceId, entityType: "asset", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
     ...sessionRows.map(row => ({ workspaceId, entityType: "session", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
     ...reportRows.map(row => ({ workspaceId, entityType: "report", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
+    ...knowledgeRows.map(row => ({ workspaceId, entityType: "knowledge_node", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
   ];
   if (rows.length > 0) await db.insert(searchDocuments).values(rows);
   return { workspaceId, indexed: rows.length };
@@ -46,7 +48,19 @@ export async function searchWorkspace(userId: number, input: { workspaceId: numb
   if (!db) return { query, results: [] };
   const limit = Math.min(100, Math.max(1, input.limit ?? 20));
   const pattern = `%${query}%`;
-  const results = await db.select({ id: searchDocuments.entityId, entityType: searchDocuments.entityType, title: searchDocuments.title, body: searchDocuments.body, updatedAt: searchDocuments.updatedAt }).from(searchDocuments).where(and(eq(searchDocuments.workspaceId, input.workspaceId), or(like(searchDocuments.title, pattern), like(searchDocuments.body, pattern)))).orderBy(desc(searchDocuments.updatedAt)).limit(limit);
+  const candidates = await db.select({ id: searchDocuments.entityId, entityType: searchDocuments.entityType, title: searchDocuments.title, body: searchDocuments.body, updatedAt: searchDocuments.updatedAt }).from(searchDocuments).where(and(eq(searchDocuments.workspaceId, input.workspaceId), or(like(searchDocuments.title, pattern), like(searchDocuments.body, pattern)))).orderBy(desc(searchDocuments.updatedAt)).limit(Math.min(500, limit * 10));
+  const normalizedQuery = query.toLocaleLowerCase();
+  const score = (result: typeof candidates[number]) => {
+    const title = result.title.toLocaleLowerCase();
+    const body = result.body.toLocaleLowerCase();
+    const exactTitle = title === normalizedQuery ? 100 : 0;
+    const titlePrefix = title.startsWith(normalizedQuery) ? 40 : 0;
+    const titleMatch = title.includes(normalizedQuery) ? 25 : 0;
+    const bodyMatch = body.includes(normalizedQuery) ? 10 : 0;
+    const freshness = Math.max(0, 10 - Math.floor((Date.now() - result.updatedAt.getTime()) / 86_400_000));
+    return exactTitle + titlePrefix + titleMatch + bodyMatch + freshness;
+  };
+  const results = candidates.sort((left, right) => score(right) - score(left) || right.updatedAt.getTime() - left.updatedAt.getTime()).slice(0, limit);
   const byType = (entityType: string) => results.filter(result => result.entityType === entityType);
   return {
     query,
@@ -56,5 +70,6 @@ export async function searchWorkspace(userId: number, input: { workspaceId: numb
     sessions: byType("session"),
     reports: byType("report"),
     programs: byType("program"),
+    knowledgeNodes: byType("knowledge_node"),
   };
 }

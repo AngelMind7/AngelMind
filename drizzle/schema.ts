@@ -335,9 +335,10 @@ export const intelligenceFeedItems = mysqlTable("intelligenceFeedItems", {
   observedAt: timestamp("observedAt").notNull(),
   confidence: int("confidence").notNull(),
   reference: varchar("reference", { length: 512 }),
+  dedupeKey: varchar("dedupeKey", { length: 64 }).notNull(),
   data: text("data").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-}, table => [index("intelligence_feed_workspace_asset_idx").on(table.workspaceId, table.assetRef, table.observedAt), index("intelligence_feed_source_idx").on(table.source, table.observedAt)]);
+}, table => [uniqueIndex("intelligence_feed_workspace_dedupe_uq").on(table.workspaceId, table.dedupeKey), index("intelligence_feed_workspace_asset_idx").on(table.workspaceId, table.assetRef, table.observedAt), index("intelligence_feed_source_idx").on(table.source, table.observedAt)]);
 
 export const playbookStatus = ["draft", "active", "deprecated"] as const;
 export const playbooks = mysqlTable("playbooks", {
@@ -833,3 +834,44 @@ export const findingComments = mysqlTable("findingComments", {
 }, table => [index("finding_comment_finding_created_idx").on(table.findingId, table.createdAt), index("finding_comment_workspace_idx").on(table.workspaceId)]);
 
 export type FindingComment = typeof findingComments.$inferSelect;
+
+
+export const knowledgeNodeType = ["asset", "observation", "hypothesis", "finding", "intelligence", "entity", "document"] as const;
+export const knowledgeNodeStatus = ["active", "archived"] as const;
+
+export const knowledgeNodes = mysqlTable("knowledgeNodes", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  nodeType: mysqlEnum("nodeType", knowledgeNodeType).notNull(),
+  externalId: varchar("externalId", { length: 160 }).notNull(),
+  label: varchar("label", { length: 240 }).notNull(),
+  properties: text("properties").notNull(),
+  status: mysqlEnum("status", knowledgeNodeStatus).default("active").notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [
+  uniqueIndex("knowledge_node_workspace_external_uq").on(table.workspaceId, table.nodeType, table.externalId),
+  index("knowledge_node_workspace_type_idx").on(table.workspaceId, table.nodeType, table.status),
+  index("knowledge_node_workspace_updated_idx").on(table.workspaceId, table.updatedAt),
+]);
+
+export const knowledgeEdges = mysqlTable("knowledgeEdges", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  sourceNodeId: int("sourceNodeId").notNull().references(() => knowledgeNodes.id, { onDelete: "cascade" }),
+  targetNodeId: int("targetNodeId").notNull().references(() => knowledgeNodes.id, { onDelete: "cascade" }),
+  relationType: varchar("relationType", { length: 80 }).notNull(),
+  confidence: int("confidence").default(100).notNull(),
+  provenance: text("provenance").notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [
+  uniqueIndex("knowledge_edge_pair_relation_uq").on(table.workspaceId, table.sourceNodeId, table.targetNodeId, table.relationType),
+  index("knowledge_edge_workspace_relation_idx").on(table.workspaceId, table.relationType, table.createdAt),
+  index("knowledge_edge_source_idx").on(table.sourceNodeId),
+  index("knowledge_edge_target_idx").on(table.targetNodeId),
+]);
+
+export type KnowledgeNode = typeof knowledgeNodes.$inferSelect;
+export type KnowledgeEdge = typeof knowledgeEdges.$inferSelect;

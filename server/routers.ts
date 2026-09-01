@@ -30,6 +30,7 @@ import * as profile from "./profile";
 import * as researchIntelligence from "./research-intelligence";
 import * as toolCatalog from "./tool-catalog";
 import * as toolRuntime from "./tool-runtime";
+import * as knowledgeGraph from "./knowledge-graph";
 
 const workspaceInput = z.object({
   name: z.string().min(2).max(120),
@@ -1138,6 +1139,20 @@ export const appRouter = router({
         globalSearch.searchWorkspace(ctx.user.id, input)
       ),
   }),
+  knowledge: router({
+    graph: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), nodeType: z.enum(["asset", "observation", "hypothesis", "finding", "intelligence", "entity", "document"]).optional(), status: z.enum(["active", "archived"]).optional() }))
+      .query(({ ctx, input }) => knowledgeGraph.listGraph(ctx.user.id, input.workspaceId, input)),
+    upsertNode: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), nodeType: z.enum(["asset", "observation", "hypothesis", "finding", "intelligence", "entity", "document"]), externalId: z.string().trim().min(1).max(160), label: z.string().trim().min(1).max(240), properties: z.record(z.string(), z.unknown()).optional() }))
+      .mutation(({ ctx, input }) => knowledgeGraph.upsertNode(ctx.user.id, input)),
+    createEdge: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), sourceNodeId: z.number().int().positive(), targetNodeId: z.number().int().positive(), relationType: z.string().trim().min(1).max(80), confidence: z.number().int().min(0).max(100).optional(), provenance: z.record(z.string(), z.unknown()).optional() }))
+      .mutation(({ ctx, input }) => knowledgeGraph.createEdge(ctx.user.id, input)),
+    traverse: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), startNodeId: z.number().int().positive(), maxDepth: z.number().int().min(0).max(12).optional(), limit: z.number().int().min(1).max(500).optional() }))
+      .query(({ ctx, input }) => knowledgeGraph.traverseGraph(ctx.user.id, input)),
+  }),
   evidence: router({
     list: protectedProcedure
       .input(z.object({ workspaceId: z.number().int().positive() }))
@@ -1677,6 +1692,9 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         researchIntelligence.listPlaybooks(ctx.user.id, input.workspaceId)
       ),
+    runPlaybook: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), sessionId: z.number().int().positive(), playbookId: z.number().int().positive() }))
+      .mutation(({ ctx, input }) => researchIntelligence.runPlaybook(ctx.user.id, input)),
     createPlaybook: protectedProcedure
       .input(
         z.object({

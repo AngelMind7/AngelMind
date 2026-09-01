@@ -92,6 +92,7 @@ RUN python3 -m pip install --no-cache-dir --break-system-packages \
        pip-audit==2.10.1 \
        semgrep==1.172.0 \
        safety==3.8.1 \
+       trufflehog==2.2.1 \
        sigmatools==0.23.1 \
        volatility3==2.28.0 \
     && pnpm install --prod --frozen-lockfile \

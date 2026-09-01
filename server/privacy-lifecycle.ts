@@ -5,13 +5,13 @@ import { storagePut } from "./storage";
 import { processPrivacyRequest } from "./security-platform";
 
 const exportTables = [
-  ["users", "id"], ["userProfiles", "userId"], ["authDevices", "userId"], ["accountSecurityEvents", "userId"],
+  ["users", "id"], ["userProfiles", "userId"], ["authDevices", "userId"], ["accountSecurityEvents", "userId"], ["emailDeliveries", "userId"], ["organizationInvitations", "invitedByUserId"],
   ["onboardingProfiles", "userId"], ["apiKeys", "userId"], ["organizationMembers", "userId"], ["workspaceMemberships", "userId"],
   ["savedViews", "userId"], ["notificationPreferences", "userId"], ["notifications", "userId"], ["privacyRequests", "userId"],
 ] as const;
 
 const deleteTables = [
-  ["notificationPreferences", "userId"], ["notifications", "userId"], ["savedViews", "userId"], ["workspaceMemberships", "userId"],
+  ["notificationPreferences", "userId"], ["notifications", "userId"], ["emailDeliveries", "userId"], ["organizationInvitations", "invitedByUserId"], ["savedViews", "userId"], ["workspaceMemberships", "userId"],
   ["organizationMembers", "userId"], ["apiKeys", "userId"], ["authDevices", "userId"], ["accountSecurityEvents", "userId"],
   ["onboardingProfiles", "userId"], ["userProfiles", "userId"],
 ] as const;

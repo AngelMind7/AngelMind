@@ -1,3 +1,5 @@
+import { parseFeatureFlags } from "../feature-flags";
+
 export const ENV = {
   databaseUrl: process.env.DATABASE_URL ?? "",
   archiveSigningSecret: process.env.AUDIT_ARCHIVE_SIGNING_KEY ?? process.env.APP_ENCRYPTION_KEY ?? "",
@@ -23,6 +25,7 @@ export const ENV = {
   smtpSecure: process.env.SMTP_SECURE === "true",
   smtpTimeoutMs: Number(process.env.SMTP_TIMEOUT_MS ?? 10_000),
   isProduction: process.env.NODE_ENV === "production",
+  featureFlagsRaw: process.env.FEATURE_FLAGS ?? "{}",
 };
 
 export function getSmtpConfig() {
@@ -55,6 +58,10 @@ export function validateRuntimeConfig(options: { production?: boolean } = {}) {
   if (process.env.APP_ENCRYPTION_KEY && process.env.APP_ENCRYPTION_KEY.length < 32) missing.push("APP_ENCRYPTION_KEY(min-32-chars)");
   if (missing.length) throw new Error(`Production runtime configuration incomplete: ${missing.join(", ")}`);
   return { production: true as const, missing: [] as string[] };
+}
+
+export function getRuntimeFeatureFlags() {
+  return parseFeatureFlags(ENV.featureFlagsRaw);
 }
 
 export function isSmtpConfigured() {

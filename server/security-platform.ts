@@ -125,7 +125,10 @@ export async function processPrivacyRequest(input: { requestId: number; status: 
     if (request.status !== input.status) throw new Error("Terminal privacy request cannot be reopened.");
     return request;
   }
+  if (input.status === "processing" && request.status !== "requested") throw new Error("Only requested privacy actions can enter processing.");
+  if ((input.status === "completed" || input.status === "rejected") && request.status !== "processing") throw new Error("Privacy action must be processing before it can reach a terminal state.");
   if (input.status === "completed" && !input.resultReference?.trim()) throw new Error("Completed privacy request requires a result reference.");
+  if (request.requestType === "delete" && input.status === "completed" && !input.resultReference?.trim()) throw new Error("Completed deletion requires a verification reference.");
   const resultReference = input.resultReference?.trim() || null;
   const completedAt = input.status === "completed" || input.status === "rejected" ? new Date() : null;
   await db.update(privacyRequests).set({ status: input.status, resultReference, completedAt }).where(and(eq(privacyRequests.id, request.id), eq(privacyRequests.status, request.status)));

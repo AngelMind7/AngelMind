@@ -514,6 +514,36 @@ export const searchDocuments = mysqlTable("searchDocuments", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [uniqueIndex("search_document_entity_uq").on(table.workspaceId, table.entityType, table.entityId), index("search_document_workspace_updated_idx").on(table.workspaceId, table.updatedAt)]);
 
+export const workspaceTags = mysqlTable("workspaceTags", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 80 }).notNull(),
+  color: varchar("color", { length: 16 }).notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("workspace_tag_name_uq").on(table.workspaceId, table.name), index("workspace_tag_workspace_idx").on(table.workspaceId, table.createdAt)]);
+export const tagAssignments = mysqlTable("tagAssignments", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  tagId: int("tagId").notNull().references(() => workspaceTags.id, { onDelete: "cascade" }),
+  entityType: varchar("entityType", { length: 60 }).notNull(),
+  entityId: int("entityId").notNull(),
+  assignedByUserId: int("assignedByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("tag_assignment_entity_uq").on(table.tagId, table.entityType, table.entityId), index("tag_assignment_entity_idx").on(table.workspaceId, table.entityType, table.entityId)]);
+export const workspaceNotes = mysqlTable("workspaceNotes", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  authorUserId: int("authorUserId").notNull(),
+  entityType: varchar("entityType", { length: 60 }).notNull(),
+  entityId: int("entityId"),
+  title: varchar("title", { length: 240 }).notNull(),
+  body: text("body").notNull(),
+  visibility: mysqlEnum("visibility", ["private", "workspace"] as const).default("workspace").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [index("workspace_note_entity_idx").on(table.workspaceId, table.entityType, table.entityId), index("workspace_note_author_updated_idx").on(table.authorUserId, table.updatedAt)]);
+
 export const savedViews = mysqlTable("savedViews", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),

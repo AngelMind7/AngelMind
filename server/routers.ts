@@ -27,6 +27,7 @@ import * as securityPlatform from "./security-platform";
 import * as submissionWorkflow from "./submission-workflow";
 import * as globalSearch from "./global-search";
 import * as savedViewService from "./saved-views";
+import * as tagsNotes from "./tags-notes";
 import * as profile from "./profile";
 import * as researchIntelligence from "./research-intelligence";
 import * as toolCatalog from "./tool-catalog";
@@ -1150,6 +1151,12 @@ export const appRouter = router({
     deleteView: protectedProcedure
       .input(z.object({ savedViewId: z.number().int().positive() }))
       .mutation(({ ctx, input }) => savedViewService.deleteSavedView(ctx.user.id, input.savedViewId)),
+    tags: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => tagsNotes.listTags(ctx.user.id, input.workspaceId)),
+    upsertTag: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), name: z.string().trim().min(2).max(80), color: z.string().max(16).optional() })).mutation(({ ctx, input }) => tagsNotes.upsertTag(ctx.user.id, input)),
+    assignments: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), entityType: z.string().trim().min(1).max(60), entityId: z.number().int().positive() })).query(({ ctx, input }) => tagsNotes.listAssignments(ctx.user.id, input)),
+    assignTag: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), tagId: z.number().int().positive(), entityType: z.string().trim().min(1).max(60), entityId: z.number().int().positive() })).mutation(({ ctx, input }) => tagsNotes.assignTag(ctx.user.id, input)),
+    notes: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), entityType: z.string().trim().min(1).max(60).optional(), entityId: z.number().int().positive().optional() })).query(({ ctx, input }) => tagsNotes.listNotes(ctx.user.id, input)),
+    createNote: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), entityType: z.string().trim().min(1).max(60), entityId: z.number().int().positive().optional(), title: z.string().trim().min(2).max(240), body: z.string().trim().min(1), visibility: z.enum(["private", "workspace"]).optional() })).mutation(({ ctx, input }) => tagsNotes.createNote(ctx.user.id, input)),
   }),
   knowledge: router({
     graph: protectedProcedure

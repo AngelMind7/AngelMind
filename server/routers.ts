@@ -1438,6 +1438,9 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         researchWorkflow.listResearchSessions(ctx.user.id, input.workspaceId)
       ),
+    sessionsPage: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), pageSize: z.number().int().min(1).max(100).optional(), cursor: z.string().max(512).optional() }))
+      .query(({ ctx, input }) => researchWorkflow.listResearchSessionsPage(ctx.user.id, input)),
     createSession: protectedProcedure
       .input(
         z.object({

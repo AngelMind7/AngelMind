@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { and, asc, desc, eq, inArray } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, lt, or } from "drizzle-orm";
 import {
   auditEvents,
   findings,
@@ -15,6 +15,7 @@ import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { isTargetInScope } from "./control-plane/guardrails";
 import { currentTraceContext } from "./_core/trace-context";
+import { decodePageCursor, pageResult } from "./_core/query-safety";
 
 const sessionTransitions: Record<string, string[]> = {
   draft: ["ready", "archived"],
@@ -90,6 +91,16 @@ async function addResearchAudit(db: NonNullable<Awaited<ReturnType<typeof getDb>
 export async function listResearchSessions(userId: number, workspaceId: number) {
   const { db } = await requireWorkspace(userId, workspaceId);
   return db.select().from(researchSessions).where(eq(researchSessions.workspaceId, workspaceId)).orderBy(desc(researchSessions.updatedAt));
+}
+
+export async function listResearchSessionsPage(userId: number, input: { workspaceId: number; pageSize?: number; cursor?: string }) {
+  const { db, workspace } = await requireWorkspace(userId, input.workspaceId);
+  const cursor = decodePageCursor(input.cursor);
+  const where = cursor
+    ? and(eq(researchSessions.workspaceId, workspace.id), or(lt(researchSessions.updatedAt, new Date(cursor.createdAt)), and(eq(researchSessions.updatedAt, new Date(cursor.createdAt)), lt(researchSessions.id, cursor.id))))
+    : eq(researchSessions.workspaceId, workspace.id);
+  const rows = await db.select().from(researchSessions).where(where).orderBy(desc(researchSessions.updatedAt), desc(researchSessions.id)).limit(Math.min(Math.max(input.pageSize ?? 25, 1), 100) + 1);
+  return pageResult(rows, input.pageSize ?? 25);
 }
 
 export async function createResearchSession(userId: number, input: { workspaceId: number; title: string }) {

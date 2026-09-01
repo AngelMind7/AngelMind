@@ -27,3 +27,9 @@ Keputusan berikut tetap menjadi tanggung jawab owner: kebijakan model AI/cost/re
 ## Perubahan yang sudah dipublish
 
 Implementasi yang sudah masuk ke `main` mencakup registry-based AI fallback, generic workspace-scoped knowledge graph beserta migration/API/UI/traversal, search ranking graph-aware, playbook task/dependency generation, intelligence feed deduplication dan batch ingestion, route permissions, serta test contract updates. Semua perubahan tersebut sudah melalui typecheck, test suite, build, dan `git diff --check` pada sandbox.
+
+## E — Repository audit update (2026-09-01)
+
+The latest repository pass added a canonical evidence normalizer with deterministic redaction, type coercion, timestamp normalization, XSS/control-character sanitization, data classification, confidence clamping, chain-reference deduplication, and tamper-evident hashing. High-risk approval records now persist structured review context and expire automatically after 24 hours; expired records cannot be decided. Migration `0041_approval_review_context` is registered in the migration journal. These changes do not enable target-facing offensive execution and remain compatible with the existing Firebase authentication, Supabase Storage quarantine flow, and Railway web/worker deployment configuration.
+
+The following items still require live owner/environment actions rather than local code changes: applying migration `0041` to the production database, verifying Firebase authorized domains and providers, confirming the Supabase bucket and service-role secret, deploying both Railway services, and running staging smoke tests with real credentials. No production secret was added to the repository.

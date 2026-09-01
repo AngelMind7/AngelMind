@@ -3,6 +3,8 @@ import { and, asc, desc, eq, lt } from "drizzle-orm";
 import { getDb, getUserByEmail } from "./db";
 import { organizationInvitations, programs, organizationMembers, organizations, workspaces } from "../drizzle/schema";
 import { diffProgramScope, normalizeProgramScope, parseStoredProgramScope } from "./control-plane/program-scope";
+import { buildOrganizationInvitationEmail } from "./_core/email-templates";
+import { enqueueEmailDelivery } from "./email-delivery";
 
 const organizationRoles = ["owner", "admin", "researcher", "reviewer", "auditor"] as const;
 type OrganizationRole = (typeof organizationRoles)[number];
@@ -117,7 +119,12 @@ export async function createOrganizationInvitation(userId: number, input: { orga
   const token = `inv_${randomBytes(32).toString("base64url")}`;
   const expiresAt = new Date(Date.now() + Math.min(30, Math.max(1, input.expiresInDays ?? 7)) * 86_400_000);
   await db.insert(organizationInvitations).values({ organizationId: input.organizationId, email, role: input.role, tokenHash: invitationHash(token), invitedByUserId: userId, expiresAt });
-  return { token, expiresAt, email, role: input.role };
+  const baseUrl = (process.env.APP_BASE_URL ?? process.env.PUBLIC_APP_URL ?? "").trim().replace(/\/$/, "");
+  if (baseUrl) {
+    const email = buildOrganizationInvitationEmail({ organizationName: (await db.select({ name: organizations.name }).from(organizations).where(eq(organizations.id, input.organizationId)).limit(1))[0]?.name ?? "AngelMind organization", inviterName: undefined, inviteUrl: `${baseUrl}/accept-invitation?token=${encodeURIComponent(token)}`, expiresAt });
+    await enqueueEmailDelivery(userId, { recipient: input.email, templateKey: "organization_invitation", subject: email.subject, text: email.text, html: email.html, idempotencyKey: `organization-invitation:${input.organizationId}:${input.email.trim().toLowerCase()}:${expiresAt.getTime()}` });
+  }
+  return { token, expiresAt, email: input.email.trim().toLowerCase(), role: input.role };
 }
 export async function acceptOrganizationInvitation(userId: number, token: string) {
   const db = await getDb(); if (!db) throw new Error("Database tidak tersedia.");

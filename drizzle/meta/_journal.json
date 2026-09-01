@@ -211,6 +211,20 @@
       "when": 1788067900000,
       "tag": "0029_evidence_quarantine_lifecycle",
       "breakpoints": true
+    },
+    {
+      "idx": 30,
+      "version": "7",
+      "when": 1788068000000,
+      "tag": "0035_trace_lineage",
+      "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1788068100000,
+      "tag": "0036_outbox_retry_leases",
+      "breakpoints": true
     }
   ]
 }

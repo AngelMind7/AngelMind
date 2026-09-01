@@ -134,13 +134,13 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 95 | Migration | **Implemented** | Drizzle forward migrations, deploy/runbook, validation tersedia. |
 | 96 | CI/CD | **Partial** | CI check/test/build/security workflows ada; staging/smoke/production promotion belum lengkap. |
 | 97 | Supply-chain security | **Partial** | Lockfile, dependency review/security workflow, container hardening ada; SBOM/signing/DAST penuh belum. |
-| 98 | Testing | **Partial** | Unit/integration/property/E2E/Python tests ada; security/accessibility/performance/DR suites lengkap belum. |
+| 98 | Testing | **Partial** | Unit/integration/property/E2E/Python tests dan public accessibility axe smoke suite ada; authenticated security/accessibility/performance/DR suites lengkap belum. |
 | 99 | Critical E2E | **Partial** | Login/dashboard/workspace/policy/rehearsal/finding/evidence/report core ada; full program–research–submission–retest lifecycle belum. |
 | 100 | Frontend architecture | **Partial** | React/Vite route shells, pages, components, contexts, locales ada; target feature-folder split belum. |
 | 101 | Design system | **Partial** | Shared Radix/Tailwind components, semantic states, responsive shell ada; full token/a11y system belum. |
 | 102 | UI state | **Implemented** | Loading/error/empty/offline/protected states tersedia pada core surfaces. |
 | 103 | Responsive | **Implemented** | Desktop/mobile layouts dan PWA shell tersedia; route-specific data-card optimization dapat diperluas. |
-| 104 | Accessibility | **Partial** | Keyboard navigation, labels, focus-aware components ada; automated WCAG audit penuh belum. |
+| 104 | Accessibility | **Partial** | Keyboard navigation, labels, focus-aware components, serta automated axe smoke tests untuk public routes pada desktop/mobile tersedia; authenticated WCAG coverage dan full remediation register masih terbuka. |
 | 105 | Internationalization | **Implemented** | 20 locale, timezone, RTL, locale fallback dan tests tersedia. |
 | 106 | SEO | **Partial** | Title/manifest/public content ada; complete metadata/robots/sitemap/structured data belum. |
 | 107 | Performance | **Partial** | Lazy routes/PWA/cache ada; bundle masih memberi warning chunk besar dan performance budget belum. |

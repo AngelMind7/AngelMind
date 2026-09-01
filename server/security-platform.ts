@@ -9,6 +9,12 @@ function hashSecret(secret: string) {
   return createHash("sha256").update(secret).digest("hex");
 }
 
+export function normalizeApiKeyScopes(scopes: string[]): string[] {
+  const normalized = Array.from(new Set(scopes.map(scope => scope.trim().toLowerCase()).filter(Boolean)));
+  if (!normalized.length || normalized.length > 32 || normalized.some(scope => !/^[a-z0-9._:-]{2,80}$/.test(scope))) throw new Error("API key scopes are invalid or exceed the allowed limit.");
+  return normalized;
+}
+
 async function requireOrganizationMember(userId: number, organizationId: number, manage = false) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
@@ -39,8 +45,7 @@ export async function createApiKey(userId: number, input: { name: string; worksp
   if (!db) throw new Error("Database tidak tersedia.");
   const name = input.name.trim();
   if (name.length < 3) throw new Error("API key name is required.");
-  const scopes = Array.from(new Set(input.scopes.map(scope => scope.trim()).filter(Boolean)));
-  if (scopes.length === 0) throw new Error("At least one API key scope is required.");
+  const scopes = normalizeApiKeyScopes(input.scopes);
   if (input.workspaceId !== undefined && !(await canAccessWorkspace(userId, input.workspaceId, "manage"))) throw new Error("API key workspace access denied.");
   const rawSecret = `am_${randomBytes(24).toString("base64url")}`;
   const prefix = rawSecret.slice(0, 10);
@@ -60,6 +65,7 @@ export async function rotateApiKey(userId: number, apiKeyId: number, expiresAt?:
   try {
     const parsed = JSON.parse(key.scopes);
     scopes = Array.isArray(parsed) ? parsed.filter((scope): scope is string => typeof scope === "string") : [];
+    scopes = normalizeApiKeyScopes(scopes);
   } catch {
     scopes = [];
   }

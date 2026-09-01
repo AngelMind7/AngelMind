@@ -63,3 +63,7 @@ Protected tRPC procedures with a declared workspace role now enforce owner, read
 ## K — Governance completion: incident post-review (2026-09-02)
 
 Incident post-incident review is now repository-backed through `incidentReviews` and migration 0045. The workflow stores summary, root cause, bounded action items, optional action owner and due date, closure evidence reference, and open/closed status. Closing is fail-closed until the incident is resolved and closure evidence is present. The assurance router exposes read and save procedures with strict validation and workspace response access.
+
+## L — Structured policy comparison (2026-09-02)
+
+The assurance API now exposes `comparePolicies`, which validates that both immutable policy versions exist in the same workspace, enforces read access, parses stored allowlists/exclusions, and recomputes a structured field-level diff instead of trusting client-provided data.

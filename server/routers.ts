@@ -847,6 +847,9 @@ export const appRouter = router({
           input.note
         )
       ),
+    comparePolicies: protectedProcedure
+      .input(z.object({ fromPolicyVersionId: z.number().int().positive(), toPolicyVersionId: z.number().int().positive() }))
+      .query(({ ctx, input }) => assurance.comparePolicyVersions(ctx.user.id, input.fromPolicyVersionId, input.toPolicyVersionId)),
     incidents: protectedProcedure
       .input(
         z

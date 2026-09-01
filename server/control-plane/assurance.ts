@@ -69,6 +69,17 @@ export async function listPolicyVersions(userId: number, workspaceId?: number) {
   return db.select().from(policyVersions).where(inArray(policyVersions.workspaceId, workspaceIds)).orderBy(desc(policyVersions.createdAt));
 }
 
+export async function comparePolicyVersions(userId: number, fromPolicyVersionId: number, toPolicyVersionId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const rows = await db.select().from(policyVersions).where(inArray(policyVersions.id, [fromPolicyVersionId, toPolicyVersionId]));
+  const from = rows.find(policy => policy.id === fromPolicyVersionId);
+  const to = rows.find(policy => policy.id === toPolicyVersionId);
+  if (!from || !to || from.workspaceId !== to.workspaceId || !await canAccessWorkspace(userId, from.workspaceId, "read")) throw new Error("Policy versions tidak ditemukan atau tidak dapat diakses.");
+  const snapshot = (policy: typeof from) => ({ safeHarbor: policy.safeHarbor, codeOfConduct: policy.codeOfConduct, allowlist: JSON.parse(policy.allowlist) as string[], exclusions: JSON.parse(policy.exclusions) as string[] });
+  return { workspaceId: from.workspaceId, from: { id: from.id, version: from.version, status: from.status, createdAt: from.createdAt }, to: { id: to.id, version: to.version, status: to.status, createdAt: to.createdAt }, diff: buildPolicyDiff(snapshot(from), snapshot(to)) };
+}
+
 export async function decidePolicyVersion(userId: number, userRole: UserRole, policyVersionId: number, decision: "approved" | "rejected", note: string) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");

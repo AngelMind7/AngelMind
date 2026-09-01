@@ -16,8 +16,20 @@ function getSupabaseConfig() {
       "Storage config missing: set SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and SUPABASE_STORAGE_BUCKET",
     );
   }
+  let parsedUrl: URL;
+  try {
+    parsedUrl = new URL(url);
+  } catch {
+    throw new Error("SUPABASE_URL must be a valid HTTPS URL.");
+  }
+  if (parsedUrl.protocol !== "https:" || !parsedUrl.hostname.endsWith(".supabase.co")) {
+    throw new Error("SUPABASE_URL must use an approved HTTPS Supabase host.");
+  }
+  if (!/^[a-zA-Z0-9][a-zA-Z0-9._-]{0,62}$/.test(bucket)) {
+    throw new Error("SUPABASE_STORAGE_BUCKET contains invalid characters.");
+  }
 
-  return { url, serviceRoleKey, bucket };
+  return { url: parsedUrl.toString().replace(/\/$/, ""), serviceRoleKey, bucket };
 }
 
 function getSupabaseStorage(): { client: SupabaseClient; bucket: string } {
@@ -37,7 +49,9 @@ export function normalizeStorageKey(relKey: string): string {
   if (segments.some(segment => !segment || segment === "." || segment === "..")) {
     throw new Error("Storage object key must remain within its assigned prefix.");
   }
-  return segments.join("/");
+  const result = segments.join("/");
+  if (result.length > 512) throw new Error("Storage object key is too long.");
+  return result;
 }
 
 function appendHashSuffix(relKey: string): string {

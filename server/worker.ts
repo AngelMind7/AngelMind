@@ -1,4 +1,4 @@
-import { claimPendingJobs, completeJob, dispatchPendingOutbox, executeAiRunJob, executeOrchestrationPlanJob, failJob, heartbeatJob, refreshModelCatalog, type OutboxEventHandler } from "./ai-platform";
+import { claimPendingJobs, completeJob, dispatchPendingOutbox, executeAiRunJob, executeOrchestrationPlanJob, failJob, heartbeatJob, purgeExpiredAiRunMemory, refreshModelCatalog, type OutboxEventHandler } from "./ai-platform";
 import { executeEvidenceScanJob } from "./control-plane/service";
 import { executeIntelligenceFetchJob } from "./research-intelligence";
 import { executePrivacyRequest } from "./privacy-lifecycle";
@@ -133,6 +133,11 @@ if (process.env.RUN_WORKER === "true") {
     "notification.deliver": async (_job, payload) => {
       if (payload.type !== "notification_delivery") throw new Error("Unsupported notification delivery payload type.");
       await executeNotificationDeliveryJob(payload);
+    },
+    "ai.memory.purge": async (_job, payload) => {
+      if (payload.type !== "ai_memory_purge") throw new Error("Unsupported AI memory purge payload type.");
+      const limit = typeof payload.limit === "number" ? payload.limit : 100;
+      await purgeExpiredAiRunMemory(limit);
     },
     "playbook.run": async (_job, payload) => {
       if (payload.type !== "playbook_run") throw new Error("Unsupported playbook run payload type.");

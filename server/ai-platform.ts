@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, desc, eq, lte, lt, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, isNotNull, lte, lt, or, sql } from "drizzle-orm";
 import { aiModels, aiRunEvaluations, aiRunOutputs, aiRuns, jobs, outboxConsumerReceipts, outboxEvents, researchSessions, researchTasks, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
@@ -123,6 +123,19 @@ export async function listAiRunEvaluations(userId: number, runId: number) {
 export async function listAiRuns(userId: number, workspaceId: number) {
   const { db } = await requireWorkspace(userId, workspaceId);
   return db.select().from(aiRuns).where(eq(aiRuns.workspaceId, workspaceId)).orderBy(desc(aiRuns.createdAt)).limit(100);
+}
+
+/** Purges expired AI memory payloads but preserves run metadata, cost, status, and trace lineage. */
+export async function purgeExpiredAiRunMemory(limit = 100) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const boundedLimit = Math.min(500, Math.max(1, limit));
+  const expired = await db.select({ id: aiRuns.id }).from(aiRuns).where(and(isNotNull(aiRuns.retentionUntil), lte(aiRuns.retentionUntil, new Date()))).orderBy(asc(aiRuns.id)).limit(boundedLimit);
+  for (const run of expired) {
+    await db.delete(aiRunOutputs).where(eq(aiRunOutputs.runId, run.id));
+    await db.update(aiRuns).set({ inputReference: "retention://purged", outputReference: null }).where(eq(aiRuns.id, run.id));
+  }
+  return { inspected: expired.length, purged: expired.length };
 }
 
 export async function enqueueJob(userId: number, input: { workspaceId?: number; kind: string; idempotencyKey: string; payload: Record<string, unknown>; maxAttempts?: number }) {

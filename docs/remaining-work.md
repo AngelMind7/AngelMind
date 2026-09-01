@@ -59,3 +59,7 @@ The public authentication entry now includes an email-auth modal with sign-in, a
 ## J — Workspace role enforcement and durable trace correlation (2026-09-02)
 
 Protected tRPC procedures with a declared workspace role now enforce owner, read-member, and responder access centrally when a workspaceId is present. Distinct-reviewer and admin-or-distinct-reviewer procedures remain delegated to their domain-specific approval checks. Durable jobs and outbox events now persist traceId, worker execution restores request/trace context with deterministic job fallbacks, and migration 0044 adds the required indexes.
+
+## K — Governance completion: incident post-review (2026-09-02)
+
+Incident post-incident review is now repository-backed through `incidentReviews` and migration 0045. The workflow stores summary, root cause, bounded action items, optional action owner and due date, closure evidence reference, and open/closed status. Closing is fail-closed until the incident is resolved and closure evidence is present. The assurance router exposes read and save procedures with strict validation and workspace response access.

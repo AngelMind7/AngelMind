@@ -1,5 +1,5 @@
 import { and, desc, eq, inArray, isNull, lt } from "drizzle-orm";
-import { evidenceArtifacts, incidentEvidenceLinks, incidents, notificationPreferences, notifications, policyVersions, webhookActivationRequests, webhookConfigurations, workspaces } from "../../drizzle/schema";
+import { evidenceArtifacts, incidentEvidenceLinks, incidentReviews, incidents, notificationPreferences, notifications, policyVersions, webhookActivationRequests, webhookConfigurations, workspaces } from "../../drizzle/schema";
 import { getDb, getOwnedWorkspace } from "../db";
 import { canAccessWorkspace, getReadableWorkspaceIds, hasReviewerMembership } from "./operations";
 import { sha256 } from "./archive-integrity";
@@ -124,6 +124,38 @@ export async function resolveIncident(userId: number, incidentId: number, resolu
   await db.update(incidents).set({ status: transitionIncidentWorkflow(incident.status, "resolve"), resolutionNote: resolutionNote.trim() || null, resolvedAt: new Date() }).where(eq(incidents.id, incident.id));
   await addAudit(incident.workspaceId, "incident", "incident-resolved", { incidentId, resolvedByUserId: userId });
   return { success: true };
+}
+
+export async function getIncidentReview(userId: number, incidentId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [incident] = await db.select().from(incidents).where(eq(incidents.id, incidentId)).limit(1);
+  if (!incident || !await canAccessWorkspace(userId, incident.workspaceId, "read")) throw new Error("Incident tidak ditemukan atau tidak dapat diakses.");
+  const [review] = await db.select().from(incidentReviews).where(eq(incidentReviews.incidentId, incidentId)).limit(1);
+  return review ? { ...review, actionItems: JSON.parse(review.actionItems) as unknown[] } : null;
+}
+
+export async function saveIncidentReview(userId: number, input: { incidentId: number; summary: string; rootCause: string; actionItems: Array<{ title: string; ownerUserId?: number; dueAt?: string; status?: "open" | "done" }>; ownerUserId?: number; dueAt?: string; closureEvidenceReference?: string; status?: "open" | "closed" }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [incident] = await db.select().from(incidents).where(eq(incidents.id, input.incidentId)).limit(1);
+  if (!incident || !await canAccessWorkspace(userId, incident.workspaceId, "respond")) throw new Error("Incident tidak ditemukan atau tidak dapat direview.");
+  const summary = input.summary.trim();
+  const rootCause = input.rootCause.trim();
+  if (summary.length < 3 || rootCause.length < 3 || input.actionItems.length > 100) throw new Error("Post-incident review harus memiliki summary, root cause, dan action items yang valid.");
+  const actionItems = input.actionItems.map(item => ({ title: item.title.trim(), ownerUserId: item.ownerUserId ?? null, dueAt: item.dueAt ?? null, status: item.status ?? "open" })).filter(item => item.title.length > 0);
+  if (actionItems.length !== input.actionItems.length) throw new Error("Setiap action item harus memiliki judul.");
+  const status = input.status ?? "open";
+  const closureEvidenceReference = input.closureEvidenceReference?.trim() || null;
+  if (status === "closed" && (incident.status !== "resolved" || !closureEvidenceReference)) throw new Error("Review hanya dapat ditutup setelah incident resolved dan closure evidence tersedia.");
+  const dueAt = input.dueAt ? new Date(input.dueAt) : null;
+  if (dueAt && Number.isNaN(dueAt.getTime())) throw new Error("Review due date tidak valid.");
+  const [existing] = await db.select().from(incidentReviews).where(eq(incidentReviews.incidentId, incident.id)).limit(1);
+  const values = { incidentId: incident.id, workspaceId: incident.workspaceId, summary, rootCause, actionItems: JSON.stringify(actionItems), ownerUserId: input.ownerUserId ?? null, dueAt, closureEvidenceReference, status, createdByUserId: existing?.createdByUserId ?? userId, closedByUserId: status === "closed" ? userId : null, closedAt: status === "closed" ? new Date() : null };
+  if (existing) await db.update(incidentReviews).set({ ...values, updatedAt: new Date() }).where(eq(incidentReviews.id, existing.id));
+  else await db.insert(incidentReviews).values(values);
+  await addAudit(incident.workspaceId, "incident", existing ? "incident-review-updated" : "incident-review-created", { incidentId: incident.id, reviewStatus: status, actionItemCount: actionItems.length, actorUserId: userId });
+  return getIncidentReview(userId, incident.id);
 }
 
 export async function listIncidentEvidence(userId: number, incidentId: number) {

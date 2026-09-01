@@ -845,6 +845,25 @@ export const incidents = mysqlTable("incidents", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => [index("incident_workspace_status_due_idx").on(table.workspaceId, table.status, table.escalationDueAt)]);
 
+export const incidentReviewStatus = ["open", "closed"] as const;
+export const incidentReviews = mysqlTable("incidentReviews", {
+  id: int("id").autoincrement().primaryKey(),
+  incidentId: int("incidentId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  summary: text("summary").notNull(),
+  rootCause: text("rootCause").notNull(),
+  actionItems: text("actionItems").notNull(),
+  ownerUserId: int("ownerUserId"),
+  dueAt: timestamp("dueAt"),
+  closureEvidenceReference: varchar("closureEvidenceReference", { length: 512 }),
+  status: mysqlEnum("status", incidentReviewStatus).default("open").notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  closedByUserId: int("closedByUserId"),
+  closedAt: timestamp("closedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [uniqueIndex("incident_review_incident_uq").on(table.incidentId), index("incident_review_workspace_status_idx").on(table.workspaceId, table.status)]);
+
 export const webhookActivationRequests = mysqlTable("webhookActivationRequests", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),

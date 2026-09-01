@@ -887,6 +887,21 @@ export const appRouter = router({
           input.resolutionNote
         )
       ),
+    incidentReview: protectedProcedure
+      .input(z.object({ incidentId: z.number().int().positive() }))
+      .query(({ ctx, input }) => assurance.getIncidentReview(ctx.user.id, input.incidentId)),
+    saveIncidentReview: protectedProcedure
+      .input(z.object({
+        incidentId: z.number().int().positive(),
+        summary: z.string().min(3).max(10_000),
+        rootCause: z.string().min(3).max(10_000),
+        actionItems: z.array(z.object({ title: z.string().min(1).max(500), ownerUserId: z.number().int().positive().optional(), dueAt: z.string().datetime().optional(), status: z.enum(["open", "done"]).optional() })).max(100),
+        ownerUserId: z.number().int().positive().optional(),
+        dueAt: z.string().datetime().optional(),
+        closureEvidenceReference: z.string().trim().max(512).optional(),
+        status: z.enum(["open", "closed"]).optional(),
+      }))
+      .mutation(({ ctx, input }) => assurance.saveIncidentReview(ctx.user.id, input)),
     incidentEvidence: protectedProcedure
       .input(z.object({ incidentId: z.number().int().positive() }))
       .query(({ ctx, input }) =>

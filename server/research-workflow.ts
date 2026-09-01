@@ -215,6 +215,16 @@ export async function listResearchTasks(userId: number, sessionId: number) {
   return db.select().from(researchTasks).where(eq(researchTasks.sessionId, session.id)).orderBy(asc(researchTasks.status), desc(researchTasks.priority), desc(researchTasks.createdAt));
 }
 
+export async function listResearchTasksPage(userId: number, input: { sessionId: number; pageSize?: number; cursor?: string }) {
+  const { db, session } = await requireSession(userId, input.sessionId);
+  const cursor = decodePageCursor(input.cursor);
+  const where = cursor
+    ? and(eq(researchTasks.sessionId, session.id), or(lt(researchTasks.createdAt, new Date(cursor.createdAt)), and(eq(researchTasks.createdAt, new Date(cursor.createdAt)), lt(researchTasks.id, cursor.id))))
+    : eq(researchTasks.sessionId, session.id);
+  const rows = await db.select().from(researchTasks).where(where).orderBy(desc(researchTasks.createdAt), desc(researchTasks.id)).limit(Math.min(Math.max(input.pageSize ?? 25, 1), 100) + 1);
+  return pageResult(rows, input.pageSize ?? 25);
+}
+
 export async function createResearchTask(userId: number, input: { sessionId: number; type: string; title: string; priority: number; dependencies: number[]; ownerUserId?: number; inputs?: Record<string, unknown> }) {
   const { db, session } = await requireSession(userId, input.sessionId, "respond");
   const dependencies = Array.from(new Set(input.dependencies));

@@ -171,6 +171,26 @@ export const organizationEntitlements = mysqlTable("organizationEntitlements", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => [uniqueIndex("organization_entitlement_uq").on(table.organizationId), index("organization_entitlement_period_idx").on(table.periodEnd)]);
 
+export const emailDeliveryStatus = ["queued", "sending", "sent", "failed"] as const;
+
+export const emailDeliveries = mysqlTable("emailDeliveries", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId"),
+  workspaceId: int("workspaceId"),
+  recipient: varchar("recipient", { length: 320 }).notNull(),
+  templateKey: varchar("templateKey", { length: 120 }).notNull(),
+  subject: varchar("subject", { length: 512 }).notNull(),
+  payload: text("payload").notNull(),
+  status: mysqlEnum("status", emailDeliveryStatus).default("queued").notNull(),
+  attempts: int("attempts").default(0).notNull(),
+  nextAttemptAt: timestamp("nextAttemptAt").defaultNow().notNull(),
+  providerMessageId: varchar("providerMessageId", { length: 512 }),
+  lastError: text("lastError"),
+  idempotencyKey: varchar("idempotencyKey", { length: 180 }).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [uniqueIndex("email_delivery_idempotency_uq").on(table.idempotencyKey), index("email_delivery_status_attempt_idx").on(table.status, table.nextAttemptAt), index("email_delivery_recipient_idx").on(table.recipient)]);
+
 export const privacyRequests = mysqlTable("privacyRequests", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),

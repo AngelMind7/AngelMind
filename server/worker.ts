@@ -2,6 +2,7 @@ import { claimPendingJobs, completeJob, dispatchPendingOutbox, executeAiRunJob, 
 import { executeEvidenceScanJob } from "./control-plane/service";
 import { executeIntelligenceFetchJob } from "./research-intelligence";
 import { executePrivacyRequest } from "./privacy-lifecycle";
+import { executeEmailDeliveryJob } from "./email-delivery";
 
 export type WorkerJob = {
   id: number;
@@ -113,6 +114,10 @@ if (process.env.RUN_WORKER === "true") {
     "privacy.process": async (_job, payload) => {
       if (payload.type !== "privacy_process" || typeof payload.requestId !== "number") throw new Error("Unsupported privacy payload type.");
       await executePrivacyRequest(payload.requestId);
+    },
+    "email.deliver": async (_job, payload) => {
+      if (payload.type !== "email_delivery") throw new Error("Unsupported email delivery payload type.");
+      await executeEmailDeliveryJob(payload);
     },
   });
   console.info(`[worker] started; poll interval=${DEFAULT_POLL_INTERVAL_MS}ms`);

@@ -48,7 +48,10 @@ export async function searchWorkspace(userId: number, input: { workspaceId: numb
   if (!db) return { query, results: [] };
   const limit = Math.min(100, Math.max(1, input.limit ?? 20));
   const pattern = `%${query}%`;
-  const candidates = await db.select({ id: searchDocuments.entityId, entityType: searchDocuments.entityType, title: searchDocuments.title, body: searchDocuments.body, updatedAt: searchDocuments.updatedAt }).from(searchDocuments).where(and(eq(searchDocuments.workspaceId, input.workspaceId), or(like(searchDocuments.title, pattern), like(searchDocuments.body, pattern)))).orderBy(desc(searchDocuments.updatedAt)).limit(Math.min(500, limit * 10));
+  const tokens = Array.from(new Set(query.toLocaleLowerCase().split(/\s+/).map(token => token.replace(/[^A-Za-z0-9_-]/g, "")).filter(token => token.length >= 2))).slice(0, 12);
+  const tokenPatterns = tokens.flatMap(token => [`%${token}%`]);
+  const searchConditions = [like(searchDocuments.title, pattern), like(searchDocuments.body, pattern), ...tokenPatterns.flatMap(token => [like(searchDocuments.title, token), like(searchDocuments.body, token)])];
+  const candidates = await db.select({ id: searchDocuments.entityId, entityType: searchDocuments.entityType, title: searchDocuments.title, body: searchDocuments.body, updatedAt: searchDocuments.updatedAt }).from(searchDocuments).where(and(eq(searchDocuments.workspaceId, input.workspaceId), or(...searchConditions))).orderBy(desc(searchDocuments.updatedAt)).limit(Math.min(500, limit * 10));
   const normalizedQuery = query.toLocaleLowerCase();
   const score = (result: typeof candidates[number]) => {
     const title = result.title.toLocaleLowerCase();
@@ -57,8 +60,9 @@ export async function searchWorkspace(userId: number, input: { workspaceId: numb
     const titlePrefix = title.startsWith(normalizedQuery) ? 40 : 0;
     const titleMatch = title.includes(normalizedQuery) ? 25 : 0;
     const bodyMatch = body.includes(normalizedQuery) ? 10 : 0;
+    const tokenCoverage = tokens.length ? tokens.reduce((total, token) => total + (title.includes(token) ? 8 : body.includes(token) ? 3 : 0), 0) : 0;
     const freshness = Math.max(0, 10 - Math.floor((Date.now() - result.updatedAt.getTime()) / 86_400_000));
-    return exactTitle + titlePrefix + titleMatch + bodyMatch + freshness;
+    return exactTitle + titlePrefix + titleMatch + bodyMatch + tokenCoverage + freshness;
   };
   const results = candidates.sort((left, right) => score(right) - score(left) || right.updatedAt.getTime() - left.updatedAt.getTime()).slice(0, limit);
   const byType = (entityType: string) => results.filter(result => result.entityType === entityType);

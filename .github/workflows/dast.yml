@@ -1,0 +1,44 @@
+name: Staging DAST
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_url:
+        description: "Explicit staging URL, for example https://staging.example.com"
+        required: true
+        type: string
+      confirm_staging:
+        description: "Type STAGING to confirm this is an authorized staging target"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  zap-baseline:
+    if: ${{ inputs.confirm_staging == 'STAGING' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Validate HTTPS staging target
+        env:
+          TARGET_URL: ${{ inputs.target_url }}
+        run: |
+          case "$TARGET_URL" in
+            https://*) ;;
+            *) echo "DAST target must use HTTPS" >&2; exit 1 ;;
+          esac
+          case "$TARGET_URL" in
+            *localhost*|*127.0.0.1*|*production*|*prod.*)
+              echo "Refusing localhost or production-looking target" >&2
+              exit 1
+              ;;
+          esac
+      - name: Run OWASP ZAP baseline scan
+        uses: zaproxy/action-baseline@v0.14.0
+        with:
+          target: ${{ inputs.target_url }}
+          fail_action: true
+          allow_issue_writing: false
+          artifact_name: zap-baseline-${{ github.run_id }}

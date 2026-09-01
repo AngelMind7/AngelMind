@@ -215,15 +215,78 @@
     {
       "idx": 30,
       "version": "7",
-      "when": 1788068000000,
-      "tag": "0035_trace_lineage",
+      "when": 1788067900001,
+      "tag": "0030_knowledge_graph",
       "breakpoints": true
     },
     {
       "idx": 31,
       "version": "7",
+      "when": 1788067900002,
+      "tag": "0031_intelligence_feed_dedupe",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1788067900003,
+      "tag": "0032_research_workspace_consistency",
+      "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1788067900004,
+      "tag": "0033_audit_trace_id",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1788067900005,
+      "tag": "0034_playbook_runs",
+      "breakpoints": true
+    },
+    {
+      "idx": 35,
+      "version": "7",
+      "when": 1788068000000,
+      "tag": "0035_trace_lineage",
+      "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
       "when": 1788068100000,
       "tag": "0036_outbox_retry_leases",
+      "breakpoints": true
+    },
+    {
+      "idx": 37,
+      "version": "7",
+      "when": 1788068200000,
+      "tag": "0037_saved_views",
+      "breakpoints": true
+    },
+    {
+      "idx": 38,
+      "version": "7",
+      "when": 1788068300000,
+      "tag": "0038_tags_notes",
+      "breakpoints": true
+    },
+    {
+      "idx": 39,
+      "version": "7",
+      "when": 1788068400000,
+      "tag": "0039_organization_invitations",
+      "breakpoints": true
+    },
+    {
+      "idx": 40,
+      "version": "7",
+      "when": 1788068500000,
+      "tag": "0040_evidence_storage_key",
       "breakpoints": true
     }
   ]

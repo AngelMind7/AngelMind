@@ -47,3 +47,7 @@ The current `main` branch now includes validated feature-flag parsing, cursor-pa
 Playbook runs now enqueue a durable `playbook.run` job and are processed by the worker through dependency-aware, deterministic task selection. The executor validates passive task types, persists blocked-task output, pauses runs when no approved passive adapter is available, and emits an audit event rather than fabricating a result. Target-facing execution remains intentionally disabled until an owner-approved passive adapter/provider is configured and covered by integration tests.
 
 The local repository remains free of production credentials. Firebase Admin, Supabase Storage, database migration application, Railway deployment, and staging smoke verification still require the owner's live environment actions described in section C.
+
+## H — Runtime readiness hardening (2026-09-02)
+
+The `/readyz` endpoint now checks configured `RUNTIME_REQUIRED_BINARIES` against registered adapters and actual executable availability. Production readiness fails closed when a required binary is missing or unregistered, while development remains usable without a runtime list. Prometheus metrics now report the actual runtime readiness result. The adapter probe treats a successfully spawned executable as available even when that executable does not implement `--version` with exit code zero.

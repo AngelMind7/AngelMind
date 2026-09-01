@@ -32,8 +32,12 @@ const schema = {
 export async function analyzeEvidence(input: { scopeSummary: string; evidence: string; findingTitle?: string; modelKey?: string }): Promise<EvidenceAnalysis> {
   if (input.evidence.trim().length < 20) throw new Error("Evidence must contain at least 20 characters.");
   if (input.evidence.length > 40_000 || input.scopeSummary.length > 10_000) throw new Error("Agent input exceeds the safe analysis limit.");
+  const modelKey = input.modelKey?.trim() || (await selectRegisteredModel({
+    capabilities: ["text"],
+    minimumContextWindow: Math.ceil((input.evidence.length + input.scopeSummary.length) / 3),
+  })).model.modelKey;
   const response = await invokeLLM({
-    model: input.modelKey ?? "gpt-5-mini",
+    model: modelKey,
     maxTokens: 2_500,
     messages: [
       { role: "system", content: "You are AngelMind, an evidence analyst for an authorized bug bounty workflow. Analyze only the supplied text. Never contact targets, generate exploit instructions, request credentials, replay tokens, exfiltrate data, or submit reports. Return only JSON matching the schema. Hypotheses must be validation plans using already-provided evidence or a human-reviewed passive check." },

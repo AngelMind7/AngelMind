@@ -310,9 +310,21 @@ export async function executeAiRunJob(payload: Record<string, unknown>) {
   if (!run || run.userId !== userId) throw new Error("AI run tidak ditemukan.");
   const [model] = await db.select().from(aiModels).where(eq(aiModels.modelKey, run.modelKey)).limit(1);
   if (!model || model.status !== "active" || model.gateway !== run.gateway) throw new Error("AI model registry validation failed.");
+  const modelCapabilities = JSON.parse(model.capabilities) as string[];
+  const registeredFallbacks = (await db.select().from(aiModels))
+    .filter(candidate => candidate.modelKey !== model.modelKey && candidate.status === "active")
+    .filter(candidate => {
+      const capabilities = new Set(JSON.parse(candidate.capabilities) as string[]);
+      return modelCapabilities.every(capability => capabilities.has(capability)) && candidate.contextWindow >= model.contextWindow;
+    })
+    .sort((left, right) => {
+      const gatewayOrder = (gateway: string) => gateway === run.gateway ? 0 : 1;
+      return gatewayOrder(left.gateway) - gatewayOrder(right.gateway) || left.modelKey.localeCompare(right.modelKey);
+    })
+    .map(candidate => candidate.modelKey);
   await updateAiRun(userId, { runId, status: "running" });
   try {
-    const response = await invokeLLM({ model: model.modelKey, messages });
+    const response = await invokeLLM({ model: model.modelKey, fallbackModels: registeredFallbacks, messages });
     await db.insert(aiRunOutputs).values({ workspaceId: run.workspaceId, runId, outputJson: JSON.stringify(response) }).onDuplicateKeyUpdate({ set: { outputJson: JSON.stringify(response), createdAt: new Date() } });
     const outputReference = `ai-run-output:${runId}`;
     await updateAiRun(userId, { runId, status: "completed", outputReference, inputTokens: response.usage?.prompt_tokens ?? 0, outputTokens: response.usage?.completion_tokens ?? 0 });

@@ -67,6 +67,8 @@ export type InvokeParams = {
   responseFormat?: ResponseFormat;
   response_format?: ResponseFormat;
   model?: string;
+  /** Registry-approved models to try on subsequent configured gateways. */
+  fallbackModels?: string[];
   thinking?: Record<string, unknown>;
   reasoning?: Record<string, unknown>;
 };
@@ -387,6 +389,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     responseFormat,
     response_format,
     model,
+    fallbackModels,
     thinking,
     reasoning,
     maxTokens,
@@ -438,7 +441,9 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
     const provider = providers[providerIndex];
     const providerPayload = {
       ...payload,
-      ...(model || provider.model ? { model: providerIndex === 0 ? (model || provider.model) : provider.model } : {}),
+      ...(model || provider.model || fallbackModels?.[providerIndex - 1]
+        ? { model: providerIndex === 0 ? (model || provider.model) : (fallbackModels?.[providerIndex - 1] || provider.model) }
+        : {}),
     };
 
     try {

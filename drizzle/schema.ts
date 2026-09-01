@@ -355,7 +355,23 @@ export const playbooks = mysqlTable("playbooks", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => [uniqueIndex("playbook_workspace_slug_version_uq").on(table.workspaceId, table.slug, table.version), index("playbook_workspace_status_idx").on(table.workspaceId, table.status)]);
-
+export const playbookRunStatus = ["queued", "running", "paused", "failed", "completed", "cancelled"] as const;
+export const playbookRuns = mysqlTable("playbookRuns", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  playbookId: int("playbookId").notNull().references(() => playbooks.id, { onDelete: "cascade" }),
+  sessionId: int("sessionId").notNull().references(() => researchSessions.id, { onDelete: "cascade" }),
+  status: mysqlEnum("status", playbookRunStatus).default("queued").notNull(),
+  taskIds: text("taskIds").notNull(),
+  checkpoint: text("checkpoint").notNull(),
+  retryCount: int("retryCount").default(0).notNull(),
+  lastError: text("lastError"),
+  createdByUserId: int("createdByUserId").notNull(),
+  startedAt: timestamp("startedAt"),
+  completedAt: timestamp("completedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [index("playbook_run_workspace_status_idx").on(table.workspaceId, table.status, table.updatedAt), index("playbook_run_session_idx").on(table.sessionId, table.createdAt)]);
 export const aiModelStatus = ["active", "degraded", "disabled"] as const;
 export const aiRunStatus = ["queued", "running", "completed", "failed", "partial", "cancelled"] as const;
 export const jobStatus = ["queued", "running", "succeeded", "failed", "retrying", "dead_letter", "cancelled"] as const;

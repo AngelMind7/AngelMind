@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { evolutionSnapshots, failureObservations, intelligenceFeedItems, playbooks, researchSessions, researchTaskDependencies, researchTasks, workspaces } from "../drizzle/schema";
+import { evolutionSnapshots, failureObservations, intelligenceFeedItems, playbooks, playbookRuns, researchSessions, researchTaskDependencies, researchTasks, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { compareAssetSnapshots, normalizeIntelligenceFeed, validateFailureObservation, type AssetSnapshot, type FailureObservation, type IntelligenceFeedItem } from "./control-plane/intelligence-engine";
@@ -132,8 +132,10 @@ export async function runPlaybook(userId: number, input: { workspaceId: number; 
   for (let index = 0; index < createdIds.length; index += 1) {
     await db.update(researchTasks).set({ dependencies: JSON.stringify(dependenciesByTask[index]), updatedAt: new Date() }).where(eq(researchTasks.id, createdIds[index]));
   }
-  await audit(db, input.workspaceId, userId, "playbook-run-created", { playbookId: playbook.id, sessionId: session.id, taskIds: createdIds });
-  return { playbookId: playbook.id, sessionId: session.id, taskIds: createdIds, taskCount: createdIds.length };
+  await db.insert(playbookRuns).values({ workspaceId: input.workspaceId, playbookId: playbook.id, sessionId: session.id, status: "queued", taskIds: JSON.stringify(createdIds), checkpoint: JSON.stringify({ completedTaskIds: [], failedTaskIds: [], nextTaskIndex: 0 }), retryCount: 0, lastError: null, createdByUserId: userId });
+  const [run] = await db.select().from(playbookRuns).where(and(eq(playbookRuns.workspaceId, input.workspaceId), eq(playbookRuns.playbookId, playbook.id), eq(playbookRuns.sessionId, session.id))).orderBy(desc(playbookRuns.id)).limit(1);
+  await audit(db, input.workspaceId, userId, "playbook-run-created", { playbookId: playbook.id, sessionId: session.id, playbookRunId: run?.id ?? null, taskIds: createdIds });
+  return { playbookRunId: run?.id ?? null, playbookId: playbook.id, sessionId: session.id, taskIds: createdIds, taskCount: createdIds.length };
 }
 
 export async function createPlaybook(userId: number, input: { workspaceId: number; slug: string; version: string; status?: "draft" | "active" | "deprecated"; domains: string[]; assetTypes: string[]; technologies?: string[]; taskTemplates: unknown[] }) {

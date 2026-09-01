@@ -66,6 +66,7 @@ function metricName(value: string) {
 export function registerMetricsRoute(app: Express) {
   app.get("/metrics", async (_req, res) => {
     const memory = process.memoryUsage();
+    const runtime = await checkRuntimeReadiness();
     const lines = [
       "# HELP angelmind_process_uptime_seconds Process uptime in seconds.",
       "# TYPE angelmind_process_uptime_seconds gauge",
@@ -78,7 +79,7 @@ export function registerMetricsRoute(app: Express) {
       `angelmind_worker_enabled ${process.env.RUN_WORKER === "true" ? 1 : 0}`,
       "# HELP angelmind_runtime_ready Whether configured runtime binaries are available and registered.",
       "# TYPE angelmind_runtime_ready gauge",
-      `angelmind_runtime_ready ${process.env.RUNTIME_REQUIRED_BINARIES ? 0 : 1}`,
+      `angelmind_runtime_ready ${runtime.ready ? 1 : 0}`,
       "# HELP angelmind_process_memory_bytes Node.js process memory by category.",
       "# TYPE angelmind_process_memory_bytes gauge",
       ...Object.entries(memory).map(([category, value]) => `angelmind_process_memory_bytes{category=\"${metricName(category)}\"} ${value}`),

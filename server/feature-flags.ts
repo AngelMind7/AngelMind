@@ -15,7 +15,18 @@ export function parseFeatureFlags(value: string | undefined): FeatureFlagConfig 
   let parsed: unknown;
   try { parsed = JSON.parse(value); } catch { throw new Error("FEATURE_FLAGS must be valid JSON."); }
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("FEATURE_FLAGS must be a JSON object.");
-  return parsed as FeatureFlagConfig;
+  const config: FeatureFlagConfig = {};
+  for (const [flag, raw] of Object.entries(parsed)) {
+    if (!/^[A-Za-z0-9._-]{1,120}$/.test(flag) || !raw || typeof raw !== "object" || Array.isArray(raw)) throw new Error(`FEATURE_FLAGS contains an invalid definition for '${flag}'.`);
+    const definition = raw as Record<string, unknown>;
+    const environments = definition.environments === undefined ? undefined : Array.isArray(definition.environments) && definition.environments.every(value => typeof value === "string") ? definition.environments.map(value => value.trim()).filter(Boolean) : null;
+    const allowUsers = definition.allowUsers === undefined ? undefined : Array.isArray(definition.allowUsers) && definition.allowUsers.every(value => Number.isInteger(value) && Number(value) > 0) ? definition.allowUsers as number[] : null;
+    const allowOrganizations = definition.allowOrganizations === undefined ? undefined : Array.isArray(definition.allowOrganizations) && definition.allowOrganizations.every(value => Number.isInteger(value) && Number(value) > 0) ? definition.allowOrganizations as number[] : null;
+    const rolloutPercentage = definition.rolloutPercentage === undefined ? undefined : typeof definition.rolloutPercentage === "number" && Number.isFinite(definition.rolloutPercentage) && definition.rolloutPercentage >= 0 && definition.rolloutPercentage <= 100 ? definition.rolloutPercentage : null;
+    if (environments === null || allowUsers === null || allowOrganizations === null || rolloutPercentage === null || (definition.enabled !== undefined && typeof definition.enabled !== "boolean")) throw new Error(`FEATURE_FLAGS contains an invalid definition for '${flag}'.`);
+    config[flag] = { enabled: definition.enabled as boolean | undefined, environments, allowUsers, allowOrganizations, rolloutPercentage };
+  }
+  return config;
 }
 
 function rolloutBucket(flag: string, subject: string): number {

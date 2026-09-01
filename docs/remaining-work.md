@@ -41,3 +41,9 @@ The repository now includes fail-closed runtime feature flags with environment, 
 ## Latest incremental closures
 
 The current `main` branch now includes validated feature-flag parsing, cursor-paginated research sessions/tasks, revision-aware research transitions, race-safe job/outbox idempotency, passive-only playbook task enforcement, automatic research search indexing on create and state transitions, durable email delivery with worker execution, organization invitation email queueing, and privacy export/delete coverage for email deliveries and organization invitations. These remain subject to staging/live environment verification where applicable.
+
+## G — Latest implementation slice (2026-09-01)
+
+Playbook runs now enqueue a durable `playbook.run` job and are processed by the worker through dependency-aware, deterministic task selection. The executor validates passive task types, persists blocked-task output, pauses runs when no approved passive adapter is available, and emits an audit event rather than fabricating a result. Target-facing execution remains intentionally disabled until an owner-approved passive adapter/provider is configured and covered by integration tests.
+
+The local repository remains free of production credentials. Firebase Admin, Supabase Storage, database migration application, Railway deployment, and staging smoke verification still require the owner's live environment actions described in section C.

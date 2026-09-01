@@ -56,19 +56,19 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && rm -rf /tmp/chainsaw /tmp/chainsaw.tar.gz \
     && curl -fsSL -o /tmp/gosec.tar.gz https://github.com/securego/gosec/releases/download/v2.28.0/gosec_2.28.0_linux_amd64.tar.gz \
     && curl -fsSL -o /tmp/gosec_checksums.txt https://github.com/securego/gosec/releases/download/v2.28.0/gosec_2.28.0_checksums.txt \
-    && grep 'gosec_2.28.0_linux_amd64.tar.gz' /tmp/gosec_checksums.txt | sha256sum -c - \
+    && grep 'gosec_2.28.0_linux_amd64.tar.gz' /tmp/gosec_checksums.txt | awk '{print $1"  /tmp/gosec.tar.gz"}' | sha256sum -c - \
     && tar -xzf /tmp/gosec.tar.gz -C /tmp \
     && install -m 0755 /tmp/gosec /usr/local/bin/gosec \
     && rm -f /tmp/gosec.tar.gz /tmp/gosec_checksums.txt /tmp/gosec \
     && curl -fsSL -o /tmp/dnsx.zip https://github.com/projectdiscovery/dnsx/releases/download/v1.3.0/dnsx_1.3.0_linux_amd64.zip \
     && curl -fsSL -o /tmp/dnsx_checksums.txt https://github.com/projectdiscovery/dnsx/releases/download/v1.3.0/dnsx_1.3.0_checksums.txt \
-    && grep 'dnsx_1.3.0_linux_amd64.zip' /tmp/dnsx_checksums.txt | sha256sum -c - \
+    && grep 'dnsx_1.3.0_linux_amd64.zip' /tmp/dnsx_checksums.txt | awk '{print $1"  /tmp/dnsx.zip"}' | sha256sum -c - \
     && unzip -q /tmp/dnsx.zip -d /tmp/dnsx \
     && install -m 0755 /tmp/dnsx/dnsx /usr/local/bin/dnsx \
     && rm -rf /tmp/dnsx /tmp/dnsx.zip /tmp/dnsx_checksums.txt \
     && curl -fsSL -o /tmp/subfinder.zip https://github.com/projectdiscovery/subfinder/releases/download/v2.16.0/subfinder_2.16.0_linux_amd64.zip \
     && curl -fsSL -o /tmp/subfinder_checksums.txt https://github.com/projectdiscovery/subfinder/releases/download/v2.16.0/subfinder_2.16.0_checksums.txt \
-    && grep 'subfinder_2.16.0_linux_amd64.zip' /tmp/subfinder_checksums.txt | sha256sum -c - \
+    && grep 'subfinder_2.16.0_linux_amd64.zip' /tmp/subfinder_checksums.txt | awk '{print $1"  /tmp/subfinder.zip"}' | sha256sum -c - \
     && unzip -q /tmp/subfinder.zip -d /tmp/subfinder \
     && install -m 0755 /tmp/subfinder/subfinder /usr/local/bin/subfinder \
     && rm -rf /tmp/subfinder /tmp/subfinder.zip /tmp/subfinder_checksums.txt \

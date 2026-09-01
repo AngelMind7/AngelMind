@@ -23,6 +23,21 @@ function normalizedMime(contentType: string) {
   return contentType.trim().toLowerCase().split(";", 1)[0];
 }
 
+function validateTextSafety(bytes: Buffer) {
+  const sample = bytes.subarray(0, Math.min(bytes.length, 1_000_000)).toString("utf8");
+  const controlCharacters = Array.from(sample).filter(character => character !== "\n" && character !== "\r" && character !== "\t" && character.charCodeAt(0) < 0x20).length;
+  if (controlCharacters > Math.max(4, sample.length * 0.01)) throw new Error("Text evidence contains an unsafe control-character ratio.");
+}
+
+function validateZipSafety(bytes: Buffer) {
+  let entries = 0;
+  for (let offset = 0; offset + 4 <= bytes.length && entries <= 1_000; offset += 1) {
+    if (bytes.readUInt32LE(offset) === 0x04034b50) entries += 1;
+  }
+  if (entries > 1_000) throw new Error("ZIP evidence contains too many archive entries.");
+  if (entries > 0 && bytes.length < entries * 30) throw new Error("ZIP evidence has an invalid archive structure.");
+}
+
 export function validateEvidenceBytes(input: { contentType: string; fileName: string; bytes: Buffer }) {
   const contentType = normalizedMime(input.contentType);
   if (!MIME_EXTENSION_MAP[contentType]) throw new Error(`Unsupported evidence content type: ${contentType || "missing"}.`);
@@ -37,6 +52,8 @@ export function validateEvidenceBytes(input: { contentType: string; fileName: st
     const height = input.bytes.readUInt32BE(20);
     if (width === 0 || height === 0 || width > 10_000 || height > 10_000) throw new Error("PNG evidence dimensions exceed the safe limit.");
   }
+  if (["text/plain", "text/csv"].includes(contentType)) validateTextSafety(input.bytes);
+  if (contentType === "application/zip") validateZipSafety(input.bytes);
   return { contentType } as const;
 }
 

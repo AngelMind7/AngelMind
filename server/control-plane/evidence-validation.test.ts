@@ -22,4 +22,15 @@ describe("evidence byte validation", () => {
   it("keeps text evidence MIME-aware without requiring a binary signature", () => {
     expect(validateEvidenceBytes({ contentType: "text/plain; charset=utf-8", fileName: "notes.txt", bytes: Buffer.from("finding notes") }).contentType).toBe("text/plain");
   });
+
+  it("rejects text evidence with an unsafe control-character ratio", () => {
+    expect(() => validateEvidenceBytes({ contentType: "text/plain", fileName: "notes.txt", bytes: Buffer.from("\u0000\u0001\u0002\u0003\u0004\u0005") })).toThrow(/control-character/i);
+  });
+
+  it("rejects malformed ZIP archive structure", () => {
+    const zip = Buffer.alloc(40);
+    zip.writeUInt32LE(0x04034b50, 0);
+    zip.writeUInt32LE(0x04034b50, 5);
+    expect(() => validateEvidenceBytes({ contentType: "application/zip", fileName: "archive.zip", bytes: zip })).toThrow(/archive structure/i);
+  });
 });

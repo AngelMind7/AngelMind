@@ -337,6 +337,13 @@
       "when": 1788069200000,
       "tag": "0047_audit_archive_retention",
       "breakpoints": true
+    },
+    {
+      "idx": 48,
+      "version": "7",
+      "when": 1788069300000,
+      "tag": "0048_ai_run_retention_index",
+      "breakpoints": true
     }
   ]
 }

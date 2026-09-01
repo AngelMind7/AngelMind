@@ -457,7 +457,7 @@ export const aiRuns = mysqlTable("aiRuns", {
   completedAt: timestamp("completedAt"),
   retentionUntil: timestamp("retentionUntil"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-}, table => [index("ai_run_workspace_created_idx").on(table.workspaceId, table.createdAt), index("ai_run_trace_idx").on(table.traceId), index("ai_run_status_idx").on(table.status, table.createdAt)]);
+}, table => [index("ai_run_workspace_created_idx").on(table.workspaceId, table.createdAt), index("ai_run_trace_idx").on(table.traceId), index("ai_run_status_idx").on(table.status, table.createdAt), index("ai_run_retention_id_idx").on(table.retentionUntil, table.id)]);
 
 export const aiRunOutputs = mysqlTable("aiRunOutputs", {
   id: int("id").autoincrement().primaryKey(),

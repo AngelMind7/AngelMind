@@ -171,10 +171,20 @@ export async function claimOutboxConsumer(eventId: number, consumerKey: string, 
   }
 }
 
+export async function claimOutboxEvent(eventId: number, now = new Date()) {
+  const db = await getDb();
+  if (!db) return { claimed: false as const, reason: "database-unavailable" as const };
+  const staleBefore = new Date(now.getTime() - OUTBOX_LEASE_MS);
+  await db.update(outboxEvents).set({ status: "retrying", lockedAt: null, workerId: null, availableAt: now, lastError: "Outbox lease expired." }).where(and(eq(outboxEvents.status, "retrying"), lt(outboxEvents.lockedAt, staleBefore)));
+  const changed = await db.update(outboxEvents).set({ status: "retrying", lockedAt: now, workerId: WORKER_ID, attempts: sql`${outboxEvents.attempts} + 1` }).where(and(eq(outboxEvents.id, eventId), or(eq(outboxEvents.status, "pending"), eq(outboxEvents.status, "retrying")), lte(outboxEvents.availableAt, now)));
+  if (!changed) return { claimed: false as const, reason: "already-claimed" as const };
+  return { claimed: true as const, eventId, workerId: WORKER_ID };
+}
+
 export async function markOutboxEventPublished(eventId: number) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
-  await db.update(outboxEvents).set({ status: "published", publishedAt: new Date() }).where(and(eq(outboxEvents.id, eventId), eq(outboxEvents.status, "pending")));
+  await db.update(outboxEvents).set({ status: "published", publishedAt: new Date(), lockedAt: null, workerId: null, lastError: null }).where(and(eq(outboxEvents.id, eventId), eq(outboxEvents.workerId, WORKER_ID), eq(outboxEvents.status, "retrying")));
   return { success: true as const, eventId, status: "published" as const };
 }
 
@@ -183,13 +193,19 @@ export async function failOutboxEvent(eventId: number, errorMessage: string) {
   if (!db) throw new Error("Database tidak tersedia.");
   const [event] = await db.select().from(outboxEvents).where(eq(outboxEvents.id, eventId)).limit(1);
   if (!event) throw new Error("Outbox event tidak ditemukan.");
-  if (event.attempts >= 5) return { success: false as const, eventId, status: "failed" as const, attempts: event.attempts };
-  await db.update(outboxEvents).set({ status: "failed", attempts: event.attempts + 1 }).where(and(eq(outboxEvents.id, eventId), eq(outboxEvents.status, "pending")));
-  return { success: false as const, eventId, status: "failed" as const, attempts: event.attempts + 1, error: errorMessage.trim().slice(0, 4_000) };
+  const attempts = event.attempts;
+  const terminal = attempts >= OUTBOX_MAX_ATTEMPTS;
+  const nextStatus = terminal ? "failed" : "retrying";
+  const error = errorMessage.trim().slice(0, 4_000) || "Outbox handler failed.";
+  const availableAt = new Date(Date.now() + Math.min(60 * 60 * 1_000, 2 ** Math.max(0, attempts - 1) * 5_000));
+  await db.update(outboxEvents).set({ status: nextStatus, availableAt: terminal ? event.availableAt : availableAt, lockedAt: null, workerId: null, lastError: error }).where(and(eq(outboxEvents.id, eventId), eq(outboxEvents.workerId, WORKER_ID), eq(outboxEvents.status, "retrying")));
+  return { success: !terminal, eventId, status: nextStatus, attempts, error } as const;
 }
 
 const WORKER_ID = process.env.WORKER_ID?.trim() || randomUUID();
 const WORKER_LEASE_MS = 10 * 60 * 1_000;
+const OUTBOX_MAX_ATTEMPTS = 5;
+const OUTBOX_LEASE_MS = 2 * 60 * 1_000;
 
 export async function heartbeatJob(jobId: number) {
   const db = await getDb();
@@ -349,20 +365,22 @@ export type OutboxEventHandler = (event: { id: number; eventType: string; aggreg
 export async function dispatchPendingOutbox(handlers: Record<string, OutboxEventHandler>, limit = 25) {
   const db = await getDb();
   if (!db) return { claimed: 0, published: 0, failed: 0 };
-  const pending = await db.select().from(outboxEvents).where(eq(outboxEvents.status, "pending")).orderBy(asc(outboxEvents.createdAt)).limit(Math.min(100, Math.max(1, limit)));
+  const now = new Date();
+  const pending = await db.select().from(outboxEvents).where(and(or(eq(outboxEvents.status, "pending"), eq(outboxEvents.status, "retrying")), lte(outboxEvents.availableAt, now))).orderBy(asc(outboxEvents.createdAt)).limit(Math.min(100, Math.max(1, limit)));
   let claimed = 0;
   let published = 0;
   let failed = 0;
   for (const event of pending) {
     const handler = handlers[event.eventType];
     if (!handler) continue;
-    const receipt = await claimOutboxConsumer(event.id, `dispatcher:${event.eventType}`);
-    if (!receipt.claimed) continue;
+    const claim = await claimOutboxEvent(event.id, now);
+    if (!claim.claimed) continue;
     claimed += 1;
     try {
       const payload: unknown = JSON.parse(event.payload);
       if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Outbox payload must be a JSON object.");
       await handler({ id: event.id, eventType: event.eventType, aggregateType: event.aggregateType, aggregateId: event.aggregateId, schemaVersion: event.schemaVersion, payload: payload as Record<string, unknown> });
+      await claimOutboxConsumer(event.id, `dispatcher:${event.eventType}`);
       await markOutboxEventPublished(event.id);
       published += 1;
     } catch (error) {

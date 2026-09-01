@@ -380,7 +380,7 @@ export const playbookRuns = mysqlTable("playbookRuns", {
 export const aiModelStatus = ["active", "degraded", "disabled"] as const;
 export const aiRunStatus = ["queued", "running", "completed", "failed", "partial", "cancelled"] as const;
 export const jobStatus = ["queued", "running", "succeeded", "failed", "retrying", "dead_letter", "cancelled"] as const;
-export const outboxEventStatus = ["pending", "published", "failed"] as const;
+export const outboxEventStatus = ["pending", "retrying", "published", "failed"] as const;
 
 export const aiModels = mysqlTable("aiModels", {
   id: int("id").autoincrement().primaryKey(),
@@ -487,6 +487,10 @@ export const outboxEvents = mysqlTable("outboxEvents", {
   payload: text("payload").notNull(),
   status: mysqlEnum("status", outboxEventStatus).default("pending").notNull(),
   attempts: int("attempts").default(0).notNull(),
+  availableAt: timestamp("availableAt").defaultNow().notNull(),
+  lockedAt: timestamp("lockedAt"),
+  workerId: varchar("workerId", { length: 128 }),
+  lastError: text("lastError"),
   publishedAt: timestamp("publishedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [uniqueIndex("outbox_event_idempotency_uq").on(table.idempotencyKey), index("outbox_event_status_created_idx").on(table.status, table.createdAt), index("outbox_event_workspace_idx").on(table.workspaceId, table.createdAt)]);

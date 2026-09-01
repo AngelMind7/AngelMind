@@ -317,7 +317,8 @@ export async function uploadEvidence(userId: number, input: { workspaceId: numbe
   const artifact = await storagePut(`workspace-${workspace.id}/evidence/${Date.now()}-${cleanName}`, bytes, validatedEvidence.contentType);
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
-  await db.insert(evidenceArtifacts).values({ workspaceId: workspace.id, findingId: input.findingId ?? null, artifactType: validatedEvidence.contentType, contentType: validatedEvidence.contentType, sizeBytes: bytes.length, storageReference: artifact.url, sha256: createHash("sha256").update(bytes).digest("hex"), status: "quarantined", quarantineReason: "Awaiting content/security scan." });
+  const traceId = currentTraceContext()?.traceId ?? null;
+  await db.insert(evidenceArtifacts).values({ workspaceId: workspace.id, findingId: input.findingId ?? null, artifactType: validatedEvidence.contentType, contentType: validatedEvidence.contentType, sizeBytes: bytes.length, storageReference: artifact.url, sha256: createHash("sha256").update(bytes).digest("hex"), status: "quarantined", quarantineReason: "Awaiting content/security scan.", traceId });
   await addAudit(workspace.id, "evidence", "artifact-stored", { fileName: cleanName, contentType: validatedEvidence.contentType, storageReference: artifact.url, findingId: input.findingId ?? null });
   return { storageReference: artifact.url };
 }

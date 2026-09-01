@@ -37,3 +37,7 @@ The following items still require live owner/environment actions rather than loc
 ## F — Incremental implementation update
 
 The repository now includes fail-closed runtime feature flags with environment, organization, user, entitlement, rollout, and kill-switch evaluation, plus reusable bounded cursor pagination and optimistic-concurrency primitives with deterministic request fingerprints. These primitives are covered by tests and are available for adoption by domain list/mutation endpoints in subsequent vertical slices.
+
+## Latest incremental closures
+
+The current `main` branch now includes validated feature-flag parsing, cursor-paginated research sessions/tasks, revision-aware research transitions, race-safe job/outbox idempotency, passive-only playbook task enforcement, automatic research search indexing on create and state transitions, durable email delivery with worker execution, organization invitation email queueing, and privacy export/delete coverage for email deliveries and organization invitations. These remain subject to staging/live environment verification where applicable.

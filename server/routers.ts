@@ -113,9 +113,18 @@ export const appRouter = router({
           reason: z.string().min(3).max(20_000),
         })
       )
-      .mutation(({ ctx, input }) =>
-        securityPlatform.requestPrivacyAction(ctx.user.id, input)
-      ),
+      .mutation(async ({ ctx, input }) => {
+        const request = await securityPlatform.requestPrivacyAction(ctx.user.id, input);
+        if (request && (input.requestType === "export" || input.requestType === "delete")) {
+          await aiPlatform.enqueueJob(ctx.user.id, {
+            kind: "privacy.process",
+            idempotencyKey: `privacy:${request.id}`,
+            payload: { type: "privacy_process", requestId: request.id, userId: ctx.user.id },
+            maxAttempts: 3,
+          });
+        }
+        return request;
+      }),
     processPrivacyRequest: adminProcedure
       .input(
         z.object({

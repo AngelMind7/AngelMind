@@ -1,5 +1,5 @@
 import { and, desc, eq, gte, inArray, like, or } from "drizzle-orm";
-import { findings, knowledgeNodes, programs, reportVersions, researchAssets, researchSessions, searchDocuments, workspaces } from "../drizzle/schema";
+import { evidenceArtifacts, findings, intelligenceFeedItems, knowledgeNodes, programs, reportVersions, researchAssets, researchHypotheses, researchObservations, researchSessions, researchTasks, searchDocuments, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 
@@ -17,13 +17,18 @@ export async function rebuildWorkspaceSearchIndex(userId: number, workspaceId: n
   if (!(await canAccessWorkspace(userId, workspaceId, "respond"))) throw new Error("Workspace tidak dapat dikelola.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
-  const [workspaceRow, findingRows, assetRows, sessionRows, reportRows, knowledgeRows] = await Promise.all([
+  const [workspaceRow, findingRows, assetRows, sessionRows, reportRows, knowledgeRows, observationRows, hypothesisRows, taskRows, evidenceRows, intelligenceRows] = await Promise.all([
     db.select({ programId: workspaces.programId }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1),
     db.select({ id: findings.id, title: findings.title, body: findings.impactSummary }).from(findings).where(eq(findings.workspaceId, workspaceId)),
     db.select({ id: researchAssets.id, title: researchAssets.hostname, body: researchAssets.value }).from(researchAssets).where(eq(researchAssets.workspaceId, workspaceId)),
     db.select({ id: researchSessions.id, title: researchSessions.title, body: researchSessions.scopeDigest }).from(researchSessions).where(eq(researchSessions.workspaceId, workspaceId)),
     db.select({ id: reportVersions.id, title: reportVersions.title, body: reportVersions.body }).from(reportVersions).where(eq(reportVersions.workspaceId, workspaceId)),
     db.select({ id: knowledgeNodes.id, title: knowledgeNodes.label, body: knowledgeNodes.properties }).from(knowledgeNodes).where(and(eq(knowledgeNodes.workspaceId, workspaceId), eq(knowledgeNodes.status, "active"))),
+    db.select({ id: researchObservations.id, title: researchObservations.title, body: researchObservations.content }).from(researchObservations).where(eq(researchObservations.workspaceId, workspaceId)),
+    db.select({ id: researchHypotheses.id, title: researchHypotheses.description, body: researchHypotheses.reason }).from(researchHypotheses).where(eq(researchHypotheses.workspaceId, workspaceId)),
+    db.select({ id: researchTasks.id, title: researchTasks.title, body: researchTasks.outputs }).from(researchTasks).where(eq(researchTasks.workspaceId, workspaceId)),
+    db.select({ id: evidenceArtifacts.id, title: evidenceArtifacts.artifactType, body: evidenceArtifacts.quarantineReason }).from(evidenceArtifacts).where(eq(evidenceArtifacts.workspaceId, workspaceId)),
+    db.select({ id: intelligenceFeedItems.id, title: intelligenceFeedItems.source, body: intelligenceFeedItems.data }).from(intelligenceFeedItems).where(eq(intelligenceFeedItems.workspaceId, workspaceId)),
   ]);
   await db.delete(searchDocuments).where(eq(searchDocuments.workspaceId, workspaceId));
   const programId = workspaceRow[0]?.programId;
@@ -35,6 +40,11 @@ export async function rebuildWorkspaceSearchIndex(userId: number, workspaceId: n
     ...sessionRows.map(row => ({ workspaceId, entityType: "session", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
     ...reportRows.map(row => ({ workspaceId, entityType: "report", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
     ...knowledgeRows.map(row => ({ workspaceId, entityType: "knowledge_node", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
+    ...observationRows.map(row => ({ workspaceId, entityType: "observation", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
+    ...hypothesisRows.map(row => ({ workspaceId, entityType: "hypothesis", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
+    ...taskRows.map(row => ({ workspaceId, entityType: "task", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
+    ...evidenceRows.map(row => ({ workspaceId, entityType: "evidence", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
+    ...intelligenceRows.map(row => ({ workspaceId, entityType: "intelligence", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
   ];
   if (rows.length > 0) await db.insert(searchDocuments).values(rows);
   return { workspaceId, indexed: rows.length };
@@ -78,6 +88,11 @@ export async function searchWorkspace(userId: number, input: { workspaceId: numb
     reports: byType("report"),
     programs: byType("program"),
     knowledgeNodes: byType("knowledge_node"),
+    observations: byType("observation"),
+    hypotheses: byType("hypothesis"),
+    tasks: byType("task"),
+    evidence: byType("evidence"),
+    intelligence: byType("intelligence"),
     facets: results.reduce<Record<string, number>>((facets, result) => { facets[result.entityType] = (facets[result.entityType] ?? 0) + 1; return facets; }, {}),
   };
 }

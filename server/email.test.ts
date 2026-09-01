@@ -17,33 +17,51 @@ describe("organization invitation email template", () => {
   });
 });
 
-describe("password reset email template", () => {
-  it("includes reset instructions, expiry, and escaped recipient data", () => {
+describe("localized password reset email template", () => {
+  it("keeps Indonesian as the backwards-compatible default", () => {
+    const result = buildPasswordResetEmail({ recipientName: "Dewi", resetUrl: "https://angelmind.test/reset" });
+    expect(result.subject).toBe("Reset password AngelMind");
+    expect(result.text).toContain("Kami menerima permintaan");
+    expect(result.html).toContain("Reset password");
+  });
+
+  it("renders English and regional English locales", () => {
     const result = buildPasswordResetEmail({
       recipientName: "Dewi <Admin>",
       resetUrl: "https://angelmind.test/reset?token=a&next=/login",
       expiresAt: new Date("2026-09-01T10:00:00.000Z"),
+      locale: "en-US",
     });
 
-    expect(result.subject).toBe("Reset password AngelMind");
+    expect(result.subject).toBe("Reset your AngelMind password");
+    expect(result.text).toContain("We received a request");
     expect(result.text).toContain("2026-09-01T10:00:00.000Z");
-    expect(result.text).toContain("Jika Anda tidak meminta reset password");
     expect(result.html).toContain("Dewi &lt;Admin&gt;");
     expect(result.html).toContain("reset?token=a&amp;next=/login");
   });
 });
 
-describe("account verification email template", () => {
-  it("provides both plain text and HTML verification content", () => {
+describe("localized account verification email template", () => {
+  it("renders English verification content", () => {
     const result = buildAccountVerificationEmail({
       recipientName: "Budi",
       verificationUrl: "https://angelmind.test/verify?token=xyz",
+      locale: "en",
+    });
+
+    expect(result.subject).toBe("Verify your AngelMind account");
+    expect(result.text).toContain("Thank you for creating an AngelMind account");
+    expect(result.html).toContain("Verify account");
+    expect(result.html).toContain("https://angelmind.test/verify?token=xyz");
+  });
+
+  it("falls back to Indonesian for unsupported locales", () => {
+    const result = buildAccountVerificationEmail({
+      verificationUrl: "https://angelmind.test/verify",
+      locale: "fr",
     });
 
     expect(result.subject).toBe("Verifikasi akun AngelMind Anda");
     expect(result.text).toContain("Terima kasih telah membuat akun AngelMind");
-    expect(result.text).toContain("https://angelmind.test/verify?token=xyz");
-    expect(result.html).toContain("Verifikasi akun");
-    expect(result.html).toContain("https://angelmind.test/verify?token=xyz");
   });
 });

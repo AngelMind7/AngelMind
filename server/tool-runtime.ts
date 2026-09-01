@@ -649,7 +649,10 @@ function probeBinary(binary: string) {
     child.once("close", code => {
       clearTimeout(timer);
       resolve({
-        available: code === 0,
+        // A non-zero exit from --version can mean the binary does not support
+        // that flag. The spawn itself proves the executable is present; only
+        // an OS-level spawn error or timeout is an availability failure.
+        available: true,
         version: code === 0 ? boundedText(stdout.trim(), 512) : undefined,
       });
     });

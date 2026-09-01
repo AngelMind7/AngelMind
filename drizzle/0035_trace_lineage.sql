@@ -1,0 +1,14 @@
+ALTER TABLE `researchSessions` ADD COLUMN `traceId` varchar(128) NULL;
+ALTER TABLE `researchAssets` ADD COLUMN `traceId` varchar(128) NULL;
+ALTER TABLE `researchObservations` ADD COLUMN `traceId` varchar(128) NULL;
+ALTER TABLE `researchHypotheses` ADD COLUMN `traceId` varchar(128) NULL;
+ALTER TABLE `researchTasks` ADD COLUMN `traceId` varchar(128) NULL;
+ALTER TABLE `findings` ADD COLUMN `traceId` varchar(128) NULL;
+ALTER TABLE `evidenceArtifacts` ADD COLUMN `traceId` varchar(128) NULL;
+CREATE INDEX `research_session_trace_idx` ON `researchSessions` (`traceId`);
+CREATE INDEX `research_asset_trace_idx` ON `researchAssets` (`traceId`);
+CREATE INDEX `research_observation_trace_idx` ON `researchObservations` (`traceId`);
+CREATE INDEX `research_hypothesis_trace_idx` ON `researchHypotheses` (`traceId`);
+CREATE INDEX `research_task_trace_idx` ON `researchTasks` (`traceId`);
+CREATE INDEX `finding_trace_idx` ON `findings` (`traceId`);
+CREATE INDEX `evidence_artifact_trace_idx` ON `evidenceArtifacts` (`traceId`);

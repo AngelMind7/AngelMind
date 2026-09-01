@@ -95,7 +95,8 @@ export async function listResearchSessions(userId: number, workspaceId: number) 
 export async function createResearchSession(userId: number, input: { workspaceId: number; title: string }) {
   const { db, workspace } = await requireWorkspace(userId, input.workspaceId, "respond");
   const scopeDigest = digest(JSON.stringify({ allowlist: workspace.allowlist, exclusions: workspace.exclusions, safeHarbor: workspace.safeHarbor, codeOfConduct: workspace.codeOfConduct }));
-  await db.insert(researchSessions).values({ workspaceId: workspace.id, ownerUserId: userId, title: input.title.trim(), state: "draft", scopeDigest });
+  const traceId = currentTraceContext()?.traceId ?? null;
+  await db.insert(researchSessions).values({ workspaceId: workspace.id, ownerUserId: userId, title: input.title.trim(), state: "draft", scopeDigest, traceId });
   const [session] = await db.select().from(researchSessions).where(and(eq(researchSessions.workspaceId, workspace.id), eq(researchSessions.ownerUserId, userId), eq(researchSessions.title, input.title.trim()))).orderBy(desc(researchSessions.createdAt)).limit(1);
   if (!session) throw new Error("Research session could not be created.");
   await addResearchAudit(db, workspace.id, userId, "research-session-created", { sessionId: session.id, scopeDigest });
@@ -124,7 +125,8 @@ export async function createResearchAsset(userId: number, input: { sessionId: nu
   if (!value) throw new Error("Asset value is required.");
   if (!target) throw new Error("Asset hostname is required for scope validation.");
   const inScope = isTargetInScope(target, parseJson<string[]>(workspace.allowlist, []), parseJson<string[]>(workspace.exclusions, []));
-  await db.insert(researchAssets).values({ workspaceId: session.workspaceId, sessionId: session.id, assetType: input.assetType, value, hostname: input.hostname?.trim() || null, state: inScope ? "in_scope" : "out_of_scope", inScope: inScope ? 1 : 0, metadata: JSON.stringify({ ...(input.metadata ?? {}), scopeTarget: target, scopeCheckedAt: new Date().toISOString() }), createdByUserId: userId });
+  const traceId = currentTraceContext()?.traceId ?? session.traceId ?? null;
+  await db.insert(researchAssets).values({ workspaceId: session.workspaceId, sessionId: session.id, assetType: input.assetType, value, hostname: input.hostname?.trim() || null, state: inScope ? "in_scope" : "out_of_scope", inScope: inScope ? 1 : 0, metadata: JSON.stringify({ ...(input.metadata ?? {}), scopeTarget: target, scopeCheckedAt: new Date().toISOString() }), createdByUserId: userId, traceId });
   const [asset] = await db.select().from(researchAssets).where(and(eq(researchAssets.sessionId, session.id), eq(researchAssets.value, value))).limit(1);
   if (!asset) throw new Error("Asset could not be created.");
   await addResearchAudit(db, session.workspaceId, userId, "research-asset-created", { sessionId: session.id, assetId: asset.id, inScope, target });
@@ -142,7 +144,8 @@ export async function createResearchObservation(userId: number, input: { session
     const [asset] = await db.select().from(researchAssets).where(and(eq(researchAssets.id, input.assetId), eq(researchAssets.sessionId, session.id), eq(researchAssets.inScope, 1))).limit(1);
     if (!asset) throw new Error("Observation must reference an in-scope asset from the same session.");
   }
-  await db.insert(researchObservations).values({ workspaceId: session.workspaceId, sessionId: session.id, assetId: input.assetId ?? null, title: input.title.trim(), content: input.content.trim(), status: "new", createdByUserId: userId });
+  const traceId = currentTraceContext()?.traceId ?? session.traceId ?? null;
+  await db.insert(researchObservations).values({ workspaceId: session.workspaceId, sessionId: session.id, assetId: input.assetId ?? null, title: input.title.trim(), content: input.content.trim(), status: "new", traceId, createdByUserId: userId });
   const [observation] = await db.select().from(researchObservations).where(and(eq(researchObservations.sessionId, session.id), eq(researchObservations.title, input.title.trim()))).orderBy(desc(researchObservations.createdAt)).limit(1);
   if (!observation) throw new Error("Observation could not be created.");
   await addResearchAudit(db, session.workspaceId, userId, "research-observation-created", { sessionId: session.id, observationId: observation.id, assetId: input.assetId ?? null });
@@ -157,7 +160,8 @@ export async function promoteObservationToFinding(userId: number, input: { sessi
   const impactSummary = input.impactSummary.trim();
   if (impactSummary.length < 3) throw new Error("Impact summary wajib diisi.");
   const fingerprint = createHash("sha256").update(`${session.workspaceId}:${session.id}:${observation.id}:${title}`).digest("hex");
-  await db.insert(findings).values({ workspaceId: session.workspaceId, fingerprint, title, status: "discovered", confidence: Math.min(100, Math.max(0, Math.trunc(input.confidence ?? 50))), impactSummary, reportDraft: JSON.stringify({ source: "research-observation", sessionId: session.id, observationId: observation.id, content: observation.content }), humanReviewStatus: "pending" }).onDuplicateKeyUpdate({ set: { confidence: Math.min(100, Math.max(0, Math.trunc(input.confidence ?? 50))), impactSummary, updatedAt: new Date() } });
+  const traceId = currentTraceContext()?.traceId ?? observation.traceId ?? session.traceId ?? null;
+  await db.insert(findings).values({ workspaceId: session.workspaceId, fingerprint, title, status: "discovered", traceId, confidence: Math.min(100, Math.max(0, Math.trunc(input.confidence ?? 50))), impactSummary, reportDraft: JSON.stringify({ source: "research-observation", sessionId: session.id, observationId: observation.id, content: observation.content }), humanReviewStatus: "pending" }).onDuplicateKeyUpdate({ set: { confidence: Math.min(100, Math.max(0, Math.trunc(input.confidence ?? 50))), impactSummary, updatedAt: new Date() } });
   const [finding] = await db.select().from(findings).where(and(eq(findings.workspaceId, session.workspaceId), eq(findings.fingerprint, fingerprint))).limit(1);
   if (!finding) throw new Error("Finding could not be created.");
   await db.update(researchObservations).set({ status: "linked", updatedAt: new Date() }).where(eq(researchObservations.id, observation.id));
@@ -176,7 +180,7 @@ export async function createResearchHypothesis(userId: number, input: { sessionI
     const [observation] = await db.select().from(researchObservations).where(and(eq(researchObservations.id, input.observationId), eq(researchObservations.sessionId, session.id))).limit(1);
     if (!observation) throw new Error("Hypothesis must reference an observation from the same session.");
   }
-  await db.insert(researchHypotheses).values({ workspaceId: session.workspaceId, sessionId: session.id, assetId: input.assetId ?? null, observationId: input.observationId ?? null, description: input.description.trim(), reason: input.reason.trim(), priority: input.priority, status: "proposed", evidence: "[]", aiAnalysis: null, outcome: null, createdByUserId: userId });
+  await db.insert(researchHypotheses).values({ workspaceId: session.workspaceId, sessionId: session.id, assetId: input.assetId ?? null, observationId: input.observationId ?? null, description: input.description.trim(), reason: input.reason.trim(), priority: input.priority, status: "proposed", evidence: "[]", aiAnalysis: null, outcome: null, createdByUserId: userId, traceId: currentTraceContext()?.traceId ?? session.traceId ?? null });
   const [hypothesis] = await db.select().from(researchHypotheses).where(and(eq(researchHypotheses.sessionId, session.id), eq(researchHypotheses.description, input.description.trim()))).orderBy(desc(researchHypotheses.createdAt)).limit(1);
   if (!hypothesis) throw new Error("Hypothesis could not be created.");
   await addResearchAudit(db, session.workspaceId, userId, "research-hypothesis-created", { sessionId: session.id, hypothesisId: hypothesis.id });
@@ -207,7 +211,7 @@ export async function createResearchTask(userId: number, input: { sessionId: num
     const rows = await db.select({ id: researchTasks.id }).from(researchTasks).where(and(eq(researchTasks.sessionId, session.id), inArray(researchTasks.id, dependencies)));
     if (rows.length !== dependencies.length) throw new Error("Task dependency must belong to the same research session.");
   }
-  await db.insert(researchTasks).values({ workspaceId: session.workspaceId, sessionId: session.id, type: input.type.trim(), title: input.title.trim(), priority: input.priority, status: "queued", ownerUserId: input.ownerUserId ?? null, dependencies: JSON.stringify(dependencies), inputs: JSON.stringify(input.inputs ?? {}), outputs: "{}", retryCount: 0, createdByUserId: userId });
+  await db.insert(researchTasks).values({ workspaceId: session.workspaceId, sessionId: session.id, type: input.type.trim(), title: input.title.trim(), priority: input.priority, status: "queued", ownerUserId: input.ownerUserId ?? null, dependencies: JSON.stringify(dependencies), inputs: JSON.stringify(input.inputs ?? {}), outputs: "{}", retryCount: 0, traceId: currentTraceContext()?.traceId ?? session.traceId ?? null, createdByUserId: userId });
   const [task] = await db.select().from(researchTasks).where(and(eq(researchTasks.sessionId, session.id), eq(researchTasks.title, input.title.trim()))).orderBy(desc(researchTasks.createdAt)).limit(1);
   if (!task) throw new Error("Task could not be created.");
   if (dependencies.length) {

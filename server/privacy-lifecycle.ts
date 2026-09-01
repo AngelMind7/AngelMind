@@ -49,10 +49,12 @@ export async function executePrivacyDelete(requestId: number) {
   const ownedOrganizations = await db.select({ id: organizations.id }).from(organizations).where(eq(organizations.ownerUserId, request.userId)).limit(1);
   const ownedWorkspaces = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.ownerUserId, request.userId)).limit(1);
   if (ownedOrganizations.length || ownedWorkspaces.length) throw new Error("Account deletion requires transferring or archiving owned organizations/workspaces first.");
-  for (const [table, column] of deleteTables) {
-    await db.execute(sql.raw(`DELETE FROM ${fixedIdentifier(table)} WHERE ${fixedIdentifier(column)} = ${request.userId}`));
-  }
-  await db.delete(users).where(eq(users.id, request.userId));
+  await db.transaction(async tx => {
+    for (const [table, column] of deleteTables) {
+      await tx.execute(sql.raw(`DELETE FROM ${fixedIdentifier(table)} WHERE ${fixedIdentifier(column)} = ${request.userId}`));
+    }
+    await tx.delete(users).where(eq(users.id, request.userId));
+  });
   return processPrivacyRequest({ requestId, status: "completed", resultReference: `account-deleted:${request.userId}:${new Date().toISOString()}` });
 }
 

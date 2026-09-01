@@ -176,8 +176,9 @@ export async function claimOutboxEvent(eventId: number, now = new Date()) {
   if (!db) return { claimed: false as const, reason: "database-unavailable" as const };
   const staleBefore = new Date(now.getTime() - OUTBOX_LEASE_MS);
   await db.update(outboxEvents).set({ status: "retrying", lockedAt: null, workerId: null, availableAt: now, lastError: "Outbox lease expired." }).where(and(eq(outboxEvents.status, "retrying"), lt(outboxEvents.lockedAt, staleBefore)));
-  const changed = await db.update(outboxEvents).set({ status: "retrying", lockedAt: now, workerId: WORKER_ID, attempts: sql`${outboxEvents.attempts} + 1` }).where(and(eq(outboxEvents.id, eventId), or(eq(outboxEvents.status, "pending"), eq(outboxEvents.status, "retrying")), lte(outboxEvents.availableAt, now)));
-  if (!changed) return { claimed: false as const, reason: "already-claimed" as const };
+  await db.update(outboxEvents).set({ status: "retrying", lockedAt: now, workerId: WORKER_ID, attempts: sql`${outboxEvents.attempts} + 1` }).where(and(eq(outboxEvents.id, eventId), or(eq(outboxEvents.status, "pending"), eq(outboxEvents.status, "retrying")), lte(outboxEvents.availableAt, now)));
+  const [claimed] = await db.select({ id: outboxEvents.id }).from(outboxEvents).where(and(eq(outboxEvents.id, eventId), eq(outboxEvents.status, "retrying"), eq(outboxEvents.workerId, WORKER_ID), eq(outboxEvents.lockedAt, now))).limit(1);
+  if (!claimed) return { claimed: false as const, reason: "already-claimed" as const };
   return { claimed: true as const, eventId, workerId: WORKER_ID };
 }
 

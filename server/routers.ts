@@ -1155,8 +1155,11 @@ export const appRouter = router({
     upsertTag: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), name: z.string().trim().min(2).max(80), color: z.string().max(16).optional() })).mutation(({ ctx, input }) => tagsNotes.upsertTag(ctx.user.id, input)),
     assignments: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), entityType: z.string().trim().min(1).max(60), entityId: z.number().int().positive() })).query(({ ctx, input }) => tagsNotes.listAssignments(ctx.user.id, input)),
     assignTag: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), tagId: z.number().int().positive(), entityType: z.string().trim().min(1).max(60), entityId: z.number().int().positive() })).mutation(({ ctx, input }) => tagsNotes.assignTag(ctx.user.id, input)),
+    unassignTag: protectedProcedure.input(z.object({ assignmentId: z.number().int().positive() })).mutation(({ ctx, input }) => tagsNotes.unassignTag(ctx.user.id, input.assignmentId)),
     notes: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), entityType: z.string().trim().min(1).max(60).optional(), entityId: z.number().int().positive().optional() })).query(({ ctx, input }) => tagsNotes.listNotes(ctx.user.id, input)),
     createNote: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), entityType: z.string().trim().min(1).max(60), entityId: z.number().int().positive().optional(), title: z.string().trim().min(2).max(240), body: z.string().trim().min(1), visibility: z.enum(["private", "workspace"]).optional() })).mutation(({ ctx, input }) => tagsNotes.createNote(ctx.user.id, input)),
+    updateNote: protectedProcedure.input(z.object({ noteId: z.number().int().positive(), title: z.string().trim().min(2).max(240), body: z.string().trim().min(1), visibility: z.enum(["private", "workspace"]).optional() })).mutation(({ ctx, input }) => tagsNotes.updateNote(ctx.user.id, input)),
+    deleteNote: protectedProcedure.input(z.object({ noteId: z.number().int().positive() })).mutation(({ ctx, input }) => tagsNotes.deleteNote(ctx.user.id, input.noteId)),
   }),
   knowledge: router({
     graph: protectedProcedure

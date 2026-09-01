@@ -1463,13 +1463,15 @@ export const appRouter = router({
             "completed",
             "archived",
           ]),
+          expectedRevision: z.number().int().min(0).optional(),
         })
       )
       .mutation(({ ctx, input }) =>
         researchWorkflow.transitionResearchSession(
           ctx.user.id,
           input.sessionId,
-          input.state
+          input.state,
+          input.expectedRevision
         )
       ),
     assets: protectedProcedure
@@ -1599,6 +1601,7 @@ export const appRouter = router({
             "cancelled",
           ]),
           outputs: z.record(z.string(), z.unknown()).optional(),
+          expectedRevision: z.number().int().min(0).optional(),
         })
       )
       .mutation(({ ctx, input }) =>
@@ -1606,7 +1609,8 @@ export const appRouter = router({
           ctx.user.id,
           input.taskId,
           input.status,
-          input.outputs
+          input.outputs,
+          input.expectedRevision
         )
       ),
     failureObservations: protectedProcedure

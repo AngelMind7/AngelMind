@@ -15,7 +15,7 @@ import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { isTargetInScope } from "./control-plane/guardrails";
 import { currentTraceContext } from "./_core/trace-context";
-import { decodePageCursor, pageResult } from "./_core/query-safety";
+import { assertExpectedRevision, decodePageCursor, nextRevision, pageResult } from "./_core/query-safety";
 
 const sessionTransitions: Record<string, string[]> = {
   draft: ["ready", "archived"],
@@ -114,10 +114,11 @@ export async function createResearchSession(userId: number, input: { workspaceId
   return session;
 }
 
-export async function transitionResearchSession(userId: number, sessionId: number, nextState: "draft" | "ready" | "active" | "paused" | "completed" | "archived") {
+export async function transitionResearchSession(userId: number, sessionId: number, nextState: "draft" | "ready" | "active" | "paused" | "completed" | "archived", expectedRevision?: number) {
   const { db, session } = await requireSession(userId, sessionId, "respond");
   if (!sessionTransitions[session.state]?.includes(nextState)) throw new Error(`Invalid research session transition: ${session.state} -> ${nextState}`);
-  await db.update(researchSessions).set({ state: nextState, completedAt: nextState === "completed" || nextState === "archived" ? new Date() : null, updatedAt: new Date() }).where(eq(researchSessions.id, session.id));
+  if (expectedRevision !== undefined) assertExpectedRevision(expectedRevision, session.revision);
+  await db.update(researchSessions).set({ state: nextState, revision: nextRevision(session.revision), completedAt: nextState === "completed" || nextState === "archived" ? new Date() : null, updatedAt: new Date() }).where(and(eq(researchSessions.id, session.id), eq(researchSessions.revision, session.revision)));
   await addResearchAudit(db, session.workspaceId, userId, "research-session-transitioned", { sessionId, from: session.state, to: nextState });
   return { success: true as const, sessionId, state: nextState };
 }
@@ -232,12 +233,13 @@ export async function createResearchTask(userId: number, input: { sessionId: num
   return task;
 }
 
-export async function transitionResearchTask(userId: number, taskId: number, nextStatus: "queued" | "running" | "blocked" | "paused" | "failed" | "retrying" | "completed" | "cancelled", outputs?: Record<string, unknown>) {
+export async function transitionResearchTask(userId: number, taskId: number, nextStatus: "queued" | "running" | "blocked" | "paused" | "failed" | "retrying" | "completed" | "cancelled", outputs?: Record<string, unknown>, expectedRevision?: number) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const [task] = await db.select().from(researchTasks).where(eq(researchTasks.id, taskId)).limit(1);
   if (!task || !(await canAccessWorkspace(userId, task.workspaceId, "respond"))) throw new Error("Task tidak ditemukan atau tidak dapat diakses.");
   if (!taskTransitions[task.status]?.includes(nextStatus)) throw new Error(`Invalid task transition: ${task.status} -> ${nextStatus}`);
+  if (expectedRevision !== undefined) assertExpectedRevision(expectedRevision, task.revision);
   if (nextStatus === "running") {
     const relationalDependencies = await db.select({ dependsOnTaskId: researchTaskDependencies.dependsOnTaskId }).from(researchTaskDependencies).where(eq(researchTaskDependencies.taskId, task.id));
     const dependencies = relationalDependencies.length ? relationalDependencies.map(row => row.dependsOnTaskId) : parseJson<number[]>(task.dependencies, []);
@@ -246,7 +248,7 @@ export async function transitionResearchTask(userId: number, taskId: number, nex
       if (dependencyRows.length !== dependencies.length || dependencyRows.some(row => row.status !== "completed")) throw new Error("Task blocked: all dependencies must be completed first.");
     }
   }
-  await db.update(researchTasks).set({ status: nextStatus, outputs: outputs ? JSON.stringify(outputs) : task.outputs, retryCount: nextStatus === "retrying" ? task.retryCount + 1 : task.retryCount, completedAt: nextStatus === "completed" || nextStatus === "cancelled" ? new Date() : null, updatedAt: new Date() }).where(eq(researchTasks.id, taskId));
+  await db.update(researchTasks).set({ status: nextStatus, revision: nextRevision(task.revision), outputs: outputs ? JSON.stringify(outputs) : task.outputs, retryCount: nextStatus === "retrying" ? task.retryCount + 1 : task.retryCount, completedAt: nextStatus === "completed" || nextStatus === "cancelled" ? new Date() : null, updatedAt: new Date() }).where(and(eq(researchTasks.id, taskId), eq(researchTasks.revision, task.revision)));
   await addResearchAudit(db, task.workspaceId, userId, "research-task-transitioned", { taskId, from: task.status, to: nextStatus });
   return { success: true as const, taskId, status: nextStatus };
 }

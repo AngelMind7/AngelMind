@@ -606,15 +606,18 @@ export const approvals = mysqlTable("approvals", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   runId: int("runId"),
+  /** Structured review context: target, tool, risk class, scope digest, and expected impact. */
+  contextJson: text("contextJson"),
   actionName: varchar("actionName", { length: 160 }).notNull(),
   tier: mysqlEnum("tier", ["tier1", "tier2", "tier3"] as const).notNull(),
   status: mysqlEnum("status", approvalStatus).default("pending").notNull(),
   requestedByUserId: int("requestedByUserId").notNull(),
   decidedByUserId: int("decidedByUserId"),
   decisionNote: text("decisionNote"),
+  expiresAt: timestamp("expiresAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   decidedAt: timestamp("decidedAt"),
-}, table => [index("approvals_workspace_status_idx").on(table.workspaceId, table.status)]);
+}, table => [index("approvals_workspace_status_idx").on(table.workspaceId, table.status), index("approvals_expiry_idx").on(table.status, table.expiresAt)]);
 
 export const auditEvents = mysqlTable("auditEvents", {
   id: int("id").autoincrement().primaryKey(),

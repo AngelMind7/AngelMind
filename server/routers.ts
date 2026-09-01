@@ -1785,13 +1785,21 @@ export const appRouter = router({
         z.object({
           workspaceId: z.number().int().positive(),
           action: z.literal("privileged_proof"),
+          context: z.object({
+            target: z.string().trim().max(512).optional(),
+            tool: z.string().trim().max(160).optional(),
+            riskClass: z.enum(["high", "critical"]).optional(),
+            scopeDigest: z.string().trim().max(128).optional(),
+            expectedImpact: z.string().trim().max(4_000).optional(),
+          }).optional(),
         })
       )
       .mutation(({ ctx, input }) =>
         controlPlane.requestApproval(
           ctx.user.id,
           input.workspaceId,
-          input.action
+          input.action,
+          input.context ?? {}
         )
       ),
     decide: protectedProcedure

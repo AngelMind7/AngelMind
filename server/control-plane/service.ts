@@ -191,28 +191,44 @@ export async function rehearseWorkspace(userId: number, workspaceId: number) {
   return rehearsal;
 }
 
-export async function requestApproval(userId: number, workspaceId: number, action: ActionKind) {
+export async function requestApproval(userId: number, workspaceId: number, action: ActionKind, context: Record<string, unknown> = {}) {
   const workspace = await ownedWorkspaceOrThrow(userId, workspaceId);
   const governance = prepareGovernanceRequest(action);
   if (governance.status !== "pending") throw new Error("Hanya aksi Tier 3 yang masuk ke antrean approval manusia.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
-  await db.insert(approvals).values({ workspaceId: workspace.id, actionName: action, tier: governance.tier, requestedByUserId: userId, status: "pending" });
-  await addAudit(workspace.id, "governance", "tier3-requested", { ...governance, outcome: "blocked-pending-human" });
+  const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000);
+  await db.insert(approvals).values({ workspaceId: workspace.id, actionName: action, tier: governance.tier, requestedByUserId: userId, status: "pending", contextJson: JSON.stringify(context), expiresAt });
+  await addAudit(workspace.id, "governance", "tier3-requested", { ...governance, context, expiresAt: expiresAt.toISOString(), outcome: "blocked-pending-human" });
   await notifyWorkspaceOwner(workspace, { eventType: "approval_required", severity: "critical", title: "AngelMind memerlukan approval manusia", message: `Aksi Tier 3 “${action}” pada workspace ${workspace.name} diblokir dan menunggu keputusan manusia. Tidak ada aksi target yang dijalankan.` });
   return { success: true, status: "pending" as const };
+}
+
+type ApprovalRow = typeof approvals.$inferSelect;
+
+async function expireApprovals(rows: ApprovalRow[]) {
+  const db = await getDb();
+  if (!db) return rows;
+  const now = new Date();
+  for (const row of rows) {
+    if (row.status === "pending" && row.expiresAt && row.expiresAt <= now) {
+      await db.update(approvals).set({ status: "expired", decidedAt: now, decisionNote: "Automatically expired after 24 hours without a reviewer decision." }).where(eq(approvals.id, row.id));
+      row.status = "expired";
+    }
+  }
+  return rows;
 }
 
 export async function listApprovals(userId: number, userRole: "user" | "admin") {
   const db = await getDb();
   if (!db) return [];
-  if (userRole === "admin") return db.select().from(approvals).orderBy(desc(approvals.createdAt));
+  if (userRole === "admin") return expireApprovals(await db.select().from(approvals).orderBy(desc(approvals.createdAt)));
   const owned = await listWorkspaces(userId);
   const reviewerWorkspaceIds = await getReviewerWorkspaceIds(userId);
   const ownedWorkspaceIds = owned.map(workspace => workspace.id);
   const workspaceIds = ownedWorkspaceIds.concat(reviewerWorkspaceIds.filter(workspaceId => !ownedWorkspaceIds.includes(workspaceId)));
   if (workspaceIds.length === 0) return [];
-  return db.select().from(approvals).where(inArray(approvals.workspaceId, workspaceIds)).orderBy(desc(approvals.createdAt));
+  return expireApprovals(await db.select().from(approvals).where(inArray(approvals.workspaceId, workspaceIds)).orderBy(desc(approvals.createdAt)));
 }
 
 export async function decideApproval(userId: number, userRole: "user" | "admin", approvalId: number, decision: "approved" | "rejected", note: string) {
@@ -220,6 +236,7 @@ export async function decideApproval(userId: number, userRole: "user" | "admin",
   const approval = allApprovals.find(item => item.id === approvalId);
   if (!approval) throw new Error("Approval tidak ditemukan atau tidak dapat diakses.");
   if (approval.status !== "pending") throw new Error("Approval ini sudah memiliki keputusan.");
+  if (approval.expiresAt && approval.expiresAt <= new Date()) throw new Error("Approval sudah kedaluwarsa setelah 24 jam dan tidak dapat diputuskan.");
   const reviewerMembership = userRole === "admin" ? false : await hasReviewerMembership(userId, approval.workspaceId);
   if (!canReviewApproval(userRole, approval.requestedByUserId, userId, reviewerMembership)) throw new Error("Tier 3 approval requires a distinct administrator or delegated reviewer.");
   assertDistinctApprover(approval.requestedByUserId, userId);

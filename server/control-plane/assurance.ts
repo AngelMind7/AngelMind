@@ -5,6 +5,7 @@ import { canAccessWorkspace, getReadableWorkspaceIds, hasReviewerMembership } fr
 import { sha256 } from "./archive-integrity";
 import { buildPolicyDiff, canApplyReviewedChange, canLinkIncidentEvidence, getEscalationDueAt, isWebhookActivationReady, type IncidentSeverity } from "./assurance-contracts";
 import { planInAppDelivery, type NotificationEvent, type NotificationSeverity } from "./notifications";
+import { currentTraceContext } from "../_core/trace-context";
 import { applyPolicyDecisionWorkflow, applyWebhookReviewWorkflow, preparePolicyVersionWorkflow, prepareWebhookActivationWorkflow, shouldEscalateIncident, transitionIncidentWorkflow } from "./assurance-workflows";
 
 type UserRole = "user" | "admin";
@@ -26,7 +27,8 @@ async function workspaceOrThrow(workspaceId: number) {
 async function addAudit(workspaceId: number, category: string, subject: string, details: Record<string, unknown>) {
   const db = await getDb();
   if (!db) return;
-  await db.insert((await import("../../drizzle/schema")).auditEvents).values({ workspaceId, category, subject, details: JSON.stringify(details), evidenceHash: sha256(JSON.stringify({ workspaceId, category, subject, details })) });
+  const traceId = currentTraceContext()?.traceId ?? null;
+  await db.insert((await import("../../drizzle/schema")).auditEvents).values({ workspaceId, category, subject, traceId, details: JSON.stringify(details), evidenceHash: sha256(JSON.stringify({ workspaceId, category, subject, details, traceId })) });
 }
 
 async function emitWorkspaceSignal(input: { userId: number; workspaceId: number; eventType: NotificationEvent; severity: NotificationSeverity; title: string; message: string }) {

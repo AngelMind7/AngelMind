@@ -15,6 +15,7 @@ import { escalateOverdueIncidentsForWorkspace } from "./assurance";
 import type { ActionKind } from "./contracts";
 import { validateEvidenceBytes } from "./evidence-validation";
 import { upsertSearchDocument } from "../global-search";
+import { currentTraceContext } from "../_core/trace-context";
 
 const parseList = (serialized: string): string[] => {
   try {
@@ -30,11 +31,13 @@ const digest = (value: unknown) => createHash("sha256").update(JSON.stringify(va
 async function addAudit(workspaceId: number, category: string, subject: string, details: Record<string, unknown>) {
   const db = await getDb();
   if (!db) return;
+  const traceId = currentTraceContext()?.traceId ?? null;
   await db.insert(auditEvents).values({
     workspaceId,
     category,
     subject,
-    evidenceHash: digest({ workspaceId, category, subject, details }),
+    traceId,
+    evidenceHash: digest({ workspaceId, category, subject, details, traceId }),
     details: JSON.stringify(details),
   });
 }

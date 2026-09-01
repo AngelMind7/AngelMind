@@ -4,6 +4,7 @@ import { evolutionSnapshots, failureObservations, intelligenceFeedItems, playboo
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { compareAssetSnapshots, normalizeIntelligenceFeed, validateFailureObservation, type AssetSnapshot, type FailureObservation, type IntelligenceFeedItem } from "./control-plane/intelligence-engine";
+import { currentTraceContext } from "./_core/trace-context";
 
 async function requireWorkspace(userId: number, workspaceId: number, intent: "read" | "respond" | "manage" = "read") {
   if (!(await canAccessWorkspace(userId, workspaceId, intent))) throw new Error("Workspace tidak ditemukan atau tidak dapat diakses.");
@@ -23,7 +24,8 @@ async function requireSessionInWorkspace(userId: number, sessionId: number, work
 
 async function audit(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, workspaceId: number, userId: number, subject: string, details: Record<string, unknown>) {
   const { auditEvents } = await import("../drizzle/schema");
-  await db.insert(auditEvents).values({ workspaceId, category: "research-intelligence", subject, details: JSON.stringify({ actorUserId: userId, ...details }), evidenceHash: `${workspaceId}:${userId}:${subject}:${JSON.stringify(details)}`.slice(0, 128) });
+  const traceId = currentTraceContext()?.traceId ?? null;
+  await db.insert(auditEvents).values({ workspaceId, category: "research-intelligence", subject, traceId, details: JSON.stringify({ actorUserId: userId, ...details }), evidenceHash: `${workspaceId}:${userId}:${subject}:${JSON.stringify(details)}:${traceId ?? ""}`.slice(0, 128) });
 }
 
 export async function listFailureObservations(userId: number, workspaceId: number, sessionId?: number) {

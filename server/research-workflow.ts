@@ -14,6 +14,7 @@ import {
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { isTargetInScope } from "./control-plane/guardrails";
+import { currentTraceContext } from "./_core/trace-context";
 
 const sessionTransitions: Record<string, string[]> = {
   draft: ["ready", "archived"],
@@ -75,12 +76,14 @@ async function requireSession(userId: number, sessionId: number, intent: "read" 
 }
 
 async function addResearchAudit(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, workspaceId: number, userId: number, subject: string, details: Record<string, unknown>) {
+  const traceId = currentTraceContext()?.traceId ?? null;
   await db.insert(auditEvents).values({
     workspaceId,
     category: "research-workflow",
     subject,
+    traceId,
     details: JSON.stringify({ actorUserId: userId, ...details }),
-    evidenceHash: digest(JSON.stringify({ workspaceId, userId, subject, details })),
+    evidenceHash: digest(JSON.stringify({ workspaceId, userId, subject, details, traceId })),
   });
 }
 

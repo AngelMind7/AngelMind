@@ -541,6 +541,7 @@ export const auditEvents = mysqlTable("auditEvents", {
   category: varchar("category", { length: 80 }).notNull(),
   subject: varchar("subject", { length: 160 }).notNull(),
   evidenceHash: varchar("evidenceHash", { length: 64 }).notNull(),
+  traceId: varchar("traceId", { length: 128 }),
   details: text("details").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [index("audit_workspace_created_idx").on(table.workspaceId, table.createdAt)]);

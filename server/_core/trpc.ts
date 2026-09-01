@@ -2,6 +2,7 @@ import { NOT_ADMIN_ERR_MSG, UNAUTHED_ERR_MSG } from '@shared/const';
 import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import type { TrpcContext } from "./context";
+import { withTraceContext } from "./trace-context";
 
 const t = initTRPC.context<TrpcContext>().create({
   transformer: superjson,
@@ -13,16 +14,17 @@ export const publicProcedure = t.procedure;
 const requireUser = t.middleware(async opts => {
   const { ctx, next } = opts;
 
-  if (!ctx.user) {
+  const user = ctx.user;
+  if (!user) {
     throw new TRPCError({ code: "UNAUTHORIZED", message: UNAUTHED_ERR_MSG });
   }
 
-  return next({
+  return withTraceContext({ requestId: ctx.requestId, traceId: ctx.traceId }, () => next({
     ctx: {
       ...ctx,
-      user: ctx.user,
+      user,
     },
-  });
+  }));
 });
 
 export const protectedProcedure = t.procedure.use(requireUser);

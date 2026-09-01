@@ -514,6 +514,17 @@ export const searchDocuments = mysqlTable("searchDocuments", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [uniqueIndex("search_document_entity_uq").on(table.workspaceId, table.entityType, table.entityId), index("search_document_workspace_updated_idx").on(table.workspaceId, table.updatedAt)]);
 
+export const savedViews = mysqlTable("savedViews", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  name: varchar("name", { length: 120 }).notNull(),
+  query: varchar("query", { length: 512 }).notNull(),
+  filters: text("filters").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [uniqueIndex("saved_view_workspace_user_name_uq").on(table.workspaceId, table.userId, table.name), index("saved_view_workspace_user_updated_idx").on(table.workspaceId, table.updatedAt)]);
+
 export const runs = mysqlTable("runs", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),

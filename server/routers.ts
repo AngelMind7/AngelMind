@@ -26,6 +26,7 @@ import * as aiOrchestration from "./ai-orchestration";
 import * as securityPlatform from "./security-platform";
 import * as submissionWorkflow from "./submission-workflow";
 import * as globalSearch from "./global-search";
+import * as savedViewService from "./saved-views";
 import * as profile from "./profile";
 import * as researchIntelligence from "./research-intelligence";
 import * as toolCatalog from "./tool-catalog";
@@ -1140,6 +1141,15 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         globalSearch.searchWorkspace(ctx.user.id, input)
       ),
+    savedViews: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive() }))
+      .query(({ ctx, input }) => savedViewService.listSavedViews(ctx.user.id, input.workspaceId)),
+    saveView: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), name: z.string().trim().min(2).max(120), query: z.string().trim().max(512), filters: z.record(z.string(), z.unknown()).optional() }))
+      .mutation(({ ctx, input }) => savedViewService.createSavedView(ctx.user.id, input)),
+    deleteView: protectedProcedure
+      .input(z.object({ savedViewId: z.number().int().positive() }))
+      .mutation(({ ctx, input }) => savedViewService.deleteSavedView(ctx.user.id, input.savedViewId)),
   }),
   knowledge: router({
     graph: protectedProcedure

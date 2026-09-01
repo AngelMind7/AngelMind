@@ -15,6 +15,12 @@ async function requireWorkspace(userId: number, workspaceId: number, intent: "re
   return { db, workspace };
 }
 
+export type PlaybookRunTransitionStatus = "queued" | "running" | "paused" | "failed" | "completed" | "cancelled";
+const playbookRunTransitions: Record<PlaybookRunTransitionStatus, PlaybookRunTransitionStatus[]> = { queued: ["running", "cancelled"], running: ["paused", "failed", "completed", "cancelled"], paused: ["running", "cancelled"], failed: ["queued", "running", "cancelled"], completed: [], cancelled: [] };
+export function assertPlaybookRunTransition(from: PlaybookRunTransitionStatus, to: PlaybookRunTransitionStatus) {
+  if (!playbookRunTransitions[from].includes(to)) throw new Error(`Playbook run tidak dapat berpindah dari ${from} ke ${to}.`);
+}
+
 async function requireSessionInWorkspace(userId: number, sessionId: number, workspaceId: number) {
   const { db } = await requireWorkspace(userId, workspaceId, "respond");
   const [session] = await db.select().from(researchSessions).where(and(eq(researchSessions.id, sessionId), eq(researchSessions.workspaceId, workspaceId))).limit(1);
@@ -143,12 +149,11 @@ export async function listPlaybookRuns(userId: number, workspaceId: number, sess
   return db.select().from(playbookRuns).where(sessionId ? and(eq(playbookRuns.workspaceId, workspaceId), eq(playbookRuns.sessionId, sessionId)) : eq(playbookRuns.workspaceId, workspaceId)).orderBy(desc(playbookRuns.updatedAt)).limit(100);
 }
 
-export async function transitionPlaybookRun(userId: number, input: { workspaceId: number; runId: number; status: "running" | "paused" | "failed" | "completed" | "cancelled" | "queued"; error?: string; completedTaskIds?: number[]; failedTaskIds?: number[]; nextTaskIndex?: number }) {
+export async function transitionPlaybookRun(userId: number, input: { workspaceId: number; runId: number; status: PlaybookRunTransitionStatus; error?: string; completedTaskIds?: number[]; failedTaskIds?: number[]; nextTaskIndex?: number }) {
   const { db } = await requireWorkspace(userId, input.workspaceId, "respond");
   const [run] = await db.select().from(playbookRuns).where(and(eq(playbookRuns.id, input.runId), eq(playbookRuns.workspaceId, input.workspaceId))).limit(1);
   if (!run) throw new Error("Playbook run tidak ditemukan pada workspace ini.");
-  const allowed: Record<string, string[]> = { queued: ["running", "cancelled"], running: ["paused", "failed", "completed", "cancelled"], paused: ["running", "cancelled"], failed: ["queued", "running", "cancelled"], completed: [], cancelled: [] };
-  if (!allowed[run.status]?.includes(input.status)) throw new Error(`Playbook run tidak dapat berpindah dari ${run.status} ke ${input.status}.`);
+  assertPlaybookRunTransition(run.status as PlaybookRunTransitionStatus, input.status);
   const checkpoint = JSON.stringify({ completedTaskIds: input.completedTaskIds ?? [], failedTaskIds: input.failedTaskIds ?? [], nextTaskIndex: Math.max(0, Math.trunc(input.nextTaskIndex ?? 0)) });
   const terminal = ["completed", "failed", "cancelled"].includes(input.status);
   await db.update(playbookRuns).set({ status: input.status, checkpoint, retryCount: input.status === "queued" && run.status === "failed" ? run.retryCount + 1 : run.retryCount, lastError: input.error?.trim().slice(0, 4_000) || null, startedAt: input.status === "running" ? run.startedAt ?? new Date() : run.startedAt, completedAt: terminal ? new Date() : null, updatedAt: new Date() }).where(eq(playbookRuns.id, run.id));

@@ -119,3 +119,8 @@ html[dir="rtl"] .tracking-\[0\.16em\], html[dir="rtl"] .tracking-\[0\.24em\] { l
 [data-theme="paper"] { --background: oklch(0.96 0.015 90); --foreground: oklch(0.22 0.02 260); --card: oklch(0.99 0.008 90); --card-foreground: oklch(0.22 0.02 260); --popover: oklch(0.99 0.008 90); --popover-foreground: oklch(0.22 0.02 260); --secondary: oklch(0.9 0.025 90); --muted: oklch(0.9 0.025 90); --muted-foreground: oklch(0.4 0.02 260); --accent: oklch(0.88 0.04 180); --border: oklch(0.65 0.03 90 / 45%); }
 [data-theme="high-contrast"] { --background: oklch(0 0 0); --foreground: oklch(1 0 0); --card: oklch(0.04 0 0); --card-foreground: oklch(1 0 0); --border: oklch(1 0 0 / 72%); --ring: oklch(1 0 0); --primary: oklch(0.86 0.2 95); --primary-foreground: oklch(0 0 0); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; } }
+
+@layer utilities {
+  /* Slate-500 is 4.24:1 on the app background; use the accessible muted tone. */
+  .text-slate-500 { color: #94a3b8; }
+}

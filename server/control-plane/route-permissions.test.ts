@@ -3,7 +3,7 @@ import { permissionNeedsWorkspaceRole, routedProcedurePermissions } from "./rout
 
 describe("routed procedure authorization contract", () => {
   it("contains every workspace-scoped operation with an explicit role requirement", () => {
-    expect(Object.keys(routedProcedurePermissions)).toHaveLength(75);
+    expect(Object.keys(routedProcedurePermissions)).toHaveLength(76);
     expect(routedProcedurePermissions["operations.addMember"]).toBe("owner");
     expect(routedProcedurePermissions["assurance.decidePolicy"]).toBe("admin-or-distinct-reviewer");
     expect(routedProcedurePermissions["assurance.createIncident"]).toBe("responder");
@@ -14,6 +14,7 @@ describe("routed procedure authorization contract", () => {
     expect(routedProcedurePermissions["knowledge.graph"]).toBe("read-member");
     expect(routedProcedurePermissions["knowledge.upsertNode"]).toBe("responder");
     expect(routedProcedurePermissions["research.promoteObservationToFinding"]).toBe("responder");
+    expect(routedProcedurePermissions["research.enqueueIntelligenceFetch"]).toBe("responder");
     expect(routedProcedurePermissions["research.playbookRuns"]).toBe("read-member");
     expect(routedProcedurePermissions["research.transitionPlaybookRun"]).toBe("responder");
     expect(routedProcedurePermissions["organization.createSubmission"]).toBe("responder");

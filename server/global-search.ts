@@ -1,4 +1,4 @@
-import { and, desc, eq, like, or } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, like, or } from "drizzle-orm";
 import { findings, knowledgeNodes, programs, reportVersions, researchAssets, researchSessions, searchDocuments, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
@@ -40,18 +40,21 @@ export async function rebuildWorkspaceSearchIndex(userId: number, workspaceId: n
   return { workspaceId, indexed: rows.length };
 }
 
-export async function searchWorkspace(userId: number, input: { workspaceId: number; query: string; limit?: number }) {
+export async function searchWorkspace(userId: number, input: { workspaceId: number; query: string; limit?: number; entityTypes?: string[]; freshnessDays?: number }) {
   const query = clean(input.query, 120);
   if (query.length < 2) throw new Error("Search query must contain at least two characters.");
   if (!(await canAccessWorkspace(userId, input.workspaceId, "read"))) throw new Error("Workspace tidak dapat diakses.");
   const db = await getDb();
   if (!db) return { query, results: [] };
   const limit = Math.min(100, Math.max(1, input.limit ?? 20));
+  const entityTypes = Array.from(new Set((input.entityTypes ?? []).map(type => clean(type, 40)).filter(Boolean))).slice(0, 12);
+  const freshnessDays = input.freshnessDays === undefined ? undefined : Math.min(3_650, Math.max(1, Math.trunc(input.freshnessDays)));
+  const freshnessCutoff = freshnessDays === undefined ? undefined : new Date(Date.now() - freshnessDays * 86_400_000);
   const pattern = `%${query}%`;
   const tokens = Array.from(new Set(query.toLocaleLowerCase().split(/\s+/).map(token => token.replace(/[^A-Za-z0-9_-]/g, "")).filter(token => token.length >= 2))).slice(0, 12);
   const tokenPatterns = tokens.flatMap(token => [`%${token}%`]);
   const searchConditions = [like(searchDocuments.title, pattern), like(searchDocuments.body, pattern), ...tokenPatterns.flatMap(token => [like(searchDocuments.title, token), like(searchDocuments.body, token)])];
-  const candidates = await db.select({ id: searchDocuments.entityId, entityType: searchDocuments.entityType, title: searchDocuments.title, body: searchDocuments.body, updatedAt: searchDocuments.updatedAt }).from(searchDocuments).where(and(eq(searchDocuments.workspaceId, input.workspaceId), or(...searchConditions))).orderBy(desc(searchDocuments.updatedAt)).limit(Math.min(500, limit * 10));
+  const candidates = await db.select({ id: searchDocuments.entityId, entityType: searchDocuments.entityType, title: searchDocuments.title, body: searchDocuments.body, updatedAt: searchDocuments.updatedAt }).from(searchDocuments).where(and(eq(searchDocuments.workspaceId, input.workspaceId), entityTypes.length ? inArray(searchDocuments.entityType, entityTypes) : undefined, freshnessCutoff ? gte(searchDocuments.updatedAt, freshnessCutoff) : undefined, or(...searchConditions))).orderBy(desc(searchDocuments.updatedAt)).limit(Math.min(500, limit * 10));
   const normalizedQuery = query.toLocaleLowerCase();
   const score = (result: typeof candidates[number]) => {
     const title = result.title.toLocaleLowerCase();
@@ -75,5 +78,6 @@ export async function searchWorkspace(userId: number, input: { workspaceId: numb
     reports: byType("report"),
     programs: byType("program"),
     knowledgeNodes: byType("knowledge_node"),
+    facets: results.reduce<Record<string, number>>((facets, result) => { facets[result.entityType] = (facets[result.entityType] ?? 0) + 1; return facets; }, {}),
   };
 }

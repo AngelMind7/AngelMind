@@ -1133,6 +1133,8 @@ export const appRouter = router({
           workspaceId: z.number().int().positive(),
           query: z.string().trim().min(2).max(120),
           limit: z.number().int().min(1).max(50).optional(),
+          entityTypes: z.array(z.string().trim().min(1).max(40)).max(12).optional(),
+          freshnessDays: z.number().int().min(1).max(3_650).optional(),
         })
       )
       .query(({ ctx, input }) =>

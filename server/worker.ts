@@ -4,6 +4,7 @@ import { executeIntelligenceFetchJob } from "./research-intelligence";
 import { executePrivacyRequest } from "./privacy-lifecycle";
 import { executeEmailDeliveryJob } from "./email-delivery";
 import { executePlaybookRunJob } from "./playbook-executor";
+import { withTraceContext } from "./_core/trace-context";
 
 export type WorkerJob = {
   id: number;
@@ -11,6 +12,7 @@ export type WorkerJob = {
   payload: string;
   attempts: number;
   maxAttempts: number;
+  traceId?: string | null;
 };
 
 export type JobHandler = (job: WorkerJob, payload: Record<string, unknown>) => Promise<void>;
@@ -33,6 +35,12 @@ function parsePayload(payload: string) {
   return parsed as Record<string, unknown>;
 }
 
+export function resolveJobTraceContext(job: Pick<WorkerJob, "id" | "traceId">, payload: Record<string, unknown>) {
+  const traceId = typeof payload.traceId === "string" && payload.traceId.trim() ? payload.traceId : job.traceId ?? `job:${job.id}`;
+  const requestId = typeof payload.requestId === "string" && payload.requestId.trim() ? payload.requestId : `job:${job.id}`;
+  return { requestId, traceId };
+}
+
 export async function processAvailableJobs(handlers: Record<string, JobHandler>, limit = 10) {
   const jobs = await claimPendingJobs(limit);
   let succeeded = 0;
@@ -44,7 +52,8 @@ export async function processAvailableJobs(handlers: Record<string, JobHandler>,
       const heartbeatTimer = setInterval(() => { void heartbeatJob(job.id).catch(() => undefined); }, 15_000);
       heartbeatTimer.unref?.();
       try {
-        await handler(job, parsePayload(job.payload));
+        const payload = parsePayload(job.payload);
+        await withTraceContext(resolveJobTraceContext(job, payload), () => handler(job, payload));
       } finally {
         clearInterval(heartbeatTimer);
       }

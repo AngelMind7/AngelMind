@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeRetryDelayMs, shouldDeadLetter } from "./worker";
+import { computeRetryDelayMs, resolveJobTraceContext, shouldDeadLetter } from "./worker";
 
 describe("durable worker retry policy", () => {
   it("uses bounded exponential backoff", () => {
@@ -13,5 +13,11 @@ describe("durable worker retry policy", () => {
     expect(shouldDeadLetter(1, 3)).toBe(false);
     expect(shouldDeadLetter(3, 3)).toBe(true);
     expect(shouldDeadLetter(4, 3)).toBe(true);
+  });
+
+  it("preserves payload correlation and falls back to the durable job id", () => {
+    expect(resolveJobTraceContext({ id: 41, traceId: "trace-from-job" }, { requestId: "req-7", traceId: "trace-from-payload" })).toEqual({ requestId: "req-7", traceId: "trace-from-payload" });
+    expect(resolveJobTraceContext({ id: 41, traceId: "trace-from-job" }, {})).toEqual({ requestId: "job:41", traceId: "trace-from-job" });
+    expect(resolveJobTraceContext({ id: 41, traceId: null }, {})).toEqual({ requestId: "job:41", traceId: "job:41" });
   });
 });

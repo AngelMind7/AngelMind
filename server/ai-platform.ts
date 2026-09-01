@@ -7,6 +7,7 @@ import { planMultiAgentRun } from "./ai-orchestration";
 import { invokeLLM, type Message } from "./_core/llm";
 import { selectBestRegisteredModel } from "./ai-routing";
 import { discoverGatewayModels } from "./ai-catalog";
+import { currentTraceContext } from "./_core/trace-context";
 
 async function requireWorkspace(userId: number, workspaceId: number, intent: "read" | "respond" = "read") {
   const db = await getDb();
@@ -130,10 +131,11 @@ export async function enqueueJob(userId: number, input: { workspaceId?: number; 
   if (input.workspaceId) await requireWorkspace(userId, input.workspaceId, "respond");
   const idempotencyKey = input.idempotencyKey.trim();
   if (idempotencyKey.length < 8) throw new Error("Idempotency key must be at least 8 characters.");
+  const traceId = currentTraceContext()?.traceId ?? null;
   const [existing] = await db.select().from(jobs).where(eq(jobs.idempotencyKey, idempotencyKey)).limit(1);
   if (existing) return existing;
   try {
-    await db.insert(jobs).values({ workspaceId: input.workspaceId ?? null, kind: input.kind.trim(), idempotencyKey, payload: JSON.stringify(input.payload), status: "queued", attempts: 0, maxAttempts: input.maxAttempts ?? 3, availableAt: new Date() });
+    await db.insert(jobs).values({ workspaceId: input.workspaceId ?? null, kind: input.kind.trim(), traceId, idempotencyKey, payload: JSON.stringify(input.payload), status: "queued", attempts: 0, maxAttempts: input.maxAttempts ?? 3, availableAt: new Date() });
   } catch (error) {
     const [concurrent] = await db.select().from(jobs).where(eq(jobs.idempotencyKey, idempotencyKey)).limit(1);
     if (concurrent) return concurrent;
@@ -157,9 +159,10 @@ export async function publishOutboxEvent(userId: number, input: { workspaceId?: 
   if (input.workspaceId) await requireWorkspace(userId, input.workspaceId, "respond");
   const existing = await db.select().from(outboxEvents).where(eq(outboxEvents.idempotencyKey, input.idempotencyKey)).limit(1);
   if (existing[0]) return existing[0];
+  const traceId = currentTraceContext()?.traceId ?? null;
   const idempotencyKey = input.idempotencyKey.trim();
   try {
-    await db.insert(outboxEvents).values({ workspaceId: input.workspaceId ?? null, eventType: input.eventType.trim(), aggregateType: input.aggregateType.trim(), aggregateId: input.aggregateId, idempotencyKey, schemaVersion: input.schemaVersion ?? 1, payload: JSON.stringify(input.payload), status: "pending", attempts: 0 });
+    await db.insert(outboxEvents).values({ workspaceId: input.workspaceId ?? null, eventType: input.eventType.trim(), traceId, aggregateType: input.aggregateType.trim(), aggregateId: input.aggregateId, idempotencyKey, schemaVersion: input.schemaVersion ?? 1, payload: JSON.stringify(input.payload), status: "pending", attempts: 0 });
   } catch (error) {
     const [concurrent] = await db.select().from(outboxEvents).where(eq(outboxEvents.idempotencyKey, idempotencyKey)).limit(1);
     if (concurrent) return concurrent;

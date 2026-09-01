@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray } from "drizzle-orm";
 import { evolutionSnapshots, failureObservations, intelligenceFeedItems, playbooks, researchSessions, researchTaskDependencies, researchTasks, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
@@ -69,14 +69,25 @@ export async function listIntelligenceFeed(userId: number, workspaceId: number, 
 }
 
 export async function createIntelligenceFeedItem(userId: number, input: { workspaceId: number } & IntelligenceFeedItem) {
-  const { db } = await requireWorkspace(userId, input.workspaceId, "respond");
-  const valid = normalizeIntelligenceFeed(input);
-  const data = JSON.stringify(valid.data);
-  const dedupeKey = createHash("sha256").update(JSON.stringify({ source: valid.source, assetRef: valid.assetRef, observedAt: valid.observedAt, reference: valid.reference ?? null, data })).digest("hex");
-  await db.insert(intelligenceFeedItems).values({ workspaceId: input.workspaceId, source: valid.source, assetRef: valid.assetRef, observedAt: new Date(valid.observedAt), confidence: valid.confidence, reference: valid.reference ?? null, dedupeKey, data }).onDuplicateKeyUpdate({ set: { confidence: valid.confidence, reference: valid.reference ?? null, data, observedAt: new Date(valid.observedAt) } });
-  const [created] = await db.select().from(intelligenceFeedItems).where(and(eq(intelligenceFeedItems.workspaceId, input.workspaceId), eq(intelligenceFeedItems.assetRef, valid.assetRef))).orderBy(desc(intelligenceFeedItems.createdAt)).limit(1);
+  const [created] = await ingestIntelligenceFeed(userId, { workspaceId: input.workspaceId, items: [input] });
   if (!created) throw new Error("Intelligence feed item could not be created.");
-  await audit(db, input.workspaceId, userId, "intelligence-feed-created", { feedItemId: created.id, source: valid.source, assetRef: valid.assetRef });
+  return created;
+}
+
+export async function ingestIntelligenceFeed(userId: number, input: { workspaceId: number; items: IntelligenceFeedItem[] }) {
+  const { db } = await requireWorkspace(userId, input.workspaceId, "respond");
+  if (!input.items.length || input.items.length > 100) throw new Error("Intelligence ingestion requires between 1 and 100 items.");
+  const normalized = input.items.map(item => {
+    const valid = normalizeIntelligenceFeed(item);
+    const data = JSON.stringify(valid.data);
+    const dedupeKey = createHash("sha256").update(JSON.stringify({ source: valid.source, assetRef: valid.assetRef, observedAt: valid.observedAt, reference: valid.reference ?? null, data })).digest("hex");
+    return { workspaceId: input.workspaceId, source: valid.source, assetRef: valid.assetRef, observedAt: new Date(valid.observedAt), confidence: valid.confidence, reference: valid.reference ?? null, dedupeKey, data };
+  });
+  for (const item of normalized) {
+    await db.insert(intelligenceFeedItems).values(item).onDuplicateKeyUpdate({ set: { confidence: item.confidence, reference: item.reference, data: item.data, observedAt: item.observedAt } });
+  }
+  const created = await db.select().from(intelligenceFeedItems).where(and(eq(intelligenceFeedItems.workspaceId, input.workspaceId), inArray(intelligenceFeedItems.dedupeKey, normalized.map(item => item.dedupeKey)))).orderBy(desc(intelligenceFeedItems.observedAt));
+  await audit(db, input.workspaceId, userId, "intelligence-feed-batch-ingested", { count: created.length, dedupeKeys: normalized.map(item => item.dedupeKey) });
   return created;
 }
 

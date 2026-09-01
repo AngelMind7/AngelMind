@@ -104,7 +104,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 70 | Cache | **Deferred** | Belum ada cache layer; tidak ditambahkan tanpa workload requirement dan invalidation design. |
 | 71 | Data consistency | **Partial** | MySQL source of truth dan derived analytics ada; explicit consistency classification belum. |
 | 72 | File storage | **Implemented** | Supabase Storage backend upload/signed URL, metadata MySQL, hash, audit tersedia. |
-| 73 | Search index | **Planned** | Belum ada index/reindex/delete/permission-aware search layer. |
+| 73 | Search index | **Partial** | Workspace-scoped `searchDocuments` index, rebuild/reindex, permission checks, query scoring, entity-type/freshness filters, REST read-only search, saved views, and workspace notes indexing are implemented; automatic mutation indexing, full delete/reindex consistency, cursor pagination, semantic search, and unified cross-domain search UI remain open. |
 | 74 | Data lifecycle | **Partial** | Active/paused/archived workspace dan retention metadata ada; export/delete lifecycle semua entity belum. |
 | 75 | Privacy | **Partial** | Retention, workspace isolation, legal surfaces, archive planning ada; export/delete account/data access center belum. |
 | 76 | Abuse protection | **Partial** | Body limits, safe boundaries, allowlists, no target execution ada; rate limit/upload malware scan/account abuse belum penuh. |

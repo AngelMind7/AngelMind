@@ -3,6 +3,7 @@ import { executeEvidenceScanJob } from "./control-plane/service";
 import { executeIntelligenceFetchJob } from "./research-intelligence";
 import { executePrivacyRequest } from "./privacy-lifecycle";
 import { executeEmailDeliveryJob } from "./email-delivery";
+import { executePlaybookRunJob } from "./playbook-executor";
 
 export type WorkerJob = {
   id: number;
@@ -118,6 +119,10 @@ if (process.env.RUN_WORKER === "true") {
     "email.deliver": async (_job, payload) => {
       if (payload.type !== "email_delivery") throw new Error("Unsupported email delivery payload type.");
       await executeEmailDeliveryJob(payload);
+    },
+    "playbook.run": async (_job, payload) => {
+      if (payload.type !== "playbook_run") throw new Error("Unsupported playbook run payload type.");
+      await executePlaybookRunJob(payload);
     },
   });
   console.info(`[worker] started; poll interval=${DEFAULT_POLL_INTERVAL_MS}ms`);

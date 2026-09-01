@@ -7,6 +7,7 @@ import { assertPassivePlaybookTaskType, compareAssetSnapshots, normalizeIntellig
 import { currentTraceContext } from "./_core/trace-context";
 import { enqueueJob } from "./ai-platform";
 import { fetchIntelligenceFeed } from "./intelligence-provider";
+import { playbookJobPayload } from "./playbook-executor";
 
 async function requireWorkspace(userId: number, workspaceId: number, intent: "read" | "respond" | "manage" = "read") {
   if (!(await canAccessWorkspace(userId, workspaceId, intent))) throw new Error("Workspace tidak ditemukan atau tidak dapat diakses.");
@@ -157,8 +158,10 @@ export async function runPlaybook(userId: number, input: { workspaceId: number; 
   }
   await db.insert(playbookRuns).values({ workspaceId: input.workspaceId, playbookId: playbook.id, sessionId: session.id, status: "queued", taskIds: JSON.stringify(createdIds), checkpoint: JSON.stringify({ completedTaskIds: [], failedTaskIds: [], nextTaskIndex: 0 }), retryCount: 0, lastError: null, createdByUserId: userId });
   const [run] = await db.select().from(playbookRuns).where(and(eq(playbookRuns.workspaceId, input.workspaceId), eq(playbookRuns.playbookId, playbook.id), eq(playbookRuns.sessionId, session.id))).orderBy(desc(playbookRuns.id)).limit(1);
-  await audit(db, input.workspaceId, userId, "playbook-run-created", { playbookId: playbook.id, sessionId: session.id, playbookRunId: run?.id ?? null, taskIds: createdIds });
-  return { playbookRunId: run?.id ?? null, playbookId: playbook.id, sessionId: session.id, taskIds: createdIds, taskCount: createdIds.length };
+  if (!run) throw new Error("Playbook run could not be created.");
+  await enqueueJob(userId, { workspaceId: input.workspaceId, kind: "playbook.run", idempotencyKey: `playbook-run:${run.id}`, payload: playbookJobPayload(run.id), maxAttempts: 3 });
+  await audit(db, input.workspaceId, userId, "playbook-run-created", { playbookId: playbook.id, sessionId: session.id, playbookRunId: run.id, taskIds: createdIds });
+  return { playbookRunId: run.id, playbookId: playbook.id, sessionId: session.id, taskIds: createdIds, taskCount: createdIds.length };
 }
 
 export async function listPlaybookRuns(userId: number, workspaceId: number, sessionId?: number) {

@@ -330,6 +330,13 @@
       "when": 1788069100000,
       "tag": "0046_notification_delivery_ledger",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1788069200000,
+      "tag": "0047_audit_archive_retention",
+      "breakpoints": true
     }
   ]
 }

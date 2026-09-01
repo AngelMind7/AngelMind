@@ -820,6 +820,10 @@ export const auditArchives = mysqlTable("auditArchives", {
   storageReference: text("storageReference").notNull(),
   manifestHash: varchar("manifestHash", { length: 64 }).notNull(),
   signature: varchar("signature", { length: 64 }).notNull(),
+  immutableBatchKey: varchar("immutableBatchKey", { length: 180 }).notNull(),
+  retentionUntil: timestamp("retentionUntil").notNull(),
+  verifiedAt: timestamp("verifiedAt"),
+  lastRestoreDrillAt: timestamp("lastRestoreDrillAt"),
   createdByUserId: int("createdByUserId").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [index("audit_archive_workspace_created_idx").on(table.workspaceId, table.createdAt)]);

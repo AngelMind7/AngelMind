@@ -75,3 +75,7 @@ Added a staging-safe Playwright contract covering authenticated workspace creati
 ## N — Notification delivery ledger and provider abstraction (2026-09-02)
 
 Notifications now create durable per-channel ledger rows for in-app, email, and webhook delivery with idempotency keys, status, attempt count, retry timestamp, provider reference, redacted payload, and last error. A provider registry and worker handler provide a common execution contract. In-app delivery is enabled; email remains delegated to the existing email delivery ledger, and webhook remains disabled until approved activation and provider configuration exist.
+
+## O — Audit archive retention and restore contract (2026-09-02)
+
+Audit archive rows now persist a deterministic immutable batch key, workspace-derived retention deadline, successful verification timestamp, and last restore-drill timestamp. Archive creation remains append-only at the application boundary; verification rechecks the signed manifest before recording status, and restore drills remain plan-only with explicit human confirmation and no data mutation. Object-lock/WORM enforcement, retention policy application, and an actual disaster-recovery restore must still be configured and exercised in the owner's live storage/database environment.

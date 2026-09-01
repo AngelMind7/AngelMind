@@ -147,8 +147,10 @@ export async function createAuditArchive(ownerUserId: number, workspaceId: numbe
   const manifestJson = JSON.stringify({ schema: "angelmind.audit-archive.v1", workspaceId: workspace.id, generatedAt: new Date().toISOString(), auditEvents: events, evidence, runs: runRows, approvals: approvalRows, notifications: notificationRows });
   const manifestHash = sha256(manifestJson);
   const signature = signArchiveManifest(manifestHash, ENV.archiveSigningSecret);
+  const immutableBatchKey = `workspace:${workspace.id}:audit:${manifestHash}`;
+  const retentionUntil = new Date(Date.now() + workspace.retentionDays * 86_400_000);
   const stored = await storagePut(`workspace-${workspace.id}/audit-archives/${Date.now()}-manifest.json`, manifestJson, "application/json");
-  await db.insert(auditArchives).values({ workspaceId: workspace.id, storageKey: stored.key, storageReference: stored.url, manifestHash, signature, createdByUserId: ownerUserId });
+  await db.insert(auditArchives).values({ workspaceId: workspace.id, storageKey: stored.key, storageReference: stored.url, manifestHash, signature, immutableBatchKey, retentionUntil, createdByUserId: ownerUserId });
   await addAudit(workspace.id, "audit-archive", "archive-created", { manifestHash, storageReference: stored.url, recordCounts: { events: events.length, evidence: evidence.length, runs: runRows.length, approvals: approvalRows.length, notifications: notificationRows.length } });
   return { storageReference: stored.url, manifestHash };
 }
@@ -192,8 +194,9 @@ export async function verifyAuditArchive(ownerUserId: number, archiveId: number)
   if (!response.ok) throw new Error("Archive could not be retrieved from managed storage.");
   const manifestJson = await response.text();
   const valid = verifyArchiveIntegrity(manifestJson, archive.manifestHash, archive.signature, ENV.archiveSigningSecret);
-  await addAudit(archive.workspaceId, "audit-archive", "archive-verified", { archiveId: archive.id, valid });
-  return { valid, manifestHash: archive.manifestHash };
+  if (valid) await db.update(auditArchives).set({ verifiedAt: new Date() }).where(eq(auditArchives.id, archive.id));
+  await addAudit(archive.workspaceId, "audit-archive", "archive-verified", { archiveId: archive.id, valid, retentionUntil: archive.retentionUntil.toISOString() });
+  return { valid, manifestHash: archive.manifestHash, retentionUntil: archive.retentionUntil };
 }
 
 
@@ -201,6 +204,8 @@ export async function runAuditArchiveDrill(ownerUserId: number, archiveId: numbe
   const verification = await verifyAuditArchive(ownerUserId, archiveId);
   if (!verification.valid) throw new Error("DR drill refused because archive integrity is invalid.");
   const plan = await restoreAuditArchivePlan(ownerUserId, archiveId, destinationWorkspaceId);
+  const db = await getDb();
+  if (db) await db.update(auditArchives).set({ lastRestoreDrillAt: new Date() }).where(eq(auditArchives.id, archiveId));
   return {
     archiveId,
     valid: plan.valid,

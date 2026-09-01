@@ -1925,6 +1925,7 @@ export const appRouter = router({
           findingId: z.number().int().positive(),
           workspaceId: z.number().int().positive(),
           body: z.string().trim().min(1).max(4_000),
+          parentCommentId: z.number().int().positive().optional(),
         })
       )
       .mutation(({ ctx, input }) =>

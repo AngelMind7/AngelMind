@@ -982,11 +982,12 @@ export const findingComments = mysqlTable("findingComments", {
   id: int("id").autoincrement().primaryKey(),
   findingId: int("findingId").notNull(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  parentCommentId: int("parentCommentId"),
   authorUserId: int("authorUserId").notNull(),
   body: text("body").notNull(),
   mentions: text("mentions").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-}, table => [index("finding_comment_finding_created_idx").on(table.findingId, table.createdAt), index("finding_comment_workspace_idx").on(table.workspaceId)]);
+}, table => [index("finding_comment_finding_created_idx").on(table.findingId, table.createdAt), index("finding_comment_workspace_idx").on(table.workspaceId), index("finding_comment_parent_created_idx").on(table.parentCommentId, table.createdAt)]);
 
 export type FindingComment = typeof findingComments.$inferSelect;
 

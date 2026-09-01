@@ -667,6 +667,20 @@ export async function checkRegisteredAdapterHealth() {
   return health;
 }
 
+export async function checkRuntimeReadiness() {
+  const requiredBinaries = (process.env.RUNTIME_REQUIRED_BINARIES ?? "")
+    .split(",")
+    .map(value => value.trim())
+    .filter(Boolean);
+  if (!requiredBinaries.length) {
+    return { configured: false as const, ready: true as const, missing: [] as string[] };
+  }
+  const registeredByBinary = new Map(adapters.map(adapter => [adapter.binary, adapter]));
+  const health = await Promise.all(requiredBinaries.map(async binary => ({ binary, available: (await probeBinary(binary)).available, registered: registeredByBinary.has(binary) })));
+  const missing = health.filter(item => !item.available || !item.registered).map(item => item.binary);
+  return { configured: true as const, ready: missing.length === 0, missing };
+}
+
 export async function runRegisteredTool(
   request: ToolRuntimeRequest
 ): Promise<ToolRuntimeResult> {

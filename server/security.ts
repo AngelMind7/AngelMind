@@ -1,6 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { sql } from "drizzle-orm";
 import { getDb } from "./db";
+import { checkRuntimeReadiness } from "./tool-runtime";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -52,8 +53,9 @@ export function registerHealthRoutes(app: Express) {
         databaseReachable = false;
       }
     }
-    const ready = process.env.NODE_ENV !== "production" ? true : databaseConfigured && databaseReachable;
-    res.status(ready ? 200 : 503).json({ status: ready ? "ready" : "not-ready", databaseConfigured, databaseReachable });
+    const runtime = await checkRuntimeReadiness();
+    const ready = process.env.NODE_ENV !== "production" ? true : databaseConfigured && databaseReachable && runtime.ready;
+    res.status(ready ? 200 : 503).json({ status: ready ? "ready" : "not-ready", databaseConfigured, databaseReachable, runtime });
   });
 }
 
@@ -74,6 +76,9 @@ export function registerMetricsRoute(app: Express) {
       "# HELP angelmind_worker_enabled Whether this process runs the durable worker.",
       "# TYPE angelmind_worker_enabled gauge",
       `angelmind_worker_enabled ${process.env.RUN_WORKER === "true" ? 1 : 0}`,
+      "# HELP angelmind_runtime_ready Whether configured runtime binaries are available and registered.",
+      "# TYPE angelmind_runtime_ready gauge",
+      `angelmind_runtime_ready ${process.env.RUNTIME_REQUIRED_BINARIES ? 0 : 1}`,
       "# HELP angelmind_process_memory_bytes Node.js process memory by category.",
       "# TYPE angelmind_process_memory_bytes gauge",
       ...Object.entries(memory).map(([category, value]) => `angelmind_process_memory_bytes{category=\"${metricName(category)}\"} ${value}`),

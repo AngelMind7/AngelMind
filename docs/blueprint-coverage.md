@@ -57,7 +57,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 33 | Change detection | **Implemented** | Workspace policy/configuration change detection tersedia; asset/technology change belum. |
 | 34 | Global search | **Partial** | `searchDocuments` and rebuild/index persistence exist; permission-aware search UI and complete cross-domain query coverage remain incomplete. |
 | 35 | Command palette | **Implemented** | Ctrl/Cmd+K authenticated navigation tersedia. |
-| 36 | Saved views | **Planned** | Belum ada saved query/view persistence. |
+| 36 | Saved views | **Implemented** | Workspace/user-scoped saved query and JSON filter persistence, authorization, audit event, migration, API, and authenticated UI tersedia. |
 | 37 | Tagging | **Planned** | Belum ada tag domain untuk technology, area, class, severity, program, custom. |
 | 38 | Notes | **Partial** | Finding comments tersedia; personal/research/program/asset/evidence notes belum. |
 | 39 | Collaboration | **Partial** | Membership, assignment dasar, finding comments tersedia; invitation, mentions, review/activity penuh belum. |

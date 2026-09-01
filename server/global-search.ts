@@ -1,5 +1,5 @@
 import { and, desc, eq, gte, inArray, like, or } from "drizzle-orm";
-import { evidenceArtifacts, findings, intelligenceFeedItems, knowledgeNodes, programs, reportVersions, researchAssets, researchHypotheses, researchObservations, researchSessions, researchTasks, searchDocuments, workspaces } from "../drizzle/schema";
+import { evidenceArtifacts, findings, intelligenceFeedItems, knowledgeNodes, programs, reportVersions, researchAssets, researchHypotheses, researchObservations, researchSessions, researchTasks, searchDocuments, workspaceNotes, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 
@@ -17,7 +17,7 @@ export async function rebuildWorkspaceSearchIndex(userId: number, workspaceId: n
   if (!(await canAccessWorkspace(userId, workspaceId, "respond"))) throw new Error("Workspace tidak dapat dikelola.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
-  const [workspaceRow, findingRows, assetRows, sessionRows, reportRows, knowledgeRows, observationRows, hypothesisRows, taskRows, evidenceRows, intelligenceRows] = await Promise.all([
+  const [workspaceRow, findingRows, assetRows, sessionRows, reportRows, knowledgeRows, observationRows, hypothesisRows, taskRows, evidenceRows, intelligenceRows, noteRows] = await Promise.all([
     db.select({ programId: workspaces.programId }).from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1),
     db.select({ id: findings.id, title: findings.title, body: findings.impactSummary }).from(findings).where(eq(findings.workspaceId, workspaceId)),
     db.select({ id: researchAssets.id, title: researchAssets.hostname, body: researchAssets.value }).from(researchAssets).where(eq(researchAssets.workspaceId, workspaceId)),
@@ -29,6 +29,7 @@ export async function rebuildWorkspaceSearchIndex(userId: number, workspaceId: n
     db.select({ id: researchTasks.id, title: researchTasks.title, body: researchTasks.outputs }).from(researchTasks).where(eq(researchTasks.workspaceId, workspaceId)),
     db.select({ id: evidenceArtifacts.id, title: evidenceArtifacts.artifactType, body: evidenceArtifacts.quarantineReason }).from(evidenceArtifacts).where(eq(evidenceArtifacts.workspaceId, workspaceId)),
     db.select({ id: intelligenceFeedItems.id, title: intelligenceFeedItems.source, body: intelligenceFeedItems.data }).from(intelligenceFeedItems).where(eq(intelligenceFeedItems.workspaceId, workspaceId)),
+    db.select({ id: workspaceNotes.id, title: workspaceNotes.title, body: workspaceNotes.body }).from(workspaceNotes).where(eq(workspaceNotes.workspaceId, workspaceId)),
   ]);
   await db.delete(searchDocuments).where(eq(searchDocuments.workspaceId, workspaceId));
   const programId = workspaceRow[0]?.programId;
@@ -45,6 +46,7 @@ export async function rebuildWorkspaceSearchIndex(userId: number, workspaceId: n
     ...taskRows.map(row => ({ workspaceId, entityType: "task", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
     ...evidenceRows.map(row => ({ workspaceId, entityType: "evidence", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
     ...intelligenceRows.map(row => ({ workspaceId, entityType: "intelligence", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
+    ...noteRows.map(row => ({ workspaceId, entityType: "note", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
   ];
   if (rows.length > 0) await db.insert(searchDocuments).values(rows);
   return { workspaceId, indexed: rows.length };

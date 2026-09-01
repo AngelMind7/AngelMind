@@ -122,6 +122,7 @@ export async function transitionResearchSession(userId: number, sessionId: numbe
   if (expectedRevision !== undefined) assertExpectedRevision(expectedRevision, session.revision);
   await db.update(researchSessions).set({ state: nextState, revision: nextRevision(session.revision), completedAt: nextState === "completed" || nextState === "archived" ? new Date() : null, updatedAt: new Date() }).where(and(eq(researchSessions.id, session.id), eq(researchSessions.revision, session.revision)));
   await addResearchAudit(db, session.workspaceId, userId, "research-session-transitioned", { sessionId, from: session.state, to: nextState });
+  await upsertSearchDocument({ workspaceId: session.workspaceId, entityType: "session", entityId: session.id, title: session.title, body: `${session.scopeDigest} status:${nextState}` });
   return { success: true as const, sessionId, state: nextState };
 }
 
@@ -212,6 +213,7 @@ export async function transitionResearchHypothesis(userId: number, hypothesisId:
   if (!hypothesisTransitions[hypothesis.status]?.includes(nextStatus)) throw new Error(`Invalid hypothesis transition: ${hypothesis.status} -> ${nextStatus}`);
   await db.update(researchHypotheses).set({ status: nextStatus, outcome: outcome?.trim() || hypothesis.outcome, updatedAt: new Date() }).where(eq(researchHypotheses.id, hypothesisId));
   await addResearchAudit(db, hypothesis.workspaceId, userId, "research-hypothesis-transitioned", { hypothesisId, from: hypothesis.status, to: nextStatus });
+  await upsertSearchDocument({ workspaceId: hypothesis.workspaceId, entityType: "hypothesis", entityId: hypothesis.id, title: hypothesis.description, body: `${hypothesis.reason} status:${nextStatus} ${outcome?.trim() ?? hypothesis.outcome ?? ""}` });
   return { success: true as const, hypothesisId, status: nextStatus };
 }
 
@@ -266,5 +268,6 @@ export async function transitionResearchTask(userId: number, taskId: number, nex
   }
   await db.update(researchTasks).set({ status: nextStatus, revision: nextRevision(task.revision), outputs: outputs ? JSON.stringify(outputs) : task.outputs, retryCount: nextStatus === "retrying" ? task.retryCount + 1 : task.retryCount, completedAt: nextStatus === "completed" || nextStatus === "cancelled" ? new Date() : null, updatedAt: new Date() }).where(and(eq(researchTasks.id, taskId), eq(researchTasks.revision, task.revision)));
   await addResearchAudit(db, task.workspaceId, userId, "research-task-transitioned", { taskId, from: task.status, to: nextStatus });
+  await upsertSearchDocument({ workspaceId: task.workspaceId, entityType: "task", entityId: task.id, title: task.title, body: `${task.inputs} ${outputs ? JSON.stringify(outputs) : task.outputs} status:${nextStatus}` });
   return { success: true as const, taskId, status: nextStatus };
 }

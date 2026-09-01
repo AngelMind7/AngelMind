@@ -2,7 +2,7 @@ import { afterAll, describe, expect, it } from "vitest";
 import { and, eq, inArray } from "drizzle-orm";
 import { aiRunOutputs, aiRuns, users, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
-import { purgeExpiredAiRunMemory } from "./ai-platform";
+import { getAiRunOutput, purgeExpiredAiRunMemory } from "./ai-platform";
 
 const integration = Boolean(process.env.DATABASE_URL);
 
@@ -31,6 +31,8 @@ describe.skipIf(!integration)("AI memory retention database integration", () => 
       { workspaceId, runId: active.id, outputJson: JSON.stringify({ secret: "active" }) },
     ]);
 
+    expect(await getAiRunOutput(userId, expired.id)).toBeNull();
+    expect(await getAiRunOutput(userId, active.id)).toMatchObject({ runId: active.id });
     const first = await purgeExpiredAiRunMemory(1);
     expect(first.inspected).toBe(1);
     expect(first.purged).toBe(1);

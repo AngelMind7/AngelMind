@@ -396,6 +396,7 @@ export async function getAiRunOutput(userId: number, runId: number) {
   if (!db) return null;
   const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, runId)).limit(1);
   if (!run || !(await canAccessWorkspace(userId, run.workspaceId, "read"))) throw new Error("AI run tidak ditemukan atau tidak dapat diakses.");
+  if (run.retentionUntil && run.retentionUntil <= new Date()) return null;
   const [output] = await db.select().from(aiRunOutputs).where(eq(aiRunOutputs.runId, runId)).limit(1);
   return output ? { ...output, output: JSON.parse(output.outputJson) as unknown } : null;
 }

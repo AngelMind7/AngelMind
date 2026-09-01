@@ -132,7 +132,13 @@ export async function enqueueJob(userId: number, input: { workspaceId?: number; 
   if (idempotencyKey.length < 8) throw new Error("Idempotency key must be at least 8 characters.");
   const [existing] = await db.select().from(jobs).where(eq(jobs.idempotencyKey, idempotencyKey)).limit(1);
   if (existing) return existing;
-  await db.insert(jobs).values({ workspaceId: input.workspaceId ?? null, kind: input.kind.trim(), idempotencyKey, payload: JSON.stringify(input.payload), status: "queued", attempts: 0, maxAttempts: input.maxAttempts ?? 3, availableAt: new Date() });
+  try {
+    await db.insert(jobs).values({ workspaceId: input.workspaceId ?? null, kind: input.kind.trim(), idempotencyKey, payload: JSON.stringify(input.payload), status: "queued", attempts: 0, maxAttempts: input.maxAttempts ?? 3, availableAt: new Date() });
+  } catch (error) {
+    const [concurrent] = await db.select().from(jobs).where(eq(jobs.idempotencyKey, idempotencyKey)).limit(1);
+    if (concurrent) return concurrent;
+    throw error;
+  }
   const [job] = await db.select().from(jobs).where(eq(jobs.idempotencyKey, idempotencyKey)).limit(1);
   return job;
 }
@@ -151,8 +157,15 @@ export async function publishOutboxEvent(userId: number, input: { workspaceId?: 
   if (input.workspaceId) await requireWorkspace(userId, input.workspaceId, "respond");
   const existing = await db.select().from(outboxEvents).where(eq(outboxEvents.idempotencyKey, input.idempotencyKey)).limit(1);
   if (existing[0]) return existing[0];
-  await db.insert(outboxEvents).values({ workspaceId: input.workspaceId ?? null, eventType: input.eventType.trim(), aggregateType: input.aggregateType.trim(), aggregateId: input.aggregateId, idempotencyKey: input.idempotencyKey.trim(), schemaVersion: input.schemaVersion ?? 1, payload: JSON.stringify(input.payload), status: "pending", attempts: 0 });
-  const [event] = await db.select().from(outboxEvents).where(eq(outboxEvents.idempotencyKey, input.idempotencyKey)).limit(1);
+  const idempotencyKey = input.idempotencyKey.trim();
+  try {
+    await db.insert(outboxEvents).values({ workspaceId: input.workspaceId ?? null, eventType: input.eventType.trim(), aggregateType: input.aggregateType.trim(), aggregateId: input.aggregateId, idempotencyKey, schemaVersion: input.schemaVersion ?? 1, payload: JSON.stringify(input.payload), status: "pending", attempts: 0 });
+  } catch (error) {
+    const [concurrent] = await db.select().from(outboxEvents).where(eq(outboxEvents.idempotencyKey, idempotencyKey)).limit(1);
+    if (concurrent) return concurrent;
+    throw error;
+  }
+  const [event] = await db.select().from(outboxEvents).where(eq(outboxEvents.idempotencyKey, idempotencyKey)).limit(1);
   return event;
 }
 

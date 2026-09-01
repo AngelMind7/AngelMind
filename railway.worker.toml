@@ -1,0 +1,13 @@
+# Use this file as the Railway configuration path for the dedicated worker service.
+# The worker uses the same image and database/storage credentials as the web service,
+# but never receives public traffic.
+
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+watchPatterns = ["server/**", "drizzle/**", "shared/**", "runtime/**", "config/**", "Dockerfile", "package.json", "pnpm-lock.yaml", "railway.worker.toml"]
+
+[deploy]
+startCommand = "RUN_WORKER=true node dist/worker.js"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 5

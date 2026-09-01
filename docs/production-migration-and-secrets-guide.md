@@ -329,3 +329,8 @@ Jangan menghapus audit/evidence untuk menyembunyikan kegagalan. Pause workspace 
 [^3]: [Firebase — Best practices for signInWithRedirect](https://firebase.google.com/docs/auth/web/redirect-best-practices), termasuk authorized domains dan production redirect behavior.
 [^4]: [AngelMind deployment guide](./deployment.md).
 [^5]: [AngelMind production runbook](./production-runbook.md).
+
+
+### 2.1 Railway worker configuration artifact
+
+Repository juga menyediakan `railway.worker.toml` untuk service worker terpisah. Set konfigurasi path Railway service worker ke file tersebut, lalu gunakan variabel shared yang sama dengan web/API—terutama `DATABASE_URL`, `APP_ENCRYPTION_KEY`, Supabase server credentials, dan provider AI server-side. Artifact ini menjalankan `RUN_WORKER=true node dist/worker.js`, tidak membuka public domain, dan memakai restart policy yang lebih toleran untuk proses queue. Web/API tetap memakai `railway.toml` utama. Jangan menjalankan dua worker identik tanpa koordinasi deployment dan observability karena concurrency harus diuji pada environment staging.

@@ -25,6 +25,18 @@ describe("localized password reset email template", () => {
     expect(result.html).toContain("Reset password");
   });
 
+  it("falls back to Indonesian for an unknown locale", () => {
+    const result = buildPasswordResetEmail({
+      recipientName: "Dewi",
+      resetUrl: "https://angelmind.test/reset",
+      locale: "xx-YY",
+    });
+
+    expect(result.subject).toBe("Reset password AngelMind");
+    expect(result.text).toContain("Kami menerima permintaan");
+    expect(result.text).not.toContain("We received a request");
+  });
+
   it("renders English and regional English locales", () => {
     const result = buildPasswordResetEmail({
       recipientName: "Dewi <Admin>",

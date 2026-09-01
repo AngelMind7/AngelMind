@@ -226,7 +226,7 @@ export async function decideApproval(userId: number, userRole: "user" | "admin",
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   await db.update(approvals).set({ status: decision, decidedByUserId: userId, decisionNote: note.trim() || null, decidedAt: new Date() }).where(eq(approvals.id, approval.id));
-  await addAudit(approval.workspaceId, "governance", "tier3-decision", { approvalId, decision, note, execution: "not-implemented" });
+  await addAudit(approval.workspaceId, "governance", "tier3-decision", { approvalId, decision, note, execution: "blocked-by-safety-boundary", message: "Approval records the human decision only; no target-facing execution is performed." });
   return { success: true };
 }
 

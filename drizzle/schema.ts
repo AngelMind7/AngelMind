@@ -129,6 +129,20 @@ export const organizationMembers = mysqlTable("organizationMembers", {
   invitedByUserId: int("invitedByUserId").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [uniqueIndex("organization_member_uq").on(table.organizationId, table.userId), index("organization_member_user_idx").on(table.userId, table.role)]);
+export const invitationStatus = ["pending", "accepted", "expired", "revoked"] as const;
+export const organizationInvitations = mysqlTable("organizationInvitations", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organizationId").notNull(),
+  email: varchar("email", { length: 320 }).notNull(),
+  role: mysqlEnum("role", ["admin", "researcher", "reviewer", "auditor"] as const).notNull(),
+  tokenHash: varchar("tokenHash", { length: 64 }).notNull(),
+  status: mysqlEnum("status", invitationStatus).default("pending").notNull(),
+  invitedByUserId: int("invitedByUserId").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  acceptedByUserId: int("acceptedByUserId"),
+  acceptedAt: timestamp("acceptedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("organization_invite_token_uq").on(table.tokenHash), index("organization_invite_status_idx").on(table.organizationId, table.status), index("organization_invite_email_idx").on(table.email, table.status)]);
 
 export const programs = mysqlTable("programs", {
   id: int("id").autoincrement().primaryKey(),

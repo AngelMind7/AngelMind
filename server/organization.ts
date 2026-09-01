@@ -1,6 +1,7 @@
-import { and, asc, desc, eq } from "drizzle-orm";
+import { createHash, randomBytes } from "node:crypto";
+import { and, asc, desc, eq, lt } from "drizzle-orm";
 import { getDb, getUserByEmail } from "./db";
-import { programs, organizationMembers, organizations, workspaces } from "../drizzle/schema";
+import { organizationInvitations, programs, organizationMembers, organizations, workspaces } from "../drizzle/schema";
 import { diffProgramScope, normalizeProgramScope, parseStoredProgramScope } from "./control-plane/program-scope";
 
 const organizationRoles = ["owner", "admin", "researcher", "reviewer", "auditor"] as const;
@@ -101,3 +102,33 @@ export async function linkWorkspaceToProgram(userId: number, input: { workspaceI
   await db.update(workspaces).set({ organizationId: input.organizationId, programId: input.programId, programName: program.name, safeHarbor: program.safeHarbor, allowlist: program.includedAssets, exclusions: program.excludedAssets, updatedAt: new Date() }).where(eq(workspaces.id, input.workspaceId));
   return { success: true as const, workspaceId: input.workspaceId, organizationId: input.organizationId, programId: input.programId };
 }
+
+const invitationHash = (token: string) => createHash("sha256").update(token).digest("hex");
+export async function listOrganizationInvitations(userId: number, organizationId: number) {
+  const { db } = await requireMembership(userId, organizationId);
+  await db.update(organizationInvitations).set({ status: "expired" }).where(and(eq(organizationInvitations.organizationId, organizationId), eq(organizationInvitations.status, "pending"), lt(organizationInvitations.expiresAt, new Date())));
+  return db.select({ id: organizationInvitations.id, email: organizationInvitations.email, role: organizationInvitations.role, status: organizationInvitations.status, expiresAt: organizationInvitations.expiresAt, createdAt: organizationInvitations.createdAt }).from(organizationInvitations).where(eq(organizationInvitations.organizationId, organizationId)).orderBy(desc(organizationInvitations.createdAt));
+}
+export async function createOrganizationInvitation(userId: number, input: { organizationId: number; email: string; role: Exclude<OrganizationRole, "owner">; expiresInDays?: number }) {
+  const { db } = await requireMembership(userId, input.organizationId, "manage");
+  const email = input.email.trim().toLowerCase();
+  const existing = await db.select().from(organizationInvitations).where(and(eq(organizationInvitations.organizationId, input.organizationId), eq(organizationInvitations.email, email), eq(organizationInvitations.status, "pending"))).limit(1);
+  if (existing[0]) throw new Error("A pending invitation already exists for this email.");
+  const token = `inv_${randomBytes(32).toString("base64url")}`;
+  const expiresAt = new Date(Date.now() + Math.min(30, Math.max(1, input.expiresInDays ?? 7)) * 86_400_000);
+  await db.insert(organizationInvitations).values({ organizationId: input.organizationId, email, role: input.role, tokenHash: invitationHash(token), invitedByUserId: userId, expiresAt });
+  return { token, expiresAt, email, role: input.role };
+}
+export async function acceptOrganizationInvitation(userId: number, token: string) {
+  const db = await getDb(); if (!db) throw new Error("Database tidak tersedia.");
+  const user = await db.select().from((await import("../drizzle/schema")).users).where(eq((await import("../drizzle/schema")).users.id, userId)).limit(1);
+  const [invite] = await db.select().from(organizationInvitations).where(eq(organizationInvitations.tokenHash, invitationHash(token.trim()))).limit(1);
+  if (!invite) throw new Error("Invitation tidak ditemukan.");
+  if (invite.status !== "pending" || invite.expiresAt <= new Date()) { if (invite.status === "pending") await db.update(organizationInvitations).set({ status: "expired" }).where(eq(organizationInvitations.id, invite.id)); throw new Error("Invitation sudah tidak berlaku."); }
+  if (!user[0]?.email || user[0].email.toLowerCase() !== invite.email) throw new Error("Invitation email does not match signed-in user.");
+  await db.insert(organizationMembers).values({ organizationId: invite.organizationId, userId, role: invite.role, invitedByUserId: invite.invitedByUserId }).onDuplicateKeyUpdate({ set: { role: invite.role } });
+  await db.update(organizationInvitations).set({ status: "accepted", acceptedByUserId: userId, acceptedAt: new Date() }).where(and(eq(organizationInvitations.id, invite.id), eq(organizationInvitations.status, "pending")));
+  return { success: true as const, organizationId: invite.organizationId, role: invite.role };
+}
+export async function revokeOrganizationInvitation(userId: number, invitationId: number) { const db = await getDb(); if (!db) throw new Error("Database tidak tersedia."); const [invite] = await db.select().from(organizationInvitations).where(eq(organizationInvitations.id, invitationId)).limit(1); if (!invite) throw new Error("Invitation tidak ditemukan."); await requireMembership(userId, invite.organizationId, "manage"); await db.update(organizationInvitations).set({ status: "revoked" }).where(and(eq(organizationInvitations.id, invitationId), eq(organizationInvitations.status, "pending"))); return { success: true as const }; }
+export async function resendOrganizationInvitation(userId: number, invitationId: number) { const db = await getDb(); if (!db) throw new Error("Database tidak tersedia."); const [invite] = await db.select().from(organizationInvitations).where(eq(organizationInvitations.id, invitationId)).limit(1); if (!invite) throw new Error("Invitation tidak ditemukan."); await requireMembership(userId, invite.organizationId, "manage"); await db.update(organizationInvitations).set({ status: "revoked" }).where(eq(organizationInvitations.id, invitationId)); return createOrganizationInvitation(userId, { organizationId: invite.organizationId, email: invite.email, role: invite.role }); }

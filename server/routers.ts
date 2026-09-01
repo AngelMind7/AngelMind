@@ -1305,16 +1305,13 @@ export const appRouter = router({
         organization.listOrganizationMembers(ctx.user.id, input.organizationId)
       ),
     addMember: protectedProcedure
-      .input(
-        z.object({
-          organizationId: z.number().int().positive(),
-          email: z.string().email().max(320),
-          role: z.enum(["admin", "researcher", "reviewer", "auditor"]),
-        })
-      )
-      .mutation(({ ctx, input }) =>
-        organization.addOrganizationMember(ctx.user.id, input)
-      ),
+      .input(z.object({ organizationId: z.number().int().positive(), email: z.string().email().max(320), role: z.enum(["admin", "researcher", "reviewer", "auditor"]) }))
+      .mutation(({ ctx, input }) => organization.addOrganizationMember(ctx.user.id, input)),
+    invitations: protectedProcedure.input(z.object({ organizationId: z.number().int().positive() })).query(({ ctx, input }) => organization.listOrganizationInvitations(ctx.user.id, input.organizationId)),
+    createInvitation: protectedProcedure.input(z.object({ organizationId: z.number().int().positive(), email: z.string().email().max(320), role: z.enum(["admin", "researcher", "reviewer", "auditor"]), expiresInDays: z.number().int().min(1).max(30).optional() })).mutation(({ ctx, input }) => organization.createOrganizationInvitation(ctx.user.id, input)),
+    acceptInvitation: protectedProcedure.input(z.object({ token: z.string().trim().min(20).max(200) })).mutation(({ ctx, input }) => organization.acceptOrganizationInvitation(ctx.user.id, input.token)),
+    revokeInvitation: protectedProcedure.input(z.object({ invitationId: z.number().int().positive() })).mutation(({ ctx, input }) => organization.revokeOrganizationInvitation(ctx.user.id, input.invitationId)),
+    resendInvitation: protectedProcedure.input(z.object({ invitationId: z.number().int().positive() })).mutation(({ ctx, input }) => organization.resendOrganizationInvitation(ctx.user.id, input.invitationId)),
     programs: protectedProcedure
       .input(z.object({ organizationId: z.number().int().positive() }))
       .query(({ ctx, input }) =>

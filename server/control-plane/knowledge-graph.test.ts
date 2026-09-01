@@ -15,6 +15,12 @@ describe("knowledge graph utilities", () => {
     expect(graph.edges[0]).toMatchObject({ confidence: 0, provenance: ["z"] });
   });
 
+  it("rejects impossible traversal requests without producing paths", () => {
+    const graph = { nodes: [], edges: [{ id: "1", from: "a", to: "b", type: "rel", workspaceId: 1, confidence: 80, provenance: [] }] };
+    expect(findKnowledgePaths(graph, "a", "b", 0)).toEqual([]);
+    expect(findKnowledgePaths(graph, "missing", "b", 4)).toEqual([]);
+  });
+
   it("returns deterministic cycle-safe paths", () => {
     const graph = { nodes: [], edges: [
       { id: "3", from: "a", to: "c", type: "rel", workspaceId: 1, confidence: 80, provenance: [] },

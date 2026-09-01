@@ -4,6 +4,7 @@
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 
 const SIGNED_URL_TTL_SECONDS = 60 * 60;
+const MAX_SIGNED_URL_TTL_SECONDS = 60 * 60;
 
 function getSupabaseConfig() {
   const url = process.env.SUPABASE_URL?.trim();
@@ -44,10 +45,10 @@ function toUploadBody(data: Buffer | Uint8Array | string): string | Buffer {
   return typeof data === "string" ? data : Buffer.from(data);
 }
 
-async function createSignedUrl(client: SupabaseClient, bucket: string, key: string): Promise<string> {
+async function createSignedUrl(client: SupabaseClient, bucket: string, key: string, expiresInSeconds = SIGNED_URL_TTL_SECONDS): Promise<string> {
   const { data, error } = await client.storage
     .from(bucket)
-    .createSignedUrl(key, SIGNED_URL_TTL_SECONDS);
+    .createSignedUrl(key, expiresInSeconds);
 
   if (error || !data?.signedUrl) {
     throw new Error(`Supabase Storage signed URL failed: ${error?.message ?? "empty URL"}`);
@@ -81,7 +82,8 @@ export async function storageGet(relKey: string): Promise<{ key: string; url: st
   return { key, url: await createSignedUrl(client, bucket, key) };
 }
 
-export async function storageGetSignedUrl(relKey: string): Promise<string> {
+export async function storageGetSignedUrl(relKey: string, expiresInSeconds = SIGNED_URL_TTL_SECONDS): Promise<string> {
   const { client, bucket } = getSupabaseStorage();
-  return createSignedUrl(client, bucket, normalizeKey(relKey));
+  const ttl = Math.min(MAX_SIGNED_URL_TTL_SECONDS, Math.max(60, Math.floor(expiresInSeconds)));
+  return createSignedUrl(client, bucket, normalizeKey(relKey), ttl);
 }

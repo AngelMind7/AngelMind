@@ -3,6 +3,7 @@ import { and, desc, eq } from "drizzle-orm";
 import { apiKeys, organizationEntitlements, organizationMembers, privacyRequests, users } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
+import { storageGetSignedUrl } from "./storage";
 
 function hashSecret(secret: string) {
   return createHash("sha256").update(secret).digest("hex");
@@ -114,6 +115,18 @@ export async function listPrivacyRequests(userId: number) {
   const db = await getDb();
   if (!db) return [];
   return db.select().from(privacyRequests).where(eq(privacyRequests.userId, userId)).orderBy(desc(privacyRequests.createdAt));
+}
+
+export async function getPrivacyExportDownloadUrl(userId: number, requestId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [request] = await db.select().from(privacyRequests).where(and(eq(privacyRequests.id, requestId), eq(privacyRequests.userId, userId), eq(privacyRequests.requestType, "export"))).limit(1);
+  if (!request) throw new Error("Export request tidak ditemukan atau tidak dapat diakses.");
+  if (request.status !== "completed" || !request.resultReference) throw new Error("Export belum selesai atau artifact belum tersedia.");
+  const expectedPrefix = `privacy-exports/${userId}/`;
+  if (!request.resultReference.startsWith(expectedPrefix) || request.resultReference.includes("..")) throw new Error("Export artifact reference tidak valid.");
+  const url = await storageGetSignedUrl(request.resultReference, 15 * 60);
+  return { requestId: request.id, status: request.status, expiresInSeconds: 15 * 60, url };
 }
 
 export async function processPrivacyRequest(input: { requestId: number; status: "processing" | "completed" | "rejected"; resultReference?: string }) {

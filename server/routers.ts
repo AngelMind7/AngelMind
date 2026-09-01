@@ -88,6 +88,11 @@ export const appRouter = router({
     privacyRequests: protectedProcedure.query(({ ctx }) =>
       securityPlatform.listPrivacyRequests(ctx.user.id)
     ),
+    downloadPrivacyExport: protectedProcedure
+      .input(z.object({ requestId: z.number().int().positive() }))
+      .query(({ ctx, input }) =>
+        securityPlatform.getPrivacyExportDownloadUrl(ctx.user.id, input.requestId)
+      ),
     profile: protectedProcedure.query(({ ctx }) =>
       profile.getUserProfile(ctx.user.id)
     ),

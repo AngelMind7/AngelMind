@@ -2,6 +2,8 @@
 
 **Sumber acuan:** `Angelmindstrukturjelas.pdf` yang diberikan pengguna. Dokumen ini membedakan implementasi nyata dari desain target. Requirement hanya boleh disebut **Implemented** bila mempunyai jalur UI/API/domain/persistence atau boundary yang sesuai; folder, komentar, dan tombol tanpa backend tidak dihitung.
 
+**Sinkronisasi terakhir:** Setelah commit privacy lifecycle `063b25d` dan endpoint signed-download `193d1ca`. Status di bawah mencerminkan repository `main`; provider secrets, migration production, deployment, dan smoke test live tetap berstatus environment-dependent.
+
 ## Status ringkas
 
 Repository saat ini adalah control plane terintegrasi yang aman untuk workflow workspace, policy, rehearsal offline, findings, evidence, reports, audit, incidents, notifications, dan operations. Blueprint PDF mendeskripsikan platform end-to-end yang lebih luas. Matrix ini menjadi daftar kerja resmi untuk menutup gap tanpa membuat demo/dummy.
@@ -55,14 +57,14 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 31 | Knowledge graph | **Partial** | Workspace-scoped relationship/evidence/finding records, search documents, and intelligence feed persistence exist; generic graph nodes/edges/traversal/temporal provenance engine remains incomplete. |
 | 32 | Intelligence center | **Partial** | Coverage dan analytics tersedia; correlation, historical intelligence, recommendation center belum. |
 | 33 | Change detection | **Implemented** | Workspace policy/configuration change detection tersedia; asset/technology change belum. |
-| 34 | Global search | **Partial** | `searchDocuments` and rebuild/index persistence exist; permission-aware search UI and complete cross-domain query coverage remain incomplete. |
+| 34 | Global search | **Partial** | `searchDocuments`, rebuild/index persistence, permission-aware ranked API/UI, saved views, and workspace notes coverage exist; automatic mutation indexing, delete/reindex consistency, cursor pagination, semantic search, and complete cross-domain coverage remain incomplete. |
 | 35 | Command palette | **Implemented** | Ctrl/Cmd+K authenticated navigation tersedia. |
 | 36 | Saved views | **Implemented** | Workspace/user-scoped saved query and JSON filter persistence, authorization, audit event, migration, API, and authenticated UI tersedia. |
-| 37 | Tagging | **Planned** | Belum ada tag domain untuk technology, area, class, severity, program, custom. |
-| 38 | Notes | **Partial** | Finding comments tersedia; personal/research/program/asset/evidence notes belum. |
-| 39 | Collaboration | **Partial** | Membership, assignment dasar, finding comments tersedia; invitation, mentions, review/activity penuh belum. |
+| 37 | Tagging | **Partial** | Workspace-scoped tag schema, create/update, assignment, unassignment, authorization, audit boundary, API, UI, and entity assignment are implemented; richer domain taxonomy and full cross-domain tag filtering remain open. |
+| 38 | Notes | **Partial** | Workspace notes schema, workspace/entity assignment, visibility, create/edit/delete lifecycle, authorization, search indexing, API, UI, and tests are implemented; richer personal/research/program/asset/evidence note taxonomy remains open. |
+| 39 | Collaboration | **Partial** | Membership, workspace roles, assignment dasar, comments/mentions, organization invitation schema/token lifecycle/API/UI foundation are implemented; invitation email wiring, comment threading, review/activity feed, and full organization/team hierarchy remain open. |
 | 40 | Review system | **Partial** | Human approval dan finding review tersedia; peer-review/security-review sequence umum belum. |
-| 41 | Notification | **Partial** | In-app notifications/preferences dan safe webhook draft tersedia; queue/retry/email delivery belum. |
+| 41 | Notification | **Partial** | In-app notifications/preferences, cursor polling, mention delivery, safe webhook boundary, and notification audit are implemented; generic notification queue, email delivery integration, retry/failure status, and unsubscribe lifecycle remain open. |
 | 42 | Reputation | **Planned** | Metrics internal ada; reputation, specialization, achievement belum menjadi domain. |
 | 43 | API platform | **Partial** | tRPC API nyata tersedia; public `/api/v1`, developer keys, SDK, CLI, docs platform belum. |
 | 44 | API security | **Partial** | Authz, validation, audit, body limits tersedia; API-key hashing/scopes/quota/rotation belum. |
@@ -90,7 +92,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 61 | Scheduler | **Partial** | Administrative scheduled check tersedia; general scheduler belum. |
 | 62 | Real-time | **Planned** | UI memakai request refresh; event-driven real-time updates belum. |
 | 63 | Event architecture | **Partial** | Audit/notification events domain ada; versioned event schemas/publishers/consumers belum. |
-| 64 | Outbox pattern | **Partial** | Versioned outbox schema and event records exist; production publisher/consumer delivery loop remains incomplete. |
+| 64 | Outbox pattern | **Partial** | Versioned outbox schema, event records, leases, consumer receipts, retry/backoff, and bounded dispatcher exist; complete production publisher/consumer coverage and operational delivery monitoring remain incomplete. |
 | 65 | Idempotency | **Partial** | Beberapa workflow memiliki duplicate guards/idempotent escalation; generic idempotency key belum. |
 
 ## Requirement 66–89: data, security, admin, billing
@@ -105,8 +107,8 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 71 | Data consistency | **Partial** | MySQL source of truth dan derived analytics ada; explicit consistency classification belum. |
 | 72 | File storage | **Implemented** | Supabase Storage backend upload/signed URL, metadata MySQL, hash, audit tersedia. |
 | 73 | Search index | **Partial** | Workspace-scoped `searchDocuments` index, rebuild/reindex, permission checks, query scoring, entity-type/freshness filters, REST read-only search, saved views, and workspace notes indexing are implemented; automatic mutation indexing, full delete/reindex consistency, cursor pagination, semantic search, and unified cross-domain search UI remain open. |
-| 74 | Data lifecycle | **Partial** | Active/paused/archived workspace dan retention metadata ada; export/delete lifecycle semua entity belum. |
-| 75 | Privacy | **Partial** | Retention, workspace isolation, legal surfaces, archive planning ada; export/delete account/data access center belum. |
+| 74 | Data lifecycle | **Partial** | Workspace retention/status metadata and account export/delete worker lifecycle are implemented, including private JSON artifact storage and transactional account-scoped deletion; full entity-wide retention purge and collaborative-resource transfer/archive workflows remain incomplete. |
+| 75 | Privacy | **Partial** | Retention, workspace isolation, legal surfaces, privacy request state machine, durable export/delete processing, owner guard, private export artifact, and owner-only signed download are implemented; privacy center UI, dedicated audit events, integration drills, and complete data-access/deletion coverage remain open. |
 | 76 | Abuse protection | **Partial** | Body limits, safe boundaries, allowlists, no target execution ada; rate limit/upload malware scan/account abuse belum penuh. |
 | 77 | Security architecture | **Partial** | Auth, authz, scope, audit, CSP, secure cookies, safe execution boundary ada; complete threat model/response system belum. |
 | 78 | Secret management | **Implemented** | Secret hanya lewat runtime env; service-role/API keys tidak dibundel frontend; rotation workflow belum. |
@@ -145,7 +147,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 106 | SEO | **Partial** | Title/manifest/public content ada; complete metadata/robots/sitemap/structured data belum. |
 | 107 | Performance | **Partial** | Lazy routes/PWA/cache ada; bundle masih memberi warning chunk besar dan performance budget belum. |
 | 108 | Database performance | **Partial** | Index dasar dan bounded queries ada; query profiling/load benchmark belum. |
-| 109 | Email system | **Planned** | Belum ada email provider, templates, queue, unsubscribe, delivery log. |
+| 109 | Email system | **Partial** | Generic SMTP adapter, typed environment configuration, invitation/reset/verification templates, Indonesian/English locale fallback, and tests are implemented; invitation/auth flow wiring, durable email delivery queue, retry/status log, unsubscribe, and provider verification remain open. |
 | 110 | Documentation | **Partial** | README, architecture, governance, runbook, alignment, roadmap tersedia; API/domain/operator docs lengkap belum. |
 | 111 | Repository final | **Partial** | Runtime provider-neutral sudah dipakai: Firebase Auth, Supabase Storage, Railway-ready API, serta CI GitHub; remaining domain gaps tercatat di matrix ini. |
 | 112 | Aturan tim | **Implemented** | Safety boundary dan definition of done terdokumentasi; automation enforcement dapat diperluas. |

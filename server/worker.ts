@@ -1,4 +1,4 @@
-import { claimPendingJobs, completeJob, executeAiRunJob, executeOrchestrationPlanJob, failJob, refreshModelCatalog } from "./ai-platform";
+import { claimPendingJobs, completeJob, executeAiRunJob, executeOrchestrationPlanJob, failJob, heartbeatJob, refreshModelCatalog } from "./ai-platform";
 
 export type WorkerJob = {
   id: number;
@@ -36,7 +36,13 @@ export async function processAvailableJobs(handlers: Record<string, JobHandler>,
     try {
       const handler = handlers[job.kind];
       if (!handler) throw new Error(`No handler registered for job kind '${job.kind}'.`);
-      await handler(job, parsePayload(job.payload));
+      const heartbeatTimer = setInterval(() => { void heartbeatJob(job.id).catch(() => undefined); }, 15_000);
+      heartbeatTimer.unref?.();
+      try {
+        await handler(job, parsePayload(job.payload));
+      } finally {
+        clearInterval(heartbeatTimer);
+      }
       await completeJob(job.id);
       succeeded += 1;
     } catch (error) {

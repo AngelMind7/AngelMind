@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { and, asc, desc, eq, inArray } from "drizzle-orm";
 import {
   auditEvents,
+  findings,
   researchAssets,
   researchHypotheses,
   researchObservations,
@@ -143,6 +144,22 @@ export async function createResearchObservation(userId: number, input: { session
   if (!observation) throw new Error("Observation could not be created.");
   await addResearchAudit(db, session.workspaceId, userId, "research-observation-created", { sessionId: session.id, observationId: observation.id, assetId: input.assetId ?? null });
   return observation;
+}
+
+export async function promoteObservationToFinding(userId: number, input: { sessionId: number; observationId: number; confidence?: number; impactSummary: string }) {
+  const { db, session } = await requireSession(userId, input.sessionId, "respond");
+  const [observation] = await db.select().from(researchObservations).where(and(eq(researchObservations.id, input.observationId), eq(researchObservations.sessionId, session.id), eq(researchObservations.workspaceId, session.workspaceId))).limit(1);
+  if (!observation) throw new Error("Observation tidak ditemukan pada research session ini.");
+  const title = observation.title.trim();
+  const impactSummary = input.impactSummary.trim();
+  if (impactSummary.length < 3) throw new Error("Impact summary wajib diisi.");
+  const fingerprint = createHash("sha256").update(`${session.workspaceId}:${session.id}:${observation.id}:${title}`).digest("hex");
+  await db.insert(findings).values({ workspaceId: session.workspaceId, fingerprint, title, status: "discovered", confidence: Math.min(100, Math.max(0, Math.trunc(input.confidence ?? 50))), impactSummary, reportDraft: JSON.stringify({ source: "research-observation", sessionId: session.id, observationId: observation.id, content: observation.content }), humanReviewStatus: "pending" }).onDuplicateKeyUpdate({ set: { confidence: Math.min(100, Math.max(0, Math.trunc(input.confidence ?? 50))), impactSummary, updatedAt: new Date() } });
+  const [finding] = await db.select().from(findings).where(and(eq(findings.workspaceId, session.workspaceId), eq(findings.fingerprint, fingerprint))).limit(1);
+  if (!finding) throw new Error("Finding could not be created.");
+  await db.update(researchObservations).set({ status: "linked", updatedAt: new Date() }).where(eq(researchObservations.id, observation.id));
+  await addResearchAudit(db, session.workspaceId, userId, "research-observation-promoted-to-finding", { sessionId: session.id, observationId: observation.id, findingId: finding.id });
+  return finding;
 }
 
 export async function listResearchHypotheses(userId: number, sessionId: number) {

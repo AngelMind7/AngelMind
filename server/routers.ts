@@ -1480,6 +1480,9 @@ export const appRouter = router({
       .mutation(({ ctx, input }) =>
         researchWorkflow.createResearchObservation(ctx.user.id, input)
       ),
+    promoteObservationToFinding: protectedProcedure
+      .input(z.object({ sessionId: z.number().int().positive(), observationId: z.number().int().positive(), confidence: z.number().int().min(0).max(100).optional(), impactSummary: z.string().min(3).max(20_000) }))
+      .mutation(({ ctx, input }) => researchWorkflow.promoteObservationToFinding(ctx.user.id, input)),
     hypotheses: protectedProcedure
       .input(z.object({ sessionId: z.number().int().positive() }))
       .query(({ ctx, input }) =>

@@ -55,3 +55,7 @@ The `/readyz` endpoint now checks configured `RUNTIME_REQUIRED_BINARIES` against
 ## I — Firebase email auth UI (2026-09-02)
 
 The public authentication entry now includes an email-auth modal with sign-in, account registration followed by verification email, and password-reset request flows using the existing Firebase client helpers. Google Sign-In remains available. Live Firebase authorized-domain/provider configuration and authenticated staging E2E remain environment-level verification tasks.
+
+## J — Workspace role enforcement and durable trace correlation (2026-09-02)
+
+Protected tRPC procedures with a declared workspace role now enforce owner, read-member, and responder access centrally when a workspaceId is present. Distinct-reviewer and admin-or-distinct-reviewer procedures remain delegated to their domain-specific approval checks. Durable jobs and outbox events now persist traceId, worker execution restores request/trace context with deterministic job fallbacks, and migration 0044 adds the required indexes.

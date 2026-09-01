@@ -6,9 +6,9 @@ Dokumen ini adalah antrean pekerjaan aktif. Status requirement otoritatif tetap 
 
 | Priority | Work item | Status terbaru |
 |---|---|---|
-| P0 | Composite workspace consistency di database boundary. | **Terbuka**: pemeriksaan aplikasi tersedia, tetapi seluruh relasi parent-child belum memiliki composite foreign key/constraint yang konsisten. |
+| P0 | Composite workspace consistency di database boundary. | **Selesai untuk research lifecycle**: composite indexes dan foreign keys session/asset/observation/hypothesis/task sudah ada pada schema dan migration `0032`; relasi domain lain dapat diperluas bila diperlukan. |
 | P1 | End-to-end trace graph correlation. | **Terbuka**: request dan AI trace ID tersedia, tetapi correlation ID belum otomatis mengalir ke seluruh record research/evidence/finding/report. |
-| P1 | Worker dan outbox operational semantics. | **Sebagian tersedia**: lease, heartbeat, stale recovery, consumer receipts tersedia; integrasi lintas worker, replay contract, dan integration test masih perlu diselesaikan. |
+| P1 | Worker dan outbox operational semantics. | **Sebagian tersedia**: claim lease, stale recovery, consumer receipts, dan heartbeat periodik selama handler berjalan tersedia; dispatcher outbox produksi, replay contract, dan integration test lintas worker masih perlu diselesaikan. |
 | P1 | Evidence security scanning. | **Sebagian tersedia**: quarantine, scan state, promote/reject, audit, serta validation tersedia; adapter MIME/content/malware nyata masih membutuhkan service/provider. |
 | P1 | Permission-aware ranked search. | **Sebagian tersedia**: workspace search, knowledge graph index, relevance ranking, dan permission boundary tersedia; semantic search, freshness scoring, dan cross-domain index penuh masih terbuka. |
 | P1 | Intelligence ingestion. | **Sebagian tersedia**: normalization, persistence, deterministic dedupe, audit, dan batch ingestion API tersedia; provider adapters dan scheduling fetch masih terbuka. |

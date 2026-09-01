@@ -638,7 +638,7 @@ function probeBinary(binary: string) {
     const timer = setTimeout(() => {
       child.kill("SIGKILL");
       resolve({ available: false });
-    }, 5_000);
+    }, 15_000);
     child.stdout.on("data", chunk => {
       stdout += chunk.toString();
     });

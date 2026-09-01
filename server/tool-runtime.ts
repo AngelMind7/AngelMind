@@ -670,18 +670,29 @@ export async function checkRegisteredAdapterHealth() {
   return health;
 }
 
-export async function checkRuntimeReadiness() {
+const RUNTIME_READINESS_CACHE_MS = 30_000;
+type RuntimeReadiness = { configured: boolean; ready: boolean; missing: string[] };
+let runtimeReadinessCache: { key: string; checkedAt: number; result: RuntimeReadiness } | null = null;
+
+export async function checkRuntimeReadiness(): Promise<RuntimeReadiness> {
   const requiredBinaries = (process.env.RUNTIME_REQUIRED_BINARIES ?? "")
     .split(",")
     .map(value => value.trim())
     .filter(Boolean);
+  const key = requiredBinaries.join(",");
   if (!requiredBinaries.length) {
     return { configured: false as const, ready: true as const, missing: [] as string[] };
+  }
+  const now = Date.now();
+  if (runtimeReadinessCache?.key === key && now - runtimeReadinessCache.checkedAt < RUNTIME_READINESS_CACHE_MS) {
+    return runtimeReadinessCache.result;
   }
   const registeredByBinary = new Map(adapters.map(adapter => [adapter.binary, adapter]));
   const health = await Promise.all(requiredBinaries.map(async binary => ({ binary, available: (await probeBinary(binary)).available, registered: registeredByBinary.has(binary) })));
   const missing = health.filter(item => !item.available || !item.registered).map(item => item.binary);
-  return { configured: true as const, ready: missing.length === 0, missing };
+  const result = { configured: true as const, ready: missing.length === 0, missing };
+  runtimeReadinessCache = { key, checkedAt: now, result };
+  return result;
 }
 
 export async function runRegisteredTool(

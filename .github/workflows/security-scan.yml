@@ -24,6 +24,19 @@ jobs:
       - name: Audit production dependency tree
         run: pnpm audit --prod --audit-level=high
 
+  sbom:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate CycloneDX SBOM
+        uses: anchore/sbom-action@v0.20.5
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: angelmind-sbom.cdx.json
+          artifact-name: angelmind-sbom-${{ github.sha }}.cdx.json
+
   python-safety-tests:
     runs-on: ubuntu-latest
     timeout-minutes: 10

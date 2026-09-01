@@ -39,6 +39,8 @@ jobs:
         run: pnpm test -- --run
       - name: Production build
         run: pnpm build
+      - name: Enforce bundle budget
+        run: pnpm check:budget
       - name: Validate PWA manifest
         run: python3 -m json.tool client/public/manifest.json >/dev/null
       - name: Setup Python

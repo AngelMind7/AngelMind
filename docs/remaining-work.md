@@ -51,3 +51,7 @@ The local repository remains free of production credentials. Firebase Admin, Sup
 ## H — Runtime readiness hardening (2026-09-02)
 
 The `/readyz` endpoint now checks configured `RUNTIME_REQUIRED_BINARIES` against registered adapters and actual executable availability. Production readiness fails closed when a required binary is missing or unregistered, while development remains usable without a runtime list. Prometheus metrics now report the actual runtime readiness result. The adapter probe treats a successfully spawned executable as available even when that executable does not implement `--version` with exit code zero.
+
+## I — Firebase email auth UI (2026-09-02)
+
+The public authentication entry now includes an email-auth modal with sign-in, account registration followed by verification email, and password-reset request flows using the existing Firebase client helpers. Google Sign-In remains available. Live Firebase authorized-domain/provider configuration and authenticated staging E2E remain environment-level verification tasks.

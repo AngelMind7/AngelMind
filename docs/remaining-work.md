@@ -16,6 +16,12 @@ Dokumen ini adalah antrean pekerjaan aktif. Status requirement otoritatif tetap 
 | P2 | Auth dan UI quality contracts. | **Sebagian tersedia**: Firebase foundation, localization, responsive UI, lazy routes, authenticated lifecycle contract, manual axe workflow, dan bounded staging load workflow tersedia; MFA/passkey/recovery E2E serta live critical-path verification tetap environment-dependent. |
 | P2 | API/domain/operator documentation. | **Sebagian tersedia**: architecture, runbook, migration, worker, quarantine-scan, deployment verification, rollback contract, dan remaining-work notes sudah diperbarui; provider-specific procedures tetap membutuhkan konfigurasi environment yang dipilih owner. |
 
+## R — AI evaluation and audit-control completion (2026-09-02)
+
+Repository kini mempersist reviewer evaluation untuk AI runs melalui rubric, score tervalidasi, verdict, notes, reviewer identity, idempotent upsert, dan workspace authorization. Halaman Operations menampilkan evaluation coverage, average score, verdict distribution, dan recorded cost dari data persisted. Audit state pada control-plane service, research workflow, dan playbook executor menggunakan AES-256-GCM bila `AUDIT_STATE_ENCRYPTION_KEY` berukuran minimal 32 karakter; fallback plaintext hanya dipertahankan untuk development yang belum mengonfigurasi key. Mutation policy decision dan incident review sekarang memiliki keyed async reentrancy guard untuk menolak double-submit paralel dalam satu proses.
+
+Commit terkait: `41b0adc`, `2397bc1`, dan `7989a5f`. Typecheck, targeted Vitest tests (9 assertions), AI orchestration tests, build, dan `git diff --check` lulus. Sisa verifikasi encryption key rotation, multi-process lock semantics, provider-level latency/regression feeds, dan live deployment tetap environment-dependent.
+
 ## C — Pekerjaan live environment
 
 Pekerjaan berikut tidak dapat diselesaikan hanya dari repository lokal karena membutuhkan akses atau tindakan pada akun/environment nyata: membuat dan mengisi secrets, memilih dialect database, menjalankan backup/preflight dan menerapkan migration pada database live, deploy web/API/worker, mengonfigurasi Firebase domains/providers, mengonfigurasi Supabase Storage, menghubungkan key 9Router/OmniRoute/provider intelligence, mengaktifkan branch protection GitHub, serta menjalankan smoke test staging/production.

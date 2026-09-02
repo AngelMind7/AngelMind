@@ -79,12 +79,12 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 48 | Model registry | **Partial** | Persisted model registry, health, capability/cost metadata, and evaluation foundations exist; full provider inventory and routing policy remain incomplete. |
 | 49 | AI orchestrator | **Partial** | Evidence analysis terstruktur tersedia; planner/decomposer/task graph/parallel aggregation belum. |
 | 50 | AI failure isolation | **Partial** | Provider fallback, provider-specific fallback model, bounded transient retry statuses, and bounded error handling are implemented; partial result/context overflow/contradiction handling remains incomplete. |
-| 51 | AI run trace | **Partial** | AI run entity, gateway/model references, usage, cost ceiling, outputs, retention, and evaluation foundations exist; distributed request correlation remains incomplete. |
+| 51 | AI run trace | **Implemented (repository)** | AI run entity, gateway/model references, usage, cost ceiling, outputs, retention, persisted trace correlation, and evaluation linkage are implemented; provider-level distributed propagation remains adapter/environment dependent. |
 | 52 | AI provenance | **Partial** | AI output disimpan sebagai finding/report draft; lineage task–run–model–input–output belum. |
 | 53 | AI context | **Partial** | Workspace context dikirim ke evidence flow; hierarchical context isolation lengkap belum. |
 | 54 | AI memory | **Planned** | Belum ada session/research/user/program memory dengan permission boundary. |
 | 55 | AI result pipeline | **Partial** | Structured JSON output dan validation tersedia; normalize/deduplicate/correlate/synthesis pipeline belum. |
-| 56 | AI evaluation | **Planned** | Belum ada quality/latency/failure/regression evaluation store. |
+| 56 | AI evaluation | **Implemented (repository)** | Persisted reviewer evaluations support rubric, bounded score, verdict, notes, reviewer identity, idempotent upsert, workspace access checks, and an operations dashboard with evaluated-run coverage, average score, verdict distribution, and recorded cost. Latency/regression baselines and provider-specific quality feeds remain optional extensions. |
 | 57 | Prompt management | **Planned** | Prompt masih berada pada source code; versioned prompt registry belum. |
 | 58 | AI cost governance | **Partial** | Budget/workspace/session controls ada; provider usage, per-user/task budget, runaway detection belum. |
 | 59 | Job system | **Partial** | Durable job/outbox foundations, scheduled maintenance, rehearsal records, and worker contracts exist; full domain-wide queue coverage remains incomplete. |

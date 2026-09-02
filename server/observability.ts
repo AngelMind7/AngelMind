@@ -9,7 +9,8 @@ function configuredProbes() {
 }
 
 export async function checkProviderProbes() {
-  const timeoutMs = Math.min(10_000, Math.max(500, Number(process.env.OBSERVABILITY_PROBE_TIMEOUT_MS ?? 2_000)));
+  const requestedTimeout = Number(process.env.OBSERVABILITY_PROBE_TIMEOUT_MS ?? 2_000);
+  const timeoutMs = Number.isFinite(requestedTimeout) ? Math.min(10_000, Math.max(500, Math.floor(requestedTimeout))) : 2_000;
   const urls = configuredProbes();
   const results: ProviderProbeResult[] = await Promise.all(urls.map(async url => {
     const startedAt = Date.now();
@@ -25,10 +26,15 @@ export async function checkProviderProbes() {
   return { configured: urls.length > 0, ready: results.every(result => result.ready), probes: results };
 }
 
+function boundedEnvNumber(raw: string | undefined, fallback: number, min: number, max: number) {
+  const value = Number(raw ?? fallback);
+  return Number.isFinite(value) ? Math.min(max, Math.max(min, value)) : fallback;
+}
+
 export function sloConfig() {
   return {
-    errorRateBudget: Math.min(1, Math.max(0, Number(process.env.SLO_ERROR_RATE_BUDGET ?? 0.01))),
-    slowRateBudget: Math.min(1, Math.max(0, Number(process.env.SLO_SLOW_RATE_BUDGET ?? 0.05))),
-    latencyThresholdMs: Math.min(60_000, Math.max(100, Number(process.env.SLO_SLOW_REQUEST_MS ?? 1_000))),
+    errorRateBudget: boundedEnvNumber(process.env.SLO_ERROR_RATE_BUDGET, 0.01, 0, 1),
+    slowRateBudget: boundedEnvNumber(process.env.SLO_SLOW_RATE_BUDGET, 0.05, 0, 1),
+    latencyThresholdMs: boundedEnvNumber(process.env.SLO_SLOW_REQUEST_MS, 1_000, 100, 60_000),
   };
 }

@@ -63,6 +63,12 @@ class FirebaseAuthServer {
     }
 
     const identity = getFirebaseRequestUser(decoded);
+    if (identity.signInProvider !== "google.com" && identity.signInProvider !== "password") {
+      throw ForbiddenError("This Firebase sign-in provider is not enabled");
+    }
+    if (identity.emailVerified !== true) {
+      throw ForbiddenError("A verified Firebase email is required");
+    }
     const openId = `firebase:${identity.uid}`;
     const signedInAt = new Date();
 

@@ -1007,22 +1007,17 @@ export const appRouter = router({
       .input(
         z.object({
           workspaceId: z.number().int().positive(),
-          cron: z
-            .string()
-            .regex(
-              /^0\s+\S+\s+\S+\s+\S+\s+\S+$/,
-              "Gunakan cron UTC lima kolom."
-            ),
+          cron: z.string().trim().min(9).max(64),
         })
       )
       .mutation(async ({ ctx, input }) => {
         const taskUid = `railway:workspace:${input.workspaceId}`;
-        await controlPlane.attachScheduleTask(
+        return controlPlane.attachScheduleTask(
           ctx.user.id,
           input.workspaceId,
-          taskUid
+          taskUid,
+          input.cron
         );
-        return { taskUid, cron: input.cron, provider: "railway-cron" } as const;
       }),
   }),
   ai: router({

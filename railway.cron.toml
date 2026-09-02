@@ -1,0 +1,12 @@
+# Attach this file to a dedicated Railway Cron service.
+# The web service must remain long-lived and must not carry cronSchedule.
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+watchPatterns = ["client/**", "server/**", "drizzle/**", "shared/**", "runtime/**", "config/**", "Dockerfile", "package.json", "pnpm-lock.yaml", "railway.cron.toml"]
+
+[deploy]
+startCommand = "node dist/scheduled.js"
+cronSchedule = "*/15 * * * *"
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

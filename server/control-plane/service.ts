@@ -3,7 +3,7 @@ import { and, desc, eq, gt, inArray, isNotNull, isNull } from "drizzle-orm";
 import { auditEvents, approvals, credentialReferences, evidenceArtifacts, findings, notificationDeliveries, notificationPreferences, notifications, runs, workspaceChangeSnapshots, workspaceMemberships, workspaces } from "../../drizzle/schema";
 import { getDb, getOwnedWorkspace } from "../db";
 import { notifyOwner } from "../_core/notification";
-import { storageGetSignedUrl, storagePut } from "../storage";
+import { storageDelete, storageGetSignedUrl, storagePut } from "../storage";
 import { assertFindingTransition, type FindingWorkflowStatus } from "./finding-workflow";
 import { buildRehearsal } from "./rehearsal";
 import { getAdministrativeCheckEligibility } from "./scheduler";
@@ -19,6 +19,7 @@ import { currentTraceContext } from "../_core/trace-context";
 import { enqueueJob } from "../ai-platform";
 import { scanEvidenceContent } from "../evidence-scanner";
 import { createNotificationDeliveryLedger } from "../notification-delivery";
+import { isCronDueAt, normalizeUtcCronExpression } from "./cron";
 
 const parseList = (serialized: string): string[] => {
   try {
@@ -30,6 +31,7 @@ const parseList = (serialized: string): string[] => {
 };
 
 const digest = (value: unknown) => createHash("sha256").update(JSON.stringify(value)).digest("hex");
+const DEFAULT_SCHEDULE_CRON = "0 2 * * *";
 
 async function addAudit(workspaceId: number, category: string, subject: string, details: Record<string, unknown>) {
   const db = await getDb();
@@ -338,15 +340,32 @@ export async function uploadEvidence(userId: number, input: { workspaceId: numbe
   const validatedEvidence = validateEvidenceBytes({ contentType: input.contentType, fileName: cleanName, bytes });
   const artifact = await storagePut(`workspace-${workspace.id}/evidence/${Date.now()}-${cleanName}`, bytes, validatedEvidence.contentType);
   const db = await getDb();
-  if (!db) throw new Error("Database tidak tersedia.");
+  if (!db) {
+    await storageDelete(artifact.key).catch(error => console.error(`[Evidence] Failed to roll back storage object: ${error instanceof Error ? error.message : String(error)}`));
+    throw new Error("Database tidak tersedia.");
+  }
   const traceId = currentTraceContext()?.traceId ?? null;
   const storageKey = artifact.key;
-  await db.insert(evidenceArtifacts).values({ workspaceId: workspace.id, findingId: input.findingId ?? null, artifactType: validatedEvidence.contentType, contentType: validatedEvidence.contentType, sizeBytes: bytes.length, storageKey, storageReference: storageKey, sha256: createHash("sha256").update(bytes).digest("hex"), status: "quarantined", quarantineReason: "Awaiting content/security scan.", traceId });
-  const [storedArtifact] = await db.select().from(evidenceArtifacts).where(and(eq(evidenceArtifacts.workspaceId, workspace.id), eq(evidenceArtifacts.storageKey, storageKey))).orderBy(desc(evidenceArtifacts.id)).limit(1);
-  if (!storedArtifact) throw new Error("Evidence artifact could not be persisted.");
-  await enqueueJob(userId, { workspaceId: workspace.id, kind: "evidence.scan", idempotencyKey: `evidence-scan:${storedArtifact.id}`, payload: { type: "evidence_scan", artifactId: storedArtifact.id, storageKey, contentType: validatedEvidence.contentType, fileName: cleanName } });
-  await addAudit(workspace.id, "evidence", "artifact-stored", { fileName: cleanName, contentType: validatedEvidence.contentType, storageKey, findingId: input.findingId ?? null, scanJobIdempotencyKey: `evidence-scan:${storedArtifact.id}` });
-  return { storageReference: artifact.url, storageKey, artifactId: storedArtifact.id, status: storedArtifact.status };
+  let storedArtifactId: number | undefined;
+  let scanJobEnqueued = false;
+  try {
+    await db.insert(evidenceArtifacts).values({ workspaceId: workspace.id, findingId: input.findingId ?? null, artifactType: validatedEvidence.contentType, contentType: validatedEvidence.contentType, sizeBytes: bytes.length, storageKey, storageReference: storageKey, sha256: createHash("sha256").update(bytes).digest("hex"), status: "quarantined", quarantineReason: "Awaiting content/security scan.", traceId });
+    const [storedArtifact] = await db.select().from(evidenceArtifacts).where(and(eq(evidenceArtifacts.workspaceId, workspace.id), eq(evidenceArtifacts.storageKey, storageKey))).orderBy(desc(evidenceArtifacts.id)).limit(1);
+    if (!storedArtifact) throw new Error("Evidence artifact could not be persisted.");
+    storedArtifactId = storedArtifact.id;
+    await enqueueJob(userId, { workspaceId: workspace.id, kind: "evidence.scan", idempotencyKey: `evidence-scan:${storedArtifact.id}`, payload: { type: "evidence_scan", artifactId: storedArtifact.id, storageKey, contentType: validatedEvidence.contentType, fileName: cleanName } });
+    scanJobEnqueued = true;
+    await addAudit(workspace.id, "evidence", "artifact-stored", { fileName: cleanName, contentType: validatedEvidence.contentType, storageKey, findingId: input.findingId ?? null, scanJobIdempotencyKey: `evidence-scan:${storedArtifact.id}` });
+    return { storageReference: artifact.url, storageKey, artifactId: storedArtifact.id, status: storedArtifact.status };
+  } catch (error) {
+    if (!scanJobEnqueued) {
+      if (storedArtifactId) {
+        await db.delete(evidenceArtifacts).where(eq(evidenceArtifacts.id, storedArtifactId)).catch(cleanupError => console.error(`[Evidence] Failed to roll back metadata row: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`));
+      }
+      await storageDelete(storageKey).catch(cleanupError => console.error(`[Evidence] Failed to roll back storage object: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`));
+    }
+    throw error;
+  }
 }
 
 export async function executeEvidenceScanJob(payload: Record<string, unknown>) {
@@ -500,10 +519,12 @@ export async function getWorkspaceByScheduleTaskUid(taskUid: string) {
   return workspace;
 }
 
-export async function runScheduledAdministrativeCheck(taskUid: string) {
+export async function runScheduledAdministrativeCheck(taskUid: string, now = new Date()) {
   const workspace = await getWorkspaceByScheduleTaskUid(taskUid);
   if (!workspace) return { ok: true, skipped: "orphan" as const };
-  const eligibility = getAdministrativeCheckEligibility(workspace);
+  const scheduleCron = workspace.scheduleCron || DEFAULT_SCHEDULE_CRON;
+  if (!isCronDueAt(scheduleCron, now)) return { ok: true, skipped: "not-due" as const, scheduleCron };
+  const eligibility = getAdministrativeCheckEligibility(workspace, now.getTime());
   if (!eligibility.eligible && eligibility.reason === "workspace-not-active") return { ok: true, skipped: "workspace-not-active" as const };
   if (!eligibility.eligible && eligibility.reason === "cooldown") return { ok: true, skipped: "cooldown" as const };
   if (!eligibility.eligible && eligibility.reason === "session-limit") return { ok: true, skipped: "session-limit" as const };
@@ -519,32 +540,34 @@ export async function runScheduledAdministrativeCheck(taskUid: string) {
   const changed = Boolean(snapshot && snapshot.configurationDigest !== configurationDigest);
   if (snapshot) await db.update(workspaceChangeSnapshots).set({ configurationDigest, checkedAt: new Date() }).where(eq(workspaceChangeSnapshots.id, snapshot.id));
   else await db.insert(workspaceChangeSnapshots).values({ workspaceId: workspace.id, configurationDigest });
-  const cutoff = new Date(Date.now() - workspace.retentionDays * 24 * 60 * 60 * 1000);
+  const cutoff = new Date(now.getTime() - workspace.retentionDays * 24 * 60 * 60 * 1000);
   const artifacts = await db.select().from(evidenceArtifacts).where(eq(evidenceArtifacts.workspaceId, workspace.id));
   const retentionReviewCount = artifacts.filter(artifact => artifact.createdAt < cutoff).length;
   const escalatedIncidentCount = await escalateOverdueIncidentsForWorkspace(workspace);
-  await addAudit(workspace.id, "administrative-check", "change-detection", { mode: "metadata-only", networkCalls: 0, changed, retentionReviewCount, result: "No target interaction: configuration digest, retention window, and pending approvals reviewed." });
+  await db.update(workspaces).set({ lastRunAt: now }).where(eq(workspaces.id, workspace.id));
+  await addAudit(workspace.id, "administrative-check", "change-detection", { mode: "metadata-only", networkCalls: 0, changed, retentionReviewCount, escalatedIncidentCount, scheduleCron, result: "No target interaction: configuration digest, retention window, and pending approvals reviewed." });
   await notifyWorkspaceOwner(workspace, { eventType: "scheduled_check", severity: changed || retentionReviewCount > 0 || escalatedIncidentCount > 0 ? "warning" : "info", title: "AngelMind scheduled check selesai", message: `Workspace ${workspace.name}: ${changed ? "configuration change recorded" : "configuration unchanged"}; retention review: ${retentionReviewCount}; incident escalations: ${escalatedIncidentCount}. No target interaction occurred.` });
   return { ok: true, completed: changed ? "metadata-change-recorded" as const : "metadata-unchanged" as const, retentionReviewCount, escalatedIncidentCount };
 }
 
-export async function runScheduledAdministrativeChecks() {
+export async function runScheduledAdministrativeChecks(now = new Date()) {
   const db = await getDb();
-  if (!db) return { ok: false as const, processed: 0, failed: 0, reason: "database-unavailable" as const };
-
+  if (!db) return { ok: false as const, processed: 0, failed: 0, skipped: 0, reason: "database-unavailable" as const };
   const scheduled = await db
-    .select({ taskUid: workspaces.scheduleCronTaskUid })
+    .select({ taskUid: workspaces.scheduleCronTaskUid, scheduleCron: workspaces.scheduleCron })
     .from(workspaces)
     .where(and(eq(workspaces.status, "active"), isNotNull(workspaces.scheduleCronTaskUid)));
-
-  const taskUids = scheduled
+  const due = scheduled.filter(row => isCronDueAt(row.scheduleCron || DEFAULT_SCHEDULE_CRON, now));
+  const taskUids = due
     .map(row => row.taskUid)
     .filter((taskUid): taskUid is string => Boolean(taskUid));
-  const results = await Promise.allSettled(taskUids.map(taskUid => runScheduledAdministrativeCheck(taskUid)));
+  const results = await Promise.allSettled(taskUids.map(taskUid => runScheduledAdministrativeCheck(taskUid, now)));
+
   return {
     ok: true as const,
     processed: results.filter(result => result.status === "fulfilled").length,
     failed: results.filter(result => result.status === "rejected").length,
+    skipped: scheduled.length - due.length,
     results: results.map((result, index) => ({
       taskUid: taskUids[index],
       status: result.status,
@@ -553,12 +576,15 @@ export async function runScheduledAdministrativeChecks() {
   };
 }
 
-export async function attachScheduleTask(userId: number, workspaceId: number, taskUid: string) {
+export async function attachScheduleTask(userId: number, workspaceId: number, taskUid: string, cron: string) {
   const workspace = await ownedWorkspaceOrThrow(userId, workspaceId);
+  const normalizedCron = normalizeUtcCronExpression(cron);
+  if (!/^railway:workspace:\d+$/.test(taskUid) || taskUid !== `railway:workspace:${workspace.id}`) throw new Error("Invalid Railway workspace task UID.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
-  await db.update(workspaces).set({ scheduleCronTaskUid: taskUid }).where(eq(workspaces.id, workspace.id));
-  await addAudit(workspace.id, "scheduler", "schedule-attached", { taskUid });
+  await db.update(workspaces).set({ scheduleCronTaskUid: taskUid, scheduleCron: normalizedCron }).where(eq(workspaces.id, workspace.id));
+  await addAudit(workspace.id, "scheduler", "schedule-attached", { taskUid, cron: normalizedCron, timezone: "UTC", provider: "railway-cron" });
+  return { taskUid, cron: normalizedCron, provider: "railway-cron" as const };
 }
 
 export async function listEvidence(userId: number, workspaceId: number) {

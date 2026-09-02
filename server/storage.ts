@@ -65,6 +65,11 @@ function toUploadBody(data: Buffer | Uint8Array | string): string | Buffer {
   return typeof data === "string" ? data : Buffer.from(data);
 }
 
+async function removeStorageObject(client: SupabaseClient, bucket: string, key: string): Promise<void> {
+  const { error } = await client.storage.from(bucket).remove([key]);
+  if (error) throw new Error(`Supabase Storage delete failed: ${error.message}`);
+}
+
 async function createSignedUrl(client: SupabaseClient, bucket: string, key: string, expiresInSeconds = SIGNED_URL_TTL_SECONDS): Promise<string> {
   const { data, error } = await client.storage
     .from(bucket)
@@ -93,7 +98,19 @@ export async function storagePut(
     throw new Error(`Supabase Storage upload failed: ${error.message}`);
   }
 
-  return { key, url: await createSignedUrl(client, bucket, key) };
+  try {
+    return { key, url: await createSignedUrl(client, bucket, key) };
+  } catch (signedUrlError) {
+    await removeStorageObject(client, bucket, key).catch(cleanupError => {
+      console.error(`[Storage] Failed to clean up object after signed URL failure: ${cleanupError instanceof Error ? cleanupError.message : String(cleanupError)}`);
+    });
+    throw signedUrlError;
+  }
+}
+
+export async function storageDelete(relKey: string): Promise<void> {
+  const { client, bucket } = getSupabaseStorage();
+  await removeStorageObject(client, bucket, normalizeStorageKey(relKey));
 }
 
 export async function storageGet(relKey: string): Promise<{ key: string; url: string }> {

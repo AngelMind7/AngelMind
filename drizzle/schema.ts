@@ -231,6 +231,7 @@ export const workspaces = mysqlTable("workspaces", {
   retentionDays: int("retentionDays").default(30).notNull(),
   lastRunAt: timestamp("lastRunAt"),
   scheduleCronTaskUid: varchar("scheduleCronTaskUid", { length: 65 }),
+  scheduleCron: varchar("scheduleCron", { length: 64 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => [

@@ -34,13 +34,16 @@ export function parseAuthorizationReference(raw: string | null | undefined): Aut
     !isNonEmptyString(candidate.authorizedBy) ||
     !isNonEmptyString(candidate.scopeSnapshotHash)
   ) return null;
-  if (!Number.isFinite(Date.parse(candidate.validFrom)) || !Number.isFinite(Date.parse(candidate.validUntil))) return null;
+  const validFrom = new Date(candidate.validFrom);
+  const validUntil = new Date(candidate.validUntil);
+  if (!Number.isFinite(validFrom.getTime()) || !Number.isFinite(validUntil.getTime()) || validUntil <= validFrom) return null;
+  if (!/^sha256:[a-f0-9]{64}$/i.test(candidate.scopeSnapshotHash.trim())) return null;
   return {
-    documentId: candidate.documentId,
+    documentId: candidate.documentId.trim(),
     validFrom: candidate.validFrom,
     validUntil: candidate.validUntil,
-    authorizedBy: candidate.authorizedBy,
-    scopeSnapshotHash: candidate.scopeSnapshotHash,
+    authorizedBy: candidate.authorizedBy.trim(),
+    scopeSnapshotHash: candidate.scopeSnapshotHash.trim().toLowerCase(),
   };
 }
 

@@ -32,7 +32,9 @@ export function getClientRateLimitKey(req: Request) {
 
 function evictExpired<T extends { resetAt?: number; blockedUntil?: number }>(map: Map<string, T>, now: number, maxEntries: number) {
   map.forEach((value, key) => {
-    if ((value.resetAt !== undefined && value.resetAt <= now) || (value.blockedUntil !== undefined && value.blockedUntil <= now)) map.delete(key);
+    const bucketExpired = value.resetAt !== undefined && value.resetAt <= now;
+    const abuseExpired = value.blockedUntil !== undefined && value.blockedUntil <= now;
+    if (bucketExpired || abuseExpired) map.delete(key);
   });
   if (map.size > maxEntries) {
     const oldest = map.keys().next().value;
@@ -43,7 +45,7 @@ function evictExpired<T extends { resetAt?: number; blockedUntil?: number }>(map
 export function createRateLimiter(options: RateLimitOptions): RequestHandler {
   const windowMs = boundedNumber(options.windowMs, 60_000, 1_000, 86_400_000);
   const max = boundedNumber(options.max, 120, 1, 100_000);
-  const maxEntries = boundedNumber(options.maxEntries ?? 10_000, 10_000, 100, 100_000);
+  const maxEntries = boundedNumber(options.maxEntries ?? 10_000, 10_000, 1, 100_000);
   const strikeThreshold = boundedNumber(options.abuseStrikeThreshold ?? 5, 5, 1, 100);
   const cooldownMs = boundedNumber(options.abuseCooldownMs ?? Math.min(windowMs * 4, 3_600_000), windowMs, 1_000, 86_400_000);
   const keyFor = options.key ?? getClientRateLimitKey;

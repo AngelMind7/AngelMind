@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar";
 import { registerWithEmail, resetPassword, signInWithEmail, signInWithGoogle } from "@/firebase";
 import { useIsMobile } from "@/hooks/useMobile";
-import { Activity, BarChart3, BrainCircuit, Boxes, Building2, FileSearch, FileText, KeyRound, LayoutDashboard, LogOut, Network, PanelLeft, Radar, ScrollText, Settings2, ShieldCheck, ShieldEllipsis, UserRound } from "lucide-react";
+import { Activity, BarChart3, BrainCircuit, Boxes, Building2, FileSearch, FileText, KeyRound, LayoutDashboard, LogOut, Network, PanelLeft, Radar, ScrollText, Search, Settings2, ShieldCheck, ShieldEllipsis, UserRound } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import { DashboardLayoutSkeleton } from './DashboardLayoutSkeleton';
@@ -44,6 +44,7 @@ const menuItems = [
   { icon: BrainCircuit, labelKey: "nav.aiCenter" as const, path: "/ai-center" },
   { icon: Radar, labelKey: "nav.research" as const, path: "/research" },
   { icon: Network, labelKey: "nav.knowledge" as const, path: "/knowledge" },
+  { icon: Search, labelKey: "nav.commandCenter" as const, label: "Search", path: "/search" },
   { icon: FileText, labelKey: "nav.reports" as const, path: "/reports" },
   { icon: Boxes, labelKey: "nav.inventory" as const, path: "/inventory" },
   { icon: ShieldCheck, labelKey: "nav.governance" as const, path: "/governance" },
@@ -251,13 +252,13 @@ function DashboardLayoutContent({
                     <SidebarMenuButton
                       isActive={isActive}
                       onClick={() => setLocation(item.path)}
-                      tooltip={t(item.labelKey)}
+                      tooltip={item.label ?? t(item.labelKey)}
                       className={`h-10 transition-all font-normal`}
                     >
                       <item.icon
                         className={`h-4 w-4 ${isActive ? "text-primary" : ""}`}
                       />
-                      <span className="tracking-wide">{t(item.labelKey)}</span>
+                      <span className="tracking-wide">{item.label ?? t(item.labelKey)}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );

@@ -1,4 +1,4 @@
-import { and, desc, eq, gte, inArray, like, or } from "drizzle-orm";
+import { and, desc, eq, gte, inArray } from "drizzle-orm";
 import { evidenceArtifacts, findings, intelligenceFeedItems, knowledgeNodes, programs, reportVersions, researchAssets, researchHypotheses, researchObservations, researchSessions, researchTasks, searchDocuments, workspaceNotes, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
@@ -25,6 +25,28 @@ function decodeSearchCursor(value: string | undefined): SearchCursor | null {
 
 function clean(value: string | null | undefined, max = 20_000) {
   return String(value ?? "").trim().slice(0, max);
+}
+
+function semanticTokens(value: string) {
+  return Array.from(new Set(value.toLocaleLowerCase().replace(/[^A-Za-z0-9_\s-]/g, " ").split(/\s+/).filter(token => token.length >= 2))).slice(0, 32);
+}
+
+function vectorize(value: string) {
+  const tokens = semanticTokens(value);
+  const vector = new Map<string, number>();
+  for (const token of tokens) vector.set(token, (vector.get(token) ?? 0) + 1);
+  for (let index = 0; index < value.length - 2; index += 1) {
+    const gram = value.slice(index, index + 3).toLocaleLowerCase();
+    if (/\w/.test(gram)) vector.set(`~${gram}`, (vector.get(`~${gram}`) ?? 0) + 0.25);
+  }
+  return vector;
+}
+
+function cosineSimilarity(left: Map<string, number>, right: Map<string, number>) {
+  let dot = 0; let leftNorm = 0; let rightNorm = 0;
+  left.forEach((value, key) => { dot += value * (right.get(key) ?? 0); leftNorm += value * value; });
+  right.forEach(value => { rightNorm += value * value; });
+  return leftNorm && rightNorm ? dot / (Math.sqrt(leftNorm) * Math.sqrt(rightNorm)) : 0;
 }
 
 export async function upsertSearchDocument(input: { workspaceId: number; entityType: string; entityId: number; title: string; body: string }) {
@@ -89,12 +111,10 @@ export async function searchWorkspace(userId: number, input: { workspaceId: numb
   const freshnessDays = input.freshnessDays === undefined ? undefined : Math.min(3_650, Math.max(1, Math.trunc(input.freshnessDays)));
   const freshnessCutoff = freshnessDays === undefined ? undefined : new Date(Date.now() - freshnessDays * 86_400_000);
   const cursor = decodeSearchCursor(input.cursor);
-  const pattern = `%${query}%`;
-  const tokens = Array.from(new Set(query.toLocaleLowerCase().split(/\s+/).map(token => token.replace(/[^A-Za-z0-9_-]/g, "")).filter(token => token.length >= 2))).slice(0, 12);
-  const tokenPatterns = tokens.flatMap(token => [`%${token}%`]);
-  const searchConditions = [like(searchDocuments.title, pattern), like(searchDocuments.body, pattern), ...tokenPatterns.flatMap(token => [like(searchDocuments.title, token), like(searchDocuments.body, token)])];
-  const candidates = await db.select({ rowId: searchDocuments.id, id: searchDocuments.entityId, entityType: searchDocuments.entityType, title: searchDocuments.title, body: searchDocuments.body, updatedAt: searchDocuments.updatedAt }).from(searchDocuments).where(and(eq(searchDocuments.workspaceId, input.workspaceId), entityTypes.length ? inArray(searchDocuments.entityType, entityTypes) : undefined, freshnessCutoff ? gte(searchDocuments.updatedAt, freshnessCutoff) : undefined, or(...searchConditions))).orderBy(desc(searchDocuments.updatedAt), desc(searchDocuments.id)).limit(500);
+  const tokens = semanticTokens(query);
+  const candidates = await db.select({ rowId: searchDocuments.id, id: searchDocuments.entityId, entityType: searchDocuments.entityType, title: searchDocuments.title, body: searchDocuments.body, updatedAt: searchDocuments.updatedAt }).from(searchDocuments).where(and(eq(searchDocuments.workspaceId, input.workspaceId), entityTypes.length ? inArray(searchDocuments.entityType, entityTypes) : undefined, freshnessCutoff ? gte(searchDocuments.updatedAt, freshnessCutoff) : undefined)).orderBy(desc(searchDocuments.updatedAt), desc(searchDocuments.id)).limit(2_000);
   const normalizedQuery = query.toLocaleLowerCase();
+  const queryVector = vectorize(query);
   const score = (result: typeof candidates[number]) => {
     const title = result.title.toLocaleLowerCase();
     const body = result.body.toLocaleLowerCase();
@@ -103,8 +123,9 @@ export async function searchWorkspace(userId: number, input: { workspaceId: numb
     const titleMatch = title.includes(normalizedQuery) ? 25 : 0;
     const bodyMatch = body.includes(normalizedQuery) ? 10 : 0;
     const tokenCoverage = tokens.length ? tokens.reduce((total, token) => total + (title.includes(token) ? 8 : body.includes(token) ? 3 : 0), 0) : 0;
+    const semantic = Math.round(cosineSimilarity(queryVector, vectorize(`${result.title} ${result.body}`)) * 35);
     const freshness = Math.max(0, 10 - Math.floor((Date.now() - result.updatedAt.getTime()) / 86_400_000));
-    return exactTitle + titlePrefix + titleMatch + bodyMatch + tokenCoverage + freshness;
+    return exactTitle + titlePrefix + titleMatch + bodyMatch + tokenCoverage + semantic + freshness;
   };
   const ranked = candidates.sort((left, right) => score(right) - score(left) || right.updatedAt.getTime() - left.updatedAt.getTime() || right.rowId - left.rowId);
   const afterCursor = cursor ? ranked.filter(result => { const resultScore = score(result); const cursorDate = new Date(cursor.updatedAt).getTime(); return resultScore < cursor.score || (resultScore === cursor.score && (result.updatedAt.getTime() < cursorDate || (result.updatedAt.getTime() === cursorDate && result.rowId < cursor.rowId))); }) : ranked;

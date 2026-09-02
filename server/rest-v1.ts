@@ -6,8 +6,21 @@ import { getAiRunOutput, listAiRuns } from "./ai-platform";
 import { searchWorkspace } from "./global-search";
 import { sdk } from "./_core/sdk";
 import { canAccessWorkspace } from "./control-plane/operations";
+import { authenticateApiKeyWithScopes } from "./security-platform";
 
-async function requireUser(req: Request) {
+export function parseBearerToken(header: string | undefined) {
+  const match = /^Bearer\s+(.+)$/i.exec(header ?? "");
+  return match?.[1]?.trim() || null;
+}
+
+async function requireUser(req: Request, requiredScope?: string) {
+  const bearer = parseBearerToken(req.header("authorization"));
+  if (bearer?.startsWith("am_")) {
+    const result = await authenticateApiKeyWithScopes(bearer);
+    if (!result) throw new Error("Authentication required.");
+    if (requiredScope && !result.scopes.includes(requiredScope) && !result.scopes.includes("*")) throw new Error("API key scope is insufficient.");
+    return result.user;
+  }
   const user = await sdk.authenticateRequest(req);
   if (!user) throw new Error("Authentication required.");
   return user;
@@ -30,7 +43,7 @@ export function registerRestV1Routes(app: Express) {
   app.get("/api/v1/health", (_req, res) => res.json({ ok: true, apiVersion: "v1" }));
   app.get("/api/v1/workspaces/:workspaceId/search", async (req, res) => {
     try {
-      const user = await requireUser(req);
+      const user = await requireUser(req, "search:read");
       const workspaceId = parsePositiveInteger(req.params.workspaceId, "workspaceId");
       const rawLimit = String(req.query.limit ?? "20");
       const limit = Math.min(100, parsePositiveInteger(rawLimit, "limit"));
@@ -42,7 +55,7 @@ export function registerRestV1Routes(app: Express) {
   });
   app.get("/api/v1/workspaces/:workspaceId/ai-runs", async (req, res) => {
     try {
-      const user = await requireUser(req);
+      const user = await requireUser(req, "ai-runs:read");
       const workspaceId = parsePositiveInteger(req.params.workspaceId, "workspaceId");
       res.json({ data: await listAiRuns(user.id, workspaceId), apiVersion: "v1" });
     } catch (error) {
@@ -51,7 +64,7 @@ export function registerRestV1Routes(app: Express) {
   });
   app.get("/api/v1/ai-runs/:runId", async (req, res) => {
     try {
-      const user = await requireUser(req);
+      const user = await requireUser(req, "ai-runs:read");
       const runId = parsePositiveInteger(req.params.runId, "runId");
       const db = await getDb();
       if (!db) throw new Error("Database tidak tersedia.");

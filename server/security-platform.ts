@@ -25,7 +25,7 @@ async function requireOrganizationMember(userId: number, organizationId: number,
   return db;
 }
 
-export async function authenticateApiKey(rawSecret: string) {
+export async function authenticateApiKeyWithScopes(rawSecret: string) {
   const db = await getDb();
   if (!db || rawSecret.length < 12 || rawSecret.length > 256) return null;
   const [key] = await db.select().from(apiKeys).where(eq(apiKeys.secretHash, hashSecret(rawSecret))).limit(1);
@@ -33,7 +33,14 @@ export async function authenticateApiKey(rawSecret: string) {
   const [user] = await db.select().from(users).where(eq(users.id, key.userId)).limit(1);
   if (!user) return null;
   await db.update(apiKeys).set({ lastUsedAt: new Date() }).where(eq(apiKeys.id, key.id));
-  return user;
+  let scopes: string[] = [];
+  try { const parsed = JSON.parse(key.scopes); scopes = Array.isArray(parsed) ? normalizeApiKeyScopes(parsed.filter((scope): scope is string => typeof scope === "string")) : []; } catch { scopes = []; }
+  return { user, scopes };
+}
+
+export async function authenticateApiKey(rawSecret: string) {
+  const result = await authenticateApiKeyWithScopes(rawSecret);
+  return result?.user ?? null;
 }
 
 export async function listApiKeys(userId: number) {

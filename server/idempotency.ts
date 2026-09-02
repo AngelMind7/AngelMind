@@ -6,6 +6,7 @@ import { getDb } from "./db";
 const DEFAULT_TTL_MS = 24 * 60 * 60 * 1_000;
 
 export function normalizeIdempotencyKey(value: string) {
+  if (typeof value !== "string") throw new Error("Idempotency key must be a string.");
   const key = value.trim();
   if (key.length < 8 || key.length > 180) throw new Error("Idempotency key must contain 8-180 characters.");
   return key;
@@ -34,6 +35,7 @@ export async function executeIdempotent<T>(input: {
   ttlMs?: number;
   handler: () => Promise<T>;
 }) {
+  if (!input || typeof input !== "object" || typeof input.scope !== "string" || typeof input.key !== "string" || typeof input.handler !== "function") throw new Error("Idempotency input is invalid.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const scope = input.scope.trim();
@@ -52,7 +54,7 @@ export async function executeIdempotent<T>(input: {
     if (existing.status === "in_progress") throw new Error("A request with this idempotency key is already in progress.");
     if (existing.status === "failed") throw new Error("The previous request for this idempotency key failed; use a new key.");
     if (!existing.responsePayload) throw new Error("Idempotent response is unavailable.");
-    return { value: JSON.parse(existing.responsePayload) as T, replayed: true };
+    try { return { value: JSON.parse(existing.responsePayload) as T, replayed: true }; } catch { throw new Error("Stored idempotent response is invalid."); }
   }
   try {
     await db.insert(idempotencyRecords).values({ userId: input.userId, scope, idempotencyKey: key, requestHash, status: "in_progress", expiresAt });
@@ -60,12 +62,15 @@ export async function executeIdempotent<T>(input: {
     const [concurrent] = await db.select().from(idempotencyRecords).where(where).limit(1);
     if (!concurrent) throw error;
     if (concurrent.requestHash !== requestHash) throw new Error("Idempotency key is already used for a different request.");
-    if (concurrent.status === "completed" && concurrent.responsePayload) return { value: JSON.parse(concurrent.responsePayload) as T, replayed: true };
+    if (concurrent.status === "completed" && concurrent.responsePayload) { try { return { value: JSON.parse(concurrent.responsePayload) as T, replayed: true }; } catch { throw new Error("Stored idempotent response is invalid."); } }
     throw new Error("A request with this idempotency key is already in progress.");
   }
   try {
     const value = await input.handler();
-    await db.update(idempotencyRecords).set({ status: "completed", responsePayload: JSON.stringify(value) }).where(where);
+    let responsePayload: string;
+    try { responsePayload = JSON.stringify(value); } catch { throw new Error("Idempotent response must be JSON-serializable."); }
+    if (responsePayload === undefined) throw new Error("Idempotent response must be JSON-serializable.");
+    await db.update(idempotencyRecords).set({ status: "completed", responsePayload }).where(where);
     return { value, replayed: false };
   } catch (error) {
     await db.update(idempotencyRecords).set({ status: "failed" }).where(where);

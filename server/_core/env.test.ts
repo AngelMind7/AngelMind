@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from "vitest";
 import { validateRuntimeConfig } from "./env";
 
-const names = ["DATABASE_URL", "APP_ENCRYPTION_KEY", "FIREBASE_PROJECT_ID", "FIREBASE_CLIENT_EMAIL", "FIREBASE_PRIVATE_KEY", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_STORAGE_BUCKET", "RAILWAY_CRON_SECRET"];
+const names = ["DATABASE_URL", "APP_ENCRYPTION_KEY", "AUDIT_ARCHIVE_SIGNING_KEY", "AUDIT_STATE_ENCRYPTION_KEY", "FIREBASE_PROJECT_ID", "FIREBASE_CLIENT_EMAIL", "FIREBASE_PRIVATE_KEY", "SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY", "SUPABASE_STORAGE_BUCKET", "RAILWAY_CRON_SECRET"];
 const saved = Object.fromEntries(names.map(name => [name, process.env[name]]));
 
 afterEach(() => {

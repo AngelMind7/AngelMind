@@ -9,6 +9,8 @@ describe("durable worker retry policy", () => {
     expect(computeRetryDelayMs(99)).toBe(60 * 60 * 1_000);
     expect(computeRetryDelayMs(Number.NaN)).toBe(5_000);
     expect(computeRetryDelayMs(Number.POSITIVE_INFINITY)).toBe(5_000);
+    expect(computeRetryDelayMs(1, Number.NaN)).toBe(60 * 60 * 1_000);
+    expect(computeRetryDelayMs(1, -1)).toBe(0);
   });
 
   it("dead-letters only after the configured attempt limit", () => {

@@ -53,6 +53,8 @@ describe("15-schema evidence normalizer registry", () => {
     const jwt = normalizeEvidenceForSchema("jwt_token_comparison", { data: { token: "abcdefghijk", status: 401 }, capabilities: [] });
     expect(jwt.falsePositive).toBe(true);
     expect(String(jwt.data.token)).not.toBe("abcdefghijk");
+    const ssrf = normalizeEvidenceForSchema("ssrf_evidence", { data: { internal_ip: "10.0.0.10", status: 403 }, capabilities: [] });
+    expect(String(ssrf.data.internal_ip)).not.toBe("10.0.0.10");
     const xxe = normalizeEvidenceForSchema("xxe_evidence", { data: { message: "XML parser disabled", xml: "<secret/>" }, capabilities: [] });
     expect(xxe.falsePositive).toBe(true);
   });

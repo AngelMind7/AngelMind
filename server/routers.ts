@@ -1069,6 +1069,9 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         aiPlatform.listAiRuns(ctx.user.id, input.workspaceId)
       ),
+    output: protectedProcedure
+      .input(z.object({ runId: z.number().int().positive() }))
+      .query(({ ctx, input }) => aiPlatform.getAiRunOutput(ctx.user.id, input.runId)),
     evaluations: protectedProcedure
       .input(z.object({ runId: z.number().int().positive() }))
       .query(({ ctx, input }) =>

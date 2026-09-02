@@ -1,0 +1,63 @@
+name: Post-deploy staging verification
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Explicit HTTPS staging URL"
+        required: true
+        type: string
+      expected_commit:
+        description: "Optional expected commit SHA prefix"
+        required: false
+        default: ""
+        type: string
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Validate staging URL
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+        run: |
+          case "$BASE_URL" in
+            https://*) ;;
+            *) echo "Verification target must use HTTPS" >&2; exit 1 ;;
+          esac
+          case "$BASE_URL" in
+            *localhost*|*127.0.0.1*|*production*|*prod.*)
+              echo "Refusing local or production-looking target" >&2
+              exit 1
+              ;;
+          esac
+      - name: Verify health and readiness
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 15 "$BASE_URL/healthz" | tee healthz.json
+          curl --fail --silent --show-error --max-time 15 "$BASE_URL/readyz" | tee readyz.json
+          curl --fail --silent --show-error --max-time 15 "$BASE_URL/metrics" >/dev/null
+          test -s healthz.json
+          test -s readyz.json
+      - name: Verify expected commit when supplied
+        if: ${{ inputs.expected_commit != '' }}
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+          EXPECTED_COMMIT: ${{ inputs.expected_commit }}
+        run: |
+          set -euo pipefail
+          actual=$(curl --fail --silent --show-error --max-time 15 "$BASE_URL/healthz" | python3 -c 'import json,sys; print(json.load(sys.stdin).get("commit", ""))')
+          case "$actual" in
+            "$EXPECTED_COMMIT"*) ;;
+            *) echo "Unexpected deployed commit: $actual" >&2; exit 1 ;;
+          esac
+      - name: Upload verification evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-verification-${{ github.run_id }}
+          path: '*.json'
+          if-no-files-found: ignore

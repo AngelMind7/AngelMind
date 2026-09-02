@@ -1,5 +1,5 @@
 import { and, desc, eq } from "drizzle-orm";
-import { approvals, auditArchives, auditEvents, evidenceArtifacts, notifications, runs, users, webhookConfigurations, workspaceMemberships, workspaces } from "../../drizzle/schema";
+import { approvals, auditArchives, auditEvents, evidenceArtifacts, notifications, restoreDrillRuns, runs, users, webhookConfigurations, workspaceMemberships, workspaces } from "../../drizzle/schema";
 import { getDb, getOwnedWorkspace, getUserByEmail } from "../db";
 import { storageGetSignedUrl, storagePut } from "../storage";
 import { ENV } from "../_core/env";
@@ -8,6 +8,7 @@ import { normalizeWebhookEvents, assertSafeWebhookEndpoint } from "./webhook-pol
 import type { NotificationEvent } from "./notifications";
 import { currentTraceContext } from "../_core/trace-context";
 import { encryptAuditState } from "./audit-state-crypto";
+import { normalizeIdempotencyKey } from "../idempotency";
 
 const memberRoles = ["operator", "reviewer", "auditor", "approval_authority"] as const;
 export type MemberRole = (typeof memberRoles)[number];
@@ -209,19 +210,37 @@ export async function verifyAuditArchive(ownerUserId: number, archiveId: number)
 }
 
 
-export async function runAuditArchiveDrill(ownerUserId: number, archiveId: number, destinationWorkspaceId?: number) {
-  const verification = await verifyAuditArchive(ownerUserId, archiveId);
-  if (!verification.valid) throw new Error("DR drill refused because archive integrity is invalid.");
-  const plan = await restoreAuditArchivePlan(ownerUserId, archiveId, destinationWorkspaceId);
+export async function runAuditArchiveDrill(ownerUserId: number, archiveId: number, destinationWorkspaceId?: number, idempotencyKey = `restore-drill:${archiveId}:${Date.now()}`) {
   const db = await getDb();
-  if (db) await db.update(auditArchives).set({ lastRestoreDrillAt: new Date() }).where(eq(auditArchives.id, archiveId));
-  return {
-    archiveId,
-    valid: plan.valid,
-    mode: "plan-only" as const,
-    requiresHumanConfirmation: plan.requiresHumanConfirmation,
-    recordsChecked: plan.recordCounts,
-    mutationPerformed: false as const,
-    rollbackRequired: false as const,
-  };
+  if (!db) throw new Error("Database tidak tersedia.");
+  const key = normalizeIdempotencyKey(idempotencyKey);
+  const [archive] = await db.select().from(auditArchives).where(eq(auditArchives.id, archiveId)).limit(1);
+  if (!archive) throw new Error("Audit archive tidak ditemukan.");
+  await workspaceAccessOrThrow(ownerUserId, archive.workspaceId, "review");
+  const [existing] = await db.select().from(restoreDrillRuns).where(and(eq(restoreDrillRuns.archiveId, archiveId), eq(restoreDrillRuns.idempotencyKey, key))).limit(1);
+  if (existing) {
+    if (existing.status === "running") throw new Error("A restore drill with this idempotency key is already running.");
+    if (existing.status === "failed") throw new Error(existing.errorMessage || "The previous restore drill failed; use a new key.");
+    return { archiveId, valid: existing.valid === 1, mode: "plan-only" as const, requiresHumanConfirmation: true as const, recordsChecked: JSON.parse(existing.recordsChecked), mutationPerformed: false as const, rollbackRequired: false as const, replayed: true as const };
+  }
+  try {
+    await db.insert(restoreDrillRuns).values({ archiveId, workspaceId: archive.workspaceId, requestedByUserId: ownerUserId, idempotencyKey: key, status: "running", recordsChecked: JSON.stringify({}) });
+  } catch {
+    const [concurrent] = await db.select().from(restoreDrillRuns).where(and(eq(restoreDrillRuns.archiveId, archiveId), eq(restoreDrillRuns.idempotencyKey, key))).limit(1);
+    if (!concurrent || concurrent.status === "running") throw new Error("A restore drill with this idempotency key is already running.");
+    if (concurrent.status === "failed") throw new Error(concurrent.errorMessage || "The previous restore drill failed; use a new key.");
+    return { archiveId, valid: concurrent.valid === 1, mode: "plan-only" as const, requiresHumanConfirmation: true as const, recordsChecked: JSON.parse(concurrent.recordsChecked), mutationPerformed: false as const, rollbackRequired: false as const, replayed: true as const };
+  }
+  try {
+    const verification = await verifyAuditArchive(ownerUserId, archiveId);
+    if (!verification.valid) throw new Error("DR drill refused because archive integrity is invalid.");
+    const plan = await restoreAuditArchivePlan(ownerUserId, archiveId, destinationWorkspaceId);
+    await db.update(auditArchives).set({ lastRestoreDrillAt: new Date() }).where(eq(auditArchives.id, archiveId));
+    await db.update(restoreDrillRuns).set({ status: "completed", valid: 1, recordsChecked: JSON.stringify(plan.recordCounts), completedAt: new Date() }).where(and(eq(restoreDrillRuns.archiveId, archiveId), eq(restoreDrillRuns.idempotencyKey, key)));
+    return { archiveId, valid: plan.valid, mode: "plan-only" as const, requiresHumanConfirmation: plan.requiresHumanConfirmation, recordsChecked: plan.recordCounts, mutationPerformed: false as const, rollbackRequired: false as const, replayed: false as const };
+  } catch (error) {
+    const message = error instanceof Error ? error.message.slice(0, 2_000) : "Restore drill failed.";
+    await db.update(restoreDrillRuns).set({ status: "failed", errorMessage: message, completedAt: new Date() }).where(and(eq(restoreDrillRuns.archiveId, archiveId), eq(restoreDrillRuns.idempotencyKey, key)));
+    throw error;
+  }
 }

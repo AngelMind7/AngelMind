@@ -930,6 +930,21 @@ export const auditArchives = mysqlTable("auditArchives", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [index("audit_archive_workspace_created_idx").on(table.workspaceId, table.createdAt)]);
 
+export const restoreDrillStatus = ["running", "completed", "failed"] as const;
+export const restoreDrillRuns = mysqlTable("restoreDrillRuns", {
+  id: int("id").autoincrement().primaryKey(),
+  archiveId: int("archiveId").notNull(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  requestedByUserId: int("requestedByUserId").notNull(),
+  idempotencyKey: varchar("idempotencyKey", { length: 180 }).notNull(),
+  status: mysqlEnum("status", restoreDrillStatus).default("running").notNull(),
+  valid: int("valid").default(0).notNull(),
+  recordsChecked: text("recordsChecked").notNull(),
+  errorMessage: varchar("errorMessage", { length: 2_000 }),
+  startedAt: timestamp("startedAt").defaultNow().notNull(),
+  completedAt: timestamp("completedAt"),
+}, table => [uniqueIndex("restore_drill_archive_key_uq").on(table.archiveId, table.idempotencyKey), index("restore_drill_workspace_started_idx").on(table.workspaceId, table.startedAt), index("restore_drill_archive_status_idx").on(table.archiveId, table.status)]);
+
 export const policyVersions = mysqlTable("policyVersions", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),

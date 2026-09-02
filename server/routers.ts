@@ -827,13 +827,15 @@ export const appRouter = router({
         z.object({
           archiveId: z.number().int().positive(),
           destinationWorkspaceId: z.number().int().positive().optional(),
+          idempotencyKey: z.string().trim().min(8).max(180).optional(),
         })
       )
       .mutation(({ ctx, input }) =>
         operations.runAuditArchiveDrill(
           ctx.user.id,
           input.archiveId,
-          input.destinationWorkspaceId
+          input.destinationWorkspaceId,
+          input.idempotencyKey
         )
       ),
   }),

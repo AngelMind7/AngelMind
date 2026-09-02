@@ -135,3 +135,9 @@ Focused rate-limit tests, typecheck, and migration safety validation pass.
 HTTP requests now receive bounded `x-request-id` and `x-trace-id` correlation headers and execute within the existing async trace context. Prometheus output includes response-status counters, current error/slow ratios, SLO budget gauges, runtime readiness, purge metrics, and configured provider probe readiness. Provider probes are bounded by timeout, report status/latency without response-body leakage, and participate in production `/readyz` fail-closed behavior when configured. Hosted alert delivery and dashboard provisioning remain environment-level operations.
 
 Full Vitest suite, production build, and diff validation pass.
+
+## X — Disaster-recovery restore drill (2026-09-03)
+
+Audit archive restore drills now persist a durable `restoreDrillRuns` ledger keyed by archive and idempotency key. A drill retrieves the managed-storage manifest, verifies SHA-256/HMAC integrity, validates workspace identity and record collections, records checked counts, and updates the archive's last-drill timestamp. Duplicate requests replay completed results; concurrent requests are rejected; failed drills remain failed and require a new key. The drill is explicitly plan-only and performs no production data writes or deletes. A real recovery environment and human-confirmed restore execution remain deployment-level work.
+
+Typecheck, archive integrity tests, migration safety, full Vitest suite, production build, and diff validation pass.

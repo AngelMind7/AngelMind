@@ -132,7 +132,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 91 | Traceability | **Partial** | tRPC context now propagates bounded `x-request-id` and `x-trace-id` response headers with generated UUID fallback; resource/job/AI/database correlation fields remain to be threaded through every workflow. |
 | 92 | Incident management | **Implemented (repository)** | Incident create/acknowledge/resolve, escalation, evidence links, audit, and structured post-incident review with summary, root cause, action items, owner/due date, closure evidence, and open/closed lifecycle are implemented; production incident integration remains deployment dependent. |
 | 93 | Status page | **Partial** | Public posture/status disclosure ada; live component telemetry belum. |
-| 94 | Disaster recovery | **Partial** | Signed archive, verify, restore plan ada; tested restore execution/recovery environment belum. |
+| 94 | Disaster recovery | **Implemented (repository)** | Signed archive, constant-time integrity verification, durable idempotent restore-drill ledger, managed-storage retrieval, manifest parsing, record-count verification, and non-destructive plan-only drill are implemented; production recovery environment and actual restore execution remain environment-dependent and require explicit human confirmation. |
 | 95 | Migration | **Implemented** | Drizzle forward migrations, deploy/runbook, validation tersedia. |
 | 96 | CI/CD | **Partial** | CI check/test/build/security workflows ada; staging/smoke/production promotion belum lengkap. |
 | 97 | Supply-chain security | **Partial** | Lockfile, dependency review/security workflow, container hardening ada; SBOM/signing/DAST penuh belum. |

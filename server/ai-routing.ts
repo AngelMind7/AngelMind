@@ -26,6 +26,8 @@ export type ModelRouteDecision = {
 const normalized = (value: string) => value.trim().toLowerCase();
 
 export function selectBestRegisteredModel(models: RegisteredModel[], requirements: ModelRouteRequirements = {}): ModelRouteDecision {
+  if (!Array.isArray(models) || !models.every(model => model && typeof model.modelKey === "string" && typeof model.gateway === "string" && Array.isArray(model.capabilities) && model.capabilities.every(value => typeof value === "string") && Number.isFinite(model.contextWindow) && model.contextWindow > 0 && ["active", "degraded", "disabled"].includes(model.status) && Number.isFinite(model.inputCostPerMillionCents) && model.inputCostPerMillionCents >= 0 && Number.isFinite(model.outputCostPerMillionCents) && model.outputCostPerMillionCents >= 0)) throw new Error("Registered model catalog is invalid.");
+  if (!requirements || typeof requirements !== "object" || (requirements.capabilities !== undefined && (!Array.isArray(requirements.capabilities) || !requirements.capabilities.every(value => typeof value === "string"))) || (requirements.minimumContextWindow !== undefined && (!Number.isFinite(requirements.minimumContextWindow) || requirements.minimumContextWindow < 0)) || (requirements.maxCostCentsPerMillionTokens !== undefined && (!Number.isFinite(requirements.maxCostCentsPerMillionTokens) || requirements.maxCostCentsPerMillionTokens < 0))) throw new Error("Model routing requirements are invalid.");
   const required = new Set((requirements.capabilities ?? []).map(normalized).filter(Boolean));
   const maxCost = requirements.maxCostCentsPerMillionTokens ?? Number.POSITIVE_INFINITY;
   const candidates = models.filter(model => {

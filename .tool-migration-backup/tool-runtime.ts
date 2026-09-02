@@ -53,23 +53,11 @@ type SupportedToolKey =
   | "dependencies.3"
   | "dependencies.6"
   | "dependencies.11"
-  | "dependencies.12"
-  | "burp_suite_pro"
-  | "jwt_tool"
-  | "dalfox"
-  | "ssrfmap"
-  | "interactsh"
-  | "ffuf"
-  | "cloudfox"
-  | "graphql_cop"
-  | "sqlmap"
-  | "nuclei"
-  | "httpx"
-  | "custom_scripts";
+  | "dependencies.12";
 
 export type ToolRuntimeRequest = {
   toolKey: string;
-  mode: "offline_artifact" | "passive_readonly" | "active_nondestructive" | "privileged_or_destructive";
+  mode: "offline_artifact" | "passive_readonly";
   scopeValidated: boolean;
   humanApproval: boolean;
   input: string;
@@ -97,102 +85,6 @@ type Adapter = {
 };
 
 const adapters: readonly Adapter[] = [
-  {
-    toolKey: "burp_suite_pro",
-    binary: "burp-rest-cli",
-    args: (inputPath, input) => [
-      "--project", "/app/runtime/burp-project.burp",
-      "--target", input,
-      "--scan-config", "/etc/angelmind/burp-scan-config.json",
-    ],
-    allowedModes: ["passive_readonly", "active_nondestructive"],
-    requiresTarget: true,
-  },
-  {
-    toolKey: "jwt_tool",
-    binary: "jwt_tool.py",
-    args: (inputPath, input) => ["-t", input, "-M", "at"],
-    allowedModes: ["active_nondestructive"],
-    requiresTarget: true,
-  },
-  {
-    toolKey: "dalfox",
-    binary: "dalfox",
-    args: (inputPath, input) => ["url", input, "--format", "json", "--silence"],
-    allowedModes: ["active_nondestructive"],
-    requiresTarget: true,
-  },
-  {
-    toolKey: "ssrfmap",
-    binary: "ssrfmap",
-    args: (inputPath, input) => ["-r", inputPath, "-p", input],
-    allowedModes: ["active_nondestructive"],
-    requiresTarget: true,
-  },
-  {
-    toolKey: "interactsh",
-    binary: "interactsh-client",
-    args: () => ["-json", "-poll-interval", "5"],
-    allowedModes: ["passive_readonly"],
-  },
-  {
-    toolKey: "ffuf",
-    binary: "ffuf",
-    args: (inputPath, input) => [
-      "-u", input,
-      "-w", "/etc/angelmind/wordlists/common.txt",
-      "-of", "json",
-      "-o", "-",
-    ],
-    allowedModes: ["active_nondestructive"],
-    requiresTarget: true,
-  },
-  {
-    toolKey: "cloudfox",
-    binary: "cloudfox",
-    args: () => ["aws", "all-checks", "--output", "json"],
-    allowedModes: ["passive_readonly"],
-  },
-  {
-    toolKey: "graphql_cop",
-    binary: "graphql-cop",
-    args: (inputPath, input) => ["-t", input, "-o", "json"],
-    allowedModes: ["passive_readonly", "active_nondestructive"],
-    requiresTarget: true,
-  },
-  {
-    toolKey: "sqlmap",
-    binary: "sqlmap",
-    args: (inputPath, input) => [
-      "-u", input,
-      "--batch",
-      "--output-dir=/tmp/angelmind-sqlmap",
-      "--level=1",
-      "--risk=1",
-    ],
-    allowedModes: ["privileged_or_destructive"],
-    requiresTarget: true,
-  },
-  {
-    toolKey: "nuclei",
-    binary: "nuclei",
-    args: (inputPath, input) => ["-u", input, "-jsonl", "-silent"],
-    allowedModes: ["passive_readonly", "active_nondestructive"],
-    requiresTarget: true,
-  },
-  {
-    toolKey: "httpx",
-    binary: "httpx",
-    args: (inputPath, input) => ["-u", input, "-json", "-silent"],
-    allowedModes: ["passive_readonly"],
-    requiresTarget: true,
-  },
-  {
-    toolKey: "custom_scripts",
-    binary: "python3",
-    args: inputPath => ["/app/runtime/custom_script_runner.py", inputPath],
-    allowedModes: ["offline_artifact", "passive_readonly"],
-  },
   {
     toolKey: "binary_artifact_analysis.24",
     binary: "yara",
@@ -614,10 +506,8 @@ const MAX_TIMEOUT_MS = 120_000;
 const DEFAULT_MAX_OUTPUT_BYTES = 512_000;
 const MAX_OUTPUT_BYTES = 2_000_000;
 
-const registeredAdapters = adapters.filter(adapter => Boolean(getToolCatalogEntry(adapter.toolKey)));
-
 function getAdapter(toolKey: string) {
-  return registeredAdapters.find(adapter => adapter.toolKey === toolKey);
+  return adapters.find(adapter => adapter.toolKey === toolKey);
 }
 
 function boundedText(value: string, maxBytes: number) {
@@ -709,7 +599,7 @@ function executeAdapter(
 }
 
 export function listRegisteredAdapters() {
-  return registeredAdapters.map(adapter => ({
+  return adapters.map(adapter => ({
     toolKey: adapter.toolKey,
     binary: adapter.binary,
     allowedModes: adapter.allowedModes,
@@ -771,7 +661,7 @@ function probeBinary(binary: string) {
 
 export async function checkRegisteredAdapterHealth() {
   const health = await Promise.all(
-    registeredAdapters.map(async adapter => ({
+    adapters.map(async adapter => ({
       toolKey: adapter.toolKey,
       binary: adapter.binary,
       ...(await probeBinary(adapter.binary)),
@@ -797,7 +687,7 @@ export async function checkRuntimeReadiness(): Promise<RuntimeReadiness> {
   if (runtimeReadinessCache?.key === key && now - runtimeReadinessCache.checkedAt < RUNTIME_READINESS_CACHE_MS) {
     return runtimeReadinessCache.result;
   }
-  const registeredByBinary = new Map(registeredAdapters.map(adapter => [adapter.binary, adapter]));
+  const registeredByBinary = new Map(adapters.map(adapter => [adapter.binary, adapter]));
   const health = await Promise.all(requiredBinaries.map(async binary => ({ binary, available: (await probeBinary(binary)).available, registered: registeredByBinary.has(binary) })));
   const missing = health.filter(item => !item.available || !item.registered).map(item => item.binary);
   const result = { configured: true as const, ready: missing.length === 0, missing };

@@ -28,6 +28,23 @@ describe("security and health contracts", () => {
     expect(response.headers.get("permissions-policy")).toContain("camera=()");
   });
 
+  it("propagates bounded request and trace correlation headers", async () => {
+    const app = express();
+    registerSecurityMiddleware(app);
+    app.get("/", (_req, res) => res.status(200).send("ok"));
+    const server = app.listen(0);
+    await new Promise<void>(resolve => server.once("listening", () => resolve()));
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("Test server did not expose a port");
+    try {
+      const response = await fetch(`http://127.0.0.1:${address.port}/`, { headers: { "x-request-id": "request-test", "x-trace-id": "trace-test" } });
+      expect(response.headers.get("x-request-id")).toBe("request-test");
+      expect(response.headers.get("x-trace-id")).toBe("trace-test");
+    } finally {
+      await new Promise<void>(resolve => server.close(() => resolve()));
+    }
+  });
+
   it("exposes process metrics in Prometheus text format", async () => {
     const app = express();
     registerMetricsRoute(app);

@@ -129,3 +129,9 @@ Local scope contract tests and migration safety/rollback checks pass. Applying m
 The API boundary now applies bounded in-memory rate limiting to Firebase token exchange, scheduled callbacks, REST v1, and tRPC routes. Client keys use the socket address by default and only honor `X-Forwarded-For` when `TRUST_PROXY=true`; authorization material is hashed before keying and is never exposed in responses or logs. Repeated limit violations escalate to a bounded exponential abuse cooldown with `Retry-After`, while health and metrics routes remain available for operations. Distributed quota coordination and behavioral/account-abuse detection remain environment/provider work.
 
 Focused rate-limit tests, typecheck, and migration safety validation pass.
+
+## W — Production observability hardening (2026-09-03)
+
+HTTP requests now receive bounded `x-request-id` and `x-trace-id` correlation headers and execute within the existing async trace context. Prometheus output includes response-status counters, current error/slow ratios, SLO budget gauges, runtime readiness, purge metrics, and configured provider probe readiness. Provider probes are bounded by timeout, report status/latency without response-body leakage, and participate in production `/readyz` fail-closed behavior when configured. Hosted alert delivery and dashboard provisioning remain environment-level operations.
+
+Full Vitest suite, production build, and diff validation pass.

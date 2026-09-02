@@ -379,6 +379,13 @@
       "when": 1788335086740,
       "tag": "0053_program_authorization_reference",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "5",
+      "when": 1788335086741,
+      "tag": "0054_audit_chain_and_approval_authority",
+      "breakpoints": true
     }
   ]
 }

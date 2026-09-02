@@ -1,4 +1,5 @@
 import { createHash } from "node:crypto";
+import { extraFingerprintRules } from "./research-vector-selection-extra";
 
 export type VectorRiskClass = "low" | "medium" | "high" | "critical";
 
@@ -39,7 +40,7 @@ function stableKey(assetId: number, vectorKey: string) {
 export function selectVectorsForAsset(input: { assetId: number; metadata: unknown }): SelectedResearchVector[] {
   const source = typeof input.metadata === "string" ? input.metadata : JSON.stringify(input.metadata ?? {});
   const normalized = source.toLowerCase();
-  const selected = fingerprintRules.flatMap(rule => {
+  const selected = [...fingerprintRules, ...extraFingerprintRules].flatMap(rule => {
     if (!rule.needles.some(needle => normalized.includes(needle))) return [];
     return rule.vectors;
   });

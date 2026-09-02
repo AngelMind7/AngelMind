@@ -208,7 +208,7 @@ export const runStatus = ["queued", "running", "checkpointed", "completed", "blo
 export const findingStatus = ["discovered", "triaged", "candidate", "reproducing", "validated", "reported", "submitted", "invalid", "duplicate", "inconclusive"] as const;
 export const approvalStatus = ["pending", "approved", "rejected", "expired"] as const;
 export const notificationEventType = ["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check", "policy_review_required", "incident_created", "webhook_activation_requested", "comment_mentioned"] as const;
-export const workspaceMemberRole = ["owner", "operator", "reviewer", "auditor"] as const;
+export const workspaceMemberRole = ["owner", "operator", "reviewer", "auditor", "approval_authority"] as const;
 export const policyVersionStatus = ["pending", "approved", "rejected", "superseded"] as const;
 export const incidentSeverity = ["low", "medium", "high", "critical"] as const;
 export const incidentStatus = ["open", "acknowledged", "resolved"] as const;
@@ -660,6 +660,8 @@ export const auditEvents = mysqlTable("auditEvents", {
   category: varchar("category", { length: 80 }).notNull(),
   subject: varchar("subject", { length: 160 }).notNull(),
   evidenceHash: varchar("evidenceHash", { length: 64 }).notNull(),
+  previousEntryHash: varchar("previousEntryHash", { length: 64 }),
+  chainHash: varchar("chainHash", { length: 64 }),
   traceId: varchar("traceId", { length: 128 }),
   details: text("details").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),

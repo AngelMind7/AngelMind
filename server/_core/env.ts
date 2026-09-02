@@ -41,24 +41,37 @@ export function getSmtpConfig() {
 export type SmtpConfig = NonNullable<ReturnType<typeof getSmtpConfig>>;
 
 export function validateRuntimeConfig(options: { production?: boolean } = {}) {
-  const production = options.production ?? ENV.isProduction;
+  const production = options.production ?? process.env.NODE_ENV === "production";
   if (!production) return { production: false as const, missing: [] as string[] };
+
+  // Read process.env at validation time so startup and tests cannot accidentally
+  // validate a stale module-level snapshot of the environment.
+  const databaseUrl = process.env.DATABASE_URL ?? "";
+  const archiveSigningSecret = process.env.AUDIT_ARCHIVE_SIGNING_KEY ?? process.env.APP_ENCRYPTION_KEY ?? "";
+  const auditStateEncryptionKey = process.env.AUDIT_STATE_ENCRYPTION_KEY ?? "";
+  const firebaseProjectId = process.env.FIREBASE_PROJECT_ID ?? "";
+  const firebaseClientEmail = process.env.FIREBASE_CLIENT_EMAIL ?? "";
+  const firebasePrivateKey = process.env.FIREBASE_PRIVATE_KEY ?? "";
+  const supabaseUrl = process.env.SUPABASE_URL ?? "";
+  const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY ?? "";
+  const supabaseStorageBucket = process.env.SUPABASE_STORAGE_BUCKET ?? "angelmind-files";
+  const railwayCronSecret = process.env.RAILWAY_CRON_SECRET ?? "";
 
   const missing: string[] = [];
   const required = (name: string, value: string) => { if (!value.trim()) missing.push(name); };
-  required("DATABASE_URL", ENV.databaseUrl);
-  required("AUDIT_ARCHIVE_SIGNING_KEY", ENV.archiveSigningSecret);
-  required("AUDIT_STATE_ENCRYPTION_KEY", ENV.auditStateEncryptionKey);
-  required("FIREBASE_PROJECT_ID", ENV.firebaseProjectId);
-  required("FIREBASE_CLIENT_EMAIL", ENV.firebaseClientEmail);
-  required("FIREBASE_PRIVATE_KEY", ENV.firebasePrivateKey);
-  required("SUPABASE_URL", ENV.supabaseUrl);
-  required("SUPABASE_SERVICE_ROLE_KEY", ENV.supabaseServiceRoleKey);
-  required("SUPABASE_STORAGE_BUCKET", ENV.supabaseStorageBucket);
-  required("RAILWAY_CRON_SECRET", ENV.railwayCronSecret);
-  if (ENV.supabaseUrl && (!ENV.supabaseUrl.startsWith("https://") || !ENV.supabaseUrl.includes(".supabase.co"))) missing.push("SUPABASE_URL(approved-https-host)");
-  if (ENV.railwayCronSecret && ENV.railwayCronSecret.length < 32) missing.push("RAILWAY_CRON_SECRET(min-32-chars)");
-  if (ENV.archiveSigningSecret && ENV.archiveSigningSecret.length < 32) missing.push("AUDIT_ARCHIVE_SIGNING_KEY(min-32-chars)");
+  required("DATABASE_URL", databaseUrl);
+  required("AUDIT_ARCHIVE_SIGNING_KEY", archiveSigningSecret);
+  required("AUDIT_STATE_ENCRYPTION_KEY", auditStateEncryptionKey);
+  required("FIREBASE_PROJECT_ID", firebaseProjectId);
+  required("FIREBASE_CLIENT_EMAIL", firebaseClientEmail);
+  required("FIREBASE_PRIVATE_KEY", firebasePrivateKey);
+  required("SUPABASE_URL", supabaseUrl);
+  required("SUPABASE_SERVICE_ROLE_KEY", supabaseServiceRoleKey);
+  required("SUPABASE_STORAGE_BUCKET", supabaseStorageBucket);
+  required("RAILWAY_CRON_SECRET", railwayCronSecret);
+  if (supabaseUrl && (!supabaseUrl.startsWith("https://") || !supabaseUrl.includes(".supabase.co"))) missing.push("SUPABASE_URL(approved-https-host)");
+  if (railwayCronSecret && railwayCronSecret.length < 32) missing.push("RAILWAY_CRON_SECRET(min-32-chars)");
+  if (archiveSigningSecret && archiveSigningSecret.length < 32) missing.push("AUDIT_ARCHIVE_SIGNING_KEY(min-32-chars)");
   if (missing.length) throw new Error(`Production runtime configuration incomplete: ${missing.join(", ")}`);
   return { production: true as const, missing: [] as string[] };
 }

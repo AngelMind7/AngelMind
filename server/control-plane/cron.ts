@@ -34,6 +34,7 @@ function expandField(value: string, [minimum, maximum]: CronField): Set<number> 
 }
 
 function parseCronExpression(expression: string): Set<number>[] | null {
+  if (typeof expression !== "string" || !expression.trim()) return null;
   const fields = expression.trim().split(/\s+/);
   if (fields.length !== 5) return null;
   const parsed = fields.map((field, index) => expandField(field, FIELD_RANGES[index]));

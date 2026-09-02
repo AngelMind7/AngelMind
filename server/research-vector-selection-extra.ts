@@ -55,7 +55,7 @@ export const extraFingerprintRules: Array<{
     { vectorKey: "race-condition", capability: "timing-analysis", suggestedAdapters: ["custom_scripts_adapter"], riskClass: "high", rationale: "Indikator operasi non-atomic ditemukan; berpotensi race condition." },
   ] },
   { needles: ["dependency", "package.json", "requirements.txt", "cve"], vectors: [
-    { vectorKey: "supply-chain-dependency-cve", capability: "dependency-scanning", suggestedAdapters: ["trivy_adapter"], riskClass: "high", rationale: "Manifest dependency ditemukan; perlu pemeriksaan CVE." },
+    { vectorKey: "supply-chain-dependency-cve", capability: "dependency-scanning", suggestedAdapters: ["dependencies.12"], riskClass: "high", rationale: "Manifest dependency ditemukan; perlu pemeriksaan CVE." },
   ] },
   { needles: ["reflected", "xss", "unescaped output"], vectors: [
     { vectorKey: "xss-reflected", capability: "input-validation-testing", suggestedAdapters: ["dalfox_adapter", "burp_pro_adapter"], riskClass: "medium", rationale: "Indikator output tidak di-escape ditemukan; berpotensi XSS reflected." },
@@ -74,7 +74,7 @@ export const extraFingerprintRules: Array<{
     { vectorKey: "rce-command-injection", capability: "code-execution-validation", suggestedAdapters: ["custom_scripts_adapter"], riskClass: "critical", rationale: "Indikator eksekusi command dari input pengguna ditemukan; dibatasi approval." },
   ] },
   { needles: ["s3.amazonaws.com", "public bucket", "acl=public"], vectors: [
-    { vectorKey: "cloud-s3-public", capability: "cloud-metadata-testing", suggestedAdapters: ["cloudfox_adapter"], riskClass: "high", rationale: "Indikator S3 bucket publik ditemukan." },
+    { vectorKey: "cloud-s3-public", capability: "cloud-metadata-testing", suggestedAdapters: ["cloudfox"], riskClass: "high", rationale: "Indikator S3 bucket publik ditemukan." },
   ] },
   { needles: ["iam", "assume role", "sts:"], vectors: [
     { vectorKey: "cloud-iam-overpermission", capability: "iam-analysis", suggestedAdapters: ["cloudfox_adapter"], riskClass: "critical", rationale: "Indikator IAM/assume-role ditemukan; berpotensi over-permission, dibatasi approval." },

@@ -551,6 +551,18 @@ export const jobs = mysqlTable("jobs", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => [uniqueIndex("job_idempotency_key_uq").on(table.idempotencyKey), index("job_status_available_idx").on(table.status, table.availableAt), index("job_lease_expiry_idx").on(table.status, table.leaseExpiresAt), index("job_workspace_created_idx").on(table.workspaceId, table.createdAt), index("job_trace_idx").on(table.traceId)]);
 
+export const idempotencyRecords = mysqlTable("idempotencyRecords", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  scope: varchar("scope", { length: 160 }).notNull(),
+  idempotencyKey: varchar("idempotencyKey", { length: 180 }).notNull(),
+  requestHash: varchar("requestHash", { length: 64 }).notNull(),
+  status: mysqlEnum("status", ["in_progress", "completed", "failed"]).default("in_progress").notNull(),
+  responsePayload: text("responsePayload"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+}, table => [uniqueIndex("idempotency_scope_key_uq").on(table.userId, table.scope, table.idempotencyKey), index("idempotency_expiry_idx").on(table.expiresAt), index("idempotency_user_created_idx").on(table.userId, table.createdAt)]);
+
 export const outboxEvents = mysqlTable("outboxEvents", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").references(() => workspaces.id, { onDelete: "set null" }),

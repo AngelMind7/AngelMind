@@ -164,6 +164,14 @@ npm run api:cli -- ai-runs 42
 
 The CLI is intentionally read-only and does not expose target-facing execution, report submission, credential handling, or migration operations.
 
+## Generic idempotency
+
+Mutation yang dapat diulang oleh client dapat memakai helper `executeIdempotent` dari `server/idempotency.ts`. Kontrak ini mengikat request pada kombinasi **user + scope + `Idempotency-Key`** dan menyimpan fingerprint SHA-256 serta response JSON di tabel `idempotencyRecords`.
+
+Client mengirim header `Idempotency-Key` sepanjang 8–180 karakter. Pengulangan dengan key dan payload yang sama mengembalikan response tersimpan tanpa menjalankan handler lagi. Key yang sama dengan payload berbeda ditolak, request yang masih berjalan menghasilkan konflik, dan record memiliki TTL default 24 jam. Scope menjaga agar key dari operasi berbeda tidak saling bertabrakan.
+
+Integrasi mutation dilakukan dengan membungkus side effect di dalam `executeIdempotent({ userId, scope, key, request, handler })`. Migrasi database yang diperlukan adalah `drizzle/0060_generic_idempotency.sql`.
+
 ## Current limitations
 
 The v1 surface is intentionally read-only. It does not expose target-facing execution, autonomous submission, external delivery activation, migration controls, or purge mutation controls. Those operations remain behind governed tRPC procedures and server-side worker boundaries.

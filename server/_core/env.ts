@@ -47,7 +47,7 @@ export function validateRuntimeConfig(options: { production?: boolean } = {}) {
   const missing: string[] = [];
   const required = (name: string, value: string) => { if (!value.trim()) missing.push(name); };
   required("DATABASE_URL", ENV.databaseUrl);
-  required("APP_ENCRYPTION_KEY", process.env.APP_ENCRYPTION_KEY ?? "");
+  required("AUDIT_ARCHIVE_SIGNING_KEY", ENV.archiveSigningSecret);
   required("AUDIT_STATE_ENCRYPTION_KEY", ENV.auditStateEncryptionKey);
   required("FIREBASE_PROJECT_ID", ENV.firebaseProjectId);
   required("FIREBASE_CLIENT_EMAIL", ENV.firebaseClientEmail);
@@ -58,7 +58,7 @@ export function validateRuntimeConfig(options: { production?: boolean } = {}) {
   required("RAILWAY_CRON_SECRET", ENV.railwayCronSecret);
   if (ENV.supabaseUrl && (!ENV.supabaseUrl.startsWith("https://") || !ENV.supabaseUrl.includes(".supabase.co"))) missing.push("SUPABASE_URL(approved-https-host)");
   if (ENV.railwayCronSecret && ENV.railwayCronSecret.length < 32) missing.push("RAILWAY_CRON_SECRET(min-32-chars)");
-  if (process.env.APP_ENCRYPTION_KEY && process.env.APP_ENCRYPTION_KEY.length < 32) missing.push("APP_ENCRYPTION_KEY(min-32-chars)");
+  if (ENV.archiveSigningSecret && ENV.archiveSigningSecret.length < 32) missing.push("AUDIT_ARCHIVE_SIGNING_KEY(min-32-chars)");
   if (missing.length) throw new Error(`Production runtime configuration incomplete: ${missing.join(", ")}`);
   return { production: true as const, missing: [] as string[] };
 }

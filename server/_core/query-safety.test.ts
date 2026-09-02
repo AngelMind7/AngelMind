@@ -14,6 +14,8 @@ describe("query safety primitives", () => {
     expect(result.items).toHaveLength(2);
     expect(result.hasNextPage).toBe(true);
     expect(result.nextCursor).toBeTruthy();
+    expect(pageResult(rows, Number.NaN).items).toHaveLength(3);
+    expect(pageResult(rows, Number.POSITIVE_INFINITY).items).toHaveLength(3);
   });
 
   it("fails closed on stale revisions and advances valid revisions", () => {
@@ -21,5 +23,7 @@ describe("query safety primitives", () => {
     expect(() => assertExpectedRevision(2, 2)).not.toThrow();
     expect(nextRevision(4)).toBe(5);
     expect(requestFingerprint({ method: "post", path: "/api/test", body: { a: 1 } })).toHaveLength(64);
+    expect(() => requestFingerprint({ method: " ", path: "/api/test", body: {} })).toThrow("Request method is required");
+    expect(() => requestFingerprint({ method: "POST", path: "api/test", body: {} })).toThrow("Request path must be absolute");
   });
 });

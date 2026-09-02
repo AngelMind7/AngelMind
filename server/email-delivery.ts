@@ -5,6 +5,7 @@ import { enqueueJob } from "./ai-platform";
 import { sendEmail } from "./_core/email";
 
 function normalizeRecipient(value: string): string {
+  if (typeof value !== "string") throw new Error("Email recipient is invalid.");
   const recipient = value.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(recipient)) throw new Error("Email recipient is invalid.");
   return recipient;
@@ -13,11 +14,13 @@ function normalizeRecipient(value: string): string {
 export async function enqueueEmailDelivery(userId: number, input: { recipient: string; templateKey: string; subject: string; text: string; html?: string; replyTo?: string; idempotencyKey: string; workspaceId?: number }) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
+  if (!Number.isInteger(userId) || userId < 1 || !input || typeof input.idempotencyKey !== "string") throw new Error("Email delivery input is invalid.");
   const recipient = normalizeRecipient(input.recipient);
   const idempotencyKey = input.idempotencyKey.trim();
   if (idempotencyKey.length < 8 || idempotencyKey.length > 180) throw new Error("Email idempotency key must contain 8-180 characters.");
   const [existing] = await db.select().from(emailDeliveries).where(eq(emailDeliveries.idempotencyKey, idempotencyKey)).limit(1);
   if (existing) return existing;
+  if (typeof input.templateKey !== "string" || typeof input.subject !== "string" || typeof input.text !== "string") throw new Error("Email delivery content is invalid.");
   const payload = { text: input.text, html: input.html, replyTo: input.replyTo };
   try {
     await db.insert(emailDeliveries).values({ userId, workspaceId: input.workspaceId ?? null, recipient, templateKey: input.templateKey.trim().slice(0, 120), subject: input.subject.trim().slice(0, 512), payload: JSON.stringify(payload), status: "queued", attempts: 0, nextAttemptAt: new Date(), idempotencyKey });

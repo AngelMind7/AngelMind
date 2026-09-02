@@ -9,6 +9,7 @@ const TITLE_MAX_LENGTH = 1200;
 const CONTENT_MAX_LENGTH = 20_000;
 
 function validatePayload(input: NotificationPayload): NotificationPayload {
+  if (!input || typeof input.title !== "string" || typeof input.content !== "string") throw new TRPCError({ code: "BAD_REQUEST", message: "Notification payload is invalid." });
   const title = input.title.trim();
   const content = input.content.trim();
   if (!title) throw new TRPCError({ code: "BAD_REQUEST", message: "Notification title is required." });
@@ -26,6 +27,13 @@ export async function notifyOwner(payload: NotificationPayload): Promise<boolean
   const validated = validatePayload(payload);
   const endpoint = process.env.NOTIFICATION_WEBHOOK_URL?.trim();
   if (!endpoint) return false;
+  try {
+    const url = new URL(endpoint);
+    if (url.protocol !== "https:") throw new Error("Notification webhook must use HTTPS.");
+  } catch {
+    console.warn("[Notification] Webhook URL is invalid or insecure.");
+    return false;
+  }
 
   const secret = process.env.NOTIFICATION_WEBHOOK_SECRET?.trim();
   try {

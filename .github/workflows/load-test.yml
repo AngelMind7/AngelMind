@@ -1,0 +1,52 @@
+name: Staging load and recovery probe
+on:
+  workflow_dispatch:
+    inputs:
+      base_url:
+        description: "Explicit HTTPS staging URL"
+        required: true
+        type: string
+      concurrency:
+        description: "Concurrent workers (1-50)"
+        required: false
+        default: "10"
+        type: string
+      duration_ms:
+        description: "Duration in milliseconds (1000-120000)"
+        required: false
+        default: "15000"
+        type: string
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Validate staging target
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+        run: |
+          case "$BASE_URL" in
+            https://*) ;;
+            *) echo "Load test target must use HTTPS" >&2; exit 1 ;;
+          esac
+          case "$BASE_URL" in
+            *localhost*|*127.0.0.1*|*production*|*prod.*)
+              echo "Refusing local or production-looking target" >&2
+              exit 1
+              ;;
+          esac
+      - name: Run bounded health load test
+        env:
+          LOAD_TEST_BASE_URL: ${{ inputs.base_url }}
+          LOAD_TEST_CONCURRENCY: ${{ inputs.concurrency }}
+          LOAD_TEST_DURATION_MS: ${{ inputs.duration_ms }}
+        run: pnpm test:load

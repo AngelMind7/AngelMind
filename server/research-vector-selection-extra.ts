@@ -1,16 +1,5 @@
 import type { SelectedResearchVector } from "./research-vector-selection";
 
-/**
- * P4 — Tambahan vector fingerprint menuju 45 vectors (Appendix F, Master Spec v4).
- *
- * File terpisah dari research-vector-selection.ts supaya tidak mengubah/berisiko
- * merusak 13 rule yang sudah ada & sudah punya test (research-vector-selection.test.ts).
- * Digabung lewat merge di research-vector-selection.ts (lihat patch di bawah).
- *
- * Naming SENGAJA mengikuti konvensi file asli: vectorKey (bukan vector_id),
- * camelCase field, riskClass union yang sama ("low"|"medium"|"high"|"critical").
- */
-
 export const extraFingerprintRules: Array<{
   needles: string[];
   vectors: Array<Omit<SelectedResearchVector, "rationale"> & { rationale: string }>;

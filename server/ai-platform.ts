@@ -126,6 +126,18 @@ export async function listAiRuns(userId: number, workspaceId: number) {
   return db.select().from(aiRuns).where(eq(aiRuns.workspaceId, workspaceId)).orderBy(desc(aiRuns.createdAt)).limit(100);
 }
 
+export async function getAiEvaluationSummary(userId: number, workspaceId: number) {
+  const { db } = await requireWorkspace(userId, workspaceId);
+  const [runs, evaluations] = await Promise.all([
+    db.select({ id: aiRuns.id, status: aiRuns.status, costCents: aiRuns.costCents }).from(aiRuns).where(eq(aiRuns.workspaceId, workspaceId)).limit(500),
+    db.select({ score: aiRunEvaluations.score, verdict: aiRunEvaluations.verdict }).from(aiRunEvaluations).where(eq(aiRunEvaluations.workspaceId, workspaceId)).limit(1_000),
+  ]);
+  const verdicts = { pass: 0, fail: 0, needs_review: 0 };
+  let scoreTotal = 0;
+  for (const evaluation of evaluations) { verdicts[evaluation.verdict] += 1; scoreTotal += evaluation.score; }
+  return { runCount: runs.length, completedRunCount: runs.filter(run => run.status === "completed" || run.status === "partial").length, evaluatedRunCount: evaluations.length, averageScore: evaluations.length ? Math.round((scoreTotal / evaluations.length) * 100) / 100 : null, verdicts, costCents: runs.reduce((total, run) => total + run.costCents, 0) };
+}
+
 /** Purges expired AI memory payloads but preserves run metadata, cost, status, and trace lineage. */
 export async function purgeExpiredAiRunMemory(limit = 100) {
   const startedAt = Date.now();

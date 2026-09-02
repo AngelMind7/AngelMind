@@ -350,7 +350,7 @@ export async function executeOrchestrationPlanJob(payload: Record<string, unknow
     const [run] = await db.select().from(aiRuns).where(eq(aiRuns.inputReference, inputReference)).orderBy(desc(aiRuns.id)).limit(1);
     if (!run) throw new Error(`Could not persist orchestration task ${task.id}.`);
     const idempotencyKey = `orchestration:${planId}:${task.id}`;
-    await db.insert(jobs).values({ workspaceId, kind: "ai.run.execute", idempotencyKey, payload: JSON.stringify({ type: "ai_run_execute", runId: run.id, userId, messages: [{ role: "system", content: `You are the ${task.role} agent in a governed orchestration. Respect dependencies and never perform target-facing actions.` }, { role: "user", content: JSON.stringify({ objective: task.objective, dependsOn: task.dependsOn, evidenceReferences: plan.evidenceReferences ?? [] }) }] }), status: "queued", attempts: 0, maxAttempts: 3, availableAt: new Date() }).onDuplicateKeyUpdate({ set: { updatedAt: new Date() } });
+    await enqueueJob(userId, { workspaceId, kind: "ai.run.execute", idempotencyKey, payload: { type: "ai_run_execute", runId: run.id, userId, workspaceId, modelKey: model.modelKey, messages: [{ role: "system", content: `You are the ${task.role} agent in a governed orchestration. Respect dependencies and never perform target-facing actions.` }, { role: "user", content: JSON.stringify({ objective: task.objective, dependsOn: task.dependsOn, evidenceReferences: plan.evidenceReferences ?? [] }) }] }, maxAttempts: 3 });
   }
   return { planId, tasksQueued: plan.tasks.length, modelKey: model.modelKey };
 }

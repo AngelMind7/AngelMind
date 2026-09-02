@@ -59,6 +59,7 @@ export async function appendAuditChainEntry(
   trx: Transaction,
   entry: AuditChainEntryInput,
 ) {
+  if (!trx || !entry || !Number.isInteger(entry.workspaceId) || entry.workspaceId < 1 || typeof entry.category !== "string" || !entry.category.trim() || typeof entry.subject !== "string" || !entry.subject.trim() || typeof entry.evidenceHash !== "string" || !/^[a-f0-9]{64}$/i.test(entry.evidenceHash) || typeof entry.details !== "string") throw new Error("Audit chain entry is invalid.");
   const [lastEntry] = await trx
     .select({ chainHash: auditEvents.chainHash })
     .from(auditEvents)
@@ -136,6 +137,7 @@ export async function verifyAuditChain(workspaceId: number): Promise<AuditChainV
     if (actualPrevious !== expectedPrevious) {
       return { valid: false, workspaceId, checkedCount: entries.length, brokenAtEntryId: row.id, reason: "previous_hash_mismatch" };
     }
+    if (!(row.createdAt instanceof Date) || !Number.isFinite(row.createdAt.getTime()) || typeof row.category !== "string" || typeof row.subject !== "string" || typeof row.evidenceHash !== "string" || typeof row.details !== "string") return { valid: false, workspaceId, checkedCount, brokenAtEntryId: row.id, reason: "malformed_entry" };
     const recomputed = computeChainHash({
       previousHash: expectedPrevious,
       workspaceId,

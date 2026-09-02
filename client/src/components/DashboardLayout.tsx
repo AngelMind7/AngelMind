@@ -32,6 +32,7 @@ import { TimezoneSelector } from "./TimezoneSelector";
 import CommandPalette from "./CommandPalette";
 import ThemeSwitcher from "./ThemeSwitcher";
 import { useLocale } from "@/contexts/LocaleContext";
+import { useRealtimeEvents } from "@/hooks/useRealtimeEvents";
 
 const menuItems = [
   { icon: LayoutDashboard, labelKey: "nav.commandCenter" as const, path: "/" },
@@ -176,6 +177,7 @@ function DashboardLayoutContent({
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
   const { t, isRTL } = useLocale();
+  useRealtimeEvents(Boolean(user));
 
   useEffect(() => {
     if (isCollapsed) {

@@ -11,6 +11,7 @@ import { registerHealthRoutes, registerMetricsRoute, registerSecurityMiddleware 
 import { registerFirebaseAuthRoutes } from "../firebase-auth";
 import { validateRuntimeConfig } from "./env";
 import { registerRestV1Routes } from "../rest-v1";
+import { registerRealtimeRoutes } from "../realtime";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -43,6 +44,7 @@ async function startServer() {
   app.use(express.urlencoded({ limit: "1mb", extended: true }));
   registerFirebaseAuthRoutes(app);
   registerRestV1Routes(app);
+  registerRealtimeRoutes(app);
   app.post("/api/scheduled/workspace-maintenance", workspaceMaintenanceHandler);
   // tRPC API
   app.use(

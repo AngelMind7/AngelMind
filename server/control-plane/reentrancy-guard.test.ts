@@ -12,6 +12,11 @@ describe("control-plane reentrancy guard", () => {
     expect(isControlPlaneMutationActive("incident:7")).toBe(false);
   });
 
+  it("rejects malformed keys without leaking state", async () => {
+    await expect(withControlPlaneReentrancyGuard(null as never, async () => "nope")).rejects.toThrow("key is required");
+    expect(isControlPlaneMutationActive(null as never)).toBe(false);
+  });
+
   it("releases the key after a failed operation", async () => {
     await expect(withControlPlaneReentrancyGuard("policy:3", async () => { throw new Error("boom"); })).rejects.toThrow("boom");
     await expect(withControlPlaneReentrancyGuard("policy:3", async () => "retry")).resolves.toBe("retry");

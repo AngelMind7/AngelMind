@@ -90,6 +90,53 @@ export function verifyEvidenceHash(evidence: CanonicalEvidence): boolean {
   return createHash("sha256").update(stableJson(canonical)).digest("hex") === expected;
 }
 
+export type EvidenceSchemaId =
+  | "jwt_token_comparison" | "sqli_evidence" | "xss_evidence" | "ssrf_evidence"
+  | "cloud_metadata_evidence" | "graphql_introspection_evidence" | "graphql_batching_evidence"
+  | "idor_evidence" | "ssti_evidence" | "rce_evidence" | "host_header_evidence"
+  | "cache_poisoning_evidence" | "race_condition_evidence" | "file_upload_evidence" | "xxe_evidence";
+
+export type EvidenceSchemaDefinition = {
+  id: EvidenceSchemaId;
+  vectors: string[];
+  redactedKeys: string[];
+  falsePositive: (data: Record<string, unknown>) => boolean;
+};
+
+const statusFalsePositive = (data: Record<string, unknown>, statuses: number[]) => {
+  const status = Number(data.status ?? data.statusCode ?? data.httpStatus);
+  return Number.isFinite(status) && statuses.includes(status);
+};
+
+export const evidenceSchemas: Record<EvidenceSchemaId, EvidenceSchemaDefinition> = {
+  jwt_token_comparison: { id: "jwt_token_comparison", vectors: ["auth-jwt-alg-confusion", "auth-jwt-none"], redactedKeys: ["token", "secret"], falsePositive: data => statusFalsePositive(data, [401]) },
+  sqli_evidence: { id: "sqli_evidence", vectors: ["sqli-classic", "sqli-blind"], redactedKeys: ["credential", "password"], falsePositive: data => /generic error/i.test(String(data.message ?? data.error ?? "")) },
+  xss_evidence: { id: "xss_evidence", vectors: ["xss-reflected", "xss-stored"], redactedKeys: ["cookie", "session"], falsePositive: data => /csp.*block|blocked.*csp/i.test(String(data.message ?? data.error ?? "")) },
+  ssrf_evidence: { id: "ssrf_evidence", vectors: ["ssrf-internal"], redactedKeys: ["internal_ip"], falsePositive: data => statusFalsePositive(data, [403, 404]) },
+  cloud_metadata_evidence: { id: "cloud_metadata_evidence", vectors: ["cloud-metadata-exposure"], redactedKeys: ["credential", "token"], falsePositive: data => /imdsv2.*enabled/i.test(String(data.message ?? data.error ?? "")) },
+  graphql_introspection_evidence: { id: "graphql_introspection_evidence", vectors: ["graphql-introspection-abuse"], redactedKeys: ["schema"], falsePositive: data => /introspection.*disabled/i.test(String(data.message ?? data.error ?? "")) },
+  graphql_batching_evidence: { id: "graphql_batching_evidence", vectors: ["graphql-batching"], redactedKeys: ["user_data"], falsePositive: data => /rate.?limit/i.test(String(data.message ?? data.error ?? "")) },
+  idor_evidence: { id: "idor_evidence", vectors: ["idor-horizontal", "idor-vertical"], redactedKeys: ["user_data"], falsePositive: data => statusFalsePositive(data, [403, 404]) },
+  ssti_evidence: { id: "ssti_evidence", vectors: ["ssti-server-side"], redactedKeys: ["code"], falsePositive: data => /sandbox/i.test(String(data.message ?? data.error ?? "")) },
+  rce_evidence: { id: "rce_evidence", vectors: ["rce-command-injection"], redactedKeys: ["command"], falsePositive: data => /sandbox/i.test(String(data.message ?? data.error ?? "")) },
+  host_header_evidence: { id: "host_header_evidence", vectors: ["host-header-injection"], redactedKeys: ["email"], falsePositive: data => /whitelist/i.test(String(data.message ?? data.error ?? "")) },
+  cache_poisoning_evidence: { id: "cache_poisoning_evidence", vectors: ["cache-poisoning"], redactedKeys: ["cache_key"], falsePositive: data => /cache.*disabled/i.test(String(data.message ?? data.error ?? "")) },
+  race_condition_evidence: { id: "race_condition_evidence", vectors: ["race-condition"], redactedKeys: ["state"], falsePositive: data => /locking|lock acquired/i.test(String(data.message ?? data.error ?? "")) },
+  file_upload_evidence: { id: "file_upload_evidence", vectors: ["file-upload-abuse"], redactedKeys: ["file"], falsePositive: data => /antivirus|malware.*blocked/i.test(String(data.message ?? data.error ?? "")) },
+  xxe_evidence: { id: "xxe_evidence", vectors: ["xxe-out-of-band"], redactedKeys: ["xml"], falsePositive: data => /parser.*disabled/i.test(String(data.message ?? data.error ?? "")) },
+};
+
+export function normalizeEvidenceForSchema(schemaId: EvidenceSchemaId, input: Omit<Parameters<typeof normalizeEvidence>[0], "falsePositive">): CanonicalEvidence {
+  const schema = evidenceSchemas[schemaId];
+  const redactedData = { ...input.data };
+  for (const key of schema.redactedKeys) {
+    for (const [actualKey, value] of Object.entries(redactedData)) {
+      if (actualKey.toLowerCase() === key.toLowerCase() && typeof value === "string") redactedData[actualKey] = redactEvidenceValue(actualKey, value);
+    }
+  }
+  return normalizeEvidence({ ...input, data: redactedData, falsePositive: schema.falsePositive(redactedData) });
+}
+
 export const redactEvidenceValue = (key: string, value: string) => normalizeValue(value, key) as string;
 
 export { stableJson };

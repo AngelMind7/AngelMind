@@ -12,7 +12,7 @@ import {
   workspaces,
 } from "../drizzle/schema";
 import { getDb } from "./db";
-import { canAccessWorkspace } from "./control-plane/operations";
+import { canAccessWorkspace, hasReviewerMembership } from "./control-plane/operations";
 import { isTargetInScope } from "./control-plane/guardrails";
 import { currentTraceContext } from "./_core/trace-context";
 import { assertExpectedRevision, decodePageCursor, nextRevision, pageResult } from "./_core/query-safety";
@@ -258,6 +258,20 @@ export async function createResearchTask(userId: number, input: { sessionId: num
   await addResearchAudit(db, session.workspaceId, userId, "research-task-created", { sessionId: session.id, taskId: task.id, dependencies, vectorKey: task.vectorKey, requiredCapabilities, suggestedAdapters, riskClass, approvalStatus: task.approvalStatus, execution: approvalRequired ? "blocked-pending-human" : "passive-only" });
   await upsertSearchDocument({ workspaceId: session.workspaceId, entityType: "task", entityId: task.id, title: task.title, body: task.inputs });
   return task;
+}
+
+export async function approveResearchTask(userId: number, taskId: number, expectedRevision?: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [task] = await db.select().from(researchTasks).where(eq(researchTasks.id, taskId)).limit(1);
+  if (!task || !(await hasReviewerMembership(userId, task.workspaceId))) throw new Error("Hanya reviewer workspace yang dapat menyetujui task.");
+  if (task.createdByUserId === userId) throw new Error("Task creator tidak boleh menyetujui task sendiri.");
+  if (!(task.riskClass === "high" || task.riskClass === "critical")) throw new Error("Approval hanya diperlukan untuk task high/critical.");
+  if (task.approvalStatus !== "pending") throw new Error("Task approval sudah diputuskan.");
+  if (expectedRevision !== undefined) assertExpectedRevision(expectedRevision, task.revision);
+  await db.update(researchTasks).set({ approvalStatus: "approved", status: "queued", revision: nextRevision(task.revision), updatedAt: new Date() }).where(and(eq(researchTasks.id, task.id), eq(researchTasks.revision, task.revision), eq(researchTasks.approvalStatus, "pending")));
+  await addResearchAudit(db, task.workspaceId, userId, "research-task-approved", { taskId: task.id, riskClass: task.riskClass, reviewerUserId: userId });
+  return { success: true as const, taskId: task.id, approvalStatus: "approved" as const, status: "queued" as const };
 }
 
 export async function transitionResearchTask(userId: number, taskId: number, nextStatus: "queued" | "running" | "blocked" | "paused" | "failed" | "retrying" | "completed" | "cancelled", outputs?: Record<string, unknown>, expectedRevision?: number) {

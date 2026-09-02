@@ -1616,6 +1616,9 @@ export const appRouter = router({
       .mutation(({ ctx, input }) =>
         researchWorkflow.createResearchTask(ctx.user.id, input)
       ),
+    approveTask: protectedProcedure
+      .input(z.object({ taskId: z.number().int().positive(), expectedRevision: z.number().int().min(0).optional() }))
+      .mutation(({ ctx, input }) => researchWorkflow.approveResearchTask(ctx.user.id, input.taskId, input.expectedRevision)),
     transitionTask: protectedProcedure
       .input(
         z.object({

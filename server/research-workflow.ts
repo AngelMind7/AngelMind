@@ -61,6 +61,7 @@ function parseJson<T>(value: string, fallback: T): T {
 }
 
 async function requireWorkspace(userId: number, workspaceId: number, intent: "read" | "respond" | "manage" = "read") {
+  if (!Number.isInteger(userId) || userId < 1 || !Number.isInteger(workspaceId) || workspaceId < 1) throw new Error("Workspace identity is invalid.");
   const allowed = await canAccessWorkspace(userId, workspaceId, intent);
   if (!allowed) throw new Error("Workspace tidak ditemukan atau tidak dapat diakses.");
   const db = await getDb();
@@ -71,6 +72,7 @@ async function requireWorkspace(userId: number, workspaceId: number, intent: "re
 }
 
 async function requireSession(userId: number, sessionId: number, intent: "read" | "respond" | "manage" = "read") {
+  if (!Number.isInteger(userId) || userId < 1 || !Number.isInteger(sessionId) || sessionId < 1) throw new Error("Research session identity is invalid.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const [session] = await db.select().from(researchSessions).where(eq(researchSessions.id, sessionId)).limit(1);
@@ -108,6 +110,7 @@ export async function listResearchSessionsPage(userId: number, input: { workspac
 }
 
 export async function createResearchSession(userId: number, input: { workspaceId: number; title: string }) {
+  if (!input || typeof input.title !== "string" || input.title.trim().length < 3 || input.title.trim().length > 240) throw new Error("Research session title is invalid.");
   const { db, workspace } = await requireWorkspace(userId, input.workspaceId, "respond");
   const scopeDigest = digest(JSON.stringify({ allowlist: workspace.allowlist, exclusions: workspace.exclusions, safeHarbor: workspace.safeHarbor, codeOfConduct: workspace.codeOfConduct }));
   const traceId = currentTraceContext()?.traceId ?? null;
@@ -135,6 +138,7 @@ export async function listResearchAssets(userId: number, sessionId: number) {
 }
 
 export async function createResearchAsset(userId: number, input: { sessionId: number; assetType: "domain" | "subdomain" | "ip" | "application" | "api" | "endpoint" | "technology" | "service"; value: string; hostname?: string; metadata?: Record<string, unknown> }) {
+  if (!input || typeof input.value !== "string" || (input.hostname !== undefined && typeof input.hostname !== "string") || !["domain", "subdomain", "ip", "application", "api", "endpoint", "technology", "service"].includes(input.assetType)) throw new Error("Research asset input is invalid.");
   const { db, session } = await requireSession(userId, input.sessionId, "respond");
   const [workspace] = await db.select({ allowlist: workspaces.allowlist, exclusions: workspaces.exclusions }).from(workspaces).where(eq(workspaces.id, session.workspaceId)).limit(1);
   if (!workspace) throw new Error("Research workspace tidak ditemukan.");
@@ -158,7 +162,9 @@ export async function listResearchObservations(userId: number, sessionId: number
 }
 
 export async function createResearchObservation(userId: number, input: { sessionId: number; assetId?: number; title: string; content: string }) {
+  if (!input || typeof input.title !== "string" || typeof input.content !== "string" || (input.assetId !== undefined && (!Number.isInteger(input.assetId) || input.assetId < 1))) throw new Error("Research observation input is invalid.");
   const { db, session } = await requireSession(userId, input.sessionId, "respond");
+  if (!input.title.trim() || !input.content.trim()) throw new Error("Research observation title and content are required.");
   if (input.assetId) {
     const [asset] = await db.select().from(researchAssets).where(and(eq(researchAssets.id, input.assetId), eq(researchAssets.sessionId, session.id), eq(researchAssets.inScope, 1))).limit(1);
     if (!asset) throw new Error("Observation must reference an in-scope asset from the same session.");

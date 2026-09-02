@@ -14,9 +14,19 @@ const securityHeaders = {
   "Cross-Origin-Resource-Policy": "same-origin",
 };
 
+const requestMetrics = { total: 0, errors: 0, totalDurationMs: 0, slow: 0 };
+
 export function registerSecurityMiddleware(app: Express) {
   app.disable("x-powered-by");
   app.use((_req: Request, res: Response, next: NextFunction) => {
+    const startedAt = Date.now();
+    requestMetrics.total += 1;
+    res.on("finish", () => {
+      const duration = Date.now() - startedAt;
+      requestMetrics.totalDurationMs += duration;
+      if (res.statusCode >= 500) requestMetrics.errors += 1;
+      if (duration >= 1_000) requestMetrics.slow += 1;
+    });
     for (const [name, value] of Object.entries(securityHeaders)) res.setHeader(name, value);
     if (process.env.NODE_ENV === "production") {
       res.setHeader("Strict-Transport-Security", "max-age=31536000; includeSubDomains");
@@ -81,6 +91,18 @@ export function registerMetricsRoute(app: Express) {
       "# HELP angelmind_runtime_ready Whether configured runtime binaries are available and registered.",
       "# TYPE angelmind_runtime_ready gauge",
       `angelmind_runtime_ready ${runtime.ready ? 1 : 0}`,
+      "# HELP angelmind_http_requests_total Total HTTP requests observed by this process.",
+      "# TYPE angelmind_http_requests_total counter",
+      `angelmind_http_requests_total ${requestMetrics.total}`,
+      "# HELP angelmind_http_errors_total Total HTTP 5xx responses observed by this process.",
+      "# TYPE angelmind_http_errors_total counter",
+      `angelmind_http_errors_total ${requestMetrics.errors}`,
+      "# HELP angelmind_http_slow_requests_total Requests taking at least one second.",
+      "# TYPE angelmind_http_slow_requests_total counter",
+      `angelmind_http_slow_requests_total ${requestMetrics.slow}`,
+      "# HELP angelmind_http_request_duration_ms_total Sum of observed request durations.",
+      "# TYPE angelmind_http_request_duration_ms_total counter",
+      `angelmind_http_request_duration_ms_total ${requestMetrics.totalDurationMs}`,
       "# HELP angelmind_process_memory_bytes Node.js process memory by category.",
       "# TYPE angelmind_process_memory_bytes gauge",
       ...Object.entries(memory).map(([category, value]) => `angelmind_process_memory_bytes{category=\"${metricName(category)}\"} ${value}`),

@@ -108,8 +108,8 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 72 | File storage | **Implemented** | Supabase Storage backend upload/signed URL, metadata MySQL, hash, audit tersedia. |
 | 73 | Search index | **Partial** | Workspace-scoped `searchDocuments` index, rebuild/reindex, permission checks, query scoring, entity-type/freshness filters, REST read-only search, saved views, workspace notes/knowledge/report-draft/finding/evidence/AI-memory mutation indexing, stale-entity delete cleanup, and cursor pagination are implemented; semantic retrieval and unified cross-domain search UI remain open. |
 | 74 | Data lifecycle | **Partial** | Workspace retention/status metadata, AI memory retention purge, and account export/delete worker lifecycle are implemented, including private JSON artifact storage and transactional account-scoped deletion; full entity-wide retention purge and collaborative-resource transfer/archive workflows remain incomplete. |
-| 75 | Privacy | **Partial** | Retention, workspace isolation, legal surfaces, privacy request state machine, durable export/delete processing, owner guard, private export artifact, and owner-only signed download are implemented; privacy center UI, dedicated audit events, integration drills, and complete data-access/deletion coverage remain open. |
-| 76 | Abuse protection | **Partial** | Body limits, safe boundaries, allowlists, no target execution ada; rate limit/upload malware scan/account abuse belum penuh. |
+| 75 | Privacy | **Partial** | Retention, workspace isolation, legal surfaces, privacy request state machine, privacy center UI, durable export/delete processing, owner guard, private export artifact, owner-only signed download, and request audit events are implemented; integration drills and complete data-access/deletion coverage remain open. |
+| 76 | Abuse protection | **Partial** | Body limits, safe boundaries, allowlists, API rate limiting, and no target execution are implemented; upload malware provider and account-abuse detection remain open. |
 | 77 | Security architecture | **Partial** | Auth, authz, scope, audit, CSP, secure cookies, safe execution boundary ada; complete threat model/response system belum. |
 | 78 | Secret management | **Implemented** | Secret hanya lewat runtime env; service-role/API keys tidak dibundel frontend; rotation workflow belum. |
 | 79 | Encryption | **Partial** | TLS/security headers dan managed at-rest providers; sensitive-field/key management design belum. |
@@ -128,7 +128,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 
 | No. | Requirement | Status | Bukti/gap utama |
 |---:|---|---|---|
-| 90 | Observability | **Partial** | Health, readiness, metrics, logs, audit tersedia; traces/alerts/SLO dashboards belum. |
+| 90 | Observability | **Partial** | Health, readiness, Prometheus process/purge/HTTP counters, latency/error/slow-request signals, logs, and audit are implemented; distributed traces, alert delivery, and SLO dashboards remain open. |
 | 91 | Traceability | **Partial** | tRPC context now propagates bounded `x-request-id` and `x-trace-id` response headers with generated UUID fallback; resource/job/AI/database correlation fields remain to be threaded through every workflow. |
 | 92 | Incident management | **Implemented** | Incident create/acknowledge/resolve, escalation, evidence links, audit tersedia; post-incident review belum. |
 | 93 | Status page | **Partial** | Public posture/status disclosure ada; live component telemetry belum. |

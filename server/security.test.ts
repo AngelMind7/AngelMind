@@ -41,6 +41,18 @@ describe("security and health contracts", () => {
     expect(body).toContain("angelmind_purge_duration_alert 0");
   });
 
+  it("exposes HTTP request and slow-request counters", async () => {
+    const app = express();
+    registerSecurityMiddleware(app);
+    app.get("/", (_req, res) => res.status(200).send("ok"));
+    registerMetricsRoute(app);
+    await request(app, "/");
+    const body = await (await request(app, "/metrics")).text();
+    expect(body).toContain("angelmind_http_requests_total");
+    expect(body).toContain("angelmind_http_errors_total");
+    expect(body).toContain("angelmind_http_slow_requests_total");
+  });
+
   it("records purge duration and exposes a threshold alert", () => {
     resetPurgeMetrics();
     recordPurgeBatch(PURGE_DURATION_ALERT_MS + 1, 500);

@@ -1,0 +1,71 @@
+name: Staging verification
+
+on:
+  workflow_dispatch:
+    inputs:
+      apply_migrations:
+        description: "Apply pending migrations to the dedicated staging database"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+env:
+  NODE_ENV: development
+  ALLOW_STAGING_TESTS: "true"
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    environment: staging
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Validate staging database secret
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: |
+          set -euo pipefail
+          test -n "$DATABASE_URL"
+          case "$DATABASE_URL" in
+            *mysql.railway.internal*|*production*)
+              echo "Refusing internal or production-looking database URL" >&2
+              exit 1
+              ;;
+          esac
+      - name: Apply migrations when explicitly requested
+        if: ${{ inputs.apply_migrations }}
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: pnpm drizzle-kit migrate
+      - name: Run staging database contracts
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+        run: pnpm exec vitest run server/ai-memory-retention.integration.test.ts server/ai-memory-context.integration.test.ts server/global-search.integration.test.ts
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Run authenticated lifecycle E2E when configured
+        if: ${{ secrets.ANGELMIND_E2E_TOKEN != '' && secrets.STAGING_BASE_URL != '' }}
+        env:
+          E2E_BASE_URL: ${{ secrets.STAGING_BASE_URL }}
+          ANGELMIND_E2E_TOKEN: ${{ secrets.ANGELMIND_E2E_TOKEN }}
+        run: pnpm exec playwright test e2e/authenticated-lifecycle.contract.spec.ts
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: staging-playwright-report-${{ github.run_id }}
+          path: playwright-report/
+          if-no-files-found: ignore

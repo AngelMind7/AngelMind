@@ -29,10 +29,31 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Install Chromium
         run: pnpm exec playwright install --with-deps chromium
+      - name: Reject non-staging target
+        env:
+          BASE_URL: ${{ inputs.base_url }}
+        run: |
+          set -euo pipefail
+          case "$BASE_URL" in
+            https://*) ;;
+            *) echo "E2E target must use HTTPS" >&2; exit 1 ;;
+          esac
+          case "$BASE_URL" in
+            *localhost*|*127.0.0.1*|*production*|*prod.*)
+              echo "E2E workflow accepts staging only" >&2
+              exit 1
+              ;;
+          esac
       - name: Run browser smoke suite
         env:
           E2E_BASE_URL: ${{ inputs.base_url }}
         run: pnpm test:e2e
+      - name: Run authenticated lifecycle contract when configured
+        if: ${{ secrets.ANGELMIND_E2E_TOKEN != '' }}
+        env:
+          E2E_BASE_URL: ${{ inputs.base_url }}
+          ANGELMIND_E2E_TOKEN: ${{ secrets.ANGELMIND_E2E_TOKEN }}
+        run: pnpm exec playwright test e2e/authenticated-lifecycle.contract.spec.ts
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4

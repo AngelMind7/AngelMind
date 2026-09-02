@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, lt } from "drizzle-orm";
 import {
   approvals,
   auditArchives,
@@ -105,20 +105,18 @@ async function addAudit(
   const db = await getDb();
   if (!db) return;
   const traceId = currentTraceContext()?.traceId ?? null;
-  await db
-    .insert(auditEvents)
-    .values({
-      workspaceId,
-      category,
-      subject,
-      traceId,
-      details: ENV.auditStateEncryptionKey
-        ? encryptAuditState(details, ENV.auditStateEncryptionKey)
-        : JSON.stringify(details),
-      evidenceHash: sha256(
-        JSON.stringify({ workspaceId, category, subject, details, traceId })
-      ),
-    });
+  await db.insert(auditEvents).values({
+    workspaceId,
+    category,
+    subject,
+    traceId,
+    details: ENV.auditStateEncryptionKey
+      ? encryptAuditState(details, ENV.auditStateEncryptionKey)
+      : JSON.stringify(details),
+    evidenceHash: sha256(
+      JSON.stringify({ workspaceId, category, subject, details, traceId })
+    ),
+  });
 }
 
 export async function ensureOwnerMembership(
@@ -474,18 +472,16 @@ export async function createAuditArchive(
     manifestJson,
     "application/json"
   );
-  await db
-    .insert(auditArchives)
-    .values({
-      workspaceId: workspace.id,
-      storageKey: stored.key,
-      storageReference: stored.url,
-      manifestHash,
-      signature,
-      immutableBatchKey,
-      retentionUntil,
-      createdByUserId: ownerUserId,
-    });
+  await db.insert(auditArchives).values({
+    workspaceId: workspace.id,
+    storageKey: stored.key,
+    storageReference: stored.url,
+    manifestHash,
+    signature,
+    immutableBatchKey,
+    retentionUntil,
+    createdByUserId: ownerUserId,
+  });
   await addAudit(workspace.id, "audit-archive", "archive-created", {
     manifestHash,
     storageReference: stored.url,
@@ -661,16 +657,14 @@ export async function runAuditArchiveDrill(
     };
   }
   try {
-    await db
-      .insert(restoreDrillRuns)
-      .values({
-        archiveId,
-        workspaceId: archive.workspaceId,
-        requestedByUserId: ownerUserId,
-        idempotencyKey: key,
-        status: "running",
-        recordsChecked: JSON.stringify({}),
-      });
+    await db.insert(restoreDrillRuns).values({
+      archiveId,
+      workspaceId: archive.workspaceId,
+      requestedByUserId: ownerUserId,
+      idempotencyKey: key,
+      status: "running",
+      recordsChecked: JSON.stringify({}),
+    });
   } catch {
     const [concurrent] = await db
       .select()

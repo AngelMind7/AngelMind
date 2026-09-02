@@ -58,8 +58,15 @@ export const appRouter = router({
       securityPlatform.listApiKeys(ctx.user.id)
     ),
     apiKeysPage: protectedProcedure
-      .input(z.object({ pageSize: z.number().int().min(1).max(100).optional(), cursor: z.string().max(512).optional() }))
-      .query(({ ctx, input }) => securityPlatform.listApiKeysPage(ctx.user.id, input)),
+      .input(
+        z.object({
+          pageSize: z.number().int().min(1).max(100).optional(),
+          cursor: z.string().max(512).optional(),
+        })
+      )
+      .query(({ ctx, input }) =>
+        securityPlatform.listApiKeysPage(ctx.user.id, input)
+      ),
     createApiKey: protectedProcedure
       .input(
         z.object({
@@ -95,12 +102,22 @@ export const appRouter = router({
       securityPlatform.listPrivacyRequests(ctx.user.id)
     ),
     privacyRequestsPage: protectedProcedure
-      .input(z.object({ pageSize: z.number().int().min(1).max(100).optional(), cursor: z.string().max(512).optional() }))
-      .query(({ ctx, input }) => securityPlatform.listPrivacyRequestsPage(ctx.user.id, input)),
+      .input(
+        z.object({
+          pageSize: z.number().int().min(1).max(100).optional(),
+          cursor: z.string().max(512).optional(),
+        })
+      )
+      .query(({ ctx, input }) =>
+        securityPlatform.listPrivacyRequestsPage(ctx.user.id, input)
+      ),
     downloadPrivacyExport: protectedProcedure
       .input(z.object({ requestId: z.number().int().positive() }))
       .query(({ ctx, input }) =>
-        securityPlatform.getPrivacyExportDownloadUrl(ctx.user.id, input.requestId)
+        securityPlatform.getPrivacyExportDownloadUrl(
+          ctx.user.id,
+          input.requestId
+        )
       ),
     profile: protectedProcedure.query(({ ctx }) =>
       profile.getUserProfile(ctx.user.id)
@@ -128,12 +145,22 @@ export const appRouter = router({
         })
       )
       .mutation(async ({ ctx, input }) => {
-        const request = await securityPlatform.requestPrivacyAction(ctx.user.id, input);
-        if (request && (input.requestType === "export" || input.requestType === "delete")) {
+        const request = await securityPlatform.requestPrivacyAction(
+          ctx.user.id,
+          input
+        );
+        if (
+          request &&
+          (input.requestType === "export" || input.requestType === "delete")
+        ) {
           await aiPlatform.enqueueJob(ctx.user.id, {
             kind: "privacy.process",
             idempotencyKey: `privacy:${request.id}`,
-            payload: { type: "privacy_process", requestId: request.id, userId: ctx.user.id },
+            payload: {
+              type: "privacy_process",
+              requestId: request.id,
+              userId: ctx.user.id,
+            },
             maxAttempts: 3,
           });
         }
@@ -159,23 +186,60 @@ export const appRouter = router({
     mfa: protectedProcedure.query(({ ctx }) => mfa.getMfaStatus(ctx.user.id)),
     beginTotpEnrollment: protectedProcedure
       .input(z.object({ label: z.string().trim().max(120).optional() }))
-      .mutation(({ ctx, input }) => mfa.beginTotpEnrollment(ctx.user.id, input.label)),
+      .mutation(({ ctx, input }) =>
+        mfa.beginTotpEnrollment(ctx.user.id, input.label)
+      ),
     confirmTotpEnrollment: protectedProcedure
-      .input(z.object({ challenge: z.string().min(20).max(512), code: z.string().regex(/^\d{6}$/) }))
-      .mutation(({ ctx, input }) => mfa.confirmTotpEnrollment(ctx.user.id, input)),
+      .input(
+        z.object({
+          challenge: z.string().min(20).max(512),
+          code: z.string().regex(/^\d{6}$/),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        mfa.confirmTotpEnrollment(ctx.user.id, input)
+      ),
     verifyMfa: protectedProcedure
       .input(z.object({ code: z.string().trim().min(6).max(32) }))
-      .mutation(({ ctx, input }) => mfa.verifyTotpOrRecoveryCode(ctx.user.id, input.code)),
+      .mutation(({ ctx, input }) =>
+        mfa.verifyTotpOrRecoveryCode(ctx.user.id, input.code)
+      ),
     beginPasskeyRegistration: protectedProcedure
       .input(z.object({ label: z.string().trim().max(120).optional() }))
-      .mutation(({ ctx, input }) => mfa.beginPasskeyRegistration(ctx.user.id, input.label)),
+      .mutation(({ ctx, input }) =>
+        mfa.beginPasskeyRegistration(ctx.user.id, input.label)
+      ),
     finishPasskeyRegistration: protectedProcedure
-      .input(z.object({ challenge: z.string().min(20).max(512), response: z.record(z.string(), z.unknown()) }))
-      .mutation(({ ctx, input }) => mfa.finishPasskeyRegistration(ctx.user.id, input.challenge, input.response)),
-    beginPasskeyAuthentication: protectedProcedure.mutation(({ ctx }) => mfa.beginPasskeyAuthentication(ctx.user.id)),
+      .input(
+        z.object({
+          challenge: z.string().min(20).max(512),
+          response: z.record(z.string(), z.unknown()),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        mfa.finishPasskeyRegistration(
+          ctx.user.id,
+          input.challenge,
+          input.response
+        )
+      ),
+    beginPasskeyAuthentication: protectedProcedure.mutation(({ ctx }) =>
+      mfa.beginPasskeyAuthentication(ctx.user.id)
+    ),
     finishPasskeyAuthentication: protectedProcedure
-      .input(z.object({ challenge: z.string().min(20).max(512), response: z.record(z.string(), z.unknown()) }))
-      .mutation(({ ctx, input }) => mfa.finishPasskeyAuthentication(ctx.user.id, input.challenge, input.response)),
+      .input(
+        z.object({
+          challenge: z.string().min(20).max(512),
+          response: z.record(z.string(), z.unknown()),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        mfa.finishPasskeyAuthentication(
+          ctx.user.id,
+          input.challenge,
+          input.response
+        )
+      ),
     registerDevice: protectedProcedure
       .input(
         z.object({
@@ -218,13 +282,16 @@ export const appRouter = router({
           roleIntent: z.string().max(80).optional(),
         })
       )
-      .mutation(({ ctx, input }) => executeIdempotent({
-        userId: ctx.user.id,
-        scope: "auth.saveOnboarding",
-        key: input.idempotencyKey,
-        request: input,
-        handler: () => accountSecurity.saveOnboardingProfile(ctx.user.id, input),
-      }).then(result => result.value)),
+      .mutation(({ ctx, input }) =>
+        executeIdempotent({
+          userId: ctx.user.id,
+          scope: "auth.saveOnboarding",
+          key: input.idempotencyKey,
+          request: input,
+          handler: () =>
+            accountSecurity.saveOnboardingProfile(ctx.user.id, input),
+        }).then(result => result.value)
+      ),
   }),
   agent: router({
     planMultiAgentRun: protectedProcedure
@@ -696,8 +763,14 @@ export const appRouter = router({
         controlPlane.listNotificationsSince(ctx.user.id, input)
       ),
     deliveryLedger: protectedProcedure
-      .input(z.object({ limit: z.number().int().min(1).max(100).optional() }).optional())
-      .query(({ ctx, input }) => controlPlane.listNotificationDeliveries(ctx.user.id, input?.limit)),
+      .input(
+        z
+          .object({ limit: z.number().int().min(1).max(100).optional() })
+          .optional()
+      )
+      .query(({ ctx, input }) =>
+        controlPlane.listNotificationDeliveries(ctx.user.id, input?.limit)
+      ),
     preferences: protectedProcedure.query(({ ctx }) =>
       controlPlane.listNotificationPreferences(ctx.user.id)
     ),
@@ -822,7 +895,7 @@ export const appRouter = router({
           input.destinationWorkspaceId
         )
       ),
-    runDrDrill: protectedProcedure
+    runRestoreDrill: protectedProcedure
       .input(
         z.object({
           archiveId: z.number().int().positive(),
@@ -881,8 +954,19 @@ export const appRouter = router({
         )
       ),
     comparePolicies: protectedProcedure
-      .input(z.object({ fromPolicyVersionId: z.number().int().positive(), toPolicyVersionId: z.number().int().positive() }))
-      .query(({ ctx, input }) => assurance.comparePolicyVersions(ctx.user.id, input.fromPolicyVersionId, input.toPolicyVersionId)),
+      .input(
+        z.object({
+          fromPolicyVersionId: z.number().int().positive(),
+          toPolicyVersionId: z.number().int().positive(),
+        })
+      )
+      .query(({ ctx, input }) =>
+        assurance.comparePolicyVersions(
+          ctx.user.id,
+          input.fromPolicyVersionId,
+          input.toPolicyVersionId
+        )
+      ),
     incidents: protectedProcedure
       .input(
         z
@@ -925,19 +1009,34 @@ export const appRouter = router({
       ),
     incidentReview: protectedProcedure
       .input(z.object({ incidentId: z.number().int().positive() }))
-      .query(({ ctx, input }) => assurance.getIncidentReview(ctx.user.id, input.incidentId)),
+      .query(({ ctx, input }) =>
+        assurance.getIncidentReview(ctx.user.id, input.incidentId)
+      ),
     saveIncidentReview: protectedProcedure
-      .input(z.object({
-        incidentId: z.number().int().positive(),
-        summary: z.string().min(3).max(10_000),
-        rootCause: z.string().min(3).max(10_000),
-        actionItems: z.array(z.object({ title: z.string().min(1).max(500), ownerUserId: z.number().int().positive().optional(), dueAt: z.string().datetime().optional(), status: z.enum(["open", "done"]).optional() })).max(100),
-        ownerUserId: z.number().int().positive().optional(),
-        dueAt: z.string().datetime().optional(),
-        closureEvidenceReference: z.string().trim().max(512).optional(),
-        status: z.enum(["open", "closed"]).optional(),
-      }))
-      .mutation(({ ctx, input }) => assurance.saveIncidentReview(ctx.user.id, input)),
+      .input(
+        z.object({
+          incidentId: z.number().int().positive(),
+          summary: z.string().min(3).max(10_000),
+          rootCause: z.string().min(3).max(10_000),
+          actionItems: z
+            .array(
+              z.object({
+                title: z.string().min(1).max(500),
+                ownerUserId: z.number().int().positive().optional(),
+                dueAt: z.string().datetime().optional(),
+                status: z.enum(["open", "done"]).optional(),
+              })
+            )
+            .max(100),
+          ownerUserId: z.number().int().positive().optional(),
+          dueAt: z.string().datetime().optional(),
+          closureEvidenceReference: z.string().trim().max(512).optional(),
+          status: z.enum(["open", "closed"]).optional(),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        assurance.saveIncidentReview(ctx.user.id, input)
+      ),
     incidentEvidence: protectedProcedure
       .input(z.object({ incidentId: z.number().int().positive() }))
       .query(({ ctx, input }) =>
@@ -1095,24 +1194,39 @@ export const appRouter = router({
         return aiPlatform.recordModelHealth(ctx.user.id, input);
       }),
     memories: protectedProcedure
-      .input(z.object({ workspaceId: z.number().int().positive().optional(), scope: z.enum(["user", "workspace", "session", "program"]).optional(), limit: z.number().int().min(1).max(100).optional() }))
+      .input(
+        z.object({
+          workspaceId: z.number().int().positive().optional(),
+          scope: z.enum(["user", "workspace", "session", "program"]).optional(),
+          limit: z.number().int().min(1).max(100).optional(),
+        })
+      )
       .query(({ ctx, input }) => aiMemory.listAiMemories(ctx.user.id, input)),
     saveMemory: protectedProcedure
-      .input(z.object({
-        scope: z.enum(["user", "workspace", "session", "program"]),
-        workspaceId: z.number().int().positive().optional(),
-        sessionId: z.number().int().positive().optional(),
-        programId: z.number().int().positive().optional(),
-        memoryKey: z.string().trim().min(2).max(160),
-        content: z.string().trim().min(2).max(100_000),
-        sourceReference: z.string().trim().max(512).nullable().optional(),
-        retentionDays: z.number().int().min(1).max(3_650).optional(),
-        expectedRevision: z.number().int().nonnegative().optional(),
-      }))
+      .input(
+        z.object({
+          scope: z.enum(["user", "workspace", "session", "program"]),
+          workspaceId: z.number().int().positive().optional(),
+          sessionId: z.number().int().positive().optional(),
+          programId: z.number().int().positive().optional(),
+          memoryKey: z.string().trim().min(2).max(160),
+          content: z.string().trim().min(2).max(100_000),
+          sourceReference: z.string().trim().max(512).nullable().optional(),
+          retentionDays: z.number().int().min(1).max(3_650).optional(),
+          expectedRevision: z.number().int().nonnegative().optional(),
+        })
+      )
       .mutation(({ ctx, input }) => aiMemory.saveAiMemory(ctx.user.id, input)),
     archiveMemory: protectedProcedure
-      .input(z.object({ memoryId: z.number().int().positive(), expectedRevision: z.number().int().nonnegative() }))
-      .mutation(({ ctx, input }) => aiMemory.archiveAiMemory(ctx.user.id, input)),
+      .input(
+        z.object({
+          memoryId: z.number().int().positive(),
+          expectedRevision: z.number().int().nonnegative(),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        aiMemory.archiveAiMemory(ctx.user.id, input)
+      ),
     runs: protectedProcedure
       .input(z.object({ workspaceId: z.number().int().positive() }))
       .query(({ ctx, input }) =>
@@ -1120,10 +1234,14 @@ export const appRouter = router({
       ),
     output: protectedProcedure
       .input(z.object({ runId: z.number().int().positive() }))
-      .query(({ ctx, input }) => aiPlatform.getAiRunOutput(ctx.user.id, input.runId)),
+      .query(({ ctx, input }) =>
+        aiPlatform.getAiRunOutput(ctx.user.id, input.runId)
+      ),
     evaluationSummary: protectedProcedure
       .input(z.object({ workspaceId: z.number().int().positive() }))
-      .query(({ ctx, input }) => aiPlatform.getAiEvaluationSummary(ctx.user.id, input.workspaceId)),
+      .query(({ ctx, input }) =>
+        aiPlatform.getAiEvaluationSummary(ctx.user.id, input.workspaceId)
+      ),
     evaluations: protectedProcedure
       .input(z.object({ runId: z.number().int().positive() }))
       .query(({ ctx, input }) =>
@@ -1206,7 +1324,8 @@ export const appRouter = router({
     replayOutbox: protectedProcedure
       .input(z.object({ eventId: z.number().int().positive() }))
       .mutation(({ ctx, input }) => {
-        if (ctx.user.role !== "admin") throw new Error("Admin role is required to replay outbox events.");
+        if (ctx.user.role !== "admin")
+          throw new Error("Admin role is required to replay outbox events.");
         return aiPlatform.replayFailedOutboxEvent(ctx.user.id, input.eventId);
       }),
     publishEvent: protectedProcedure
@@ -1233,7 +1352,10 @@ export const appRouter = router({
           query: z.string().trim().min(2).max(120),
           limit: z.number().int().min(1).max(50).optional(),
           cursor: z.string().trim().max(512).optional(),
-          entityTypes: z.array(z.string().trim().min(1).max(40)).max(12).optional(),
+          entityTypes: z
+            .array(z.string().trim().min(1).max(40))
+            .max(12)
+            .optional(),
           freshnessDays: z.number().int().min(1).max(3_650).optional(),
         })
       )
@@ -1242,36 +1364,170 @@ export const appRouter = router({
       ),
     savedViews: protectedProcedure
       .input(z.object({ workspaceId: z.number().int().positive() }))
-      .query(({ ctx, input }) => savedViewService.listSavedViews(ctx.user.id, input.workspaceId)),
+      .query(({ ctx, input }) =>
+        savedViewService.listSavedViews(ctx.user.id, input.workspaceId)
+      ),
     saveView: protectedProcedure
-      .input(z.object({ workspaceId: z.number().int().positive(), name: z.string().trim().min(2).max(120), query: z.string().trim().max(512), filters: z.record(z.string(), z.unknown()).optional() }))
-      .mutation(({ ctx, input }) => savedViewService.createSavedView(ctx.user.id, input)),
+      .input(
+        z.object({
+          workspaceId: z.number().int().positive(),
+          name: z.string().trim().min(2).max(120),
+          query: z.string().trim().max(512),
+          filters: z.record(z.string(), z.unknown()).optional(),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        savedViewService.createSavedView(ctx.user.id, input)
+      ),
     deleteView: protectedProcedure
       .input(z.object({ savedViewId: z.number().int().positive() }))
-      .mutation(({ ctx, input }) => savedViewService.deleteSavedView(ctx.user.id, input.savedViewId)),
-    tags: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive() })).query(({ ctx, input }) => tagsNotes.listTags(ctx.user.id, input.workspaceId)),
-    upsertTag: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), name: z.string().trim().min(2).max(80), color: z.string().max(16).optional() })).mutation(({ ctx, input }) => tagsNotes.upsertTag(ctx.user.id, input)),
-    assignments: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), entityType: z.string().trim().min(1).max(60), entityId: z.number().int().positive() })).query(({ ctx, input }) => tagsNotes.listAssignments(ctx.user.id, input)),
-    assignTag: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), tagId: z.number().int().positive(), entityType: z.string().trim().min(1).max(60), entityId: z.number().int().positive() })).mutation(({ ctx, input }) => tagsNotes.assignTag(ctx.user.id, input)),
-    unassignTag: protectedProcedure.input(z.object({ assignmentId: z.number().int().positive() })).mutation(({ ctx, input }) => tagsNotes.unassignTag(ctx.user.id, input.assignmentId)),
-    notes: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), entityType: z.string().trim().min(1).max(60).optional(), entityId: z.number().int().positive().optional() })).query(({ ctx, input }) => tagsNotes.listNotes(ctx.user.id, input)),
-    createNote: protectedProcedure.input(z.object({ workspaceId: z.number().int().positive(), entityType: z.string().trim().min(1).max(60), entityId: z.number().int().positive().optional(), title: z.string().trim().min(2).max(240), body: z.string().trim().min(1), visibility: z.enum(["private", "workspace"]).optional() })).mutation(({ ctx, input }) => tagsNotes.createNote(ctx.user.id, input)),
-    updateNote: protectedProcedure.input(z.object({ noteId: z.number().int().positive(), title: z.string().trim().min(2).max(240), body: z.string().trim().min(1), visibility: z.enum(["private", "workspace"]).optional() })).mutation(({ ctx, input }) => tagsNotes.updateNote(ctx.user.id, input)),
-    deleteNote: protectedProcedure.input(z.object({ noteId: z.number().int().positive() })).mutation(({ ctx, input }) => tagsNotes.deleteNote(ctx.user.id, input.noteId)),
+      .mutation(({ ctx, input }) =>
+        savedViewService.deleteSavedView(ctx.user.id, input.savedViewId)
+      ),
+    tags: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive() }))
+      .query(({ ctx, input }) =>
+        tagsNotes.listTags(ctx.user.id, input.workspaceId)
+      ),
+    upsertTag: protectedProcedure
+      .input(
+        z.object({
+          workspaceId: z.number().int().positive(),
+          name: z.string().trim().min(2).max(80),
+          color: z.string().max(16).optional(),
+        })
+      )
+      .mutation(({ ctx, input }) => tagsNotes.upsertTag(ctx.user.id, input)),
+    assignments: protectedProcedure
+      .input(
+        z.object({
+          workspaceId: z.number().int().positive(),
+          entityType: z.string().trim().min(1).max(60),
+          entityId: z.number().int().positive(),
+        })
+      )
+      .query(({ ctx, input }) => tagsNotes.listAssignments(ctx.user.id, input)),
+    assignTag: protectedProcedure
+      .input(
+        z.object({
+          workspaceId: z.number().int().positive(),
+          tagId: z.number().int().positive(),
+          entityType: z.string().trim().min(1).max(60),
+          entityId: z.number().int().positive(),
+        })
+      )
+      .mutation(({ ctx, input }) => tagsNotes.assignTag(ctx.user.id, input)),
+    unassignTag: protectedProcedure
+      .input(z.object({ assignmentId: z.number().int().positive() }))
+      .mutation(({ ctx, input }) =>
+        tagsNotes.unassignTag(ctx.user.id, input.assignmentId)
+      ),
+    notes: protectedProcedure
+      .input(
+        z.object({
+          workspaceId: z.number().int().positive(),
+          entityType: z.string().trim().min(1).max(60).optional(),
+          entityId: z.number().int().positive().optional(),
+        })
+      )
+      .query(({ ctx, input }) => tagsNotes.listNotes(ctx.user.id, input)),
+    createNote: protectedProcedure
+      .input(
+        z.object({
+          workspaceId: z.number().int().positive(),
+          entityType: z.string().trim().min(1).max(60),
+          entityId: z.number().int().positive().optional(),
+          title: z.string().trim().min(2).max(240),
+          body: z.string().trim().min(1),
+          visibility: z.enum(["private", "workspace"]).optional(),
+        })
+      )
+      .mutation(({ ctx, input }) => tagsNotes.createNote(ctx.user.id, input)),
+    updateNote: protectedProcedure
+      .input(
+        z.object({
+          noteId: z.number().int().positive(),
+          title: z.string().trim().min(2).max(240),
+          body: z.string().trim().min(1),
+          visibility: z.enum(["private", "workspace"]).optional(),
+        })
+      )
+      .mutation(({ ctx, input }) => tagsNotes.updateNote(ctx.user.id, input)),
+    deleteNote: protectedProcedure
+      .input(z.object({ noteId: z.number().int().positive() }))
+      .mutation(({ ctx, input }) =>
+        tagsNotes.deleteNote(ctx.user.id, input.noteId)
+      ),
   }),
   knowledge: router({
     graph: protectedProcedure
-      .input(z.object({ workspaceId: z.number().int().positive(), nodeType: z.enum(["asset", "observation", "hypothesis", "finding", "intelligence", "entity", "document"]).optional(), status: z.enum(["active", "archived"]).optional() }))
-      .query(({ ctx, input }) => knowledgeGraph.listGraph(ctx.user.id, input.workspaceId, input)),
+      .input(
+        z.object({
+          workspaceId: z.number().int().positive(),
+          nodeType: z
+            .enum([
+              "asset",
+              "observation",
+              "hypothesis",
+              "finding",
+              "intelligence",
+              "entity",
+              "document",
+            ])
+            .optional(),
+          status: z.enum(["active", "archived"]).optional(),
+        })
+      )
+      .query(({ ctx, input }) =>
+        knowledgeGraph.listGraph(ctx.user.id, input.workspaceId, input)
+      ),
     upsertNode: protectedProcedure
-      .input(z.object({ workspaceId: z.number().int().positive(), nodeType: z.enum(["asset", "observation", "hypothesis", "finding", "intelligence", "entity", "document"]), externalId: z.string().trim().min(1).max(160), label: z.string().trim().min(1).max(240), properties: z.record(z.string(), z.unknown()).optional() }))
-      .mutation(({ ctx, input }) => knowledgeGraph.upsertNode(ctx.user.id, input)),
+      .input(
+        z.object({
+          workspaceId: z.number().int().positive(),
+          nodeType: z.enum([
+            "asset",
+            "observation",
+            "hypothesis",
+            "finding",
+            "intelligence",
+            "entity",
+            "document",
+          ]),
+          externalId: z.string().trim().min(1).max(160),
+          label: z.string().trim().min(1).max(240),
+          properties: z.record(z.string(), z.unknown()).optional(),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        knowledgeGraph.upsertNode(ctx.user.id, input)
+      ),
     createEdge: protectedProcedure
-      .input(z.object({ workspaceId: z.number().int().positive(), sourceNodeId: z.number().int().positive(), targetNodeId: z.number().int().positive(), relationType: z.string().trim().min(1).max(80), confidence: z.number().int().min(0).max(100).optional(), provenance: z.record(z.string(), z.unknown()).optional() }))
-      .mutation(({ ctx, input }) => knowledgeGraph.createEdge(ctx.user.id, input)),
+      .input(
+        z.object({
+          workspaceId: z.number().int().positive(),
+          sourceNodeId: z.number().int().positive(),
+          targetNodeId: z.number().int().positive(),
+          relationType: z.string().trim().min(1).max(80),
+          confidence: z.number().int().min(0).max(100).optional(),
+          provenance: z.record(z.string(), z.unknown()).optional(),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        knowledgeGraph.createEdge(ctx.user.id, input)
+      ),
     traverse: protectedProcedure
-      .input(z.object({ workspaceId: z.number().int().positive(), startNodeId: z.number().int().positive(), maxDepth: z.number().int().min(0).max(12).optional(), limit: z.number().int().min(1).max(500).optional() }))
-      .query(({ ctx, input }) => knowledgeGraph.traverseGraph(ctx.user.id, input)),
+      .input(
+        z.object({
+          workspaceId: z.number().int().positive(),
+          startNodeId: z.number().int().positive(),
+          maxDepth: z.number().int().min(0).max(12).optional(),
+          limit: z.number().int().min(1).max(500).optional(),
+        })
+      )
+      .query(({ ctx, input }) =>
+        knowledgeGraph.traverseGraph(ctx.user.id, input)
+      ),
   }),
   evidence: router({
     list: protectedProcedure
@@ -1339,7 +1595,12 @@ export const appRouter = router({
         evidenceWorkflow.listFindingRetests(ctx.user.id, input.findingId)
       ),
     requestRetest: protectedProcedure
-      .input(z.object({ findingId: z.number().int().positive(), expectedRevision: z.number().int().nonnegative() }))
+      .input(
+        z.object({
+          findingId: z.number().int().positive(),
+          expectedRevision: z.number().int().nonnegative(),
+        })
+      )
       .mutation(({ ctx, input }) =>
         evidenceWorkflow.requestFindingRetest(ctx.user.id, input)
       ),
@@ -1403,13 +1664,57 @@ export const appRouter = router({
         organization.listOrganizationMembers(ctx.user.id, input.organizationId)
       ),
     addMember: protectedProcedure
-      .input(z.object({ organizationId: z.number().int().positive(), email: z.string().email().max(320), role: z.enum(["admin", "researcher", "reviewer", "auditor"]) }))
-      .mutation(({ ctx, input }) => organization.addOrganizationMember(ctx.user.id, input)),
-    invitations: protectedProcedure.input(z.object({ organizationId: z.number().int().positive() })).query(({ ctx, input }) => organization.listOrganizationInvitations(ctx.user.id, input.organizationId)),
-    createInvitation: protectedProcedure.input(z.object({ organizationId: z.number().int().positive(), email: z.string().email().max(320), role: z.enum(["admin", "researcher", "reviewer", "auditor"]), expiresInDays: z.number().int().min(1).max(30).optional() })).mutation(({ ctx, input }) => organization.createOrganizationInvitation(ctx.user.id, input)),
-    acceptInvitation: protectedProcedure.input(z.object({ token: z.string().trim().min(20).max(200) })).mutation(({ ctx, input }) => organization.acceptOrganizationInvitation(ctx.user.id, input.token)),
-    revokeInvitation: protectedProcedure.input(z.object({ invitationId: z.number().int().positive() })).mutation(({ ctx, input }) => organization.revokeOrganizationInvitation(ctx.user.id, input.invitationId)),
-    resendInvitation: protectedProcedure.input(z.object({ invitationId: z.number().int().positive() })).mutation(({ ctx, input }) => organization.resendOrganizationInvitation(ctx.user.id, input.invitationId)),
+      .input(
+        z.object({
+          organizationId: z.number().int().positive(),
+          email: z.string().email().max(320),
+          role: z.enum(["admin", "researcher", "reviewer", "auditor"]),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        organization.addOrganizationMember(ctx.user.id, input)
+      ),
+    invitations: protectedProcedure
+      .input(z.object({ organizationId: z.number().int().positive() }))
+      .query(({ ctx, input }) =>
+        organization.listOrganizationInvitations(
+          ctx.user.id,
+          input.organizationId
+        )
+      ),
+    createInvitation: protectedProcedure
+      .input(
+        z.object({
+          organizationId: z.number().int().positive(),
+          email: z.string().email().max(320),
+          role: z.enum(["admin", "researcher", "reviewer", "auditor"]),
+          expiresInDays: z.number().int().min(1).max(30).optional(),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        organization.createOrganizationInvitation(ctx.user.id, input)
+      ),
+    acceptInvitation: protectedProcedure
+      .input(z.object({ token: z.string().trim().min(20).max(200) }))
+      .mutation(({ ctx, input }) =>
+        organization.acceptOrganizationInvitation(ctx.user.id, input.token)
+      ),
+    revokeInvitation: protectedProcedure
+      .input(z.object({ invitationId: z.number().int().positive() }))
+      .mutation(({ ctx, input }) =>
+        organization.revokeOrganizationInvitation(
+          ctx.user.id,
+          input.invitationId
+        )
+      ),
+    resendInvitation: protectedProcedure
+      .input(z.object({ invitationId: z.number().int().positive() }))
+      .mutation(({ ctx, input }) =>
+        organization.resendOrganizationInvitation(
+          ctx.user.id,
+          input.invitationId
+        )
+      ),
     programs: protectedProcedure
       .input(z.object({ organizationId: z.number().int().positive() }))
       .query(({ ctx, input }) =>
@@ -1523,8 +1828,16 @@ export const appRouter = router({
         researchWorkflow.listResearchSessions(ctx.user.id, input.workspaceId)
       ),
     sessionsPage: protectedProcedure
-      .input(z.object({ workspaceId: z.number().int().positive(), pageSize: z.number().int().min(1).max(100).optional(), cursor: z.string().max(512).optional() }))
-      .query(({ ctx, input }) => researchWorkflow.listResearchSessionsPage(ctx.user.id, input)),
+      .input(
+        z.object({
+          workspaceId: z.number().int().positive(),
+          pageSize: z.number().int().min(1).max(100).optional(),
+          cursor: z.string().max(512).optional(),
+        })
+      )
+      .query(({ ctx, input }) =>
+        researchWorkflow.listResearchSessionsPage(ctx.user.id, input)
+      ),
     createSession: protectedProcedure
       .input(
         z.object({
@@ -1603,8 +1916,17 @@ export const appRouter = router({
         researchWorkflow.createResearchObservation(ctx.user.id, input)
       ),
     promoteObservationToFinding: protectedProcedure
-      .input(z.object({ sessionId: z.number().int().positive(), observationId: z.number().int().positive(), confidence: z.number().int().min(0).max(100).optional(), impactSummary: z.string().min(3).max(20_000) }))
-      .mutation(({ ctx, input }) => researchWorkflow.promoteObservationToFinding(ctx.user.id, input)),
+      .input(
+        z.object({
+          sessionId: z.number().int().positive(),
+          observationId: z.number().int().positive(),
+          confidence: z.number().int().min(0).max(100).optional(),
+          impactSummary: z.string().min(3).max(20_000),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        researchWorkflow.promoteObservationToFinding(ctx.user.id, input)
+      ),
     hypotheses: protectedProcedure
       .input(z.object({ sessionId: z.number().int().positive() }))
       .query(({ ctx, input }) =>
@@ -1653,8 +1975,16 @@ export const appRouter = router({
         researchWorkflow.listResearchTasks(ctx.user.id, input.sessionId)
       ),
     tasksPage: protectedProcedure
-      .input(z.object({ sessionId: z.number().int().positive(), pageSize: z.number().int().min(1).max(100).optional(), cursor: z.string().max(512).optional() }))
-      .query(({ ctx, input }) => researchWorkflow.listResearchTasksPage(ctx.user.id, input)),
+      .input(
+        z.object({
+          sessionId: z.number().int().positive(),
+          pageSize: z.number().int().min(1).max(100).optional(),
+          cursor: z.string().max(512).optional(),
+        })
+      )
+      .query(({ ctx, input }) =>
+        researchWorkflow.listResearchTasksPage(ctx.user.id, input)
+      ),
     createTask: protectedProcedure
       .input(
         z.object({
@@ -1669,8 +1999,14 @@ export const appRouter = router({
           ownerUserId: z.number().int().positive().optional(),
           assetId: z.number().int().positive().optional(),
           vectorKey: z.string().min(2).max(160).optional(),
-          requiredCapabilities: z.array(z.string().min(2).max(120)).max(20).optional(),
-          suggestedAdapters: z.array(z.string().min(2).max(120)).max(20).optional(),
+          requiredCapabilities: z
+            .array(z.string().min(2).max(120))
+            .max(20)
+            .optional(),
+          suggestedAdapters: z
+            .array(z.string().min(2).max(120))
+            .max(20)
+            .optional(),
           riskClass: z.enum(["low", "medium", "high", "critical"]).optional(),
           inputs: z.record(z.string(), z.unknown()).optional(),
         })
@@ -1679,8 +2015,19 @@ export const appRouter = router({
         researchWorkflow.createResearchTask(ctx.user.id, input)
       ),
     approveTask: protectedProcedure
-      .input(z.object({ taskId: z.number().int().positive(), expectedRevision: z.number().int().min(0).optional() }))
-      .mutation(({ ctx, input }) => researchWorkflow.approveResearchTask(ctx.user.id, input.taskId, input.expectedRevision)),
+      .input(
+        z.object({
+          taskId: z.number().int().positive(),
+          expectedRevision: z.number().int().min(0).optional(),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        researchWorkflow.approveResearchTask(
+          ctx.user.id,
+          input.taskId,
+          input.expectedRevision
+        )
+      ),
     transitionTask: protectedProcedure
       .input(
         z.object({
@@ -1811,11 +2158,40 @@ export const appRouter = router({
         )
       ),
     ingestIntelligenceFeed: protectedProcedure
-      .input(z.object({ workspaceId: z.number().int().positive(), items: z.array(z.object({ source: z.string().min(1).max(120), observedAt: z.coerce.date().transform(value => value.toISOString()), assetRef: z.string().min(1).max(512), confidence: z.number().min(0).max(100), reference: z.string().max(512).optional(), data: z.record(z.string(), z.unknown()) })).min(1).max(100) }))
-      .mutation(({ ctx, input }) => researchIntelligence.ingestIntelligenceFeed(ctx.user.id, input)),
+      .input(
+        z.object({
+          workspaceId: z.number().int().positive(),
+          items: z
+            .array(
+              z.object({
+                source: z.string().min(1).max(120),
+                observedAt: z.coerce
+                  .date()
+                  .transform(value => value.toISOString()),
+                assetRef: z.string().min(1).max(512),
+                confidence: z.number().min(0).max(100),
+                reference: z.string().max(512).optional(),
+                data: z.record(z.string(), z.unknown()),
+              })
+            )
+            .min(1)
+            .max(100),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        researchIntelligence.ingestIntelligenceFeed(ctx.user.id, input)
+      ),
     enqueueIntelligenceFetch: protectedProcedure
-      .input(z.object({ workspaceId: z.number().int().positive(), providerUrl: z.string().url().max(2_000), idempotencyKey: z.string().trim().min(8).max(180) }))
-      .mutation(({ ctx, input }) => researchIntelligence.enqueueIntelligenceFetch(ctx.user.id, input)),
+      .input(
+        z.object({
+          workspaceId: z.number().int().positive(),
+          providerUrl: z.string().url().max(2_000),
+          idempotencyKey: z.string().trim().min(8).max(180),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        researchIntelligence.enqueueIntelligenceFetch(ctx.user.id, input)
+      ),
     createIntelligenceFeed: protectedProcedure
       .input(
         z.object({
@@ -1837,14 +2213,58 @@ export const appRouter = router({
         researchIntelligence.listPlaybooks(ctx.user.id, input.workspaceId)
       ),
     runPlaybook: protectedProcedure
-      .input(z.object({ workspaceId: z.number().int().positive(), sessionId: z.number().int().positive(), playbookId: z.number().int().positive() }))
-      .mutation(({ ctx, input }) => researchIntelligence.runPlaybook(ctx.user.id, input)),
+      .input(
+        z.object({
+          workspaceId: z.number().int().positive(),
+          sessionId: z.number().int().positive(),
+          playbookId: z.number().int().positive(),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        researchIntelligence.runPlaybook(ctx.user.id, input)
+      ),
     playbookRuns: protectedProcedure
-      .input(z.object({ workspaceId: z.number().int().positive(), sessionId: z.number().int().positive().optional() }))
-      .query(({ ctx, input }) => researchIntelligence.listPlaybookRuns(ctx.user.id, input.workspaceId, input.sessionId)),
+      .input(
+        z.object({
+          workspaceId: z.number().int().positive(),
+          sessionId: z.number().int().positive().optional(),
+        })
+      )
+      .query(({ ctx, input }) =>
+        researchIntelligence.listPlaybookRuns(
+          ctx.user.id,
+          input.workspaceId,
+          input.sessionId
+        )
+      ),
     transitionPlaybookRun: protectedProcedure
-      .input(z.object({ workspaceId: z.number().int().positive(), runId: z.number().int().positive(), status: z.enum(["queued", "running", "paused", "failed", "completed", "cancelled"]), error: z.string().max(4_000).optional(), completedTaskIds: z.array(z.number().int().positive()).max(200).optional(), failedTaskIds: z.array(z.number().int().positive()).max(200).optional(), nextTaskIndex: z.number().int().min(0).max(200).optional() }))
-      .mutation(({ ctx, input }) => researchIntelligence.transitionPlaybookRun(ctx.user.id, input)),
+      .input(
+        z.object({
+          workspaceId: z.number().int().positive(),
+          runId: z.number().int().positive(),
+          status: z.enum([
+            "queued",
+            "running",
+            "paused",
+            "failed",
+            "completed",
+            "cancelled",
+          ]),
+          error: z.string().max(4_000).optional(),
+          completedTaskIds: z
+            .array(z.number().int().positive())
+            .max(200)
+            .optional(),
+          failedTaskIds: z
+            .array(z.number().int().positive())
+            .max(200)
+            .optional(),
+          nextTaskIndex: z.number().int().min(0).max(200).optional(),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        researchIntelligence.transitionPlaybookRun(ctx.user.id, input)
+      ),
     createPlaybook: protectedProcedure
       .input(
         z.object({
@@ -1887,13 +2307,15 @@ export const appRouter = router({
         z.object({
           workspaceId: z.number().int().positive(),
           action: z.literal("privileged_proof"),
-          context: z.object({
-            target: z.string().trim().max(512).optional(),
-            tool: z.string().trim().max(160).optional(),
-            riskClass: z.enum(["high", "critical"]).optional(),
-            scopeDigest: z.string().trim().max(128).optional(),
-            expectedImpact: z.string().trim().max(4_000).optional(),
-          }).optional(),
+          context: z
+            .object({
+              target: z.string().trim().max(512).optional(),
+              tool: z.string().trim().max(160).optional(),
+              riskClass: z.enum(["high", "critical"]).optional(),
+              scopeDigest: z.string().trim().max(128).optional(),
+              expectedImpact: z.string().trim().max(4_000).optional(),
+            })
+            .optional(),
         })
       )
       .mutation(({ ctx, input }) =>
@@ -1941,15 +2363,32 @@ export const appRouter = router({
           impactSummary: z.string().min(10).max(12_000),
           reportDraft: z.string().min(10).max(20_000),
           confidence: z.number().int().min(0).max(100),
-          severity: z.enum(["informational", "low", "medium", "high", "critical"]).optional(),
+          severity: z
+            .enum(["informational", "low", "medium", "high", "critical"])
+            .optional(),
         })
       )
       .mutation(({ ctx, input }) =>
         controlPlane.createFinding(ctx.user.id, input)
       ),
     updateRemediation: protectedProcedure
-      .input(z.object({ findingId: z.number().int().positive(), expectedRevision: z.number().int().nonnegative(), remediationDeadline: z.coerce.date().nullable().optional(), remediationOwnerUserId: z.number().int().positive().nullable().optional(), remediationNotes: z.string().max(20_000).nullable().optional() }))
-      .mutation(({ ctx, input }) => controlPlane.updateFindingRemediation(ctx.user.id, input)),
+      .input(
+        z.object({
+          findingId: z.number().int().positive(),
+          expectedRevision: z.number().int().nonnegative(),
+          remediationDeadline: z.coerce.date().nullable().optional(),
+          remediationOwnerUserId: z
+            .number()
+            .int()
+            .positive()
+            .nullable()
+            .optional(),
+          remediationNotes: z.string().max(20_000).nullable().optional(),
+        })
+      )
+      .mutation(({ ctx, input }) =>
+        controlPlane.updateFindingRemediation(ctx.user.id, input)
+      ),
     transition: protectedProcedure
       .input(
         z.object({
@@ -2010,7 +2449,12 @@ export const appRouter = router({
   }),
   audit: router({
     list: protectedProcedure
-      .input(z.object({ workspaceId: z.number().int().positive(), traceId: z.string().trim().max(128).optional() }))
+      .input(
+        z.object({
+          workspaceId: z.number().int().positive(),
+          traceId: z.string().trim().max(128).optional(),
+        })
+      )
       .query(({ ctx, input }) =>
         controlPlane.listAudit(ctx.user.id, input.workspaceId, input.traceId)
       ),

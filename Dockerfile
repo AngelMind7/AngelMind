@@ -21,6 +21,7 @@ ENV VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY \
     VITE_ANALYTICS_ENDPOINT=$VITE_ANALYTICS_ENDPOINT \
     VITE_ANALYTICS_WEBSITE_ID=$VITE_ANALYTICS_WEBSITE_ID
 COPY package.json pnpm-lock.yaml ./
+COPY patches ./patches
 RUN corepack enable && pnpm install --frozen-lockfile
 COPY . .
 RUN pnpm check && pnpm build

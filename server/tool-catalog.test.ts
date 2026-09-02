@@ -8,8 +8,8 @@ import {
 
 const verifiedRuntimeKeys = new Set([
   "burp_suite_pro", "jwt_tool", "dalfox", "ssrfmap", "interactsh",
-  "ffuf", "cloudfox", "gitleaks", "graphql_cop", "sqlmap",
-  "nuclei", "subfinder", "httpx", "trivy", "custom_scripts",
+  "ffuf", "cloudfox", "secrets_detection.1", "graphql_cop", "sqlmap",
+  "nuclei", "asset_intelligence.28", "httpx", "dependencies.12", "custom_scripts",
 ]);
 
 describe("tool catalog safety boundary", () => {
@@ -56,7 +56,7 @@ describe("tool catalog safety boundary", () => {
   });
 
   it("allows low-risk offline tools in offline_artifact mode", () => {
-    for (const toolKey of ["gitleaks", "trivy"]) {
+    for (const toolKey of ["secrets_detection.1", "dependencies.12"]) {
       expect(
         canExecuteTool({ toolKey, mode: "offline_artifact", scopeValidated: true, humanApproval: false }).allowed
       ).toBe(true);
@@ -64,7 +64,7 @@ describe("tool catalog safety boundary", () => {
   });
 
   it("allows low-risk passive tools in passive_readonly mode", () => {
-    for (const toolKey of ["subfinder", "httpx"]) {
+    for (const toolKey of ["asset_intelligence.28", "httpx"]) {
       expect(
         canExecuteTool({ toolKey, mode: "passive_readonly", scopeValidated: true, humanApproval: false }).allowed
       ).toBe(true);

@@ -24,7 +24,9 @@ Use separate values for development, staging, and production. Rotate application
 
 ## Release procedure
 
-1. Confirm the target commit is on `main` and the GitHub CI checks are green.
+Before deployment, review [`threat-model-register.md`](./threat-model-register.md) for any changed asset, trust boundary, provider, migration, worker handler, or capability. A release must identify affected threat IDs, confirm relevant tests and migration checks, and record unresolved residual risk before the owner approves promotion.
+
+1. Confirm the target commit is on `main`, the GitHub CI checks are green, and the threat-model review has no unowned High residual risk.
 2. Configure the environment variables in the hosting provider.
 3. Deploy the application build with `pnpm install --frozen-lockfile`, `pnpm build`, and `pnpm start` as the production lifecycle.
 4. Run the schema migration against the intended production database with `pnpm db:push`. Review the generated SQL before applying it; never point this command at an unrelated database.
@@ -46,11 +48,11 @@ Create signed audit archives on a schedule appropriate for the workspace. Verify
 
 ## Rollback
 
-If a release introduces a regression, stop new workspace activity, preserve the audit records, roll back to the last known-good application commit, and re-run the smoke test. Do not roll back the database blindly; schema changes require an explicit forward migration or a reviewed restoration procedure.
+If a release introduces a regression, stop new workspace activity, preserve the audit records, identify the affected threat-model rows, roll back to the last known-good application commit, and re-run the smoke test. Do not roll back the database blindly; schema changes require an explicit forward migration or a reviewed restoration procedure. Update the register with the failure mode, detection evidence, containment, and corrective action owner.
 
 ## Security boundary
 
-External platform submission remains a human action. Any proposed target-facing capability requires a new threat model, egress policy, least-privilege design, capability-specific rate limit, program authorization, independent review, and additional audit tests before implementation.
+Any change that could alter an existing threat-model control must include a register review, a test contract, and a rollback/disable path. External platform submission remains a human action. Any proposed target-facing capability requires a new threat model, egress policy, least-privilege design, capability-specific rate limit, program authorization, independent review, and additional audit tests before implementation.
 
 ## Durable worker and migrations
 

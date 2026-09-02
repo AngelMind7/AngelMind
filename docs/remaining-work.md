@@ -32,6 +32,12 @@ Commit: `907cae5`. Typecheck dan full Vitest lulus: 67 test files passed, 1 skip
 
 Blueprint coverage kini disinkronkan dengan implementasi yang sudah ada: parser feature flags fail-closed mendukung environment, organization, user, entitlement, deterministic rollout, dan kill switch; konfigurasi runtime typed memiliki bounded defaults serta validation untuk audit encryption key dan required binaries. Provisioning dan rotasi secret tetap sengaja dipisahkan sebagai pekerjaan environment owner.
 
+## U — Threat-model register and security runbook (2026-09-02)
+
+Repository kini memiliki [`docs/threat-model-register.md`](./threat-model-register.md) sebagai register canonical untuk 12 threat scenarios lintas workspace authorization, passive-only boundary, audit crypto, concurrency, evidence, jobs, identity, secrets, AI retention, notifications, disaster recovery, dan supply chain. Setiap row memiliki severity, controls, verification evidence, residual risk, owner, dan status. `incident-response.md` dan `production-runbook.md` sekarang mewajibkan threat-model review, evidence preservation, containment melalui feature/capability controls, post-incident review, dan rollback evidence.
+
+Break-glass access, SSO/SCIM, live provider verification, multi-process lock, WORM/object-lock, DAST, dan production DR exercise tetap sengaja berstatus open/deferred sampai owner menyediakan policy, provider, atau environment evidence.
+
 ## C — Pekerjaan live environment
 
 Pekerjaan berikut tidak dapat diselesaikan hanya dari repository lokal karena membutuhkan akses atau tindakan pada akun/environment nyata: membuat dan mengisi secrets, memilih dialect database, menjalankan backup/preflight dan menerapkan migration pada database live, deploy web/API/worker, mengonfigurasi Firebase domains/providers, mengonfigurasi Supabase Storage, menghubungkan key 9Router/OmniRoute/provider intelligence, mengaktifkan branch protection GitHub, serta menjalankan smoke test staging/production.

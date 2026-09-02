@@ -36,9 +36,10 @@ function evictExpired<T extends { resetAt?: number; blockedUntil?: number }>(map
     const abuseExpired = value.blockedUntil !== undefined && value.blockedUntil <= now;
     if (bucketExpired || abuseExpired) map.delete(key);
   });
-  if (map.size > maxEntries) {
+  while (map.size > maxEntries) {
     const oldest = map.keys().next().value;
-    if (oldest) map.delete(oldest);
+    if (oldest === undefined) break;
+    map.delete(oldest);
   }
 }
 

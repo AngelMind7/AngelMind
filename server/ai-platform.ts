@@ -425,7 +425,15 @@ export async function dispatchPendingOutbox(handlers: Record<string, OutboxEvent
   let failed = 0;
   for (const event of pending) {
     const handler = handlers[event.eventType];
-    if (!handler) continue;
+    if (!handler) {
+      const claim = await claimOutboxEvent(event.id, now);
+      if (claim.claimed) {
+        claimed += 1;
+        await failOutboxEvent(event.id, `No outbox handler registered for event type '${event.eventType}'.`);
+        failed += 1;
+      }
+      continue;
+    }
     const claim = await claimOutboxEvent(event.id, now);
     if (!claim.claimed) continue;
     claimed += 1;

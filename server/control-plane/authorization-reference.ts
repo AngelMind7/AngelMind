@@ -48,7 +48,9 @@ export function parseAuthorizationReference(raw: string | null | undefined): Aut
 }
 
 export function serializeAuthorizationReference(reference: AuthorizationReference): string {
-  return JSON.stringify(reference);
+  const valid = parseAuthorizationReference(JSON.stringify(reference));
+  if (!valid) throw new Error("Authorization reference is malformed.");
+  return JSON.stringify(valid);
 }
 
 export function computeScopeSnapshotHash(scope: Pick<ProgramScope, "includedAssets" | "excludedAssets" | "rules" | "safeHarbor">): string {
@@ -66,9 +68,11 @@ export function verifyAuthorizationReference(input: {
   scope: Pick<ProgramScope, "includedAssets" | "excludedAssets" | "rules" | "safeHarbor">;
   now?: Date;
 }): AuthorizationCheckResult {
+  if (!input || !input.scope || typeof input.scope !== "object") return { valid: false, reason: "malformed" };
   const reference = parseAuthorizationReference(input.authorizationReference);
   if (!reference) return { valid: false, reason: input.authorizationReference ? "malformed" : "missing" };
   const now = input.now ?? new Date();
+  if (!(now instanceof Date) || !Number.isFinite(now.getTime())) return { valid: false, reason: "malformed" };
   if (now < new Date(reference.validFrom)) return { valid: false, reason: "not_yet_valid" };
   if (now >= new Date(reference.validUntil)) return { valid: false, reason: "expired" };
   if (reference.scopeSnapshotHash !== computeScopeSnapshotHash(input.scope)) return { valid: false, reason: "scope_changed" };

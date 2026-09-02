@@ -18,3 +18,17 @@ export function verifyArchiveIntegrity(manifestJson: string, expectedHash: strin
   const hash = sha256(manifestJson);
   return constantTimeEqual(hash, expectedHash) && constantTimeEqual(signArchiveManifest(hash, secret), expectedSignature);
 }
+
+export function assertArchiveManifest(manifestJson: string, expectedWorkspaceId: number) {
+  let manifest: Record<string, unknown>;
+  try {
+    const parsed = JSON.parse(manifestJson) as unknown;
+    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("not-object");
+    manifest = parsed as Record<string, unknown>;
+  } catch {
+    throw new Error("Archive manifest JSON is invalid.");
+  }
+  if (manifest.schema !== "angelmind.audit-archive.v1" || manifest.workspaceId !== expectedWorkspaceId) throw new Error("Archive manifest schema or workspace identity is invalid.");
+  for (const key of ["auditEvents", "evidence", "runs", "approvals", "notifications"]) if (manifest[key] !== undefined && !Array.isArray(manifest[key])) throw new Error(`Archive manifest field '${key}' must be an array.`);
+  return manifest;
+}

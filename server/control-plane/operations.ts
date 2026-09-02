@@ -3,7 +3,7 @@ import { approvals, auditArchives, auditEvents, evidenceArtifacts, notifications
 import { getDb, getOwnedWorkspace, getUserByEmail } from "../db";
 import { storageGetSignedUrl, storagePut } from "../storage";
 import { ENV } from "../_core/env";
-import { sha256, signArchiveManifest, verifyArchiveIntegrity } from "./archive-integrity";
+import { assertArchiveManifest, sha256, signArchiveManifest, verifyArchiveIntegrity } from "./archive-integrity";
 import { normalizeWebhookEvents, assertSafeWebhookEndpoint } from "./webhook-policy";
 import type { NotificationEvent } from "./notifications";
 import { currentTraceContext } from "../_core/trace-context";
@@ -186,8 +186,7 @@ export async function restoreAuditArchivePlan(ownerUserId: number, archiveId: nu
   const manifestJson = await response.text();
   const valid = verifyArchiveIntegrity(manifestJson, archive.manifestHash, archive.signature, ENV.archiveSigningSecret);
   if (!valid) throw new Error("Archive integrity verification failed; restore plan refused.");
-  const manifest = JSON.parse(manifestJson) as { schema?: unknown; workspaceId?: unknown; auditEvents?: unknown[]; evidence?: unknown[]; runs?: unknown[]; approvals?: unknown[]; notifications?: unknown[] };
-  if (manifest.schema !== "angelmind.audit-archive.v1" || manifest.workspaceId !== archive.workspaceId) throw new Error("Archive manifest schema or workspace identity is invalid.");
+  const manifest = assertArchiveManifest(manifestJson, archive.workspaceId) as { schema?: unknown; workspaceId?: unknown; auditEvents?: unknown[]; evidence?: unknown[]; runs?: unknown[]; approvals?: unknown[]; notifications?: unknown[] };
   return { archiveId, workspaceId: archive.workspaceId, destinationWorkspaceId: destinationId, valid: true as const, requiresHumanConfirmation: true as const, recordCounts: { auditEvents: manifest.auditEvents?.length ?? 0, evidence: manifest.evidence?.length ?? 0, runs: manifest.runs?.length ?? 0, approvals: manifest.approvals?.length ?? 0, notifications: manifest.notifications?.length ?? 0 }, mode: "plan-only" as const };
 }
 

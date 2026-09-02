@@ -14,6 +14,7 @@ export const notificationLabels: Record<NotificationEvent, string> = {
 };
 
 export function isInAppEnabled(event: NotificationEvent, preferences: Array<{ eventType: NotificationEvent; inAppEnabled: number }>): boolean {
+  if (!notificationEvents.includes(event) || !Array.isArray(preferences)) return false;
   return preferences.find(preference => preference.eventType === event)?.inAppEnabled !== 0;
 }
 
@@ -24,5 +25,5 @@ export function planInAppDelivery(event: NotificationEvent, preferences: Array<{
 }
 
 export function canAcknowledgeNotification(notificationUserId: number, actingUserId: number): boolean {
-  return notificationUserId === actingUserId;
+  return Number.isInteger(notificationUserId) && notificationUserId > 0 && Number.isInteger(actingUserId) && actingUserId > 0 && notificationUserId === actingUserId;
 }

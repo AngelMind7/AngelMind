@@ -130,7 +130,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 |---:|---|---|---|
 | 90 | Observability | **Partial** | Health, readiness, Prometheus process/purge/HTTP counters, latency/error/slow-request signals, logs, and audit are implemented; distributed traces, alert delivery, and SLO dashboards remain open. |
 | 91 | Traceability | **Partial** | tRPC context now propagates bounded `x-request-id` and `x-trace-id` response headers with generated UUID fallback; resource/job/AI/database correlation fields remain to be threaded through every workflow. |
-| 92 | Incident management | **Implemented** | Incident create/acknowledge/resolve, escalation, evidence links, audit tersedia; post-incident review belum. |
+| 92 | Incident management | **Implemented (repository)** | Incident create/acknowledge/resolve, escalation, evidence links, audit, and structured post-incident review with summary, root cause, action items, owner/due date, closure evidence, and open/closed lifecycle are implemented; production incident integration remains deployment dependent. |
 | 93 | Status page | **Partial** | Public posture/status disclosure ada; live component telemetry belum. |
 | 94 | Disaster recovery | **Partial** | Signed archive, verify, restore plan ada; tested restore execution/recovery environment belum. |
 | 95 | Migration | **Implemented** | Drizzle forward migrations, deploy/runbook, validation tersedia. |

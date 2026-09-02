@@ -6,6 +6,11 @@ type NotificationChannel = (typeof notificationDeliveryChannel)[number];
 type NotificationRecord = typeof notifications.$inferSelect;
 type DeliveryResult = { delivered: boolean; reason?: string; providerMessageId?: string };
 
+export function getNotificationRetryDelayMs(attempts: number): number {
+  const normalizedAttempts = Number.isFinite(attempts) ? Math.max(0, Math.trunc(attempts)) : 0;
+  return Math.min(3_600_000, 5_000 * 2 ** normalizedAttempts);
+}
+
 export type NotificationProvider = {
   channel: NotificationChannel;
   isEnabled: () => boolean;
@@ -80,6 +85,6 @@ export async function executeNotificationDeliveryJob(payload: Record<string, unk
     return { ...delivery, status: "sent" as const, providerMessageId: result.providerMessageId ?? null };
   }
   const reason = result.reason ?? "Notification provider delivery failed.";
-  await db.update(notificationDeliveries).set({ status: "failed", lastError: reason, nextAttemptAt: new Date(Date.now() + Math.min(3_600_000, 5_000 * 2 ** Math.max(0, delivery.attempts))), updatedAt: new Date() }).where(eq(notificationDeliveries.id, delivery.id));
+  await db.update(notificationDeliveries).set({ status: "failed", lastError: reason, nextAttemptAt: new Date(Date.now() + getNotificationRetryDelayMs(delivery.attempts)), updatedAt: new Date() }).where(eq(notificationDeliveries.id, delivery.id));
   throw new Error(reason);
 }

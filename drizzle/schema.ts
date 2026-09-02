@@ -205,7 +205,8 @@ export const privacyRequests = mysqlTable("privacyRequests", {
 
 export const workspaceStatus = ["active", "paused", "archived"] as const;
 export const runStatus = ["queued", "running", "checkpointed", "completed", "blocked", "failed"] as const;
-export const findingStatus = ["discovered", "triaged", "candidate", "reproducing", "validated", "reported", "submitted", "invalid", "duplicate", "inconclusive"] as const;
+export const findingStatus = ["discovered", "triaged", "candidate", "reproducing", "validated", "reported", "notified", "remediation", "retest", "resolved", "reopened", "false_positive", "submitted", "invalid", "duplicate", "inconclusive"] as const;
+export const findingSeverity = ["informational", "low", "medium", "high", "critical"] as const;
 export const approvalStatus = ["pending", "approved", "rejected", "expired"] as const;
 export const notificationEventType = ["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check", "policy_review_required", "incident_created", "webhook_activation_requested", "comment_mentioned"] as const;
 export const workspaceMemberRole = ["owner", "operator", "reviewer", "auditor", "approval_authority"] as const;
@@ -622,12 +623,19 @@ export const findings = mysqlTable("findings", {
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   fingerprint: varchar("fingerprint", { length: 96 }).notNull(),
   title: varchar("title", { length: 240 }).notNull(),
+  severity: mysqlEnum("severity", findingSeverity).default("medium").notNull(),
   status: mysqlEnum("status", findingStatus).default("discovered").notNull(),
+  revision: int("revision").default(0).notNull(),
   confidence: int("confidence").default(0).notNull(),
   impactSummary: text("impactSummary").notNull(),
   reportDraft: text("reportDraft").notNull(),
   sourceObservationId: int("sourceObservationId"),
   humanReviewStatus: mysqlEnum("humanReviewStatus", ["pending", "approved", "rejected"] as const).default("pending").notNull(),
+  clientNotifiedAt: timestamp("clientNotifiedAt"),
+  remediationDeadline: timestamp("remediationDeadline"),
+  remediationOwnerUserId: int("remediationOwnerUserId"),
+  remediationNotes: text("remediationNotes"),
+  resolvedAt: timestamp("resolvedAt"),
   traceId: varchar("traceId", { length: 128 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
@@ -635,6 +643,8 @@ export const findings = mysqlTable("findings", {
   uniqueIndex("findings_workspace_fingerprint_uq").on(table.workspaceId, table.fingerprint),
   index("findings_workspace_status_idx").on(table.workspaceId, table.status),
   index("findings_source_observation_idx").on(table.sourceObservationId),
+  index("findings_workspace_remediation_idx").on(table.workspaceId, table.remediationDeadline),
+  index("findings_remediation_owner_status_idx").on(table.remediationOwnerUserId, table.status),
 ]);
 
 export const approvals = mysqlTable("approvals", {
@@ -732,6 +742,7 @@ export const findingRetests = mysqlTable("findingRetests", {
   resultSummary: text("resultSummary"),
   evidenceArtifactId: int("evidenceArtifactId").references(() => evidenceArtifacts.id, { onDelete: "set null" }),
   reviewedByUserId: int("reviewedByUserId"),
+  startedAt: timestamp("startedAt"),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   completedAt: timestamp("completedAt"),
 }, table => [index("finding_retest_workspace_status_idx").on(table.workspaceId, table.status), index("finding_retest_finding_created_idx").on(table.findingId, table.createdAt)]);

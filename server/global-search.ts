@@ -2,6 +2,26 @@ import { and, desc, eq, gte, inArray, like, or } from "drizzle-orm";
 import { evidenceArtifacts, findings, intelligenceFeedItems, knowledgeNodes, programs, reportVersions, researchAssets, researchHypotheses, researchObservations, researchSessions, researchTasks, searchDocuments, workspaceNotes, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
+type SearchCursor = { score: number; updatedAt: string; rowId: number };
+
+function encodeSearchCursor(cursor: SearchCursor): string {
+  if (!Number.isInteger(cursor.score) || cursor.score < 0 || !Number.isInteger(cursor.rowId) || cursor.rowId < 1 || Number.isNaN(new Date(cursor.updatedAt).getTime())) throw new Error("Search cursor is invalid.");
+  return Buffer.from(JSON.stringify(cursor), "utf8").toString("base64url");
+}
+
+function decodeSearchCursor(value: string | undefined): SearchCursor | null {
+  if (!value?.trim()) return null;
+  try {
+    const parsed = JSON.parse(Buffer.from(value, "base64url").toString("utf8")) as Partial<SearchCursor>;
+    if (!Number.isInteger(parsed.score) || (parsed.score ?? -1) < 0 || !Number.isInteger(parsed.rowId) || (parsed.rowId ?? 0) < 1 || typeof parsed.updatedAt !== "string" || Number.isNaN(new Date(parsed.updatedAt).getTime())) throw new Error("invalid");
+    const score = parsed.score;
+    const rowId = parsed.rowId;
+    if (score === undefined || rowId === undefined || parsed.updatedAt === undefined) throw new Error("invalid");
+    return { score, updatedAt: new Date(parsed.updatedAt).toISOString(), rowId };
+  } catch {
+    throw new Error("Invalid search pagination cursor.");
+  }
+}
 
 function clean(value: string | null | undefined, max = 20_000) {
   return String(value ?? "").trim().slice(0, max);
@@ -11,6 +31,12 @@ export async function upsertSearchDocument(input: { workspaceId: number; entityT
   const db = await getDb();
   if (!db) return;
   await db.insert(searchDocuments).values({ workspaceId: input.workspaceId, entityType: input.entityType, entityId: input.entityId, title: clean(input.title, 512), body: clean(input.body) }).onDuplicateKeyUpdate({ set: { title: clean(input.title, 512), body: clean(input.body), updatedAt: new Date() } });
+}
+
+export async function deleteSearchDocument(input: { workspaceId: number; entityType: string; entityId: number }) {
+  const db = await getDb();
+  if (!db) return;
+  await db.delete(searchDocuments).where(and(eq(searchDocuments.workspaceId, input.workspaceId), eq(searchDocuments.entityType, input.entityType), eq(searchDocuments.entityId, input.entityId)));
 }
 
 export async function rebuildWorkspaceSearchIndex(userId: number, workspaceId: number) {
@@ -52,21 +78,22 @@ export async function rebuildWorkspaceSearchIndex(userId: number, workspaceId: n
   return { workspaceId, indexed: rows.length };
 }
 
-export async function searchWorkspace(userId: number, input: { workspaceId: number; query: string; limit?: number; entityTypes?: string[]; freshnessDays?: number }) {
+export async function searchWorkspace(userId: number, input: { workspaceId: number; query: string; limit?: number; cursor?: string; entityTypes?: string[]; freshnessDays?: number }) {
   const query = clean(input.query, 120);
   if (query.length < 2) throw new Error("Search query must contain at least two characters.");
   if (!(await canAccessWorkspace(userId, input.workspaceId, "read"))) throw new Error("Workspace tidak dapat diakses.");
   const db = await getDb();
-  if (!db) return { query, results: [] };
+  if (!db) return { query, results: [], hasNextPage: false, nextCursor: null, findings: [], assets: [], sessions: [], reports: [], programs: [], knowledgeNodes: [], observations: [], hypotheses: [], tasks: [], evidence: [], intelligence: [], facets: {} };
   const limit = Math.min(100, Math.max(1, input.limit ?? 20));
   const entityTypes = Array.from(new Set((input.entityTypes ?? []).map(type => clean(type, 40)).filter(Boolean))).slice(0, 12);
   const freshnessDays = input.freshnessDays === undefined ? undefined : Math.min(3_650, Math.max(1, Math.trunc(input.freshnessDays)));
   const freshnessCutoff = freshnessDays === undefined ? undefined : new Date(Date.now() - freshnessDays * 86_400_000);
+  const cursor = decodeSearchCursor(input.cursor);
   const pattern = `%${query}%`;
   const tokens = Array.from(new Set(query.toLocaleLowerCase().split(/\s+/).map(token => token.replace(/[^A-Za-z0-9_-]/g, "")).filter(token => token.length >= 2))).slice(0, 12);
   const tokenPatterns = tokens.flatMap(token => [`%${token}%`]);
   const searchConditions = [like(searchDocuments.title, pattern), like(searchDocuments.body, pattern), ...tokenPatterns.flatMap(token => [like(searchDocuments.title, token), like(searchDocuments.body, token)])];
-  const candidates = await db.select({ id: searchDocuments.entityId, entityType: searchDocuments.entityType, title: searchDocuments.title, body: searchDocuments.body, updatedAt: searchDocuments.updatedAt }).from(searchDocuments).where(and(eq(searchDocuments.workspaceId, input.workspaceId), entityTypes.length ? inArray(searchDocuments.entityType, entityTypes) : undefined, freshnessCutoff ? gte(searchDocuments.updatedAt, freshnessCutoff) : undefined, or(...searchConditions))).orderBy(desc(searchDocuments.updatedAt)).limit(Math.min(500, limit * 10));
+  const candidates = await db.select({ rowId: searchDocuments.id, id: searchDocuments.entityId, entityType: searchDocuments.entityType, title: searchDocuments.title, body: searchDocuments.body, updatedAt: searchDocuments.updatedAt }).from(searchDocuments).where(and(eq(searchDocuments.workspaceId, input.workspaceId), entityTypes.length ? inArray(searchDocuments.entityType, entityTypes) : undefined, freshnessCutoff ? gte(searchDocuments.updatedAt, freshnessCutoff) : undefined, or(...searchConditions))).orderBy(desc(searchDocuments.updatedAt), desc(searchDocuments.id)).limit(500);
   const normalizedQuery = query.toLocaleLowerCase();
   const score = (result: typeof candidates[number]) => {
     const title = result.title.toLocaleLowerCase();
@@ -79,11 +106,19 @@ export async function searchWorkspace(userId: number, input: { workspaceId: numb
     const freshness = Math.max(0, 10 - Math.floor((Date.now() - result.updatedAt.getTime()) / 86_400_000));
     return exactTitle + titlePrefix + titleMatch + bodyMatch + tokenCoverage + freshness;
   };
-  const results = candidates.sort((left, right) => score(right) - score(left) || right.updatedAt.getTime() - left.updatedAt.getTime()).slice(0, limit);
+  const ranked = candidates.sort((left, right) => score(right) - score(left) || right.updatedAt.getTime() - left.updatedAt.getTime() || right.rowId - left.rowId);
+  const afterCursor = cursor ? ranked.filter(result => { const resultScore = score(result); const cursorDate = new Date(cursor.updatedAt).getTime(); return resultScore < cursor.score || (resultScore === cursor.score && (result.updatedAt.getTime() < cursorDate || (result.updatedAt.getTime() === cursorDate && result.rowId < cursor.rowId))); }) : ranked;
+  const hasNextPage = afterCursor.length > limit;
+  const page = afterCursor.slice(0, limit);
+  const last = page.at(-1);
+  const nextCursor = hasNextPage && last ? encodeSearchCursor({ score: score(last), updatedAt: last.updatedAt.toISOString(), rowId: last.rowId }) : null;
+  const results = page.map(({ rowId: _rowId, ...result }) => result);
   const byType = (entityType: string) => results.filter(result => result.entityType === entityType);
   return {
     query,
     results,
+    hasNextPage,
+    nextCursor,
     findings: byType("finding"),
     assets: byType("asset"),
     sessions: byType("session"),

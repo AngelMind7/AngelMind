@@ -2,6 +2,7 @@ import { and, asc, eq, inArray } from "drizzle-orm";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { knowledgeEdges, knowledgeNodes } from "../drizzle/schema";
+import { upsertSearchDocument } from "./global-search";
 
 const normalizeJson = (value: Record<string, unknown> | undefined) => JSON.stringify(value ?? {});
 
@@ -30,6 +31,7 @@ export async function upsertNode(userId: number, input: { workspaceId: number; n
   await db.insert(knowledgeNodes).values({ workspaceId: input.workspaceId, nodeType: input.nodeType, externalId, label, properties: normalizeJson(input.properties), createdByUserId: userId }).onDuplicateKeyUpdate({ set: { label, properties: normalizeJson(input.properties), status: "active", updatedAt: new Date() } });
   const [node] = await db.select().from(knowledgeNodes).where(and(eq(knowledgeNodes.workspaceId, input.workspaceId), eq(knowledgeNodes.nodeType, input.nodeType), eq(knowledgeNodes.externalId, externalId))).limit(1);
   if (!node) throw new Error("Knowledge node tidak dapat disimpan.");
+  await upsertSearchDocument({ workspaceId: node.workspaceId, entityType: "knowledge_node", entityId: node.id, title: node.label, body: [node.nodeType, node.externalId, node.properties, `status:${node.status}`].join("\\n") });
   return node;
 }
 

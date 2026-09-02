@@ -109,3 +109,11 @@ Research task kini dapat menerima `assetId`, membaca metadata asset pada session
 ## Q — Repository completion pass (2026-09-02)
 
 Subsequent commits added direct `sourceObservationId` provenance on findings with migration `0052`, a reviewer-only approval mutation for high/critical research tasks, an explicit administrative scheduler registry, bounded notification retry backoff, constant-time archive signature verification, a manual HTTPS-only staging load probe, and a manual post-deploy health/readiness/metrics verification workflow. These contracts are covered by typecheck and automated tests and remain safe by default.
+
+## R — Finding remediation, retest, and search consistency (2026-09-02)
+
+Finding records now persist severity, client-notified time, remediation deadline/owner/notes, resolved time, and a monotonic revision counter through migrations `0056_finding_remediation_lifecycle` and `0057_finding_revision_concurrency`. The state machine now models notification, remediation, retest, resolution, reopening, and false-positive checkpoints while keeping automated submission impossible. Transition, remediation, and new retest-request writes require the caller's expected revision and fail closed on stale data. Retest requests are idempotent while active; terminal retest results require scanned or promoted evidence and update the parent finding to `resolved`, `remediation`, or `inconclusive`.
+
+Search consistency is extended to finding transitions/remediation, evidence upload/scan/promotion/provenance, report drafts, knowledge-node upserts, and workspace-note create/update/delete. Global search now exposes deterministic relevance-aware cursor pagination and a stable empty-database response shape. The Findings surface exposes severity, remediation planning, and the expanded lifecycle. Firebase, Supabase, Railway, production migration application, and live staging verification remain intentionally outside this repository-only slice.
+
+Verification completed locally: TypeScript check, finding workflow tests, migration journal consistency, and `git diff --check` passed after the changes; full test/build verification remains the next gate before commit.

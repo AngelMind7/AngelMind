@@ -100,13 +100,13 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | No. | Requirement | Status | Bukti/gap utama |
 |---:|---|---|---|
 | 66 | Database | **Implemented** | MySQL/Drizzle schema dan forward migrations tersedia. |
-| 67 | Database integrity | **Partial** | Research session/asset/observation/hypothesis/task, finding relation/retest, evidence link, and multi-event provenance foreign keys are now enforced through migration `0024`; complete data preflight/load verification remains deployment work. |
+| 67 | Database integrity | **Partial** | Research session/asset/observation/hypothesis/task, finding relation/retest, evidence link, multi-event provenance foreign keys, and finding remediation metadata are enforced through forward migrations `0024` and `0056`; complete data preflight/load verification remains deployment work. |
 | 68 | Concurrency | **Planned** | Belum ada optimistic locking/version conflict workflow umum. |
-| 69 | Pagination | **Partial** | List queries terbatas dan workspace-scoped; cursor pagination global belum. |
+| 69 | Pagination | **Partial** | Workspace-scoped list queries and cursor pagination for global search are implemented with deterministic timestamp/ID continuation; remaining domain-wide adoption is incomplete. |
 | 70 | Cache | **Deferred** | Belum ada cache layer; tidak ditambahkan tanpa workload requirement dan invalidation design. |
 | 71 | Data consistency | **Partial** | MySQL source of truth dan derived analytics ada; explicit consistency classification belum. |
 | 72 | File storage | **Implemented** | Supabase Storage backend upload/signed URL, metadata MySQL, hash, audit tersedia. |
-| 73 | Search index | **Partial** | Workspace-scoped `searchDocuments` index, rebuild/reindex, permission checks, query scoring, entity-type/freshness filters, REST read-only search, saved views, and workspace notes indexing are implemented; automatic mutation indexing, full delete/reindex consistency, cursor pagination, semantic search, and unified cross-domain search UI remain open. |
+| 73 | Search index | **Partial** | Workspace-scoped `searchDocuments` index, rebuild/reindex, permission checks, query scoring, entity-type/freshness filters, REST read-only search, saved views, workspace notes/knowledge/report-draft/finding/evidence mutation indexing, stale-note delete cleanup, and cursor pagination are implemented; semantic search and unified cross-domain search UI remain open. |
 | 74 | Data lifecycle | **Partial** | Workspace retention/status metadata and account export/delete worker lifecycle are implemented, including private JSON artifact storage and transactional account-scoped deletion; full entity-wide retention purge and collaborative-resource transfer/archive workflows remain incomplete. |
 | 75 | Privacy | **Partial** | Retention, workspace isolation, legal surfaces, privacy request state machine, durable export/delete processing, owner guard, private export artifact, and owner-only signed download are implemented; privacy center UI, dedicated audit events, integration drills, and complete data-access/deletion coverage remain open. |
 | 76 | Abuse protection | **Partial** | Body limits, safe boundaries, allowlists, no target execution ada; rate limit/upload malware scan/account abuse belum penuh. |
@@ -137,7 +137,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 96 | CI/CD | **Partial** | CI check/test/build/security workflows ada; staging/smoke/production promotion belum lengkap. |
 | 97 | Supply-chain security | **Partial** | Lockfile, dependency review/security workflow, container hardening ada; SBOM/signing/DAST penuh belum. |
 | 98 | Testing | **Partial** | Unit/integration/property/E2E/Python tests dan public accessibility axe smoke suite ada; authenticated security/accessibility/performance/DR suites lengkap belum. |
-| 99 | Critical E2E | **Partial** | Login/dashboard/workspace/policy/rehearsal/finding/evidence/report core ada; full program–research–submission–retest lifecycle belum. |
+| 99 | Critical E2E | **Partial** | Login/dashboard/workspace/policy/rehearsal/finding/evidence/report core ada; finding notification/remediation/retest/resolution persistence is now covered at the state-machine contract level, while browser-level full program–research–retest coverage remains open. |
 | 100 | Frontend architecture | **Partial** | React/Vite route shells, pages, components, contexts, locales ada; target feature-folder split belum. |
 | 101 | Design system | **Partial** | Shared Radix/Tailwind components, semantic states, responsive shell ada; full token/a11y system belum. |
 | 102 | UI state | **Implemented** | Loading/error/empty/offline/protected states tersedia pada core surfaces. |

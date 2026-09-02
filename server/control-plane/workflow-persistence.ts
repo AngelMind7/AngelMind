@@ -35,6 +35,7 @@ export async function saveReportDraft(userId: number, input: { findingId: number
   const reportJson = JSON.stringify(input.report);
   await db.insert(reportDrafts).values({ findingId: input.findingId, workspaceId: input.workspaceId, platform: input.platform, reportJson, lastSavedByUserId: userId }).onDuplicateKeyUpdate({ set: { platform: input.platform, reportJson, lastSavedByUserId: userId, updatedAt: new Date() } });
   const [draft] = await db.select().from(reportDrafts).where(and(eq(reportDrafts.findingId, input.findingId), eq(reportDrafts.workspaceId, input.workspaceId))).limit(1);
+  if (draft) await upsertSearchDocument({ workspaceId: input.workspaceId, entityType: "report_draft", entityId: draft.id, title: `Draft ${input.platform} · finding #${input.findingId}`, body: [input.platform, reportJson].join("\\n") });
   return draft;
 }
 

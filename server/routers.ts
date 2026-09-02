@@ -1183,6 +1183,7 @@ export const appRouter = router({
           workspaceId: z.number().int().positive(),
           query: z.string().trim().min(2).max(120),
           limit: z.number().int().min(1).max(50).optional(),
+          cursor: z.string().trim().max(512).optional(),
           entityTypes: z.array(z.string().trim().min(1).max(40)).max(12).optional(),
           freshnessDays: z.number().int().min(1).max(3_650).optional(),
         })
@@ -1289,9 +1290,9 @@ export const appRouter = router({
         evidenceWorkflow.listFindingRetests(ctx.user.id, input.findingId)
       ),
     requestRetest: protectedProcedure
-      .input(z.object({ findingId: z.number().int().positive() }))
+      .input(z.object({ findingId: z.number().int().positive(), expectedRevision: z.number().int().nonnegative() }))
       .mutation(({ ctx, input }) =>
-        evidenceWorkflow.requestFindingRetest(ctx.user.id, input.findingId)
+        evidenceWorkflow.requestFindingRetest(ctx.user.id, input)
       ),
     completeRetest: protectedProcedure
       .input(
@@ -1891,21 +1892,32 @@ export const appRouter = router({
           impactSummary: z.string().min(10).max(12_000),
           reportDraft: z.string().min(10).max(20_000),
           confidence: z.number().int().min(0).max(100),
+          severity: z.enum(["informational", "low", "medium", "high", "critical"]).optional(),
         })
       )
       .mutation(({ ctx, input }) =>
         controlPlane.createFinding(ctx.user.id, input)
       ),
+    updateRemediation: protectedProcedure
+      .input(z.object({ findingId: z.number().int().positive(), expectedRevision: z.number().int().nonnegative(), remediationDeadline: z.coerce.date().nullable().optional(), remediationOwnerUserId: z.number().int().positive().nullable().optional(), remediationNotes: z.string().max(20_000).nullable().optional() }))
+      .mutation(({ ctx, input }) => controlPlane.updateFindingRemediation(ctx.user.id, input)),
     transition: protectedProcedure
       .input(
         z.object({
           findingId: z.number().int().positive(),
+          expectedRevision: z.number().int().nonnegative(),
           status: z.enum([
             "triaged",
             "candidate",
             "reproducing",
             "validated",
             "reported",
+            "notified",
+            "remediation",
+            "retest",
+            "resolved",
+            "reopened",
+            "false_positive",
             "invalid",
             "duplicate",
             "inconclusive",

@@ -1,8 +1,10 @@
 import { createHash } from "node:crypto";
 import { and, desc, eq, like, ne, or } from "drizzle-orm";
 import { evidenceArtifacts, evidenceProvenance, findingRelations, findingRetests, findings, researchEvidenceLinks, researchHypotheses, researchObservations, reportVersions, workspaces } from "../drizzle/schema";
+import { upsertSearchDocument } from "./global-search";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
+import { assertExpectedRevision, nextRevision } from "./_core/query-safety";
 
 function digest(value: unknown) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -54,6 +56,7 @@ export async function recordEvidenceProvenance(userId: number, input: { evidence
   if (!sourceType || !sourceReference) throw new Error("Evidence provenance source is required.");
   await db.insert(evidenceProvenance).values({ evidenceArtifactId: artifact.id, workspaceId: artifact.workspaceId, sourceType, sourceReference, capturedAt: input.capturedAt, capturedByUserId: userId, metadata: JSON.stringify(input.metadata ?? {}) }).onDuplicateKeyUpdate({ set: { sourceType, sourceReference, capturedAt: input.capturedAt, capturedByUserId: userId, metadata: JSON.stringify(input.metadata ?? {}) } });
   const [provenance] = await db.select().from(evidenceProvenance).where(eq(evidenceProvenance.evidenceArtifactId, artifact.id)).limit(1);
+  await upsertSearchDocument({ workspaceId: artifact.workspaceId, entityType: "evidence", entityId: artifact.id, title: artifact.artifactType, body: [artifact.artifactType, `status:${artifact.status}`, artifact.sha256, `source:${sourceType}`, `reference:${sourceReference}`, `capturedAt:${input.capturedAt.toISOString()}`].join("\\n") });
   return provenance;
 }
 
@@ -84,13 +87,20 @@ export async function listFindingRetests(userId: number, findingId: number) {
   return db.select().from(findingRetests).where(and(eq(findingRetests.findingId, finding.id), eq(findingRetests.workspaceId, finding.workspaceId))).orderBy(desc(findingRetests.createdAt));
 }
 
-export async function requestFindingRetest(userId: number, findingId: number) {
-  const { db, finding } = await loadFinding(userId, findingId, "respond");
+export async function requestFindingRetest(userId: number, input: { findingId: number; expectedRevision: number }) {
+  const { db, finding } = await loadFinding(userId, input.findingId, "respond");
+  const [active] = await db.select().from(findingRetests).where(and(eq(findingRetests.findingId, finding.id), eq(findingRetests.workspaceId, finding.workspaceId), or(eq(findingRetests.status, "requested"), eq(findingRetests.status, "in_progress")))).orderBy(desc(findingRetests.createdAt)).limit(1);
+  if (active) return active;
+  assertExpectedRevision(input.expectedRevision, finding.revision);
+  if (!["validated", "reported", "notified", "remediation", "reopened", "inconclusive"].includes(finding.status)) throw new Error("Retest hanya dapat diminta setelah finding tervalidasi atau memasuki remediation.");
   const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, finding.workspaceId)).limit(1);
   if (!workspace) throw new Error("Workspace tidak ditemukan.");
   const scopeDigest = digest({ allowlist: workspace.allowlist, exclusions: workspace.exclusions, safeHarbor: workspace.safeHarbor, codeOfConduct: workspace.codeOfConduct });
   await db.insert(findingRetests).values({ workspaceId: finding.workspaceId, findingId: finding.id, requestedByUserId: userId, status: "requested", scopeDigest });
+  const updated = await db.update(findings).set({ status: "retest", revision: nextRevision(finding.revision), updatedAt: new Date() }).where(and(eq(findings.id, finding.id), eq(findings.revision, input.expectedRevision)));
+  if (updated[0].affectedRows !== 1) throw new Error("Concurrent update detected; reload the finding and retry.");
   const [retest] = await db.select().from(findingRetests).where(and(eq(findingRetests.findingId, finding.id), eq(findingRetests.requestedByUserId, userId))).orderBy(desc(findingRetests.createdAt)).limit(1);
+  await upsertSearchDocument({ workspaceId: finding.workspaceId, entityType: "finding", entityId: finding.id, title: finding.title, body: [finding.impactSummary, finding.remediationNotes ?? "", "status:retest"].filter(Boolean).join("\\n") });
   return retest;
 }
 
@@ -99,16 +109,23 @@ export async function completeFindingRetest(userId: number, input: { retestId: n
   if (!db) throw new Error("Database tidak tersedia.");
   const [retest] = await db.select().from(findingRetests).where(eq(findingRetests.id, input.retestId)).limit(1);
   if (!retest || !(await canAccessWorkspace(userId, retest.workspaceId, "review"))) throw new Error("Retest tidak ditemukan atau reviewer permission diperlukan.");
+  if (!["requested", "in_progress"].includes(retest.status)) throw new Error("Retest ini sudah memiliki hasil terminal dan tidak dapat ditulis ulang.");
   if (input.evidenceArtifactId) {
     const [artifact] = await db.select().from(evidenceArtifacts).where(and(eq(evidenceArtifacts.id, input.evidenceArtifactId), eq(evidenceArtifacts.workspaceId, retest.workspaceId))).limit(1);
     if (!artifact) throw new Error("Retest evidence must belong to the same workspace.");
+    if (!["scanned", "promoted"].includes(artifact.status)) throw new Error("Retest evidence must pass the security scan before it can be attached.");
   }
   const resultSummary = input.resultSummary.trim();
   if (resultSummary.length < 3) throw new Error("Retest result summary is required.");
-  await db.update(findingRetests).set({ status: input.status, resultSummary, evidenceArtifactId: input.evidenceArtifactId ?? null, reviewedByUserId: userId, completedAt: input.status === "passed" || input.status === "failed" || input.status === "inconclusive" || input.status === "cancelled" ? new Date() : null }).where(eq(findingRetests.id, retest.id));
-  if (input.status === "passed") await db.update(findings).set({ status: "validated", humanReviewStatus: "pending", updatedAt: new Date() }).where(eq(findings.id, retest.findingId));
-  if (input.status === "failed" || input.status === "inconclusive") await db.update(findings).set({ status: "inconclusive", humanReviewStatus: "pending", updatedAt: new Date() }).where(eq(findings.id, retest.findingId));
-  return { success: true as const, retestId: retest.id, status: input.status };
+  const terminal = ["passed", "failed", "inconclusive", "cancelled"].includes(input.status);
+  const now = new Date();
+  await db.update(findingRetests).set({ status: input.status, resultSummary, evidenceArtifactId: input.evidenceArtifactId ?? retest.evidenceArtifactId, reviewedByUserId: userId, startedAt: input.status === "in_progress" ? (retest.startedAt ?? now) : retest.startedAt, completedAt: terminal ? now : null }).where(and(eq(findingRetests.id, retest.id), or(eq(findingRetests.status, "requested"), eq(findingRetests.status, "in_progress"))));
+  const [finding] = await db.select().from(findings).where(eq(findings.id, retest.findingId)).limit(1);
+  if (!finding) throw new Error("Finding retest parent tidak ditemukan.");
+  const nextStatus = input.status === "passed" ? "resolved" : input.status === "failed" ? "remediation" : input.status === "inconclusive" ? "inconclusive" : input.status === "cancelled" ? "remediation" : "retest";
+  await db.update(findings).set({ status: nextStatus, resolvedAt: nextStatus === "resolved" ? now : null, humanReviewStatus: nextStatus === "resolved" ? "pending" : finding.humanReviewStatus, updatedAt: now }).where(eq(findings.id, finding.id));
+  await upsertSearchDocument({ workspaceId: finding.workspaceId, entityType: "finding", entityId: finding.id, title: finding.title, body: [finding.impactSummary, finding.remediationNotes ?? "", `status:${nextStatus}`, `retest:${input.status}`, resultSummary].filter(Boolean).join("\\n") });
+  return { success: true as const, retestId: retest.id, status: input.status, findingStatus: nextStatus };
 }
 
 export async function getFindingQualityGate(userId: number, findingId: number) {

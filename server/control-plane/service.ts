@@ -24,6 +24,7 @@ import { createNotificationDeliveryLedger } from "../notification-delivery";
 import { isCronDueAt, normalizeUtcCronExpression } from "./cron";
 import { parseStoredProgramScope } from "./program-scope";
 import { verifyAuthorizationReference } from "./authorization-reference";
+import { assertExpectedRevision, nextRevision } from "../_core/query-safety";
 
 const parseList = (serialized: string): string[] => {
   try {
@@ -295,7 +296,7 @@ export async function addCredentialReference(userId: number, workspaceId: number
   return { success: true };
 }
 
-export async function createFinding(userId: number, input: { workspaceId: number; fingerprint: string; title: string; impactSummary: string; reportDraft: string; confidence: number }) {
+export async function createFinding(userId: number, input: { workspaceId: number; fingerprint: string; title: string; impactSummary: string; reportDraft: string; confidence: number; severity?: "informational" | "low" | "medium" | "high" | "critical" }) {
   const workspace = await ownedWorkspaceOrThrow(userId, input.workspaceId);
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
@@ -305,6 +306,7 @@ export async function createFinding(userId: number, input: { workspaceId: number
     workspaceId: workspace.id,
     fingerprint: input.fingerprint.trim(),
     title: input.title.trim(),
+    severity: input.severity ?? "medium",
     confidence: input.confidence,
     impactSummary: input.impactSummary.trim(),
     reportDraft: input.reportDraft.trim(),
@@ -329,20 +331,58 @@ export async function approveFindingReview(userId: number, findingId: number) {
   return { success: true };
 }
 
-export async function transitionFinding(userId: number, input: { findingId: number; status: FindingWorkflowStatus }) {
-  const owned = await listWorkspaces(userId);
+export async function transitionFinding(userId: number, input: { findingId: number; status: FindingWorkflowStatus; expectedRevision: number }) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
-  const [finding] = await db.select().from(findings).where(and(eq(findings.id, input.findingId), inArray(findings.workspaceId, owned.map(workspace => workspace.id)))).limit(1);
-  if (!finding) throw new Error("Finding tidak ditemukan atau tidak dapat diakses.");
+  const [finding] = await db.select().from(findings).where(eq(findings.id, input.findingId)).limit(1);
+  if (!finding || !(await canAccessWorkspace(userId, finding.workspaceId, "respond"))) throw new Error("Finding tidak ditemukan atau tidak dapat diakses.");
+  assertExpectedRevision(input.expectedRevision, finding.revision);
   assertFindingTransition(finding.status as FindingWorkflowStatus, input.status, finding.humanReviewStatus === "approved");
-  await db.update(findings).set({ status: input.status }).where(eq(findings.id, finding.id));
-  await addAudit(finding.workspaceId, "finding", "finding-transition", { findingId: finding.id, from: finding.status, to: input.status });
+  const now = new Date();
+  const revision = nextRevision(finding.revision);
+  const lifecyclePatch = {
+    status: input.status,
+    revision,
+    updatedAt: now,
+    clientNotifiedAt: input.status === "notified" ? now : finding.clientNotifiedAt,
+    resolvedAt: input.status === "resolved" ? now : input.status === "reopened" ? null : finding.resolvedAt,
+  } as const;
+  const updated = await db.update(findings).set(lifecyclePatch).where(and(eq(findings.id, finding.id), eq(findings.revision, input.expectedRevision)));
+  if (updated[0].affectedRows !== 1) throw new Error("Concurrent update detected; reload the finding and retry.");
+  await addAudit(finding.workspaceId, "finding", "finding-transition", { findingId: finding.id, from: finding.status, to: input.status, severity: finding.severity });
+  const updatedBody = [finding.impactSummary, finding.remediationNotes ?? "", `status:${input.status}`, finding.remediationDeadline ? `deadline:${finding.remediationDeadline.toISOString()}` : ""].filter(Boolean).join("\\n");
+  await upsertSearchDocument({ workspaceId: finding.workspaceId, entityType: "finding", entityId: finding.id, title: finding.title, body: updatedBody });
   if (input.status === "validated") {
-    const workspace = await ownedWorkspaceOrThrow(userId, finding.workspaceId);
-    await notifyWorkspaceOwner(workspace, { eventType: "finding_validated", severity: "info", title: "AngelMind finding tervalidasi", message: `Finding “${finding.title}” di workspace #${finding.workspaceId} memasuki status validated dan menunggu human review.` });
+    const workspace = await db.select({ id: workspaces.id, ownerUserId: workspaces.ownerUserId, name: workspaces.name }).from(workspaces).where(eq(workspaces.id, finding.workspaceId)).limit(1).then(rows => rows[0]);
+    if (workspace) {
+      const severity = finding.severity === "high" || finding.severity === "critical" ? "critical" : "info";
+      await notifyWorkspaceOwner(workspace, { eventType: "finding_validated", severity, title: finding.severity === "high" || finding.severity === "critical" ? "Finding berisiko tinggi tervalidasi" : "AngelMind finding tervalidasi", message: `Finding “${finding.title}” memasuki status validated. Severity ${finding.severity}; human review tetap wajib sebelum reporting.` });
+    }
   }
-  return { success: true };
+  return { success: true, status: input.status, revision, clientNotifiedAt: lifecyclePatch.clientNotifiedAt, resolvedAt: lifecyclePatch.resolvedAt };
+}
+
+export async function updateFindingRemediation(userId: number, input: { findingId: number; expectedRevision: number; remediationDeadline?: Date | null; remediationOwnerUserId?: number | null; remediationNotes?: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [finding] = await db.select().from(findings).where(eq(findings.id, input.findingId)).limit(1);
+  if (!finding || !(await canAccessWorkspace(userId, finding.workspaceId, "respond"))) throw new Error("Finding tidak ditemukan atau tidak dapat diakses.");
+  assertExpectedRevision(input.expectedRevision, finding.revision);
+  if (input.remediationDeadline && input.remediationDeadline.getTime() < Date.now() - 60_000) throw new Error("Remediation deadline tidak boleh berada di masa lalu.");
+  if (input.remediationDeadline && input.remediationDeadline.getTime() > Date.now() + 5 * 365 * 86_400_000) throw new Error("Remediation deadline terlalu jauh.");
+  if (input.remediationOwnerUserId !== undefined && input.remediationOwnerUserId !== null && !(await canAccessWorkspace(input.remediationOwnerUserId, finding.workspaceId, "read"))) throw new Error("Remediation owner harus menjadi anggota workspace yang sama.");
+  const patch = {
+    remediationDeadline: input.remediationDeadline === undefined ? finding.remediationDeadline : input.remediationDeadline,
+    remediationOwnerUserId: input.remediationOwnerUserId === undefined ? finding.remediationOwnerUserId : input.remediationOwnerUserId,
+    remediationNotes: input.remediationNotes === undefined ? finding.remediationNotes : (input.remediationNotes?.trim().slice(0, 20_000) || null),
+    revision: nextRevision(finding.revision),
+    updatedAt: new Date(),
+  } as const;
+  const updated = await db.update(findings).set(patch).where(and(eq(findings.id, finding.id), eq(findings.revision, input.expectedRevision)));
+  if (updated[0].affectedRows !== 1) throw new Error("Concurrent update detected; reload the finding and retry.");
+  await addAudit(finding.workspaceId, "finding-remediation", "remediation-updated", { findingId: finding.id, remediationDeadline: patch.remediationDeadline?.toISOString() ?? null, remediationOwnerUserId: patch.remediationOwnerUserId, hasNotes: Boolean(patch.remediationNotes) });
+  await upsertSearchDocument({ workspaceId: finding.workspaceId, entityType: "finding", entityId: finding.id, title: finding.title, body: [finding.impactSummary, patch.remediationNotes ?? "", `status:${finding.status}`, patch.remediationDeadline ? `deadline:${patch.remediationDeadline.toISOString()}` : ""].filter(Boolean).join("\\n") });
+  return { success: true as const, findingId: finding.id, ...patch };
 }
 
 export async function uploadEvidence(userId: number, input: { workspaceId: number; findingId?: number; fileName: string; contentType: string; contentBase64: string }) {
@@ -373,6 +413,7 @@ export async function uploadEvidence(userId: number, input: { workspaceId: numbe
     await enqueueJob(userId, { workspaceId: workspace.id, kind: "evidence.scan", idempotencyKey: `evidence-scan:${storedArtifact.id}`, payload: { type: "evidence_scan", artifactId: storedArtifact.id, storageKey, contentType: validatedEvidence.contentType, fileName: cleanName } });
     scanJobEnqueued = true;
     await addAudit(workspace.id, "evidence", "artifact-stored", { fileName: cleanName, contentType: validatedEvidence.contentType, storageKey, findingId: input.findingId ?? null, scanJobIdempotencyKey: `evidence-scan:${storedArtifact.id}` });
+    await upsertSearchDocument({ workspaceId: workspace.id, entityType: "evidence", entityId: storedArtifact.id, title: cleanName, body: [validatedEvidence.contentType, `status:${storedArtifact.status}`, `sha256:${storedArtifact.sha256}`, input.findingId ? `finding:${input.findingId}` : ""].filter(Boolean).join("\\n") });
     return { storageReference: artifact.url, storageKey, artifactId: storedArtifact.id, status: storedArtifact.status };
   } catch (error) {
     if (!scanJobEnqueued) {
@@ -404,6 +445,7 @@ export async function executeEvidenceScanJob(payload: Record<string, unknown>) {
   const result = scanEvidenceContent({ bytes, contentType, fileName });
   await db.update(evidenceArtifacts).set({ status: result.passed ? "scanned" : "rejected", scannedAt: new Date(), quarantineReason: result.passed ? null : result.reason }).where(and(eq(evidenceArtifacts.id, artifact.id), eq(evidenceArtifacts.status, "quarantined")));
   await addAudit(artifact.workspaceId, "evidence", result.passed ? "artifact-auto-scanned" : "artifact-auto-rejected", { evidenceArtifactId: artifact.id, scanner: result.scanner, reason: result.reason });
+  await upsertSearchDocument({ workspaceId: artifact.workspaceId, entityType: "evidence", entityId: artifact.id, title: artifact.artifactType, body: [artifact.artifactType, `status:${result.passed ? "scanned" : "rejected"}`, artifact.sha256, result.reason].filter(Boolean).join("\\n") });
 }
 
 export async function markEvidenceScanned(userId: number, evidenceArtifactId: number, scanPassed: boolean, reason?: string) {
@@ -414,6 +456,7 @@ export async function markEvidenceScanned(userId: number, evidenceArtifactId: nu
   const status = scanPassed ? "scanned" : "rejected";
   await db.update(evidenceArtifacts).set({ status, scannedAt: new Date(), quarantineReason: scanPassed ? null : (reason?.trim().slice(0, 2_000) || "Security scan rejected artifact.") }).where(eq(evidenceArtifacts.id, artifact.id));
   await addAudit(artifact.workspaceId, "evidence", scanPassed ? "artifact-scanned" : "artifact-rejected", { evidenceArtifactId: artifact.id, reason: reason?.trim() || null });
+  await upsertSearchDocument({ workspaceId: artifact.workspaceId, entityType: "evidence", entityId: artifact.id, title: artifact.artifactType, body: [artifact.artifactType, `status:${status}`, artifact.sha256, reason?.trim() ?? ""].filter(Boolean).join("\\n") });
   return { success: true as const, evidenceArtifactId: artifact.id, status };
 }
 
@@ -425,6 +468,7 @@ export async function promoteEvidence(userId: number, evidenceArtifactId: number
   if (artifact.status !== "scanned") throw new Error("Evidence must pass a security scan before promotion.");
   await db.update(evidenceArtifacts).set({ status: "promoted", promotedAt: new Date(), quarantineReason: null }).where(eq(evidenceArtifacts.id, artifact.id));
   await addAudit(artifact.workspaceId, "evidence", "artifact-promoted", { evidenceArtifactId: artifact.id });
+  await upsertSearchDocument({ workspaceId: artifact.workspaceId, entityType: "evidence", entityId: artifact.id, title: artifact.artifactType, body: [artifact.artifactType, "status:promoted", artifact.sha256].join("\\n") });
   return { success: true as const, evidenceArtifactId: artifact.id, status: "promoted" as const };
 }
 

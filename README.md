@@ -1,143 +1,167 @@
 <div align="center">
 
-<img src="assets/readme/angelmind-banner.gif" alt="AngelMind security research banner" width="100%" />
+<img src="assets/readme/angelmind-hero.png" alt="AngelMind defensive security research signal map" width="100%" />
 
-<img src="assets/readme/security-loop.svg" alt="Animated AngelMind security research terminal" width="100%" />
+# `ANGELMIND`
 
-# `AngelMind`
+### `AUTHORIZED SECURITY RESEARCH // BUG BOUNTY // RESPONSIBLE DISCLOSURE`
 
-### Security research. Bug bounty. Responsible disclosure.
+<p>
+  <strong>Find the signal. Prove the boundary. Protect the target.</strong><br />
+  <sub>Temukan sinyalnya. Buktikan batasnya. Lindungi targetnya.</sub>
+</p>
 
-> **Find deeper. Prove clearly. Report responsibly.**
+<a href="https://github.com/AngelMind7/AngelMind/actions/workflows/ci.yml"><img src="https://github.com/AngelMind7/AngelMind/actions/workflows/ci.yml/badge.svg" alt="CI status" /></a>
+<a href="https://github.com/AngelMind7/AngelMind/actions/workflows/container.yml"><img src="https://github.com/AngelMind7/AngelMind/actions/workflows/container.yml/badge.svg" alt="Container status" /></a>
+<img src="https://img.shields.io/badge/RESEARCH-AUTHORIZED-00ff9c?style=flat-square&labelColor=0b0f14" alt="Authorized research" />
+<img src="https://img.shields.io/badge/MODE-PASSIVE--FIRST-36cfc9?style=flat-square&labelColor=0b0f14" alt="Passive first mode" />
+<img src="https://img.shields.io/badge/DISCLOSURE-RESPONSIBLE-fuchsia?style=flat-square&labelColor=0b0f14" alt="Responsible disclosure" />
 
-[![CI](https://github.com/AngelMind7/AngelMind/actions/workflows/ci.yml/badge.svg)](https://github.com/AngelMind7/AngelMind/actions/workflows/ci.yml)
-[![Container](https://github.com/AngelMind7/AngelMind/actions/workflows/container.yml/badge.svg)](https://github.com/AngelMind7/AngelMind/actions/workflows/container.yml)
-[![Security Research](https://img.shields.io/badge/security-research-0b0f14?style=for-the-badge&logo=hackthebox&logoColor=00ff9c)](https://github.com/AngelMind7/AngelMind)
-[![Bug Bounty](https://img.shields.io/badge/bug-bounty-111827?style=for-the-badge&logo=bugcrowd&logoColor=00ff9c)](https://github.com/AngelMind7/AngelMind)
+</div>
+
+<div align="center">
+
+<img src="assets/readme/security-loop.svg" alt="Animated terminal showing an authorized passive security workflow" width="100%" />
 
 </div>
 
 ```text
 ┌─[ angelmind@research ]─[ ~/signal ]
-└──╼ $ recon --passive && test --safe && report --clear
+└──╼ $ scope --verify && recon --passive && evidence --preserve
 
-[+] scope verified
-[+] signal collected
-[+] evidence preserved
-[+] impact explained
-[+] responsible disclosure ready
+[+] authorization confirmed      [OK]
+[+] scope boundary locked        [OK]
+[+] signal mapped                [OK]
+[+] evidence normalized          [OK]
+[+] impact explained             [OK]
+[+] responsible disclosure       [READY]
 ```
 
-## `whoami`
+> **AngelMind is not a black-hat tool.** It uses a red-team-inspired visual language with white-hat discipline: explicit authorization, minimal impact, reproducible evidence, and private disclosure.
+>
+> **AngelMind bukan alat black-hat.** Estetikanya terinspirasi operasi red team, tetapi guardrail-nya berorientasi defensive security: izin eksplisit, dampak minimal, bukti reproducible, dan disclosure privat.
 
-AngelMind adalah ruang kerja publik untuk **security research**, **bug bounty**, dan **responsible vulnerability disclosure**. Fokusnya bukan sekadar menemukan sesuatu yang terlihat aneh, tetapi memahami perilaku sistem, menguji hipotesis secara aman, menyusun bukti yang dapat diulang, dan membantu pemilik sistem memperbaiki masalahnya.
+## `whoami // siapa saya`
 
-Tampilan publik ini sengaja dibuat ringkas. Tidak ada credential, token, konfigurasi deployment, struktur internal, atau detail operasional sensitif yang dipublikasikan di sini.
+AngelMind adalah workspace untuk **authorized security research**, **bug bounty**, **vulnerability triage**, dan **responsible disclosure**. Fokusnya adalah mengubah observasi teknis menjadi sinyal yang dapat diverifikasi: apa yang terjadi, mengapa hal itu penting, dan bagaimana pemilik sistem dapat memperbaikinya.
 
-## `focus --list`
+AngelMind bukan tempat untuk unauthorized access, credential abuse, destructive testing, denial-of-service, persistence, evasion, harassment, data exfiltration, atau pengujian di luar scope program.
 
-| Area | Fokus |
-|---|---|
-| `web-security` | Authentication, authorization, access control, session handling, input validation, dan business logic. |
-| `api-security` | Endpoint exposure, privilege boundaries, object-level authorization, rate limiting, dan data validation. |
-| `bug-bounty` | Passive reconnaissance, hypothesis-driven testing, safe validation, triage, dan retest. |
-| `evidence` | Reproduction steps, request/response context, impact assessment, dan evidence yang relevan. |
-| `security-quality` | False-positive reduction, severity reasoning, remediation guidance, dan responsible reporting. |
+<div align="center">
 
-## `toolkit --loaded`
+| `DISCOVER` | `VALIDATE` | `EXPLAIN` | `DISCLOSE` |
+|:---:|:---:|:---:|:---:|
+| Map the signal | Minimize the action | Prove the impact | Help fix the risk |
+| Petakan sinyal | Validasi dengan aman | Buktikan dampak | Bantu perbaiki risiko |
+
+</div>
+
+## `capabilities // kemampuan`
+
+<div align="center">
+
+<a href="#scope-first"><img src="assets/readme/icon-programs.png" alt="Scope and programs" width="132" /></a>
+<a href="#evidence-over-noise"><img src="assets/readme/icon-findings.png" alt="Findings and evidence" width="132" /></a>
+<a href="#responsible-disclosure"><img src="assets/readme/icon-disclosure.png" alt="Responsible disclosure" width="132" /></a>
+<a href="#research-loop"><img src="assets/readme/icon-bughunter.png" alt="Bug bounty research" width="132" /></a>
+
+</div>
+
+| Surface | What it means | Fokus |
+|---|---|---|
+| `scope-first` | Scope and rules of engagement stay upstream of every action. | Allowlist, exclusions, safe harbor, policy gates. |
+| `signal-mapping` | Observe systems without turning curiosity into collateral damage. | Passive inventory, attack-surface mapping, hypothesis formation. |
+| `evidence-over-noise` | A finding needs context, reproduction, and impact—not spectacle. | Evidence chain, confidence, severity reasoning, remediation. |
+| `human-in-the-loop` | High-risk decisions require explicit review; automation never becomes permission. | Approval gates, auditability, role separation. |
+| `responsible-disclosure` | The output is a useful fix, communicated through the official channel. | Triage, private reporting, retest, closure. |
+
+## `research-loop // siklus riset`
+
+```mermaid
+flowchart LR
+    A[01 Read scope<br/>Baca scope] --> B[02 Map signal<br/>Petakan sinyal]
+    B --> C[03 Form hypothesis<br/>Bentuk hipotesis]
+    C --> D[04 Safe validation<br/>Validasi aman]
+    D --> E[05 Preserve evidence<br/>Simpan bukti]
+    E --> F[06 Explain impact<br/>Jelaskan dampak]
+    F --> G[07 Private disclosure<br/>Disclosure privat]
+    G --> H[08 Authorized retest<br/>Retest berizin]
+```
+
+## `tooling // alat kerja`
 
 <div align="center">
 
 <img src="https://img.shields.io/badge/Linux-0b0f14?style=for-the-badge&logo=linux&logoColor=00ff9c" alt="Linux" />
-<img src="https://img.shields.io/badge/Kali_Linux-0b0f14?style=for-the-badge&logo=kalilinux&logoColor=00ff9c" alt="Kali Linux" />
 <img src="https://img.shields.io/badge/Python-0b0f14?style=for-the-badge&logo=python&logoColor=00ff9c" alt="Python" />
 <img src="https://img.shields.io/badge/TypeScript-0b0f14?style=for-the-badge&logo=typescript&logoColor=00ff9c" alt="TypeScript" />
-<img src="https://img.shields.io/badge/JavaScript-0b0f14?style=for-the-badge&logo=javascript&logoColor=00ff9c" alt="JavaScript" />
 <img src="https://img.shields.io/badge/Node.js-0b0f14?style=for-the-badge&logo=nodedotjs&logoColor=00ff9c" alt="Node.js" />
-<img src="https://img.shields.io/badge/Docker-0b0f14?style=for-the-badge&logo=docker&logoColor=00ff9c" alt="Docker" />
-<img src="https://img.shields.io/badge/Git-0b0f14?style=for-the-badge&logo=git&logoColor=00ff9c" alt="Git" />
-<img src="https://img.shields.io/badge/GitHub-0b0f14?style=for-the-badge&logo=github&logoColor=00ff9c" alt="GitHub" />
 <img src="https://img.shields.io/badge/OWASP-0b0f14?style=for-the-badge&logo=owasp&logoColor=00ff9c" alt="OWASP" />
-<img src="https://img.shields.io/badge/Burp_Suite-0b0f14?style=for-the-badge&logo=burpsuite&logoColor=00ff9c" alt="Burp Suite" />
-<img src="https://img.shields.io/badge/Metasploit-0b0f14?style=for-the-badge&logo=metasploit&logoColor=00ff9c" alt="Metasploit" />
+<img src="https://img.shields.io/badge/Burp%20Suite-0b0f14?style=for-the-badge&logo=burpsuite&logoColor=00ff9c" alt="Burp Suite" />
+<img src="https://img.shields.io/badge/GitHub-0b0f14?style=for-the-badge&logo=github&logoColor=00ff9c" alt="GitHub" />
 
 </div>
 
-## `mindset --verbose`
+> Tool names are references for authorized work only. Availability of a tool never overrides program scope, safe harbor, rate limits, or human approval.
+>
+> Nama alat hanya referensi untuk pekerjaan berizin. Ketersediaan alat tidak pernah mengalahkan scope program, safe harbor, rate limit, atau approval manusia.
 
-Security research is a discipline of **curiosity controlled by authorization**. The interesting part is not making the loudest request or collecting the most data; it is finding the smallest reproducible signal that explains a real security boundary, then communicating it with enough precision for someone else to fix.
-
-I value careful observation over noisy automation, evidence over assumptions, and responsible disclosure over public spectacle. Every useful finding should answer three questions: **what happened, why it matters, and how the risk can be reduced**. When the evidence is incomplete, the conclusion should remain appropriately cautious.
-
-## `methodology --run`
-
-```text
-01  Read the scope and rules of engagement
-02  Map the observable attack surface
-03  Form a testable security hypothesis
-04  Validate with the smallest safe action
-05  Capture only necessary evidence
-06  Explain impact and realistic conditions
-07  Report privately through the official channel
-08  Retest after remediation when permitted
-```
-
-## `rules_of_engagement`
+## `rules_of_engagement // aturan main`
 
 ```yaml
 authorization: required
 scope: explicit
+mode: passive-first
 impact: minimize
-data_access: minimum_necessary
+data_access: minimum-necessary
 evidence: reproducible
+secrets: never publish
 disclosure: responsible
 availability: protect
-intent: improve_security
+intent: improve-security
 ```
 
-Pengujian hanya dilakukan pada target yang memiliki **izin eksplisit** dan berada dalam scope yang berlaku. AngelMind tidak mendukung unauthorized access, credential abuse, destructive testing, denial-of-service, persistence, evasion, harassment, data exfiltration, atau pengujian di luar scope program.
+Setiap eksperimen harus memiliki alasan yang jelas, batas yang terukur, dan jalur penghentian. Jika scope tidak jelas, langkah yang benar adalah **berhenti dan meminta klarifikasi**—bukan menebak.
 
-## `signal.log`
+## `evidence-over-noise // bukti di atas sensasi`
 
-<div align="center">
-
-<img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&size=18&duration=2600&pause=900&color=00FF9C&center=true&vCenter=true&width=760&lines=Recon+quietly.+Validate+carefully.;Every+request+has+a+scope.;Evidence+over+assumptions.;Report+responsibly.+Improve+continuously." alt="Animated security research principles" />
-
-</div>
+AngelMind menilai kualitas riset dari **ketepatan**, bukan volume request. Bukti harus cukup untuk reproduksi dan mitigasi, tetapi tidak boleh mengandung credential, token, data pribadi, rahasia program, atau data target yang tidak perlu.
 
 ```text
-[+] Curiosity without authorization is noise.
-[+] Technical skill without discipline is risk.
-[+] A valid finding needs evidence, impact, and context.
-[+] The goal is stronger software—not collateral damage.
+[signal]    observation with context
+[proof]     smallest safe reproduction
+[impact]    realistic security consequence
+[fix]       actionable remediation guidance
+[retest]    authorized confirmation after remediation
 ```
 
-## `responsible-disclosure`
+## `responsible-disclosure // pelaporan aman`
 
-Jika menemukan masalah keamanan dalam project ini, jangan publikasikan credential, token, data pribadi, atau detail exploit pada issue publik. Gunakan kanal security contact yang tersedia pada deployment atau repository terkait, dan berikan informasi minimum yang diperlukan untuk reproduksi serta mitigasi.
+Jika menemukan masalah keamanan pada project atau target program, jangan publikasikan credential, token, data pribadi, atau detail exploit pada issue publik. Gunakan kanal security contact resmi, berikan bukti minimum yang diperlukan, dan hormati proses triage serta disclosure policy pemilik sistem.
 
-## `connect --with`
+Untuk detail keamanan repository, lihat [`docs/threat-model-register.md`](docs/threat-model-register.md), [`docs/incident-response.md`](docs/incident-response.md), dan [`docs/production-runbook.md`](docs/production-runbook.md). Dokumen publik tersebut sengaja tidak memuat credential, konfigurasi deployment, struktur internal sensitif, atau identitas operator.
 
-Terbuka untuk kolaborasi dalam security research, bug bounty, vulnerability triage, responsible disclosure, dan peningkatan keamanan aplikasi—selama dilakukan secara legal, etis, dan sesuai scope.
+## `status // kondisi`
 
 <div align="center">
 
-### `status: hunting_for_signal`
+<img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&size=18&duration=2600&pause=900&color=00FF9C&center=true&vCenter=true&width=820&lines=Recon+quietly.+Validate+carefully.;Every+request+has+a+scope.;Evidence+over+assumptions.;Report+responsibly.+Improve+continuously." alt="Animated security research principles" />
 
-<sub>Black-hat aesthetic. White-hat discipline. Responsible impact.</sub>
+### `STATUS: SIGNAL_DISCIPLINE_ACTIVE`
+
+<sub>Red-team aesthetic. Defensive controls. Responsible impact.</sub>
 
 <br />
 
-**Find deeper. Prove clearly. Report responsibly.**
+<strong>Find deeper. Prove clearly. Report responsibly.</strong>
 
 </div>
 
-<!--
-Public README intentionally omits private implementation details, credentials,
-internal architecture, deployment configuration, and operational procedures.
--->
-
-## References
+## `references`
 
 - [OWASP Web Security Testing Guide](https://owasp.org/www-project-web-security-testing-guide/)
+- [OWASP Bug Bounty Program Guidelines](https://owasp.org/www-community/Bug_Bounty_Cheat_Sheet)
 - [GitHub Security Advisories](https://docs.github.com/en/code-security/security-advisories/working-with-repository-security-advisories/about-repository-security-advisories)
+
+<!-- Public README intentionally omits private implementation details, credentials,
+internal architecture, deployment configuration, and operational procedures. -->

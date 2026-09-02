@@ -19,6 +19,7 @@ export type AgentObservation = {
 const roleOrder: AgentRole[] = ["scope", "evidence", "risk", "report"];
 
 export function planMultiAgentRun(input: { objective: string; roles: AgentRole[]; evidenceReferences?: string[] }) {
+  if (!input || typeof input.objective !== "string" || !Array.isArray(input.roles) || !input.roles.every(role => roleOrder.includes(role)) || (input.evidenceReferences !== undefined && (!Array.isArray(input.evidenceReferences) || !input.evidenceReferences.every(value => typeof value === "string")))) throw new Error("Orchestration input is invalid.");
   const objective = input.objective.trim();
   if (objective.length < 10) throw new Error("Orchestration objective is required.");
   const roles = Array.from(new Set(input.roles));
@@ -35,12 +36,14 @@ export function planMultiAgentRun(input: { objective: string; roles: AgentRole[]
 }
 
 export function assignReadyTasks(tasks: OrchestrationTask[], capacity: number) {
-  const limit = Math.max(1, Math.min(50, Math.floor(capacity)));
+  if (!Array.isArray(tasks) || !tasks.every(task => task && typeof task.id === "string" && roleOrder.includes(task.role) && Array.isArray(task.dependsOn) && task.dependsOn.every(value => typeof value === "string") && ["queued", "blocked"].includes(task.status))) throw new Error("Orchestration tasks are invalid.");
+  const limit = Number.isFinite(capacity) ? Math.max(1, Math.min(50, Math.floor(capacity))) : 1;
   const completed = new Set(tasks.filter(task => task.status === "queued" && task.role === "scope").map(task => task.id));
   return tasks.filter(task => task.status === "queued" || task.dependsOn.every(dependency => completed.has(dependency))).slice(0, limit);
 }
 
 export function crossCheckObservations(observations: AgentObservation[]) {
+  if (!Array.isArray(observations) || !observations.every(item => item && typeof item.taskId === "string" && roleOrder.includes(item.role) && typeof item.conclusion === "string" && Number.isFinite(item.confidence) && Array.isArray(item.evidenceReferences) && item.evidenceReferences.every(value => typeof value === "string"))) throw new Error("Agent observations are invalid.");
   if (observations.length === 0) return { verdict: "needs_review" as const, agreement: 0, conflicts: ["No agent observations were provided."] };
   const normalized = observations.map(item => item.conclusion.trim().toLowerCase()).filter(Boolean);
   const counts = new Map<string, number>();
@@ -52,7 +55,10 @@ export function crossCheckObservations(observations: AgentObservation[]) {
 }
 
 export function synthesizeObservations(observations: AgentObservation[], minimumConfidence = 0.6) {
-  const accepted = observations.filter(item => item.confidence >= minimumConfidence && item.conclusion.trim().length > 0);
+  if (!Number.isFinite(minimumConfidence)) throw new Error("Minimum confidence is invalid.");
+  crossCheckObservations(observations);
+  const threshold = Math.min(1, Math.max(0, minimumConfidence));
+  const accepted = observations.filter(item => item.confidence >= threshold && item.conclusion.trim().length > 0);
   const references = Array.from(new Set(accepted.flatMap(item => item.evidenceReferences.map(reference => reference.trim())).filter(Boolean)));
   return {
     acceptedCount: accepted.length,

@@ -85,6 +85,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && useradd --create-home --shell /usr/sbin/nologin angelmind
 COPY --from=build --chown=angelmind:angelmind /app/dist ./dist
 COPY --from=build --chown=angelmind:angelmind /app/package.json /app/pnpm-lock.yaml ./
+COPY --from=build --chown=angelmind:angelmind /app/patches ./patches
 COPY --chown=angelmind:angelmind config/tool-runtime-packs.yaml ./config/tool-runtime-packs.yaml
 COPY --chown=angelmind:angelmind runtime/rules.yar /etc/angelmind/rules.yar
 COPY --chown=angelmind:angelmind runtime/capstone_inspect.py runtime/unicorn_probe.py runtime/dkim_verify.py ./runtime/

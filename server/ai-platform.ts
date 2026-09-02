@@ -229,6 +229,17 @@ export async function markOutboxEventPublished(eventId: number) {
   return { success: true as const, eventId, status: "published" as const };
 }
 
+export async function replayFailedOutboxEvent(userId: number, eventId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [event] = await db.select().from(outboxEvents).where(eq(outboxEvents.id, eventId)).limit(1);
+  if (!event || !event.workspaceId || !(await canAccessWorkspace(userId, event.workspaceId, "manage"))) throw new Error("Outbox event tidak ditemukan atau tidak dapat direplay.");
+  if (event.status !== "failed") throw new Error("Hanya outbox event berstatus failed yang dapat direplay.");
+  await db.update(outboxEvents).set({ status: "retrying", attempts: 0, availableAt: new Date(), lockedAt: null, workerId: null, lastError: "Manual replay requested.", publishedAt: null }).where(and(eq(outboxEvents.id, event.id), eq(outboxEvents.status, "failed")));
+  const [replayed] = await db.select().from(outboxEvents).where(eq(outboxEvents.id, event.id)).limit(1);
+  return replayed;
+}
+
 export async function failOutboxEvent(eventId: number, errorMessage: string) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");

@@ -1151,6 +1151,12 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         aiPlatform.listJobs(ctx.user.id, input?.workspaceId)
       ),
+    replayOutbox: protectedProcedure
+      .input(z.object({ eventId: z.number().int().positive() }))
+      .mutation(({ ctx, input }) => {
+        if (ctx.user.role !== "admin") throw new Error("Admin role is required to replay outbox events.");
+        return aiPlatform.replayFailedOutboxEvent(ctx.user.id, input.eventId);
+      }),
     publishEvent: protectedProcedure
       .input(
         z.object({

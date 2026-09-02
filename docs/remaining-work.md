@@ -83,3 +83,7 @@ Audit archive rows now persist a deterministic immutable batch key, workspace-de
 ## P — Discovery → fingerprint → vector selection (2026-09-02)
 
 Research task kini dapat menerima `assetId`, membaca metadata asset pada session yang sama, dan menghasilkan rekomendasi vector deterministik dengan capability, suggested adapters, risk class, serta rationale fingerprint. Metadata tersebut dipersist pada migration `0051_dashing_spectrum`. Task high/critical dibuat `blocked` dengan `approvalStatus=pending` dan transition ke `running` ditolak sampai approval manusia tersedia. Selector dan malformed-metadata behavior dilindungi oleh unit tests. Implementasi ini tetap passive-only; adapter recommendation bukan izin eksekusi dan tidak mengaktifkan target-facing tools.
+
+## Q — Repository completion pass (2026-09-02)
+
+Subsequent commits added direct `sourceObservationId` provenance on findings with migration `0052`, a reviewer-only approval mutation for high/critical research tasks, an explicit administrative scheduler registry, bounded notification retry backoff, constant-time archive signature verification, a manual HTTPS-only staging load probe, and a manual post-deploy health/readiness/metrics verification workflow. These contracts are covered by typecheck and automated tests and remain safe by default.

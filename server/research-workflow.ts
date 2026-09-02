@@ -15,6 +15,8 @@ import { getDb } from "./db";
 import { canAccessWorkspace, hasReviewerMembership } from "./control-plane/operations";
 import { isTargetInScope } from "./control-plane/guardrails";
 import { currentTraceContext } from "./_core/trace-context";
+import { ENV } from "./_core/env";
+import { encryptAuditState } from "./control-plane/audit-state-crypto";
 import { assertExpectedRevision, decodePageCursor, nextRevision, pageResult } from "./_core/query-safety";
 import { upsertSearchDocument } from "./global-search";
 import { parseAssetMetadata, selectVectorsForAsset } from "./research-vector-selection";
@@ -85,7 +87,7 @@ async function addResearchAudit(db: NonNullable<Awaited<ReturnType<typeof getDb>
     category: "research-workflow",
     subject,
     traceId,
-    details: JSON.stringify({ actorUserId: userId, ...details }),
+    details: ENV.auditStateEncryptionKey ? encryptAuditState({ actorUserId: userId, ...details }, ENV.auditStateEncryptionKey) : JSON.stringify({ actorUserId: userId, ...details }),
     evidenceHash: digest(JSON.stringify({ workspaceId, userId, subject, details, traceId })),
   });
 }

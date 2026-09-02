@@ -3,6 +3,7 @@ import { parseFeatureFlags } from "../feature-flags";
 export const ENV = {
   databaseUrl: process.env.DATABASE_URL ?? "",
   archiveSigningSecret: process.env.AUDIT_ARCHIVE_SIGNING_KEY ?? process.env.APP_ENCRYPTION_KEY ?? "",
+  auditStateEncryptionKey: process.env.AUDIT_STATE_ENCRYPTION_KEY ?? "",
   firebaseProjectId: process.env.FIREBASE_PROJECT_ID ?? "",
   firebaseClientEmail: process.env.FIREBASE_CLIENT_EMAIL ?? "",
   firebasePrivateKey: process.env.FIREBASE_PRIVATE_KEY ?? "",
@@ -46,6 +47,7 @@ export function validateRuntimeConfig(options: { production?: boolean } = {}) {
   const required = (name: string, value: string) => { if (!value.trim()) missing.push(name); };
   required("DATABASE_URL", ENV.databaseUrl);
   required("APP_ENCRYPTION_KEY", process.env.APP_ENCRYPTION_KEY ?? "");
+  required("AUDIT_STATE_ENCRYPTION_KEY", ENV.auditStateEncryptionKey);
   required("FIREBASE_PROJECT_ID", ENV.firebaseProjectId);
   required("FIREBASE_CLIENT_EMAIL", ENV.firebaseClientEmail);
   required("FIREBASE_PRIVATE_KEY", ENV.firebasePrivateKey);

@@ -3,10 +3,13 @@ import { evidenceArtifacts, incidentEvidenceLinks, incidentReviews, incidents, n
 import { getDb, getOwnedWorkspace } from "../db";
 import { canAccessWorkspace, getReadableWorkspaceIds, hasReviewerMembership } from "./operations";
 import { sha256 } from "./archive-integrity";
+import { ENV } from "../_core/env";
+import { encryptAuditState } from "./audit-state-crypto";
 import { buildPolicyDiff, canApplyReviewedChange, canLinkIncidentEvidence, getEscalationDueAt, isWebhookActivationReady, type IncidentSeverity } from "./assurance-contracts";
 import { planInAppDelivery, type NotificationEvent, type NotificationSeverity } from "./notifications";
 import { currentTraceContext } from "../_core/trace-context";
 import { applyPolicyDecisionWorkflow, applyWebhookReviewWorkflow, preparePolicyVersionWorkflow, prepareWebhookActivationWorkflow, shouldEscalateIncident, transitionIncidentWorkflow } from "./assurance-workflows";
+import { withControlPlaneReentrancyGuard } from "./reentrancy-guard";
 
 type UserRole = "user" | "admin";
 
@@ -28,7 +31,7 @@ async function addAudit(workspaceId: number, category: string, subject: string, 
   const db = await getDb();
   if (!db) return;
   const traceId = currentTraceContext()?.traceId ?? null;
-  await db.insert((await import("../../drizzle/schema")).auditEvents).values({ workspaceId, category, subject, traceId, details: JSON.stringify(details), evidenceHash: sha256(JSON.stringify({ workspaceId, category, subject, details, traceId })) });
+  await db.insert((await import("../../drizzle/schema")).auditEvents).values({ workspaceId, category, subject, traceId, details: ENV.auditStateEncryptionKey ? encryptAuditState(details, ENV.auditStateEncryptionKey) : JSON.stringify(details), evidenceHash: sha256(JSON.stringify({ workspaceId, category, subject, details, traceId })) });
 }
 
 async function emitWorkspaceSignal(input: { userId: number; workspaceId: number; eventType: NotificationEvent; severity: NotificationSeverity; title: string; message: string }) {
@@ -81,6 +84,10 @@ export async function comparePolicyVersions(userId: number, fromPolicyVersionId:
 }
 
 export async function decidePolicyVersion(userId: number, userRole: UserRole, policyVersionId: number, decision: "approved" | "rejected", note: string) {
+  return withControlPlaneReentrancyGuard(`policy-decision:${policyVersionId}`, () => decidePolicyVersionUnlocked(userId, userRole, policyVersionId, decision, note));
+}
+
+async function decidePolicyVersionUnlocked(userId: number, userRole: UserRole, policyVersionId: number, decision: "approved" | "rejected", note: string) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const [policy] = await db.select().from(policyVersions).where(eq(policyVersions.id, policyVersionId)).limit(1);
@@ -147,6 +154,10 @@ export async function getIncidentReview(userId: number, incidentId: number) {
 }
 
 export async function saveIncidentReview(userId: number, input: { incidentId: number; summary: string; rootCause: string; actionItems: Array<{ title: string; ownerUserId?: number; dueAt?: string; status?: "open" | "done" }>; ownerUserId?: number; dueAt?: string; closureEvidenceReference?: string; status?: "open" | "closed" }) {
+  return withControlPlaneReentrancyGuard(`incident-review:${input.incidentId}`, () => saveIncidentReviewUnlocked(userId, input));
+}
+
+async function saveIncidentReviewUnlocked(userId: number, input: { incidentId: number; summary: string; rootCause: string; actionItems: Array<{ title: string; ownerUserId?: number; dueAt?: string; status?: "open" | "done" }>; ownerUserId?: number; dueAt?: string; closureEvidenceReference?: string; status?: "open" | "closed" }) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const [incident] = await db.select().from(incidents).where(eq(incidents.id, input.incidentId)).limit(1);

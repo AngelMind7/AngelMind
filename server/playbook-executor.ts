@@ -7,6 +7,8 @@ import {
 import { getDb } from "./db";
 import { assertPassivePlaybookTaskType, executePassiveAdapter } from "./control-plane/intelligence-engine";
 import { auditEvents } from "../drizzle/schema";
+import { ENV } from "./_core/env";
+import { encryptAuditState } from "./control-plane/audit-state-crypto";
 
 async function recordAudit(
   db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
@@ -22,7 +24,7 @@ async function recordAudit(
       category: "playbook-execution",
       subject,
       traceId: null,
-      details: JSON.stringify({ actorUserId: userId, ...details }),
+      details: ENV.auditStateEncryptionKey ? encryptAuditState({ actorUserId: userId, ...details }, ENV.auditStateEncryptionKey) : JSON.stringify({ actorUserId: userId, ...details }),
       evidenceHash:
         `${workspaceId}:${userId}:${subject}:${JSON.stringify(details)}`.slice(
           0,

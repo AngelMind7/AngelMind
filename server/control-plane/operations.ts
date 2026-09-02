@@ -7,6 +7,7 @@ import { assertArchiveManifest, sha256, signArchiveManifest, verifyArchiveIntegr
 import { normalizeWebhookEvents, assertSafeWebhookEndpoint } from "./webhook-policy";
 import type { NotificationEvent } from "./notifications";
 import { currentTraceContext } from "../_core/trace-context";
+import { encryptAuditState } from "./audit-state-crypto";
 
 const memberRoles = ["operator", "reviewer", "auditor"] as const;
 export type MemberRole = (typeof memberRoles)[number];
@@ -44,7 +45,7 @@ async function addAudit(workspaceId: number, category: string, subject: string, 
   const db = await getDb();
   if (!db) return;
   const traceId = currentTraceContext()?.traceId ?? null;
-  await db.insert(auditEvents).values({ workspaceId, category, subject, traceId, details: JSON.stringify(details), evidenceHash: sha256(JSON.stringify({ workspaceId, category, subject, details, traceId })) });
+  await db.insert(auditEvents).values({ workspaceId, category, subject, traceId, details: ENV.auditStateEncryptionKey ? encryptAuditState(details, ENV.auditStateEncryptionKey) : JSON.stringify(details), evidenceHash: sha256(JSON.stringify({ workspaceId, category, subject, details, traceId })) });
 }
 
 export async function ensureOwnerMembership(workspaceId: number, ownerUserId: number) {

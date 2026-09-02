@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { createRateLimiter } from "./rate-limit";
+import { createRateLimiter, getClientRateLimitKey } from "./rate-limit";
 
 describe("API rate limiter", () => {
   it("allows the configured number of requests and returns standard headers", () => {
@@ -15,5 +15,24 @@ describe("API rate limiter", () => {
     expect(headers.get("RateLimit-Remaining")).toBe("0");
     expect(responseResult?.code).toBe(429);
     expect(responseResult?.body.error.code).toBe("RATE_LIMITED");
+  });
+
+  it("escalates repeated limit violations into a bounded abuse cooldown", () => {
+    const limiter = createRateLimiter({ windowMs: 60_000, max: 1, abuseStrikeThreshold: 2, abuseCooldownMs: 10_000, key: () => "abuser" });
+    const responses: Array<{ code: number; error: string }> = [];
+    const response = { setHeader: () => undefined, status: (code: number) => ({ json: (body: { error: { code: string } }) => responses.push({ code, error: body.error.code }) }) };
+    const req = {} as never;
+    limiter(req, response as never, () => undefined);
+    limiter(req, response as never, () => undefined);
+    limiter(req, response as never, () => undefined);
+    limiter(req, response as never, () => undefined);
+    expect(responses).toEqual([{ code: 429, error: "RATE_LIMITED" }, { code: 429, error: "RATE_LIMITED" }, { code: 429, error: "ABUSE_BLOCKED" }]);
+  });
+
+  it("does not expose authorization credentials in the default key", () => {
+    const request = { socket: { remoteAddress: "10.0.0.4" }, get: (name: string) => name === "authorization" ? "Bearer secret-value" : undefined } as never;
+    const key = getClientRateLimitKey(request);
+    expect(key).toMatch(/^ip:10\.0\.0\.4:credential:[a-f0-9]{24}$/);
+    expect(key).not.toContain("secret-value");
   });
 });

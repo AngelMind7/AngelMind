@@ -123,3 +123,9 @@ Verification completed locally: TypeScript check, finding workflow tests, migrat
 AI memory is now repository-backed for `user`, `workspace`, `session`, and workspace-linked `program` scopes. Memory writes validate references against the selected workspace, enforce read/respond authorization, protect updates and archive operations with monotonic revisions, preserve source/retention metadata, and make user-private memory unavailable to workspace search. Active workspace memory is indexed for global search; archive and retention purge remove derived search records. The worker retention interval and `ai.memory.purge` durable job now purge both AI run payloads and expired AI memory content. Migration `0058_ai_memory_scopes` defines the table, foreign keys, normalized unique scope key, indexes, status, retention, and revision columns. AI Center exposes save, update, list, and archive controls.
 
 Local scope contract tests and migration safety/rollback checks pass. Applying migration `0058` to the live database and provider-level context injection remain environment/adapter work.
+
+## V — Rate limiting and abuse protection (2026-09-03)
+
+The API boundary now applies bounded in-memory rate limiting to Firebase token exchange, scheduled callbacks, REST v1, and tRPC routes. Client keys use the socket address by default and only honor `X-Forwarded-For` when `TRUST_PROXY=true`; authorization material is hashed before keying and is never exposed in responses or logs. Repeated limit violations escalate to a bounded exponential abuse cooldown with `Retry-After`, while health and metrics routes remain available for operations. Distributed quota coordination and behavioral/account-abuse detection remain environment/provider work.
+
+Focused rate-limit tests, typecheck, and migration safety validation pass.

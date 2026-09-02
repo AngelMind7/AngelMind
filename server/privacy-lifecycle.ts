@@ -33,6 +33,7 @@ async function collectUserExport(userId: number) {
 }
 
 export async function executePrivacyExport(requestId: number) {
+  if (!Number.isInteger(requestId) || requestId < 1) throw new Error("Privacy request id is invalid.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const [request] = await db.select().from(privacyRequests).where(and(eq(privacyRequests.id, requestId), eq(privacyRequests.requestType, "export"))).limit(1);
@@ -44,6 +45,7 @@ export async function executePrivacyExport(requestId: number) {
 }
 
 export async function executePrivacyDelete(requestId: number) {
+  if (!Number.isInteger(requestId) || requestId < 1) throw new Error("Privacy request id is invalid.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const [request] = await db.select().from(privacyRequests).where(and(eq(privacyRequests.id, requestId), eq(privacyRequests.requestType, "delete"))).limit(1);
@@ -64,6 +66,7 @@ export async function executePrivacyDelete(requestId: number) {
 }
 
 export async function executePrivacyRequest(requestId: number) {
+  if (!Number.isInteger(requestId) || requestId < 1) throw new Error("Privacy request id is invalid.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const [request] = await db.select().from(privacyRequests).where(eq(privacyRequests.id, requestId)).limit(1);

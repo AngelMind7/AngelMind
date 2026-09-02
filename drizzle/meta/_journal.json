@@ -388,56 +388,56 @@
       "breakpoints": true
     },
     {
-      "idx": 54,
+      "idx": 55,
       "version": "5",
       "when": 1788335086742,
       "tag": "0055_privacy_security_audit_events",
       "breakpoints": true
     },
     {
-      "idx": 55,
+      "idx": 56,
       "version": "5",
       "when": 1788335086743,
       "tag": "0056_finding_remediation_lifecycle",
       "breakpoints": true
     },
     {
-      "idx": 56,
+      "idx": 57,
       "version": "5",
       "when": 1788335086744,
       "tag": "0057_finding_revision_concurrency",
       "breakpoints": true
     },
     {
-      "idx": 57,
+      "idx": 58,
       "version": "5",
       "when": 1788335086745,
       "tag": "0058_ai_memory_scopes",
       "breakpoints": true
     },
     {
-      "idx": 58,
+      "idx": 59,
       "version": "5",
       "when": 1788440000000,
       "tag": "0059_search_document_semantic_vectors",
       "breakpoints": true
     },
     {
-      "idx": 59,
+      "idx": 60,
       "version": "5",
       "when": 1788440000001,
       "tag": "0060_generic_idempotency",
       "breakpoints": true
     },
     {
-      "idx": 60,
+      "idx": 61,
       "version": "5",
       "when": 1788440000002,
       "tag": "0061_mfa_passkeys",
       "breakpoints": true
     },
     {
-      "idx": 61,
+      "idx": 62,
       "version": "5",
       "when": 1788440000003,
       "tag": "0062_restore_drill_ledger",

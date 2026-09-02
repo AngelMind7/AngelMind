@@ -41,6 +41,15 @@ jobs:
         run: pnpm check
       - name: Test
         run: pnpm test -- --run
+      - name: Test coverage
+        run: pnpm test:coverage
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-${{ github.run_id }}
+          path: coverage/
+          if-no-files-found: ignore
       - name: Production build
         run: pnpm build
       - name: Enforce bundle budget

@@ -8,5 +8,6 @@ describe("audit archive integrity", () => {
     const signature = signArchiveManifest(hash, "test-key");
     expect(verifyArchiveIntegrity(manifest, hash, signature, "test-key")).toBe(true);
     expect(verifyArchiveIntegrity(`${manifest}x`, hash, signature, "test-key")).toBe(false);
+    expect(verifyArchiveIntegrity(manifest, hash, `${signature}x`, "test-key")).toBe(false);
   });
 });

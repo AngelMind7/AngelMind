@@ -477,6 +477,34 @@ export const aiRunOutputs = mysqlTable("aiRunOutputs", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [uniqueIndex("ai_run_output_run_uq").on(table.runId), index("ai_run_output_workspace_created_idx").on(table.workspaceId, table.createdAt)]);
 
+export const aiMemoryScope = ["user", "workspace", "session", "program"] as const;
+export const aiMemoryStatus = ["active", "archived", "purged"] as const;
+export const aiMemories = mysqlTable("aiMemories", {
+  id: int("id").autoincrement().primaryKey(),
+  scope: mysqlEnum("scope", aiMemoryScope).notNull(),
+  status: mysqlEnum("status", aiMemoryStatus).default("active").notNull(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  workspaceId: int("workspaceId").references(() => workspaces.id, { onDelete: "cascade" }),
+  sessionId: int("sessionId").references(() => researchSessions.id, { onDelete: "cascade" }),
+  programId: int("programId").references(() => programs.id, { onDelete: "cascade" }),
+  memoryKey: varchar("memoryKey", { length: 160 }).notNull(),
+  scopeKey: varchar("scopeKey", { length: 512 }).notNull(),
+  content: text("content").notNull(),
+  sourceReference: varchar("sourceReference", { length: 512 }),
+  retentionUntil: timestamp("retentionUntil").notNull(),
+  revision: int("revision").default(0).notNull(),
+  archivedAt: timestamp("archivedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [
+  uniqueIndex("ai_memory_scope_key_uq").on(table.scopeKey),
+  index("ai_memory_user_status_idx").on(table.userId, table.status, table.updatedAt),
+  index("ai_memory_workspace_status_idx").on(table.workspaceId, table.status, table.updatedAt),
+  index("ai_memory_session_status_idx").on(table.sessionId, table.status, table.updatedAt),
+  index("ai_memory_program_status_idx").on(table.programId, table.status, table.updatedAt),
+  index("ai_memory_retention_idx").on(table.status, table.retentionUntil, table.id),
+]);
+
 export const aiEvaluationVerdict = ["pass", "fail", "needs_review"] as const;
 
 export const aiRunEvaluations = mysqlTable("aiRunEvaluations", {

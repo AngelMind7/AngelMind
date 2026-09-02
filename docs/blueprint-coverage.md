@@ -31,7 +31,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 10 | Programs | **Partial** | `programName` melekat pada workspace; program discovery/recommended/saved/following/history belum menjadi domain terpisah. |
 | 11 | Scope engine | **Implemented** | Allowlist, exclusions, safe harbor, conduct, retention, budget, cooldown, policy validation tersedia. |
 | 12 | Scope change detection | **Implemented** | Snapshot, digest, diff/change notification, audit, dan scheduled metadata check tersedia. |
-| 13 | Research workspace | **Partial** | Workspace, inventory, findings, evidence, runs, audit, coverage tersedia; asset graph, hypothesis, observation, memory belum lengkap. |
+| 13 | Research workspace | **Partial** | Workspace, inventory, findings, evidence, runs, audit, coverage, and scoped AI memory are available; asset graph and richer research-context synthesis remain incomplete. |
 | 14 | Research session | **Partial** | Run/rehearsal tersedia; entity `ResearchSession` dengan lifecycle PDF belum menjadi domain terpisah. |
 | 15 | State machine | **Implemented** | Transition rules dan approval/validation gates tersedia untuk workspace, runs, findings, policy, incidents, webhook. |
 | 16 | Asset intelligence | **Partial** | Passive assets/import dan scope filtering tersedia; relationship graph domains/technologies/services belum. |
@@ -57,7 +57,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 31 | Knowledge graph | **Partial** | Workspace-scoped relationship/evidence/finding records, search documents, and intelligence feed persistence exist; generic graph nodes/edges/traversal/temporal provenance engine remains incomplete. |
 | 32 | Intelligence center | **Partial** | Coverage dan analytics tersedia; correlation, historical intelligence, recommendation center belum. |
 | 33 | Change detection | **Implemented** | Workspace policy/configuration change detection tersedia; asset/technology change belum. |
-| 34 | Global search | **Partial** | `searchDocuments`, rebuild/index persistence, permission-aware ranked API/UI, saved views, and workspace notes coverage exist; automatic mutation indexing, delete/reindex consistency, cursor pagination, semantic search, and complete cross-domain coverage remain incomplete. |
+| 34 | Global search | **Partial** | `searchDocuments`, rebuild/index persistence, permission-aware ranked API/UI, saved views, workspace notes coverage, automatic mutation indexing, delete/reindex consistency, and cursor pagination are implemented; semantic search and a complete unified cross-domain UI remain incomplete. |
 | 35 | Command palette | **Implemented** | Ctrl/Cmd+K authenticated navigation tersedia. |
 | 36 | Saved views | **Implemented** | Workspace/user-scoped saved query and JSON filter persistence, authorization, audit event, migration, API, and authenticated UI tersedia. |
 | 37 | Tagging | **Partial** | Workspace-scoped tag schema, create/update, assignment, unassignment, authorization, audit boundary, API, UI, and entity assignment are implemented; richer domain taxonomy and full cross-domain tag filtering remain open. |
@@ -82,7 +82,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 51 | AI run trace | **Implemented (repository)** | AI run entity, gateway/model references, usage, cost ceiling, outputs, retention, persisted trace correlation, and evaluation linkage are implemented; provider-level distributed propagation remains adapter/environment dependent. |
 | 52 | AI provenance | **Partial** | AI output disimpan sebagai finding/report draft; lineage task–run–model–input–output belum. |
 | 53 | AI context | **Partial** | Workspace context dikirim ke evidence flow; hierarchical context isolation lengkap belum. |
-| 54 | AI memory | **Planned** | Belum ada session/research/user/program memory dengan permission boundary. |
+| 54 | AI memory | **Implemented (repository)** | User-private, workspace, research-session, and workspace-linked program memory are persisted with strict scope validation, owner/workspace authorization, revision-safe updates, archive lifecycle, retention purge, worker integration, and workspace search indexing. Provider-level context injection remains an extension. |
 | 55 | AI result pipeline | **Partial** | Structured JSON output dan validation tersedia; normalize/deduplicate/correlate/synthesis pipeline belum. |
 | 56 | AI evaluation | **Implemented (repository)** | Persisted reviewer evaluations support rubric, bounded score, verdict, notes, reviewer identity, idempotent upsert, workspace access checks, and an operations dashboard with evaluated-run coverage, average score, verdict distribution, and recorded cost. Latency/regression baselines and provider-specific quality feeds remain optional extensions. |
 | 57 | Prompt management | **Planned** | Prompt masih berada pada source code; versioned prompt registry belum. |
@@ -101,13 +101,13 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 |---:|---|---|---|
 | 66 | Database | **Implemented** | MySQL/Drizzle schema dan forward migrations tersedia. |
 | 67 | Database integrity | **Partial** | Research session/asset/observation/hypothesis/task, finding relation/retest, evidence link, multi-event provenance foreign keys, and finding remediation metadata are enforced through forward migrations `0024` and `0056`; complete data preflight/load verification remains deployment work. |
-| 68 | Concurrency | **Planned** | Belum ada optimistic locking/version conflict workflow umum. |
+| 68 | Concurrency | **Partial** | Optimistic revision checks now cover research, findings, remediation, and retest requests; generic middleware-wide conflict handling and distributed multi-process locks remain incomplete. |
 | 69 | Pagination | **Partial** | Workspace-scoped list queries and cursor pagination for global search are implemented with deterministic timestamp/ID continuation; remaining domain-wide adoption is incomplete. |
 | 70 | Cache | **Deferred** | Belum ada cache layer; tidak ditambahkan tanpa workload requirement dan invalidation design. |
 | 71 | Data consistency | **Partial** | MySQL source of truth dan derived analytics ada; explicit consistency classification belum. |
 | 72 | File storage | **Implemented** | Supabase Storage backend upload/signed URL, metadata MySQL, hash, audit tersedia. |
-| 73 | Search index | **Partial** | Workspace-scoped `searchDocuments` index, rebuild/reindex, permission checks, query scoring, entity-type/freshness filters, REST read-only search, saved views, workspace notes/knowledge/report-draft/finding/evidence mutation indexing, stale-note delete cleanup, and cursor pagination are implemented; semantic search and unified cross-domain search UI remain open. |
-| 74 | Data lifecycle | **Partial** | Workspace retention/status metadata and account export/delete worker lifecycle are implemented, including private JSON artifact storage and transactional account-scoped deletion; full entity-wide retention purge and collaborative-resource transfer/archive workflows remain incomplete. |
+| 73 | Search index | **Partial** | Workspace-scoped `searchDocuments` index, rebuild/reindex, permission checks, query scoring, entity-type/freshness filters, REST read-only search, saved views, workspace notes/knowledge/report-draft/finding/evidence/AI-memory mutation indexing, stale-entity delete cleanup, and cursor pagination are implemented; semantic retrieval and unified cross-domain search UI remain open. |
+| 74 | Data lifecycle | **Partial** | Workspace retention/status metadata, AI memory retention purge, and account export/delete worker lifecycle are implemented, including private JSON artifact storage and transactional account-scoped deletion; full entity-wide retention purge and collaborative-resource transfer/archive workflows remain incomplete. |
 | 75 | Privacy | **Partial** | Retention, workspace isolation, legal surfaces, privacy request state machine, durable export/delete processing, owner guard, private export artifact, and owner-only signed download are implemented; privacy center UI, dedicated audit events, integration drills, and complete data-access/deletion coverage remain open. |
 | 76 | Abuse protection | **Partial** | Body limits, safe boundaries, allowlists, no target execution ada; rate limit/upload malware scan/account abuse belum penuh. |
 | 77 | Security architecture | **Partial** | Auth, authz, scope, audit, CSP, secure cookies, safe execution boundary ada; complete threat model/response system belum. |

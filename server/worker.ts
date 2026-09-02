@@ -1,4 +1,5 @@
 import { claimPendingJobs, completeJob, dispatchPendingOutbox, executeAiRunJob, executeOrchestrationPlanJob, failJob, heartbeatJob, purgeExpiredAiRunMemory, refreshModelCatalog, type OutboxEventHandler } from "./ai-platform";
+import { purgeExpiredAiMemories } from "./ai-memory";
 import { executeEvidenceScanJob } from "./control-plane/service";
 import { executeIntelligenceFetchJob } from "./research-intelligence";
 import { executePrivacyRequest } from "./privacy-lifecycle";
@@ -117,7 +118,7 @@ if (process.env.RUN_WORKER === "true") {
   const catalogTimer = setInterval(() => void refreshCatalog(), MODEL_CATALOG_REFRESH_INTERVAL_MS);
   catalogTimer.unref?.();
   const retentionTimer = setInterval(() => {
-    void purgeExpiredAiRunMemory(100).catch(error => console.error(`[worker] memory purge failed: ${error instanceof Error ? error.message : "unknown error"}`));
+    void Promise.all([purgeExpiredAiRunMemory(100), purgeExpiredAiMemories(100)]).catch(error => console.error(`[worker] memory purge failed: ${error instanceof Error ? error.message : "unknown error"}`));
   }, MEMORY_PURGE_INTERVAL_MS);
   retentionTimer.unref?.();
   createWorkerLoop({
@@ -142,7 +143,7 @@ if (process.env.RUN_WORKER === "true") {
     "ai.memory.purge": async (_job, payload) => {
       if (payload.type !== "ai_memory_purge") throw new Error("Unsupported AI memory purge payload type.");
       const limit = typeof payload.limit === "number" ? payload.limit : 100;
-      await purgeExpiredAiRunMemory(limit);
+      await Promise.all([purgeExpiredAiRunMemory(limit), purgeExpiredAiMemories(limit)]);
     },
     "playbook.run": async (_job, payload) => {
       if (payload.type !== "playbook_run") throw new Error("Unsupported playbook run payload type.");

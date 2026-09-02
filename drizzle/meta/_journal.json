@@ -407,6 +407,13 @@
       "when": 1788335086744,
       "tag": "0057_finding_revision_concurrency",
       "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "5",
+      "when": 1788335086745,
+      "tag": "0058_ai_memory_scopes",
+      "breakpoints": true
     }
   ]
 }

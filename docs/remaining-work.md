@@ -117,3 +117,9 @@ Finding records now persist severity, client-notified time, remediation deadline
 Search consistency is extended to finding transitions/remediation, evidence upload/scan/promotion/provenance, report drafts, knowledge-node upserts, and workspace-note create/update/delete. Global search now exposes deterministic relevance-aware cursor pagination and a stable empty-database response shape. The Findings surface exposes severity, remediation planning, and the expanded lifecycle. Firebase, Supabase, Railway, production migration application, and live staging verification remain intentionally outside this repository-only slice.
 
 Verification completed locally: TypeScript check, finding workflow tests, migration journal consistency, and `git diff --check` passed after the changes; full test/build verification remains the next gate before commit.
+
+## S — Governed AI memory scopes (2026-09-02)
+
+AI memory is now repository-backed for `user`, `workspace`, `session`, and workspace-linked `program` scopes. Memory writes validate references against the selected workspace, enforce read/respond authorization, protect updates and archive operations with monotonic revisions, preserve source/retention metadata, and make user-private memory unavailable to workspace search. Active workspace memory is indexed for global search; archive and retention purge remove derived search records. The worker retention interval and `ai.memory.purge` durable job now purge both AI run payloads and expired AI memory content. Migration `0058_ai_memory_scopes` defines the table, foreign keys, normalized unique scope key, indexes, status, retention, and revision columns. AI Center exposes save, update, list, and archive controls.
+
+Local scope contract tests and migration safety/rollback checks pass. Applying migration `0058` to the live database and provider-level context injection remain environment/adapter work.

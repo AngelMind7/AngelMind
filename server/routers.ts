@@ -22,6 +22,7 @@ import * as researchWorkflow from "./research-workflow";
 import * as organization from "./organization";
 import * as evidenceWorkflow from "./evidence-workflow";
 import * as aiPlatform from "./ai-platform";
+import * as aiMemory from "./ai-memory";
 import * as aiOrchestration from "./ai-orchestration";
 import * as securityPlatform from "./security-platform";
 import * as submissionWorkflow from "./submission-workflow";
@@ -1064,6 +1065,25 @@ export const appRouter = router({
           throw new Error("Admin role is required to update model health.");
         return aiPlatform.recordModelHealth(ctx.user.id, input);
       }),
+    memories: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive().optional(), scope: z.enum(["user", "workspace", "session", "program"]).optional(), limit: z.number().int().min(1).max(100).optional() }))
+      .query(({ ctx, input }) => aiMemory.listAiMemories(ctx.user.id, input)),
+    saveMemory: protectedProcedure
+      .input(z.object({
+        scope: z.enum(["user", "workspace", "session", "program"]),
+        workspaceId: z.number().int().positive().optional(),
+        sessionId: z.number().int().positive().optional(),
+        programId: z.number().int().positive().optional(),
+        memoryKey: z.string().trim().min(2).max(160),
+        content: z.string().trim().min(2).max(100_000),
+        sourceReference: z.string().trim().max(512).nullable().optional(),
+        retentionDays: z.number().int().min(1).max(3_650).optional(),
+        expectedRevision: z.number().int().nonnegative().optional(),
+      }))
+      .mutation(({ ctx, input }) => aiMemory.saveAiMemory(ctx.user.id, input)),
+    archiveMemory: protectedProcedure
+      .input(z.object({ memoryId: z.number().int().positive(), expectedRevision: z.number().int().nonnegative() }))
+      .mutation(({ ctx, input }) => aiMemory.archiveAiMemory(ctx.user.id, input)),
     runs: protectedProcedure
       .input(z.object({ workspaceId: z.number().int().positive() }))
       .query(({ ctx, input }) =>

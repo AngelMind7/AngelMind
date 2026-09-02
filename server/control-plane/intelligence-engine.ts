@@ -64,6 +64,22 @@ export function assertPassivePlaybookTaskType(type: string): string {
   return normalized;
 }
 
+export type PassiveAdapterFeedback = {
+  adapterKey: "metadata-review" | "fingerprint-review" | "evidence-normalization";
+  status: "completed";
+  networkCalls: 0;
+  output: Record<string, unknown>;
+};
+
+export function executePassiveAdapter(adapterKey: string, input: Record<string, unknown>): PassiveAdapterFeedback {
+  const normalized = adapterKey.trim().toLowerCase();
+  const safeInput = Object.fromEntries(Object.entries(input).filter(([key, value]) => key.length <= 80 && value !== undefined).slice(0, 50));
+  if (normalized === "metadata-review") return { adapterKey: "metadata-review", status: "completed", networkCalls: 0, output: { reviewedKeys: Object.keys(safeInput).sort(), review: "metadata-only" } };
+  if (normalized === "fingerprint-review") return { adapterKey: "fingerprint-review", status: "completed", networkCalls: 0, output: { fingerprintInput: safeInput, review: "deterministic-input-accepted" } };
+  if (normalized === "evidence-normalization") return { adapterKey: "evidence-normalization", status: "completed", networkCalls: 0, output: { normalized: safeInput, review: "provider-neutral" } };
+  throw new Error("Passive adapter is not registered or is outside the safety boundary.");
+}
+
 export type Playbook = {
   id: string;
   version: string;

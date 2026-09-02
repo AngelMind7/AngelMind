@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertPassivePlaybookTaskType, compareAssetSnapshots, matchPlaybooks, normalizeIntelligenceFeed, validateFailureObservation } from "./intelligence-engine";
+import { assertPassivePlaybookTaskType, compareAssetSnapshots, executePassiveAdapter, matchPlaybooks, normalizeIntelligenceFeed, validateFailureObservation } from "./intelligence-engine";
 
 describe("intelligence engine", () => {
   it("deduplicates and validates failure evidence references", () => {
@@ -24,6 +24,16 @@ describe("intelligence engine", () => {
       { id: "api-next", version: "1", domains: ["api"], assetTypes: ["api"], technologies: ["next"], taskTemplates: [] },
     ];
     expect(matchPlaybooks(playbooks, { domain: "api", assetType: "api", technology: "next" }).map(playbook => playbook.id)).toEqual(["api-next"]);
+  });
+
+  it("returns deterministic metadata-only feedback for registered adapters", () => {
+    const result = executePassiveAdapter("metadata-review", { z: 1, a: "ok" });
+    expect(result).toMatchObject({ adapterKey: "metadata-review", status: "completed", networkCalls: 0 });
+    expect(result.output.reviewedKeys).toEqual(["a", "z"]);
+  });
+
+  it("rejects unregistered adapters", () => {
+    expect(() => executePassiveAdapter("network-probe", {})).toThrow("outside the safety boundary");
   });
 
   it("rejects unsafe playbook task types", () => {

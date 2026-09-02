@@ -5,7 +5,7 @@ import {
   researchTasks,
 } from "../drizzle/schema";
 import { getDb } from "./db";
-import { assertPassivePlaybookTaskType } from "./control-plane/intelligence-engine";
+import { assertPassivePlaybookTaskType, executePassiveAdapter } from "./control-plane/intelligence-engine";
 import { auditEvents } from "../drizzle/schema";
 
 async function recordAudit(
@@ -177,6 +177,22 @@ export async function executePlaybookRunJob(
     return { status: "paused", runId, reason };
   }
   const safeType = assertPassivePlaybookTaskType(task.type);
+  let taskInputs: Record<string, unknown> = {};
+  try {
+    const parsed = JSON.parse(task.inputs) as unknown;
+    if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) taskInputs = parsed as Record<string, unknown>;
+  } catch {
+    taskInputs = {};
+  }
+  if (typeof taskInputs.adapterKey === "string") {
+    const feedback = executePassiveAdapter(taskInputs.adapterKey, taskInputs);
+    const completedTaskIds = [...Array.from(completedIds), task.id];
+    const runCompleted = completedTaskIds.length >= ids.length;
+    await db.update(researchTasks).set({ status: "completed", outputs: JSON.stringify(feedback), completedAt: new Date(), updatedAt: new Date() }).where(and(eq(researchTasks.id, task.id), eq(researchTasks.workspaceId, run.workspaceId), eq(researchTasks.status, "queued")));
+    await db.update(playbookRuns).set({ status: runCompleted ? "completed" : "queued", checkpoint: JSON.stringify({ ...checkpoint, completedTaskIds, nextTaskIndex: checkpoint.nextTaskIndex + 1, blockedTaskIds: (checkpoint.blockedTaskIds ?? []).filter(id => id !== task.id) }), completedAt: runCompleted ? new Date() : null, lastError: null, updatedAt: new Date() }).where(eq(playbookRuns.id, run.id));
+    await recordAudit(db, run.workspaceId, run.createdByUserId, "playbook-task-passive-adapter-completed", { playbookRunId: run.id, taskId: task.id, adapterKey: feedback.adapterKey, networkCalls: feedback.networkCalls });
+    return runCompleted ? { status: "completed", runId, taskId: task.id } : { status: "completed", runId, taskId: task.id };
+  }
   const reason = `No approved passive adapter is registered for task type '${safeType}'.`;
   await db
     .update(researchTasks)

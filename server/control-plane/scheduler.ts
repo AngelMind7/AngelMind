@@ -26,10 +26,11 @@ export function getScheduledJobDefinition(key: ScheduledJobDefinition["key"]) {
 }
 
 export function getAdministrativeCheckEligibility(workspace: WorkspaceSchedulingState, now = Date.now()): { eligible: boolean; reason?: "workspace-not-active" | "cooldown" | "budget" | "session-limit" } {
-  if (workspace.status !== "active") return { eligible: false, reason: "workspace-not-active" };
-  if (workspace.spentCents >= workspace.budgetCents) return { eligible: false, reason: "budget" };
-  if (workspace.sessionLimitMinutes <= 0) return { eligible: false, reason: "session-limit" };
-  const cooldownMs = workspace.cooldownMinutes * 60_000;
+  if (!workspace || !Number.isFinite(now)) now = workspace ? Date.now() : now;
+  if (!workspace || workspace.status !== "active") return { eligible: false, reason: "workspace-not-active" };
+  if (!Number.isFinite(workspace.spentCents) || !Number.isFinite(workspace.budgetCents) || workspace.spentCents >= workspace.budgetCents) return { eligible: false, reason: "budget" };
+  if (!Number.isFinite(workspace.sessionLimitMinutes) || workspace.sessionLimitMinutes <= 0) return { eligible: false, reason: "session-limit" };
+  const cooldownMs = (Number.isFinite(workspace.cooldownMinutes) ? Math.max(0, workspace.cooldownMinutes) : 0) * 60_000;
   if (workspace.lastRunAt && now - workspace.lastRunAt.getTime() < cooldownMs) return { eligible: false, reason: "cooldown" };
   return { eligible: true };
 }

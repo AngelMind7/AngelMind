@@ -1,6 +1,6 @@
 import { createHash } from "crypto";
 import { and, desc, eq, gt, inArray, isNotNull, isNull } from "drizzle-orm";
-import { auditEvents, approvals, credentialReferences, evidenceArtifacts, findings, notificationDeliveries, notificationPreferences, notifications, runs, workspaceChangeSnapshots, workspaceMemberships, workspaces } from "../../drizzle/schema";
+import { auditEvents, approvals, credentialReferences, evidenceArtifacts, findings, notificationDeliveries, notificationPreferences, notifications, programs, runs, workspaceChangeSnapshots, workspaceMemberships, workspaces } from "../../drizzle/schema";
 import { getDb, getOwnedWorkspace } from "../db";
 import { notifyOwner } from "../_core/notification";
 import { storageDelete, storageGetSignedUrl, storagePut } from "../storage";
@@ -22,6 +22,8 @@ import { enqueueJob } from "../ai-platform";
 import { scanEvidenceContent } from "../evidence-scanner";
 import { createNotificationDeliveryLedger } from "../notification-delivery";
 import { isCronDueAt, normalizeUtcCronExpression } from "./cron";
+import { parseStoredProgramScope } from "./program-scope";
+import { verifyAuthorizationReference } from "./authorization-reference";
 
 const parseList = (serialized: string): string[] => {
   try {
@@ -144,6 +146,19 @@ export async function getToolExecutionContext(userId: number, workspaceId: numbe
   const workspace = await ownedWorkspaceOrThrow(userId, workspaceId);
   const eligibility = getRunEligibility(workspace);
   if (!eligibility.eligible) return { allowed: false as const, reason: eligibility.reason };
+
+  // Authorization reference is only enforced for workspaces explicitly linked to a program.
+  // Workspaces without a linked program keep the pre-existing behavior (no change).
+  if (workspace.programId) {
+    const db = await getDb();
+    if (!db) throw new Error("Database tidak tersedia.");
+    const [program] = await db.select().from(programs).where(eq(programs.id, workspace.programId)).limit(1);
+    if (!program) return { allowed: false as const, reason: "authorization_reference_missing" as const };
+    const scope = parseStoredProgramScope(program);
+    const authCheck = verifyAuthorizationReference({ authorizationReference: program.authorizationReference, scope });
+    if (!authCheck.valid) return { allowed: false as const, reason: `authorization_reference_${authCheck.reason}` as const };
+  }
+
   const allowlist = parseList(workspace.allowlist);
   const exclusions = parseList(workspace.exclusions);
   return {

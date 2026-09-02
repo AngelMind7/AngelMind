@@ -151,6 +151,7 @@ export const programs = mysqlTable("programs", {
   name: varchar("name", { length: 200 }).notNull(),
   description: text("description").notNull(),
   status: mysqlEnum("status", programStatus).default("draft").notNull(),
+  authorizationReference: text("authorizationReference"),
   includedAssets: text("includedAssets").notNull(),
   excludedAssets: text("excludedAssets").notNull(),
   rules: text("rules").notNull(),

@@ -8,6 +8,7 @@ export function assertSafeWebhookEndpoint(value: string): URL {
   let url: URL;
   try { url = new URL(value); } catch { throw new Error("Webhook endpoint must be a valid absolute URL."); }
   const hostname = url.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+  if (!hostname || hostname.length > 253 || /[\s\\]/.test(hostname)) throw new Error("Webhook endpoint hostname is invalid.");
   if (url.protocol !== "https:") throw new Error("Webhook endpoint must use HTTPS.");
   if (url.search || url.hash) throw new Error("Webhook endpoint must not contain query or fragment data.");
   if (url.port && url.port !== "443") throw new Error("Webhook endpoint must use the default HTTPS port.");

@@ -45,4 +45,8 @@ describe("API rate limiter", () => {
     expect(key).toMatch(/^ip:10\.0\.0\.4:credential:[a-f0-9]{24}$/);
     expect(key).not.toContain("secret-value");
   });
+
+  it("rejects missing limiter options", () => {
+    expect(() => createRateLimiter(null as never)).toThrow("options are required");
+  });
 });

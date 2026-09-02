@@ -34,6 +34,8 @@ import * as researchIntelligence from "./research-intelligence";
 import * as toolCatalog from "./tool-catalog";
 import * as toolRuntime from "./tool-runtime";
 import * as knowledgeGraph from "./knowledge-graph";
+import * as mfa from "./mfa";
+import { executeIdempotent } from "./idempotency";
 
 const workspaceInput = z.object({
   name: z.string().min(2).max(120),
@@ -154,6 +156,26 @@ export const appRouter = router({
     security: protectedProcedure.query(({ ctx }) =>
       accountSecurity.getAccountSecurity(ctx.user.id)
     ),
+    mfa: protectedProcedure.query(({ ctx }) => mfa.getMfaStatus(ctx.user.id)),
+    beginTotpEnrollment: protectedProcedure
+      .input(z.object({ label: z.string().trim().max(120).optional() }))
+      .mutation(({ ctx, input }) => mfa.beginTotpEnrollment(ctx.user.id, input.label)),
+    confirmTotpEnrollment: protectedProcedure
+      .input(z.object({ challenge: z.string().min(20).max(512), code: z.string().regex(/^\d{6}$/) }))
+      .mutation(({ ctx, input }) => mfa.confirmTotpEnrollment(ctx.user.id, input)),
+    verifyMfa: protectedProcedure
+      .input(z.object({ code: z.string().trim().min(6).max(32) }))
+      .mutation(({ ctx, input }) => mfa.verifyTotpOrRecoveryCode(ctx.user.id, input.code)),
+    beginPasskeyRegistration: protectedProcedure
+      .input(z.object({ label: z.string().trim().max(120).optional() }))
+      .mutation(({ ctx, input }) => mfa.beginPasskeyRegistration(ctx.user.id, input.label)),
+    finishPasskeyRegistration: protectedProcedure
+      .input(z.object({ challenge: z.string().min(20).max(512), response: z.record(z.string(), z.unknown()) }))
+      .mutation(({ ctx, input }) => mfa.finishPasskeyRegistration(ctx.user.id, input.challenge, input.response)),
+    beginPasskeyAuthentication: protectedProcedure.mutation(({ ctx }) => mfa.beginPasskeyAuthentication(ctx.user.id)),
+    finishPasskeyAuthentication: protectedProcedure
+      .input(z.object({ challenge: z.string().min(20).max(512), response: z.record(z.string(), z.unknown()) }))
+      .mutation(({ ctx, input }) => mfa.finishPasskeyAuthentication(ctx.user.id, input.challenge, input.response)),
     registerDevice: protectedProcedure
       .input(
         z.object({
@@ -179,6 +201,7 @@ export const appRouter = router({
     saveOnboarding: protectedProcedure
       .input(
         z.object({
+          idempotencyKey: z.string().trim().min(8).max(180),
           status: z.enum([
             "not_started",
             "in_progress",
@@ -195,9 +218,13 @@ export const appRouter = router({
           roleIntent: z.string().max(80).optional(),
         })
       )
-      .mutation(({ ctx, input }) =>
-        accountSecurity.saveOnboardingProfile(ctx.user.id, input)
-      ),
+      .mutation(({ ctx, input }) => executeIdempotent({
+        userId: ctx.user.id,
+        scope: "auth.saveOnboarding",
+        key: input.idempotencyKey,
+        request: input,
+        handler: () => accountSecurity.saveOnboardingProfile(ctx.user.id, input),
+      }).then(result => result.value)),
   }),
   agent: router({
     planMultiAgentRun: protectedProcedure

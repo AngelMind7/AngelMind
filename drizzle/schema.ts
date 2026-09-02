@@ -33,6 +33,8 @@ export const privacyRequestType = ["export", "delete", "rectify"] as const;
 export const privacyRequestStatus = ["requested", "processing", "completed", "rejected"] as const;
 export const authDevicePlatform = ["web", "ios", "android", "unknown"] as const;
 export const onboardingStatus = ["not_started", "in_progress", "completed", "skipped"] as const;
+export const mfaFactorType = ["totp", "webauthn"] as const;
+export const mfaChallengeType = ["totp", "registration", "authentication"] as const;
 
 export const userProfiles = mysqlTable("userProfiles", {
   id: int("id").autoincrement().primaryKey(),
@@ -93,6 +95,41 @@ export const accountSecurityEvents = mysqlTable("accountSecurityEvents", {
   index("account_security_event_user_created_idx").on(table.userId, table.createdAt),
   index("account_security_event_type_created_idx").on(table.eventType, table.createdAt),
 ]);
+
+export const mfaFactors = mysqlTable("mfaFactors", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  type: mysqlEnum("type", mfaFactorType).notNull(),
+  label: varchar("label", { length: 120 }).notNull(),
+  secretCiphertext: text("secretCiphertext"),
+  credentialId: varchar("credentialId", { length: 512 }),
+  publicKey: text("publicKey"),
+  counter: int("counter").default(0).notNull(),
+  transports: text("transports"),
+  enabled: int("enabled").default(0).notNull(),
+  lastUsedAt: timestamp("lastUsedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [uniqueIndex("mfa_factor_user_credential_uq").on(table.userId, table.credentialId), index("mfa_factor_user_enabled_idx").on(table.userId, table.enabled)]);
+
+export const mfaRecoveryCodes = mysqlTable("mfaRecoveryCodes", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  codeHash: varchar("codeHash", { length: 64 }).notNull(),
+  usedAt: timestamp("usedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("mfa_recovery_code_hash_uq").on(table.codeHash), index("mfa_recovery_user_used_idx").on(table.userId, table.usedAt)]);
+
+export const mfaChallenges = mysqlTable("mfaChallenges", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  type: mysqlEnum("type", mfaChallengeType).notNull(),
+  challenge: varchar("challenge", { length: 512 }).notNull(),
+  metadata: text("metadata").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  consumedAt: timestamp("consumedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("mfa_challenge_value_uq").on(table.challenge), index("mfa_challenge_user_type_expiry_idx").on(table.userId, table.type, table.expiresAt)]);
 
 export const onboardingProfiles = mysqlTable("onboardingProfiles", {
   id: int("id").autoincrement().primaryKey(),

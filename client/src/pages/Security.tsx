@@ -35,6 +35,10 @@ export default function Security() {
   const [privacyReason, setPrivacyReason] = useState("");
   const [organizationName, setOrganizationName] = useState("");
   const [roleIntent, setRoleIntent] = useState("");
+  const [totpChallenge, setTotpChallenge] = useState<string>();
+  const [totpSecret, setTotpSecret] = useState<string>();
+  const [totpCode, setTotpCode] = useState("");
+  const mfa = trpc.auth.mfa.useQuery();
   const registerDevice = trpc.auth.registerDevice.useMutation({
     onSuccess: () => {
       void utils.auth.security.invalidate();
@@ -80,6 +84,21 @@ export default function Security() {
     },
     onError: error => toast.error(error.message),
   });
+  const beginTotp = trpc.auth.beginTotpEnrollment.useMutation({ onSuccess: result => { setTotpChallenge(result.challenge); setTotpSecret(result.secret); toast.success("Scan secret ini di authenticator, lalu masukkan kode 6 digit."); }, onError: error => toast.error(error.message) });
+  const confirmTotp = trpc.auth.confirmTotpEnrollment.useMutation({ onSuccess: result => { setTotpChallenge(undefined); setTotpSecret(undefined); setTotpCode(""); void mfa.refetch(); toast.success(`MFA aktif. Simpan ${result.recoveryCodes.length} recovery codes.`); window.alert(`Recovery codes (simpan offline):\n\n${result.recoveryCodes.join("\n")}`); }, onError: error => toast.error(error.message) });
+  const registerPasskey = trpc.auth.beginPasskeyRegistration.useMutation();
+  const finishPasskey = trpc.auth.finishPasskeyRegistration.useMutation({ onSuccess: () => { void mfa.refetch(); toast.success("Passkey berhasil didaftarkan."); }, onError: error => toast.error(error.message) });
+  const registerPasskeyFromBrowser = async () => {
+    if (!window.PublicKeyCredential) { toast.error("Browser ini belum mendukung passkey."); return; }
+    try {
+      const options = await registerPasskey.mutateAsync({ label: "Current passkey" });
+      const decode = (value: string) => Uint8Array.from(atob(value.replace(/-/g, "+").replace(/_/g, "/") + "=".repeat((4 - value.length % 4) % 4)), char => char.charCodeAt(0));
+      const credential = await navigator.credentials.create({ publicKey: { ...options, challenge: decode(options.challenge), user: { ...options.user, id: decode(options.user.id) }, excludeCredentials: options.excludeCredentials?.map(item => ({ ...item, id: decode(item.id) })) } } as unknown as CredentialCreationOptions) as PublicKeyCredential;
+      const response = credential.response as AuthenticatorAttestationResponse;
+      const encode = (value: ArrayBuffer) => btoa(Array.from(new Uint8Array(value), byte => String.fromCharCode(byte)).join("")).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+      finishPasskey.mutate({ challenge: options.challenge, response: { id: credential.id, rawId: encode(credential.rawId), type: credential.type, response: { clientDataJSON: encode(response.clientDataJSON), attestationObject: encode(response.attestationObject) } } });
+    } catch (error) { toast.error(error instanceof Error ? error.message : "Passkey registration gagal."); }
+  };
 
   const profile = security.data?.profile;
   const devices = security.data?.devices ?? [];
@@ -125,10 +144,18 @@ export default function Security() {
           <div className="mt-5 space-y-4">
             <div className="space-y-2"><Label htmlFor="organization-name">Organization or team</Label><Input id="organization-name" value={organizationName} onChange={event => setOrganizationName(event.target.value)} placeholder="AngelMind Research" maxLength={160} /></div>
             <div className="space-y-2"><Label htmlFor="role-intent">Primary role</Label><Input id="role-intent" value={roleIntent} onChange={event => setRoleIntent(event.target.value)} placeholder="Security researcher" maxLength={80} /></div>
-            <Button className="w-full" onClick={() => saveOnboarding.mutate({ status: "completed", currentStep: "complete", organizationName, roleIntent })} disabled={saveOnboarding.isPending}>{saveOnboarding.isPending ? "Saving…" : "Complete onboarding"}</Button>
+            <Button className="w-full" onClick={() => saveOnboarding.mutate({ idempotencyKey: window.crypto.randomUUID(), status: "completed", currentStep: "complete", organizationName, roleIntent })} disabled={saveOnboarding.isPending}>{saveOnboarding.isPending ? "Saving…" : "Complete onboarding"}</Button>
           </div>
         </NeonFrame>
       </div>
+
+      <NeonFrame className="p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3"><div><Eyebrow>Multi-factor authentication</Eyebrow><h2 className="mt-2 font-display text-2xl font-bold text-white">MFA / Passkeys</h2></div><ShieldCheck className="h-5 w-5 text-emerald-300" /></div>
+        <p className="mt-3 text-sm leading-6 text-slate-400">Tambahkan authenticator TOTP atau passkey WebAuthn. Recovery codes hanya ditampilkan saat enrollment.</p>
+        <div className="mt-4 flex flex-wrap gap-2">{mfa.data?.factors.map(factor => <Badge key={factor.id} variant="outline" className="border-emerald-300/40 text-emerald-200">{factor.type}: {factor.label}</Badge>)}{!mfa.data?.factors.length && <Badge variant="outline" className="border-amber-300/40 text-amber-200">MFA belum aktif</Badge>}</div>
+        <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto_auto]"><Input value={totpSecret || ""} readOnly placeholder="TOTP secret muncul di sini" /><Button variant="outline" onClick={() => beginTotp.mutate({ label: "Authenticator app" })} disabled={beginTotp.isPending}>Setup TOTP</Button><Button onClick={registerPasskeyFromBrowser} disabled={registerPasskey.isPending || finishPasskey.isPending}>Register passkey</Button></div>
+        {totpChallenge && <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]"><Input value={totpCode} onChange={event => setTotpCode(event.target.value)} placeholder="6-digit authenticator code" inputMode="numeric" maxLength={6} /><Button onClick={() => confirmTotp.mutate({ challenge: totpChallenge, code: totpCode })} disabled={totpCode.length !== 6 || confirmTotp.isPending}>Confirm TOTP</Button></div>}
+      </NeonFrame>
 
       <NeonFrame className="p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3"><div><Eyebrow>Developer credentials</Eyebrow><h2 className="mt-2 font-display text-2xl font-bold text-white">API keys</h2></div><KeyRound className="h-5 w-5 text-fuchsia-300" /></div>

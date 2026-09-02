@@ -31,6 +31,15 @@ async function ownedWorkspaceOrThrow(userId: number, workspaceId: number) {
   return workspace;
 }
 
+async function workspaceAccessOrThrow(userId: number, workspaceId: number, intent: WorkspaceAccessIntent) {
+  if (!(await canAccessWorkspace(userId, workspaceId, intent))) throw new Error("Workspace tidak ditemukan atau role tidak memiliki akses untuk operasi ini.");
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  if (!workspace) throw new Error("Workspace tidak ditemukan.");
+  return workspace;
+}
+
 async function addAudit(workspaceId: number, category: string, subject: string, details: Record<string, unknown>) {
   const db = await getDb();
   if (!db) return;
@@ -155,8 +164,8 @@ export async function createAuditArchive(ownerUserId: number, workspaceId: numbe
   return { storageReference: stored.url, manifestHash };
 }
 
-export async function listAuditArchives(ownerUserId: number, workspaceId: number) {
-  await ownedWorkspaceOrThrow(ownerUserId, workspaceId);
+export async function listAuditArchives(userId: number, workspaceId: number) {
+  await workspaceAccessOrThrow(userId, workspaceId, "read");
   const db = await getDb();
   if (!db) return [];
   return db.select().from(auditArchives).where(eq(auditArchives.workspaceId, workspaceId)).orderBy(desc(auditArchives.createdAt));
@@ -167,9 +176,9 @@ export async function restoreAuditArchivePlan(ownerUserId: number, archiveId: nu
   if (!db) throw new Error("Database tidak tersedia.");
   const [archive] = await db.select().from(auditArchives).where(eq(auditArchives.id, archiveId)).limit(1);
   if (!archive) throw new Error("Audit archive tidak ditemukan.");
-  await ownedWorkspaceOrThrow(ownerUserId, archive.workspaceId);
+  await workspaceAccessOrThrow(ownerUserId, archive.workspaceId, "review");
   const destinationId = destinationWorkspaceId ?? archive.workspaceId;
-  await ownedWorkspaceOrThrow(ownerUserId, destinationId);
+  await workspaceAccessOrThrow(ownerUserId, destinationId, "review");
   if (!ENV.archiveSigningSecret) throw new Error("Archive signing secret is unavailable.");
   const url = await storageGetSignedUrl(archive.storageKey);
   const response = await fetch(url);
@@ -187,7 +196,7 @@ export async function verifyAuditArchive(ownerUserId: number, archiveId: number)
   if (!db) throw new Error("Database tidak tersedia.");
   const [archive] = await db.select().from(auditArchives).where(eq(auditArchives.id, archiveId)).limit(1);
   if (!archive) throw new Error("Audit archive tidak ditemukan.");
-  await ownedWorkspaceOrThrow(ownerUserId, archive.workspaceId);
+  await workspaceAccessOrThrow(ownerUserId, archive.workspaceId, "review");
   if (!ENV.archiveSigningSecret) throw new Error("Archive signing secret is unavailable.");
   const url = await storageGetSignedUrl(archive.storageKey);
   const response = await fetch(url);

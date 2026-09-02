@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { runCorrelation } from "./correlation-adapter";
+import {
+  evaluateCategoryEscalations,
+  evaluatePrerequisites,
+  runCorrelation,
+} from "./correlation-adapter";
 import { SEQUENTIAL_RULES } from "./correlation-rules";
 
 describe("correlation adapter", () => {
@@ -48,5 +52,49 @@ describe("correlation adapter", () => {
         .map(result => result.emittedKey)
         .sort()
     ).toEqual(["vector.idor-horizontal", "vector.idor-vertical"]);
+  });
+
+  it("returns category escalation recommendations without mutating findings", () => {
+    const results = evaluateCategoryEscalations([
+      {
+        vectorKey: "sqli-classic",
+        category: "Injection",
+        confidence: 90,
+        evidenceRefs: ["e-3"],
+      },
+      {
+        vectorKey: "ssti-server-side",
+        category: "Injection",
+        confidence: 90,
+        evidenceRefs: ["e-4"],
+      },
+    ]);
+
+    expect(results).toContainEqual(
+      expect.objectContaining({
+        ruleId: "CAT-001",
+        action: "escalate_approval_gate",
+        approvalGate: "human_approval",
+      })
+    );
+  });
+
+  it("returns prerequisite recommendations with unique evidence references", () => {
+    const results = evaluatePrerequisites([
+      {
+        vectorKey: "xxe-out-of-band",
+        confidence: 95,
+        evidenceRefs: ["e-5", "e-5"],
+      },
+    ]);
+
+    expect(results).toContainEqual(
+      expect.objectContaining({
+        ruleId: "PRE-001",
+        targetVector: "ssrf-internal",
+        autoUpdate: true,
+        evidenceRefs: ["e-5"],
+      })
+    );
   });
 });

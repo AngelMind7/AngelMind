@@ -1,6 +1,5 @@
-// Sumber: AngelMind Master Spec v4.0 Appendix E
-// 47 dari 54 target rule (30 SEQ + 10 COMP + 4 CAT + 3 PRE).
-// SEQ-031..SEQ-037 (7 rule) belum tersedia — TODO, lihat catatan di bawah.
+// Sumber: AngelMind Master Spec v4.0 Appendix A
+// 54 dari 54 target rule (37 SEQ + 10 COMP + 4 CAT + 3 PRE).
 
 export type Priority = "CRITICAL" | "HIGH" | "MEDIUM" | "LOW";
 export type ApprovalGate = "human_approval" | "scope+approval" | "auto-run";
@@ -79,7 +78,7 @@ export interface ScoringMatrix {
   >;
 }
 
-// ─── 30 SEQUENTIAL RULES (SEQ-001..SEQ-030; SEQ-031..SEQ-037 TODO) ───
+// ─── 37 SEQUENTIAL RULES (SEQ-001..SEQ-037) ───
 
 export const SEQUENTIAL_RULES: SequentialRule[] = [
   {

@@ -1,7 +1,11 @@
 import {
+  CATEGORY_ESCALATION_RULES,
   COMPOUND_RULES,
+  PREREQUISITE_RULES,
   SEQUENTIAL_RULES,
+  type CategoryEscalationRule,
   type EvidenceCondition,
+  type PrerequisiteRule,
   type SequentialRule,
 } from "./correlation-rules";
 import {
@@ -16,9 +20,30 @@ export type EvidenceValue = string | number | boolean | null | undefined;
 
 export type ConfirmedVectorFact = {
   vectorKey: string;
+  category?: string;
   confidence: number; // 0-100
   evidenceRefs: string[];
   evidence?: Record<string, EvidenceValue | EvidenceValue[]>;
+};
+
+export type CategoryEscalationResult = {
+  ruleId: string;
+  action: CategoryEscalationRule["action"];
+  sourceCategory: string;
+  affectedVectors: string[];
+  approvalGate?: string;
+  priority?: string;
+  rationale: string;
+};
+
+export type PrerequisiteResult = {
+  ruleId: string;
+  sourceVector: string;
+  targetVector: string;
+  prerequisiteSatisfied: string;
+  autoUpdate: boolean;
+  evidenceRefs: string[];
+  note?: string;
 };
 
 function toGenericFacts(
@@ -106,6 +131,69 @@ function sequentialToGenericRules(rule: SequentialRule): CorrelationRule[] {
   }));
 }
 
+function categoryMatches(
+  rule: CategoryEscalationRule,
+  vector: ConfirmedVectorFact
+): boolean {
+  return vector.category === rule.triggerCategory;
+}
+
+export function evaluateCategoryEscalations(
+  confirmedVectors: ConfirmedVectorFact[]
+): CategoryEscalationResult[] {
+  return CATEGORY_ESCALATION_RULES.flatMap(rule => {
+    const matching = confirmedVectors.filter(vector =>
+      categoryMatches(rule, vector)
+    );
+    if (matching.length < rule.triggerCount) return [];
+    const affectedVectors =
+      rule.action === "auto_flag_related"
+        ? (rule.targetVectors ?? [])
+        : confirmedVectors
+            .filter(
+              vector =>
+                vector.category ===
+                (rule.targetCategory ?? rule.triggerCategory)
+            )
+            .map(vector => vector.vectorKey);
+    return [
+      {
+        ruleId: rule.ruleId,
+        action: rule.action,
+        sourceCategory: rule.triggerCategory,
+        affectedVectors: Array.from(new Set(affectedVectors)).sort(),
+        approvalGate: rule.newApprovalGate,
+        priority: rule.newPriority,
+        rationale: rule.rationale,
+      },
+    ];
+  });
+}
+
+export function evaluatePrerequisites(
+  confirmedVectors: ConfirmedVectorFact[]
+): PrerequisiteResult[] {
+  return PREREQUISITE_RULES.flatMap((rule: PrerequisiteRule) => {
+    const sources = confirmedVectors.filter(
+      vector => vector.vectorKey === rule.sourceVector
+    );
+    if (sources.length === 0) return [];
+    return [
+      {
+        ruleId: rule.ruleId,
+        sourceVector: rule.sourceVector,
+        targetVector: rule.targetVector,
+        prerequisiteSatisfied: rule.prerequisiteSatisfied,
+        autoUpdate: rule.autoUpdate,
+        evidenceRefs: Array.from(
+          new Set(sources.flatMap(source => source.evidenceRefs))
+        ).sort(),
+        note: rule.note,
+      },
+    ];
+  });
+}
+
 function compoundToGenericRules(): CorrelationRule[] {
   return COMPOUND_RULES.flatMap(rule =>
     rule.targetVectors.map(targetVector => ({
@@ -124,6 +212,8 @@ function compoundToGenericRules(): CorrelationRule[] {
  * Evaluate confirmed vectors against the master sequential and compound rule sets.
  * Evidence-gated rules are only eligible when their required evidence field matches;
  * all target vectors are retained, then duplicate emissions are merged by the engine.
+ * Category escalation and prerequisite recommendations are exposed separately so
+ * callers can persist them through their own lifecycle/audit transaction.
  */
 export function runCorrelation(
   confirmedVectors: ConfirmedVectorFact[]

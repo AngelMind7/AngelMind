@@ -386,6 +386,13 @@
       "when": 1788335086741,
       "tag": "0054_audit_chain_and_approval_authority",
       "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "5",
+      "when": 1788335086742,
+      "tag": "0055_privacy_security_audit_events",
+      "breakpoints": true
     }
   ]
 }

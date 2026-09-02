@@ -4,6 +4,7 @@ import { apiKeys, organizationEntitlements, organizationMembers, privacyRequests
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { storageGetSignedUrl } from "./storage";
+import { recordPrivacyEvent } from "./account-security";
 import { decodePageCursor, pageResult } from "./_core/query-safety";
 
 function hashSecret(secret: string) {
@@ -126,6 +127,7 @@ export async function requestPrivacyAction(userId: number, input: { requestType:
   if (activeRequest) return activeRequest;
   await db.insert(privacyRequests).values({ userId, requestType: input.requestType, status: "requested", reason });
   const [request] = await db.select().from(privacyRequests).where(and(eq(privacyRequests.userId, userId), eq(privacyRequests.requestType, input.requestType))).orderBy(desc(privacyRequests.createdAt)).limit(1);
+  if (request && (input.requestType === "export" || input.requestType === "delete")) void recordPrivacyEvent(userId, input.requestType === "export" ? "privacy_export_requested" : "privacy_delete_requested", { requestId: request.id });
   return request;
 }
 

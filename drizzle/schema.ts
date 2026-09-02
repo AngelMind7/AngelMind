@@ -25,7 +25,7 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
-export const accountSecurityEventType = ["login", "logout", "token_rejected", "password_reset_requested", "mfa_enrolled", "mfa_unenrolled", "device_registered", "device_revoked", "profile_updated"] as const;
+export const accountSecurityEventType = ["login", "logout", "token_rejected", "password_reset_requested", "mfa_enrolled", "mfa_unenrolled", "device_registered", "device_revoked", "profile_updated", "privacy_export_requested", "privacy_export_completed", "privacy_delete_requested", "privacy_delete_completed", "privacy_delete_blocked"] as const;
 export const profileVisibility = ["private", "organization", "public"] as const;
 export const apiKeyStatus = ["active", "revoked", "expired"] as const;
 export const entitlementPlan = ["free", "team", "enterprise"] as const;

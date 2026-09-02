@@ -107,6 +107,11 @@ export async function saveOnboardingProfile(userId: number, input: { status: "no
   return profile;
 }
 
+export async function recordPrivacyEvent(userId: number, eventType: "privacy_export_requested" | "privacy_export_completed" | "privacy_delete_requested" | "privacy_delete_completed" | "privacy_delete_blocked", metadata: Record<string, unknown> = {}) {
+  await recordSecurityEvent(userId, eventType, metadata);
+  return { success: true as const };
+}
+
 export async function recordAuthEvent(userId: number, eventType: "login" | "logout" | "token_rejected" | "password_reset_requested" | "mfa_enrolled" | "mfa_unenrolled", metadata: Record<string, unknown> = {}) {
   await recordSecurityEvent(userId, eventType, metadata);
   return { success: true as const };

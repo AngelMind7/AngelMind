@@ -12,6 +12,7 @@ import { registerFirebaseAuthRoutes } from "../firebase-auth";
 import { validateRuntimeConfig } from "./env";
 import { registerRestV1Routes } from "../rest-v1";
 import { registerRealtimeRoutes } from "../realtime";
+import { registerApiRateLimit } from "../rate-limit";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -37,6 +38,7 @@ async function startServer() {
   const app = express();
   const server = createServer(app);
   registerSecurityMiddleware(app);
+  registerApiRateLimit(app);
   registerHealthRoutes(app);
   registerMetricsRoute(app);
   // Configure body parser with larger size limit for file uploads

@@ -16,6 +16,8 @@ import { getDb } from "../db";
  */
 
 const GENESIS = "genesis";
+type Database = NonNullable<Awaited<ReturnType<typeof getDb>>>;
+type Transaction = Parameters<Database["transaction"]>[0] extends (tx: infer T, ...args: any[]) => any ? T : never;
 
 export type AuditChainEntryInput = {
   workspaceId: number;
@@ -55,6 +57,7 @@ function computeChainHash(input: {
  */
 export async function appendAuditChainEntry(
   trx: Parameters<Parameters<NonNullable<Awaited<ReturnType<typeof getDb>>>["transaction"]>[0]>[0],
+  trx: Transaction,
   entry: AuditChainEntryInput,
 ) {
   const [lastEntry] = await trx
@@ -107,6 +110,7 @@ export type AuditChainVerificationResult = {
 export async function verifyAuditChain(workspaceId: number): Promise<AuditChainVerificationResult> {
   const db = await getDb();
   if (!db) throw new Error("Database connection unavailable");
+  if (!db) throw new Error("Database tidak tersedia.");
   const entries = await db
     .select({
       id: auditEvents.id,

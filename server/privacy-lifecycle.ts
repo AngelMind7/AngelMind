@@ -3,6 +3,7 @@ import { accountSecurityEvents, apiKeys, authDevices, onboardingProfiles, organi
 import { getDb } from "./db";
 import { storagePut } from "./storage";
 import { processPrivacyRequest } from "./security-platform";
+import { recordPrivacyEvent } from "./account-security";
 
 const exportTables = [
   ["users", "id"], ["userProfiles", "userId"], ["authDevices", "userId"], ["accountSecurityEvents", "userId"], ["emailDeliveries", "userId"], ["organizationInvitations", "invitedByUserId"],
@@ -38,6 +39,7 @@ export async function executePrivacyExport(requestId: number) {
   if (!request) throw new Error("Export request tidak ditemukan.");
   const data = await collectUserExport(request.userId);
   const artifact = await storagePut(`privacy-exports/${request.userId}/${request.id}.json`, JSON.stringify({ schemaVersion: 1, generatedAt: new Date().toISOString(), userId: request.userId, data }), "application/json");
+  void recordPrivacyEvent(request.userId, "privacy_export_completed", { requestId, artifactKey: artifact.key });
   return processPrivacyRequest({ requestId, status: "completed", resultReference: artifact.key });
 }
 
@@ -48,7 +50,10 @@ export async function executePrivacyDelete(requestId: number) {
   if (!request) throw new Error("Delete request tidak ditemukan.");
   const ownedOrganizations = await db.select({ id: organizations.id }).from(organizations).where(eq(organizations.ownerUserId, request.userId)).limit(1);
   const ownedWorkspaces = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.ownerUserId, request.userId)).limit(1);
-  if (ownedOrganizations.length || ownedWorkspaces.length) throw new Error("Account deletion requires transferring or archiving owned organizations/workspaces first.");
+  if (ownedOrganizations.length || ownedWorkspaces.length) {
+    void recordPrivacyEvent(request.userId, "privacy_delete_blocked", { requestId, ownsOrganization: ownedOrganizations.length > 0, ownsWorkspace: ownedWorkspaces.length > 0 });
+    throw new Error("Account deletion requires transferring or archiving owned organizations/workspaces first.");
+  }
   await db.transaction(async tx => {
     for (const [table, column] of deleteTables) {
       await tx.execute(sql.raw(`DELETE FROM ${fixedIdentifier(table)} WHERE ${fixedIdentifier(column)} = ${request.userId}`));

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsePositiveInteger } from "./rest-v1";
+import { parseBearerToken, parsePositiveInteger } from "./rest-v1";
 
 describe("REST v1 input contracts", () => {
   it("accepts positive safe integers", () => {
@@ -11,5 +11,12 @@ describe("REST v1 input contracts", () => {
     for (const value of ["0", "-1", "1.5", "1e3", "9007199254740992"]) {
       expect(() => parsePositiveInteger(value, "runId")).toThrow();
     }
+  });
+
+  it("parses only bearer authorization headers", () => {
+    expect(parseBearerToken("Bearer am_secret")).toBe("am_secret");
+    expect(parseBearerToken("bearer  token-2")).toBe("token-2");
+    expect(parseBearerToken("Basic token")).toBeNull();
+    expect(parseBearerToken(undefined)).toBeNull();
   });
 });

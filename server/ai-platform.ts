@@ -168,15 +168,24 @@ export async function enqueueJob(userId: number, input: { workspaceId?: number; 
   if (!db) throw new Error("Database tidak tersedia.");
   if (input.workspaceId) await requireWorkspace(userId, input.workspaceId, "respond");
   const idempotencyKey = input.idempotencyKey.trim();
-  if (idempotencyKey.length < 8) throw new Error("Idempotency key must be at least 8 characters.");
+  const kind = input.kind.trim();
+  const payload = JSON.stringify(input.payload);
+  if (idempotencyKey.length < 8 || idempotencyKey.length > 180) throw new Error("Idempotency key must contain 8-180 characters.");
+  if (kind.length < 2 || kind.length > 80) throw new Error("Job kind must contain 2-80 characters.");
   const traceId = currentTraceContext()?.traceId ?? null;
   const [existing] = await db.select().from(jobs).where(eq(jobs.idempotencyKey, idempotencyKey)).limit(1);
-  if (existing) return existing;
+  if (existing) {
+    if (existing.kind !== kind || existing.workspaceId !== (input.workspaceId ?? null) || existing.payload !== payload) throw new Error("Idempotency key is already used for a different job payload.");
+    return existing;
+  }
   try {
-    await db.insert(jobs).values({ workspaceId: input.workspaceId ?? null, kind: input.kind.trim(), traceId, idempotencyKey, payload: JSON.stringify(input.payload), status: "queued", attempts: 0, maxAttempts: input.maxAttempts ?? 3, availableAt: new Date() });
+    await db.insert(jobs).values({ workspaceId: input.workspaceId ?? null, kind, traceId, idempotencyKey, payload, status: "queued", attempts: 0, maxAttempts: input.maxAttempts ?? 3, availableAt: new Date() });
   } catch (error) {
     const [concurrent] = await db.select().from(jobs).where(eq(jobs.idempotencyKey, idempotencyKey)).limit(1);
-    if (concurrent) return concurrent;
+    if (concurrent) {
+      if (concurrent.kind !== kind || concurrent.workspaceId !== (input.workspaceId ?? null) || concurrent.payload !== payload) throw new Error("Idempotency key is already used for a different job payload.");
+      return concurrent;
+    }
     throw error;
   }
   const [job] = await db.select().from(jobs).where(eq(jobs.idempotencyKey, idempotencyKey)).limit(1);
@@ -195,15 +204,26 @@ export async function publishOutboxEvent(userId: number, input: { workspaceId?: 
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   if (input.workspaceId) await requireWorkspace(userId, input.workspaceId, "respond");
-  const existing = await db.select().from(outboxEvents).where(eq(outboxEvents.idempotencyKey, input.idempotencyKey)).limit(1);
-  if (existing[0]) return existing[0];
-  const traceId = currentTraceContext()?.traceId ?? null;
   const idempotencyKey = input.idempotencyKey.trim();
+  const payload = JSON.stringify(input.payload);
+  const eventType = input.eventType.trim();
+  const aggregateType = input.aggregateType.trim();
+  if (idempotencyKey.length < 8 || idempotencyKey.length > 180) throw new Error("Idempotency key must contain 8-180 characters.");
+  if (eventType.length < 3 || eventType.length > 120 || aggregateType.length < 2 || aggregateType.length > 80) throw new Error("Outbox event identity is invalid.");
+  const existing = await db.select().from(outboxEvents).where(eq(outboxEvents.idempotencyKey, idempotencyKey)).limit(1);
+  if (existing[0]) {
+    if (existing[0].eventType !== eventType || existing[0].aggregateType !== aggregateType || existing[0].aggregateId !== input.aggregateId || existing[0].workspaceId !== (input.workspaceId ?? null) || existing[0].payload !== payload) throw new Error("Idempotency key is already used for a different outbox event.");
+    return existing[0];
+  }
+  const traceId = currentTraceContext()?.traceId ?? null;
   try {
-    await db.insert(outboxEvents).values({ workspaceId: input.workspaceId ?? null, eventType: input.eventType.trim(), traceId, aggregateType: input.aggregateType.trim(), aggregateId: input.aggregateId, idempotencyKey, schemaVersion: input.schemaVersion ?? 1, payload: JSON.stringify(input.payload), status: "pending", attempts: 0 });
+    await db.insert(outboxEvents).values({ workspaceId: input.workspaceId ?? null, eventType, traceId, aggregateType, aggregateId: input.aggregateId, idempotencyKey, schemaVersion: input.schemaVersion ?? 1, payload, status: "pending", attempts: 0 });
   } catch (error) {
     const [concurrent] = await db.select().from(outboxEvents).where(eq(outboxEvents.idempotencyKey, idempotencyKey)).limit(1);
-    if (concurrent) return concurrent;
+    if (concurrent) {
+      if (concurrent.eventType !== eventType || concurrent.aggregateType !== aggregateType || concurrent.aggregateId !== input.aggregateId || concurrent.workspaceId !== (input.workspaceId ?? null) || concurrent.payload !== payload) throw new Error("Idempotency key is already used for a different outbox event.");
+      return concurrent;
+    }
     throw error;
   }
   const [event] = await db.select().from(outboxEvents).where(eq(outboxEvents.idempotencyKey, idempotencyKey)).limit(1);

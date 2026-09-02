@@ -98,7 +98,23 @@ export async function signInWithEmail(email: string, password: string): Promise<
   const client = getFirebaseClient();
   if (!client) throw new Error("Firebase authentication is not configured.");
   const credential = await signInWithEmailAndPassword(client.auth, email.trim(), password);
-  return exchangeFirebaseUser(credential.user);
+  try {
+    return await exchangeFirebaseUser(credential.user);
+  } catch (error) {
+    await signOut(client.auth).catch(() => undefined);
+    throw error;
+  }
+}
+
+export async function resendEmailVerification(email: string, password: string): Promise<void> {
+  const client = getFirebaseClient();
+  if (!client) throw new Error("Firebase authentication is not configured.");
+  const credential = await signInWithEmailAndPassword(client.auth, email.trim(), password);
+  try {
+    await sendEmailVerification(credential.user);
+  } finally {
+    await signOut(client.auth).catch(() => undefined);
+  }
 }
 
 export async function registerWithEmail(email: string, password: string): Promise<{ verificationRequired: true; email: string }> {

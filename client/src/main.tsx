@@ -72,13 +72,7 @@ const trpcClient = trpc.createClient({
   ],
 });
 
-async function bootstrap() {
-  try {
-    await completeGoogleRedirectSignIn();
-  } catch (error) {
-    console.error("[Firebase Auth] Redirect sign-in failed", error);
-  }
-
+function renderApp() {
   createRoot(document.getElementById("root")!).render(
     <trpc.Provider client={trpcClient} queryClient={queryClient}>
       <QueryClientProvider client={queryClient}>
@@ -88,4 +82,14 @@ async function bootstrap() {
   );
 }
 
-void bootstrap();
+function bootstrap() {
+  // Render the shell first. Firebase's redirect-result check can wait on
+  // browser storage/network state, especially on mobile; it must never block
+  // the public page and its sign-in button from mounting.
+  renderApp();
+  void completeGoogleRedirectSignIn().catch(error => {
+    console.error("[Firebase Auth] Redirect sign-in failed", error);
+  });
+}
+
+bootstrap();

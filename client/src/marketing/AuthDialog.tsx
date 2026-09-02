@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { registerWithEmail, resetPassword, signInWithEmail } from "@/firebase";
+import { registerWithEmail, resetPassword, resendEmailVerification, signInWithEmail } from "@/firebase";
 import { useState } from "react";
 
 type AuthMode = "signin" | "register" | "reset";
@@ -48,6 +48,7 @@ export function AuthDialog({ open, onOpenChange, onAuthenticated }: Props) {
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const canResendVerification = mode === "signin" && error === "A verified email is required.";
 
   const submit = async () => {
     if (busy) return;
@@ -142,6 +143,29 @@ export function AuthDialog({ open, onOpenChange, onAuthenticated }: Props) {
             <p role="alert" className="text-sm text-rose-300">
               {error}
             </p>
+          )}
+          {canResendVerification && (
+            <button
+              type="button"
+              className="text-left text-sm text-cyan-200 underline-offset-4 hover:underline disabled:opacity-50"
+              disabled={busy || !email.trim() || password.length < 6}
+              onClick={async () => {
+                if (busy) return;
+                setBusy(true);
+                setError(null);
+                setNotice(null);
+                try {
+                  await resendEmailVerification(email, password);
+                  setNotice("Email verifikasi dikirim ulang. Cek inbox sebelum masuk.");
+                } catch (verificationError) {
+                  setError(readableAuthError(verificationError));
+                } finally {
+                  setBusy(false);
+                }
+              }}
+            >
+              Resend verification email
+            </button>
           )}
           {notice && (
             <p role="status" className="text-sm text-cyan-200">

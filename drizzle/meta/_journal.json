@@ -386,6 +386,41 @@
       "when": 1788335086741,
       "tag": "0054_audit_chain_and_approval_authority",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "5",
+      "when": 1788335086742,
+      "tag": "0055_privacy_security_audit_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 55,
+      "version": "5",
+      "when": 1788335086743,
+      "tag": "0056_finding_remediation_lifecycle",
+      "breakpoints": true
+    },
+    {
+      "idx": 56,
+      "version": "5",
+      "when": 1788335086744,
+      "tag": "0057_finding_revision_concurrency",
+      "breakpoints": true
+    },
+    {
+      "idx": 57,
+      "version": "5",
+      "when": 1788335086745,
+      "tag": "0058_ai_memory_scopes",
+      "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "5",
+      "when": 1788440000000,
+      "tag": "0059_search_document_semantic_vectors",
+      "breakpoints": true
     }
   ]
 }

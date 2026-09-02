@@ -22,6 +22,7 @@ import * as researchWorkflow from "./research-workflow";
 import * as organization from "./organization";
 import * as evidenceWorkflow from "./evidence-workflow";
 import * as aiPlatform from "./ai-platform";
+import * as aiMemory from "./ai-memory";
 import * as aiOrchestration from "./ai-orchestration";
 import * as securityPlatform from "./security-platform";
 import * as submissionWorkflow from "./submission-workflow";
@@ -33,6 +34,8 @@ import * as researchIntelligence from "./research-intelligence";
 import * as toolCatalog from "./tool-catalog";
 import * as toolRuntime from "./tool-runtime";
 import * as knowledgeGraph from "./knowledge-graph";
+import * as mfa from "./mfa";
+import { executeIdempotent } from "./idempotency";
 
 const workspaceInput = z.object({
   name: z.string().min(2).max(120),
@@ -153,6 +156,26 @@ export const appRouter = router({
     security: protectedProcedure.query(({ ctx }) =>
       accountSecurity.getAccountSecurity(ctx.user.id)
     ),
+    mfa: protectedProcedure.query(({ ctx }) => mfa.getMfaStatus(ctx.user.id)),
+    beginTotpEnrollment: protectedProcedure
+      .input(z.object({ label: z.string().trim().max(120).optional() }))
+      .mutation(({ ctx, input }) => mfa.beginTotpEnrollment(ctx.user.id, input.label)),
+    confirmTotpEnrollment: protectedProcedure
+      .input(z.object({ challenge: z.string().min(20).max(512), code: z.string().regex(/^\d{6}$/) }))
+      .mutation(({ ctx, input }) => mfa.confirmTotpEnrollment(ctx.user.id, input)),
+    verifyMfa: protectedProcedure
+      .input(z.object({ code: z.string().trim().min(6).max(32) }))
+      .mutation(({ ctx, input }) => mfa.verifyTotpOrRecoveryCode(ctx.user.id, input.code)),
+    beginPasskeyRegistration: protectedProcedure
+      .input(z.object({ label: z.string().trim().max(120).optional() }))
+      .mutation(({ ctx, input }) => mfa.beginPasskeyRegistration(ctx.user.id, input.label)),
+    finishPasskeyRegistration: protectedProcedure
+      .input(z.object({ challenge: z.string().min(20).max(512), response: z.record(z.string(), z.unknown()) }))
+      .mutation(({ ctx, input }) => mfa.finishPasskeyRegistration(ctx.user.id, input.challenge, input.response)),
+    beginPasskeyAuthentication: protectedProcedure.mutation(({ ctx }) => mfa.beginPasskeyAuthentication(ctx.user.id)),
+    finishPasskeyAuthentication: protectedProcedure
+      .input(z.object({ challenge: z.string().min(20).max(512), response: z.record(z.string(), z.unknown()) }))
+      .mutation(({ ctx, input }) => mfa.finishPasskeyAuthentication(ctx.user.id, input.challenge, input.response)),
     registerDevice: protectedProcedure
       .input(
         z.object({
@@ -178,6 +201,7 @@ export const appRouter = router({
     saveOnboarding: protectedProcedure
       .input(
         z.object({
+          idempotencyKey: z.string().trim().min(8).max(180),
           status: z.enum([
             "not_started",
             "in_progress",
@@ -194,9 +218,13 @@ export const appRouter = router({
           roleIntent: z.string().max(80).optional(),
         })
       )
-      .mutation(({ ctx, input }) =>
-        accountSecurity.saveOnboardingProfile(ctx.user.id, input)
-      ),
+      .mutation(({ ctx, input }) => executeIdempotent({
+        userId: ctx.user.id,
+        scope: "auth.saveOnboarding",
+        key: input.idempotencyKey,
+        request: input,
+        handler: () => accountSecurity.saveOnboardingProfile(ctx.user.id, input),
+      }).then(result => result.value)),
   }),
   agent: router({
     planMultiAgentRun: protectedProcedure
@@ -799,13 +827,15 @@ export const appRouter = router({
         z.object({
           archiveId: z.number().int().positive(),
           destinationWorkspaceId: z.number().int().positive().optional(),
+          idempotencyKey: z.string().trim().min(8).max(180).optional(),
         })
       )
       .mutation(({ ctx, input }) =>
         operations.runAuditArchiveDrill(
           ctx.user.id,
           input.archiveId,
-          input.destinationWorkspaceId
+          input.destinationWorkspaceId,
+          input.idempotencyKey
         )
       ),
   }),
@@ -1064,6 +1094,25 @@ export const appRouter = router({
           throw new Error("Admin role is required to update model health.");
         return aiPlatform.recordModelHealth(ctx.user.id, input);
       }),
+    memories: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive().optional(), scope: z.enum(["user", "workspace", "session", "program"]).optional(), limit: z.number().int().min(1).max(100).optional() }))
+      .query(({ ctx, input }) => aiMemory.listAiMemories(ctx.user.id, input)),
+    saveMemory: protectedProcedure
+      .input(z.object({
+        scope: z.enum(["user", "workspace", "session", "program"]),
+        workspaceId: z.number().int().positive().optional(),
+        sessionId: z.number().int().positive().optional(),
+        programId: z.number().int().positive().optional(),
+        memoryKey: z.string().trim().min(2).max(160),
+        content: z.string().trim().min(2).max(100_000),
+        sourceReference: z.string().trim().max(512).nullable().optional(),
+        retentionDays: z.number().int().min(1).max(3_650).optional(),
+        expectedRevision: z.number().int().nonnegative().optional(),
+      }))
+      .mutation(({ ctx, input }) => aiMemory.saveAiMemory(ctx.user.id, input)),
+    archiveMemory: protectedProcedure
+      .input(z.object({ memoryId: z.number().int().positive(), expectedRevision: z.number().int().nonnegative() }))
+      .mutation(({ ctx, input }) => aiMemory.archiveAiMemory(ctx.user.id, input)),
     runs: protectedProcedure
       .input(z.object({ workspaceId: z.number().int().positive() }))
       .query(({ ctx, input }) =>
@@ -1183,6 +1232,7 @@ export const appRouter = router({
           workspaceId: z.number().int().positive(),
           query: z.string().trim().min(2).max(120),
           limit: z.number().int().min(1).max(50).optional(),
+          cursor: z.string().trim().max(512).optional(),
           entityTypes: z.array(z.string().trim().min(1).max(40)).max(12).optional(),
           freshnessDays: z.number().int().min(1).max(3_650).optional(),
         })
@@ -1289,9 +1339,9 @@ export const appRouter = router({
         evidenceWorkflow.listFindingRetests(ctx.user.id, input.findingId)
       ),
     requestRetest: protectedProcedure
-      .input(z.object({ findingId: z.number().int().positive() }))
+      .input(z.object({ findingId: z.number().int().positive(), expectedRevision: z.number().int().nonnegative() }))
       .mutation(({ ctx, input }) =>
-        evidenceWorkflow.requestFindingRetest(ctx.user.id, input.findingId)
+        evidenceWorkflow.requestFindingRetest(ctx.user.id, input)
       ),
     completeRetest: protectedProcedure
       .input(
@@ -1891,21 +1941,32 @@ export const appRouter = router({
           impactSummary: z.string().min(10).max(12_000),
           reportDraft: z.string().min(10).max(20_000),
           confidence: z.number().int().min(0).max(100),
+          severity: z.enum(["informational", "low", "medium", "high", "critical"]).optional(),
         })
       )
       .mutation(({ ctx, input }) =>
         controlPlane.createFinding(ctx.user.id, input)
       ),
+    updateRemediation: protectedProcedure
+      .input(z.object({ findingId: z.number().int().positive(), expectedRevision: z.number().int().nonnegative(), remediationDeadline: z.coerce.date().nullable().optional(), remediationOwnerUserId: z.number().int().positive().nullable().optional(), remediationNotes: z.string().max(20_000).nullable().optional() }))
+      .mutation(({ ctx, input }) => controlPlane.updateFindingRemediation(ctx.user.id, input)),
     transition: protectedProcedure
       .input(
         z.object({
           findingId: z.number().int().positive(),
+          expectedRevision: z.number().int().nonnegative(),
           status: z.enum([
             "triaged",
             "candidate",
             "reproducing",
             "validated",
             "reported",
+            "notified",
+            "remediation",
+            "retest",
+            "resolved",
+            "reopened",
+            "false_positive",
             "invalid",
             "duplicate",
             "inconclusive",

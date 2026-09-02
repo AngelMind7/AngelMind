@@ -12,6 +12,7 @@ export const ENV = {
   supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY ?? "",
   supabaseStorageBucket: process.env.SUPABASE_STORAGE_BUCKET ?? "angelmind-files",
   railwayCronSecret: process.env.RAILWAY_CRON_SECRET ?? "",
+  appBaseUrl: process.env.APP_BASE_URL ?? process.env.PUBLIC_APP_URL ?? "http://localhost:3000",
   llmPrimaryApiUrl: process.env.LLM_PRIMARY_API_BASE_URL ?? process.env.LLM_API_BASE_URL ?? "",
   llmPrimaryApiKey: process.env.LLM_PRIMARY_API_KEY ?? process.env.LLM_API_KEY ?? "",
   llmPrimaryModel: process.env.LLM_PRIMARY_MODEL ?? process.env.LLM_MODEL ?? "",

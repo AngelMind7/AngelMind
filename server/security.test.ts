@@ -28,6 +28,23 @@ describe("security and health contracts", () => {
     expect(response.headers.get("permissions-policy")).toContain("camera=()");
   });
 
+  it("propagates bounded request and trace correlation headers", async () => {
+    const app = express();
+    registerSecurityMiddleware(app);
+    app.get("/", (_req, res) => res.status(200).send("ok"));
+    const server = app.listen(0);
+    await new Promise<void>(resolve => server.once("listening", () => resolve()));
+    const address = server.address();
+    if (!address || typeof address === "string") throw new Error("Test server did not expose a port");
+    try {
+      const response = await fetch(`http://127.0.0.1:${address.port}/`, { headers: { "x-request-id": "request-test", "x-trace-id": "trace-test" } });
+      expect(response.headers.get("x-request-id")).toBe("request-test");
+      expect(response.headers.get("x-trace-id")).toBe("trace-test");
+    } finally {
+      await new Promise<void>(resolve => server.close(() => resolve()));
+    }
+  });
+
   it("exposes process metrics in Prometheus text format", async () => {
     const app = express();
     registerMetricsRoute(app);
@@ -39,6 +56,18 @@ describe("security and health contracts", () => {
     expect(body).toContain("angelmind_process_memory_bytes{category=\"rss\"}");
     expect(body).toContain("# TYPE angelmind_purge_batch_duration_ms gauge");
     expect(body).toContain("angelmind_purge_duration_alert 0");
+  });
+
+  it("exposes HTTP request and slow-request counters", async () => {
+    const app = express();
+    registerSecurityMiddleware(app);
+    app.get("/", (_req, res) => res.status(200).send("ok"));
+    registerMetricsRoute(app);
+    await request(app, "/");
+    const body = await (await request(app, "/metrics")).text();
+    expect(body).toContain("angelmind_http_requests_total");
+    expect(body).toContain("angelmind_http_errors_total");
+    expect(body).toContain("angelmind_http_slow_requests_total");
   });
 
   it("records purge duration and exposes a threshold alert", () => {

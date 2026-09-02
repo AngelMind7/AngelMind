@@ -9,7 +9,7 @@ Dokumen ini adalah antrean pekerjaan aktif. Status requirement otoritatif tetap 
 | P0 | Composite workspace consistency di database boundary. | **Selesai untuk research lifecycle**: composite indexes dan foreign keys session/asset/observation/hypothesis/task sudah ada pada schema dan migration `0032`; relasi domain lain dapat diperluas bila diperlukan. |
 | P1 | End-to-end trace graph correlation. | **Selesai untuk record inti**: `traceId` dipersist pada session, asset, observation, hypothesis, task, finding, evidence artifact, dan playbook task; propagasi ke provider eksternal tetap bergantung pada adapter/provider. |
 | P1 | Worker dan outbox operational semantics. | **Selesai untuk core dispatcher**: job lease/heartbeat, stale recovery, retry/dead-letter, outbox lease, backoff, consumer receipt setelah sukses, serta automatic evidence-scan handler sudah tersedia. Integration test dengan database live dan deployment replay drill masih memerlukan environment. |
-| P1 | Evidence security scanning. | **Selesai untuk built-in safety scan**: upload masuk quarantine dan diproses worker melalui MIME, extension, magic-byte, ukuran, ZIP, dan control-character checks. Antivirus/malware provider eksternal masih opsional dan membutuhkan provider/credential. |
+| P1 | Evidence security scanning. | **Selesai untuk repository boundary**: upload masuk quarantine dan diproses worker melalui MIME, extension, magic-byte, ukuran, ZIP, dan control-character checks. Optional external HTTP malware-provider adapter, HTTPS production enforcement, bounded timeout, provider verdict validation, and retry-safe outage behavior are implemented; provider URL/credential and live verification tetap membutuhkan environment. |
 | P1 | Permission-aware ranked search. | **Selesai untuk deterministic search**: workspace permission boundary, cross-domain index, token ranking, dan freshness scoring tersedia. Semantic/vector retrieval tetap merupakan enhancement opsional. |
 | P1 | Intelligence ingestion. | **Selesai untuk provider-neutral fetch**: normalization, persistence, deterministic dedupe, audit, batch ingestion API, HTTPS/host allowlisting, bounded JSON fetch, durable job enqueue, dan worker handler tersedia. Provider-specific authentication, credentials, dan scheduling policy tetap membutuhkan environment/keputusan owner. |
 | P1 | Playbook execution. | **Sebagian tersedia**: versioned playbook, matching, task generation, dependency persistence, trace lineage, validation, dan audit tersedia; executor task nyata dan feedback dari adapter tool masih memerlukan implementasi/provider sesuai policy. |
@@ -109,3 +109,35 @@ Research task kini dapat menerima `assetId`, membaca metadata asset pada session
 ## Q — Repository completion pass (2026-09-02)
 
 Subsequent commits added direct `sourceObservationId` provenance on findings with migration `0052`, a reviewer-only approval mutation for high/critical research tasks, an explicit administrative scheduler registry, bounded notification retry backoff, constant-time archive signature verification, a manual HTTPS-only staging load probe, and a manual post-deploy health/readiness/metrics verification workflow. These contracts are covered by typecheck and automated tests and remain safe by default.
+
+## R — Finding remediation, retest, and search consistency (2026-09-02)
+
+Finding records now persist severity, client-notified time, remediation deadline/owner/notes, resolved time, and a monotonic revision counter through migrations `0056_finding_remediation_lifecycle` and `0057_finding_revision_concurrency`. The state machine now models notification, remediation, retest, resolution, reopening, and false-positive checkpoints while keeping automated submission impossible. Transition, remediation, and new retest-request writes require the caller's expected revision and fail closed on stale data. Retest requests are idempotent while active; terminal retest results require scanned or promoted evidence and update the parent finding to `resolved`, `remediation`, or `inconclusive`.
+
+Search consistency is extended to finding transitions/remediation, evidence upload/scan/promotion/provenance, report drafts, knowledge-node upserts, and workspace-note create/update/delete. Global search now exposes deterministic relevance-aware cursor pagination and a stable empty-database response shape. The Findings surface exposes severity, remediation planning, and the expanded lifecycle. Firebase, Supabase, Railway, production migration application, and live staging verification remain intentionally outside this repository-only slice.
+
+Verification completed locally: TypeScript check, finding workflow tests, migration journal consistency, and `git diff --check` passed after the changes; full test/build verification remains the next gate before commit.
+
+## S — Governed AI memory scopes (2026-09-02)
+
+AI memory is now repository-backed for `user`, `workspace`, `session`, and workspace-linked `program` scopes. Memory writes validate references against the selected workspace, enforce read/respond authorization, protect updates and archive operations with monotonic revisions, preserve source/retention metadata, and make user-private memory unavailable to workspace search. Active workspace memory is indexed for global search; archive and retention purge remove derived search records. The worker retention interval and `ai.memory.purge` durable job now purge both AI run payloads and expired AI memory content. Migration `0058_ai_memory_scopes` defines the table, foreign keys, normalized unique scope key, indexes, status, retention, and revision columns. AI Center exposes save, update, list, and archive controls.
+
+Local scope contract tests and migration safety/rollback checks pass. Applying migration `0058` to the live database and provider-level context injection remain environment/adapter work.
+
+## V — Rate limiting and abuse protection (2026-09-03)
+
+The API boundary now applies bounded in-memory rate limiting to Firebase token exchange, scheduled callbacks, REST v1, and tRPC routes. Client keys use the socket address by default and only honor `X-Forwarded-For` when `TRUST_PROXY=true`; authorization material is hashed before keying and is never exposed in responses or logs. Repeated limit violations escalate to a bounded exponential abuse cooldown with `Retry-After`, while health and metrics routes remain available for operations. Distributed quota coordination and behavioral/account-abuse detection remain environment/provider work.
+
+Focused rate-limit tests, typecheck, and migration safety validation pass.
+
+## W — Production observability hardening (2026-09-03)
+
+HTTP requests now receive bounded `x-request-id` and `x-trace-id` correlation headers and execute within the existing async trace context. Prometheus output includes response-status counters, current error/slow ratios, SLO budget gauges, runtime readiness, purge metrics, and configured provider probe readiness. Provider probes are bounded by timeout, report status/latency without response-body leakage, and participate in production `/readyz` fail-closed behavior when configured. Hosted alert delivery and dashboard provisioning remain environment-level operations.
+
+Full Vitest suite, production build, and diff validation pass.
+
+## X — Disaster-recovery restore drill (2026-09-03)
+
+Audit archive restore drills now persist a durable `restoreDrillRuns` ledger keyed by archive and idempotency key. A drill retrieves the managed-storage manifest, verifies SHA-256/HMAC integrity, validates workspace identity and record collections, records checked counts, and updates the archive's last-drill timestamp. Duplicate requests replay completed results; concurrent requests are rejected; failed drills remain failed and require a new key. The drill is explicitly plan-only and performs no production data writes or deletes. A real recovery environment and human-confirmed restore execution remain deployment-level work.
+
+Typecheck, archive integrity tests, migration safety, full Vitest suite, production build, and diff validation pass.

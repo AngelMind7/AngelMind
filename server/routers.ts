@@ -1356,10 +1356,18 @@ export const appRouter = router({
       .input(z.object({ organizationId: z.number().int().positive(), email: z.string().email().max(320), role: z.enum(["admin", "researcher", "reviewer", "auditor"]) }))
       .mutation(({ ctx, input }) => organization.addOrganizationMember(ctx.user.id, input)),
     invitations: protectedProcedure.input(z.object({ organizationId: z.number().int().positive() })).query(({ ctx, input }) => organization.listOrganizationInvitations(ctx.user.id, input.organizationId)),
-    createInvitation: protectedProcedure.input(z.object({ organizationId: z.number().int().positive(), email: z.string().email().max(320), role: z.enum(["admin", "researcher", "reviewer", "auditor"]), expiresInDays: z.number().int().min(1).max(30).optional() })).mutation(({ ctx, input }) => organization.createOrganizationInvitation(ctx.user.id, input)),
+    createInvitation: protectedProcedure.input(z.object({ organizationId: z.number().int().positive(), email: z.string().email().max(320), role: z.enum(["admin", "researcher", "reviewer", "auditor"]), expiresInDays: z.number().int().min(1).max(30).optional() })).mutation(async ({ ctx, input }) => {
+      const invitation = await organization.createOrganizationInvitation(ctx.user.id, input);
+      if (invitation.invitationId) await aiPlatform.enqueueJob(ctx.user.id, { kind: "email.invitation", idempotencyKey: `invitation-email:${invitation.invitationId}`, payload: { type: "organization_invitation", invitationId: invitation.invitationId, token: invitation.token, email: invitation.email, role: invitation.role, organizationName: invitation.organizationName, expiresAt: invitation.expiresAt.toISOString() }, maxAttempts: 5 });
+      return invitation;
+    }),
     acceptInvitation: protectedProcedure.input(z.object({ token: z.string().trim().min(20).max(200) })).mutation(({ ctx, input }) => organization.acceptOrganizationInvitation(ctx.user.id, input.token)),
     revokeInvitation: protectedProcedure.input(z.object({ invitationId: z.number().int().positive() })).mutation(({ ctx, input }) => organization.revokeOrganizationInvitation(ctx.user.id, input.invitationId)),
-    resendInvitation: protectedProcedure.input(z.object({ invitationId: z.number().int().positive() })).mutation(({ ctx, input }) => organization.resendOrganizationInvitation(ctx.user.id, input.invitationId)),
+    resendInvitation: protectedProcedure.input(z.object({ invitationId: z.number().int().positive() })).mutation(async ({ ctx, input }) => {
+      const invitation = await organization.resendOrganizationInvitation(ctx.user.id, input.invitationId);
+      if (invitation.invitationId) await aiPlatform.enqueueJob(ctx.user.id, { kind: "email.invitation", idempotencyKey: `invitation-email:${invitation.invitationId}`, payload: { type: "organization_invitation", invitationId: invitation.invitationId, token: invitation.token, email: invitation.email, role: invitation.role, organizationName: invitation.organizationName, expiresAt: invitation.expiresAt.toISOString() }, maxAttempts: 5 });
+      return invitation;
+    }),
     programs: protectedProcedure
       .input(z.object({ organizationId: z.number().int().positive() }))
       .query(({ ctx, input }) =>

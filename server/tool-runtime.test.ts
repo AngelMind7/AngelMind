@@ -254,7 +254,7 @@ describe("registered tool runtime", () => {
 
   it("fails readiness for missing or unregistered required binaries", async () => {
     const previous = process.env.RUNTIME_REQUIRED_BINARIES;
-    process.env.RUNTIME_REQUIRED_BINARIES = "yara,missing-runtime-binary";
+    process.env.RUNTIME_REQUIRED_BINARIES = "python3,missing-runtime-binary";
     await expect(checkRuntimeReadiness()).resolves.toEqual({ configured: true, ready: false, missing: ["missing-runtime-binary"] });
     if (previous === undefined) delete process.env.RUNTIME_REQUIRED_BINARIES;
     else process.env.RUNTIME_REQUIRED_BINARIES = previous;

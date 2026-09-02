@@ -82,6 +82,7 @@ export function semanticSimilarity(left: number[], right: number[]) {
 }
 
 export async function upsertSearchDocument(input: { workspaceId: number; entityType: string; entityId: number; title: string; body: string }) {
+  if (!input || !Number.isInteger(input.workspaceId) || input.workspaceId < 1 || !Number.isInteger(input.entityId) || input.entityId < 1 || typeof input.entityType !== "string" || !/^[a-z0-9_-]{1,64}$/i.test(input.entityType) || typeof input.title !== "string" || typeof input.body !== "string") throw new Error("Search document input is invalid.");
   const db = await getDb();
   if (!db) return;
   const title = clean(input.title, 512);
@@ -91,12 +92,14 @@ export async function upsertSearchDocument(input: { workspaceId: number; entityT
 }
 
 export async function deleteSearchDocument(input: { workspaceId: number; entityType: string; entityId: number }) {
+  if (!input || !Number.isInteger(input.workspaceId) || input.workspaceId < 1 || !Number.isInteger(input.entityId) || input.entityId < 1 || typeof input.entityType !== "string" || !/^[a-z0-9_-]{1,64}$/i.test(input.entityType)) throw new Error("Search document identity is invalid.");
   const db = await getDb();
   if (!db) return;
   await db.delete(searchDocuments).where(and(eq(searchDocuments.workspaceId, input.workspaceId), eq(searchDocuments.entityType, input.entityType), eq(searchDocuments.entityId, input.entityId)));
 }
 
 export async function rebuildWorkspaceSearchIndex(userId: number, workspaceId: number) {
+  if (!Number.isInteger(userId) || userId < 1 || !Number.isInteger(workspaceId) || workspaceId < 1) throw new Error("Search index identity is invalid.");
   if (!(await canAccessWorkspace(userId, workspaceId, "respond"))) throw new Error("Workspace tidak dapat dikelola.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
@@ -136,6 +139,7 @@ export async function rebuildWorkspaceSearchIndex(userId: number, workspaceId: n
 }
 
 export async function searchWorkspace(userId: number, input: { workspaceId: number; query: string; limit?: number; cursor?: string; entityTypes?: string[]; freshnessDays?: number }) {
+  if (!Number.isInteger(userId) || userId < 1 || !input || !Number.isInteger(input.workspaceId) || input.workspaceId < 1 || typeof input.query !== "string" || (input.entityTypes !== undefined && (!Array.isArray(input.entityTypes) || !input.entityTypes.every(value => typeof value === "string")))) throw new Error("Search input is invalid.");
   const query = clean(input.query, 120);
   if (query.length < 2) throw new Error("Search query must contain at least two characters.");
   if (!(await canAccessWorkspace(userId, input.workspaceId, "read"))) throw new Error("Workspace tidak dapat diakses.");

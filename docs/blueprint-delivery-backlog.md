@@ -22,7 +22,7 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 | Task dependency graph | Implemented (presentation slice) | Dependency validation, lifecycle controls, cycle-safe deterministic graph layout, readiness indicators, and ResearchWorkspace dependency view; persistent worker orchestration remains environment/deployment dependent. |
 | Failure domain | Implemented (vertical slice) | Typed validation contract, persisted `failureObservations`, workspace/session authorization, audit event, tRPC list/create procedures, and Failure Domain UI in Research Workspace. |
 | Evolution and intelligence foundation | Implemented (vertical slice) | Persisted `evolutionSnapshots`, `intelligenceFeedItems`, and `playbooks` with migration, workspace-scoped list/create/compare procedures, deterministic snapshot diff, playbook matching, and feed normalization. External provider adapters and automated ingestion remain environment-dependent. |
-| Observation → hypothesis → evidence → finding | Partial | Evidence can now link to workspace-scoped observations/hypotheses, with quality gates; full observation-to-finding UI lifecycle remains partial. |
+| Observation → hypothesis → evidence → finding | Implemented (core) | Workspace-scoped observation/hypothesis flow, direct observation provenance on findings, quality gates, human-review state, and Research Workspace promotion UI are available; live provider ingestion remains environment-dependent. |
 | Retest and duplicate intelligence | Implemented (core) | Duplicate candidate query, relation linking, retest evidence/result, and finding status synchronization. |
 
 ## Commit group C — reports and collaboration
@@ -31,7 +31,7 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 |---|---|---|
 | Report builder/versioning | Partial | Persisted draft autosave/restore, version/diff APIs, preview/export contracts, and ReportStudio autosave path; richer collaborative diff remains partial. |
 | Submission tracking | Implemented (core) | `submissions` + `submissionEvents` migration, transition API, readiness/human-review gate. |
-| Comments/mentions/review | Partial | Workspace-scoped comments, persisted mention metadata, in-app mention notifications, and distinct reviewer checks; full comment threading remains partial. |
+| Comments/mentions/review | Implemented (core) | Workspace-scoped comments, persisted mentions, in-app mention notifications, parentCommentId validation, recursive threaded rendering, and reviewer checks are available; provider delivery remains environment-dependent. |
 | Notifications | Partial | Cursor polling, comment mention delivery, event preferences, and outbound boundary; provider retry/failure delivery remains gated. |
 | Search/saved views/tags/notes | Implemented (core) | Workspace-scoped global search across findings, assets, sessions, programs, and reports. Saved views/tags/notes remain partial. |
 | Knowledge graph/intelligence | Partial | Explicit relationship records and change detection signals. |
@@ -42,9 +42,9 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 |---|---|---|
 | Model registry/gateway health | Partial | Provider/model capability metadata plus admin health status, latency, and error metadata; live provider probes remain environment-dependent. |
 | AI orchestration | Partial | Deterministic planner, role/task assignment, dependency gating, confidence-filtered synthesis, cross-check verdict, and human-review signal; provider execution and persisted agent-run graph remain environment/architecture dependent. |
-| AI provenance/memory | Partial | Run trace, input/output references, workspace isolation, and configurable 1–3650 day retentionUntil policy; purge worker/memory retrieval remains partial. |
+| AI provenance/memory | Implemented (core) | Run trace, input/output references, workspace isolation, retention-aware output retrieval, scheduled purge worker, and expired payload deletion are available; live provider verification remains environment-dependent. |
 | Job queue/retry/DLQ | Implemented (core) | Persistent claim lease recovery, retry backoff, max-attempt dead-letter, and completion/failure helpers. |
-| Events/outbox/idempotency | Partial | Versioned schemaVersion, transactional persistence, dedupe/idempotency keys, bounded delivery transitions; production dispatcher remains partial. |
+| Events/outbox/idempotency | Implemented (core) | Versioned schemaVersion, transactional persistence, dedupe/idempotency keys, bounded delivery transitions, worker dispatcher, unknown-handler dead-lettering, and admin-only failed-event replay are available; live replay drill remains environment-dependent. |
 | Scheduler/realtime | Partial | Safe scheduled metadata jobs and realtime event delivery boundaries. |
 | Cost governance/evaluation | Partial | Workspace budget ceiling, idempotent terminal billing, model health metadata, and rubric-based AI run evaluations; live evaluation dashboards remain partial. |
 
@@ -57,7 +57,7 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 | Integrations | Blocked/Partial | Credential scopes, sync state, webhook/audit contracts; external activation requires secrets and review. |
 | Billing/usage/invoices | Partial/Blocked | Data model and usage contracts can be implemented; payment provider activation requires account configuration. |
 | Observability/incident/backup | Implemented (core) | Health/readiness/metrics endpoints, trace IDs, incident workflow, signed archive/restore contracts; provider backup drill remains deployment dependent. |
-| Accessibility/performance/i18n | Implemented (core) | Localization/accessibility inventories, semantic dashboard navigation labels, lazy routes, PWA checks, vendor chunk splitting, passing public safety E2E across desktop/mobile, and enforced JavaScript gzip/raw bundle budgets; full automated axe/Lighthouse CI remains partial. |
+| Accessibility/performance/i18n | Implemented (core) | Localization/accessibility inventories, semantic dashboard navigation labels, lazy routes, PWA checks, vendor chunk splitting, public safety E2E, enforced bundle budgets, and manual staging axe workflow are available; live staging execution remains environment-dependent. |
 
 ## Definition of 100 percent
 

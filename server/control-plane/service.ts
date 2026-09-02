@@ -16,6 +16,8 @@ import type { ActionKind } from "./contracts";
 import { validateEvidenceBytes } from "./evidence-validation";
 import { upsertSearchDocument } from "../global-search";
 import { currentTraceContext } from "../_core/trace-context";
+import { ENV } from "../_core/env";
+import { encryptAuditState } from "./audit-state-crypto";
 import { enqueueJob } from "../ai-platform";
 import { scanEvidenceContent } from "../evidence-scanner";
 import { createNotificationDeliveryLedger } from "../notification-delivery";
@@ -43,7 +45,7 @@ async function addAudit(workspaceId: number, category: string, subject: string, 
     subject,
     traceId,
     evidenceHash: digest({ workspaceId, category, subject, details, traceId }),
-    details: JSON.stringify(details),
+    details: ENV.auditStateEncryptionKey ? encryptAuditState(details, ENV.auditStateEncryptionKey) : JSON.stringify(details),
   });
 }
 

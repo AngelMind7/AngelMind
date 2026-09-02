@@ -4,7 +4,7 @@ const VERSION = "v1";
 const ALGORITHM = "aes-256-gcm";
 
 function deriveKey(secret: string) {
-  if (secret.trim().length < 32) throw new Error("AUDIT_STATE_ENCRYPTION_KEY must be at least 32 characters.");
+  if (typeof secret !== "string" || secret.trim().length < 32) throw new Error("AUDIT_STATE_ENCRYPTION_KEY must be at least 32 characters.");
   return createHash("sha256").update(secret, "utf8").digest();
 }
 
@@ -24,9 +24,13 @@ export function decryptAuditState(serialized: string, secret: string) {
   if (parts.length !== 4) throw new Error("Encrypted audit state format is invalid.");
   const [version, encodedIv, encodedTag, encodedCiphertext] = parts;
   if (version !== VERSION || !encodedIv || !encodedTag || !encodedCiphertext) throw new Error("Encrypted audit state format is invalid.");
-  const decipher = createDecipheriv(ALGORITHM, deriveKey(secret), Buffer.from(encodedIv, "base64url"));
-  decipher.setAuthTag(Buffer.from(encodedTag, "base64url"));
-  const plaintext = Buffer.concat([decipher.update(Buffer.from(encodedCiphertext, "base64url")), decipher.final()]).toString("utf8");
+  const iv = Buffer.from(encodedIv, "base64url");
+  const tag = Buffer.from(encodedTag, "base64url");
+  const ciphertext = Buffer.from(encodedCiphertext, "base64url");
+  if (iv.length !== 12 || tag.length !== 16 || ciphertext.length === 0) throw new Error("Encrypted audit state format is invalid.");
+  const decipher = createDecipheriv(ALGORITHM, deriveKey(secret), iv);
+  decipher.setAuthTag(tag);
+  const plaintext = Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
   return JSON.parse(plaintext) as unknown;
 }
 

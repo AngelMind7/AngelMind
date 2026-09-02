@@ -11,8 +11,19 @@ export function normalizeIdempotencyKey(value: string) {
   return key;
 }
 
+function stableJson(value: unknown): string {
+  if (value === null || typeof value !== "object") {
+    const encoded = JSON.stringify(value);
+    if (encoded === undefined) throw new Error("Idempotency request must be JSON-serializable.");
+    return encoded;
+  }
+  if (Array.isArray(value)) return `[${value.map(stableJson).join(",")}]`;
+  const object = value as Record<string, unknown>;
+  return `{${Object.keys(object).sort().map(key => `${JSON.stringify(key)}:${stableJson(object[key])}`).join(",")}}`;
+}
+
 export function hashIdempotencyRequest(input: unknown) {
-  return createHash("sha256").update(JSON.stringify(input)).digest("hex");
+  return createHash("sha256").update(stableJson(input)).digest("hex");
 }
 
 export async function executeIdempotent<T>(input: {
@@ -29,8 +40,11 @@ export async function executeIdempotent<T>(input: {
   if (scope.length < 2 || scope.length > 160) throw new Error("Idempotency scope must contain 2-160 characters.");
   const key = normalizeIdempotencyKey(input.key);
   const requestHash = hashIdempotencyRequest(input.request);
+  if (!Number.isInteger(input.userId) || input.userId < 1) throw new Error("Idempotency userId must be a positive integer.");
   const now = new Date();
-  const expiresAt = new Date(now.getTime() + Math.max(60_000, input.ttlMs ?? DEFAULT_TTL_MS));
+  const requestedTtl = input.ttlMs ?? DEFAULT_TTL_MS;
+  const safeTtl = Number.isFinite(requestedTtl) ? Math.max(60_000, Math.min(Math.floor(requestedTtl), 30 * 24 * 60 * 60 * 1_000)) : DEFAULT_TTL_MS;
+  const expiresAt = new Date(now.getTime() + safeTtl);
   const where = and(eq(idempotencyRecords.userId, input.userId), eq(idempotencyRecords.scope, scope), eq(idempotencyRecords.idempotencyKey, key));
   const [existing] = await db.select().from(idempotencyRecords).where(and(where, gt(idempotencyRecords.expiresAt, now))).limit(1);
   if (existing) {

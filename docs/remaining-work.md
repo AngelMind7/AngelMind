@@ -28,6 +28,10 @@ Executor orchestration tidak lagi melakukan direct insert ke tabel jobs. Setiap 
 
 Commit: `907cae5`. Typecheck dan full Vitest lulus: 67 test files passed, 1 skipped; 181 tests passed, 1 skipped. Integration database test tetap memerlukan `DATABASE_URL` staging.
 
+## T — Feature flag and configuration coverage (2026-09-02)
+
+Blueprint coverage kini disinkronkan dengan implementasi yang sudah ada: parser feature flags fail-closed mendukung environment, organization, user, entitlement, deterministic rollout, dan kill switch; konfigurasi runtime typed memiliki bounded defaults serta validation untuk audit encryption key dan required binaries. Provisioning dan rotasi secret tetap sengaja dipisahkan sebagai pekerjaan environment owner.
+
 ## C — Pekerjaan live environment
 
 Pekerjaan berikut tidak dapat diselesaikan hanya dari repository lokal karena membutuhkan akses atau tindakan pada akun/environment nyata: membuat dan mengisi secrets, memilih dialect database, menjalankan backup/preflight dan menerapkan migration pada database live, deploy web/API/worker, mengonfigurasi Firebase domains/providers, mengonfigurasi Supabase Storage, menghubungkan key 9Router/OmniRoute/provider intelligence, mengaktifkan branch protection GitHub, serta menjalankan smoke test staging/production.

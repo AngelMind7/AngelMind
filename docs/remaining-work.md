@@ -22,6 +22,12 @@ Repository kini mempersist reviewer evaluation untuk AI runs melalui rubric, sco
 
 Commit terkait: `41b0adc`, `2397bc1`, dan `7989a5f`. Typecheck, targeted Vitest tests (9 assertions), AI orchestration tests, build, dan `git diff --check` lulus. Sisa verifikasi encryption key rotation, multi-process lock semantics, provider-level latency/regression feeds, dan live deployment tetap environment-dependent.
 
+## S — Centralized orchestration queue adoption (2026-09-02)
+
+Executor orchestration tidak lagi melakukan direct insert ke tabel jobs. Setiap task AI kini melewati `enqueueJob`, sehingga workspace authorization, trace context, idempotency reconciliation, bounded retry, dan payload worker memakai kontrak yang sama dengan durable AI runs lainnya. Direct writes yang tersisa hanya merupakan ledger domain yang disengaja atau boundary provider, bukan submission queue.
+
+Commit: `907cae5`. Typecheck dan full Vitest lulus: 67 test files passed, 1 skipped; 181 tests passed, 1 skipped. Integration database test tetap memerlukan `DATABASE_URL` staging.
+
 ## C — Pekerjaan live environment
 
 Pekerjaan berikut tidak dapat diselesaikan hanya dari repository lokal karena membutuhkan akses atau tindakan pada akun/environment nyata: membuat dan mengisi secrets, memilih dialect database, menjalankan backup/preflight dan menerapkan migration pada database live, deploy web/API/worker, mengonfigurasi Firebase domains/providers, mengonfigurasi Supabase Storage, menghubungkan key 9Router/OmniRoute/provider intelligence, mengaktifkan branch protection GitHub, serta menjalankan smoke test staging/production.

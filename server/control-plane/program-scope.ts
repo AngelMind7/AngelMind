@@ -19,6 +19,8 @@ export type ScopeDiff = {
 };
 
 function normalizeList(values: string[]) {
+  if (!Array.isArray(values)) throw new Error("Program scope lists must be arrays.");
+  if (!values.every(value => typeof value === "string")) throw new Error("Program scope lists must contain strings.");
   return Array.from(new Set(values.map(value => value.trim()).filter(Boolean))).sort((left, right) => left.localeCompare(right));
 }
 
@@ -27,10 +29,12 @@ export function normalizeProgramScope(input: Omit<ProgramScope, "version"> & { v
   const excludedAssets = normalizeList(input.excludedAssets);
   const rules = normalizeList(input.rules);
   if (includedAssets.length === 0) throw new Error("Program scope requires at least one included asset.");
-  if (!input.safeHarbor.trim()) throw new Error("Program scope requires safe harbor text.");
+  if (typeof input.safeHarbor !== "string" || !input.safeHarbor.trim()) throw new Error("Program scope requires safe harbor text.");
   const overlap = includedAssets.filter(asset => excludedAssets.includes(asset));
   if (overlap.length > 0) throw new Error(`An asset cannot be both included and excluded: ${overlap.join(", ")}`);
-  return { includedAssets, excludedAssets, rules, safeHarbor: input.safeHarbor.trim(), version: input.version ?? 1 };
+  const version = input.version ?? 1;
+  if (!Number.isInteger(version) || version < 1) throw new Error("Program scope version must be a positive integer.");
+  return { includedAssets, excludedAssets, rules, safeHarbor: input.safeHarbor.trim(), version };
 }
 
 function listDiff(previous: string[], current: string[]) {

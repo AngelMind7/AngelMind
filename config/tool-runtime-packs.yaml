@@ -88,3 +88,68 @@ railway:
     - RUNTIME_MAX_SECONDS
     - RUNTIME_MAX_OUTPUT_BYTES
     - RUNTIME_NETWORK_POLICY
+
+# The master capability set is explicit and auditable. Entries marked
+# external_artifact are never replaced by a fake executable: the image build
+# must receive the vendor artifact and checksum through build arguments.
+master_tools:
+  - id: burp
+    command: burp-rest-cli
+    provisioning: external_artifact
+    risk_class: medium
+  - id: jwt_tool
+    command: jwt_tool.py
+    provisioning: pinned_source
+    risk_class: high
+  - id: dalfox
+    command: dalfox
+    provisioning: pinned_binary
+    risk_class: high
+  - id: ssrfmap
+    command: ssrfmap
+    provisioning: pinned_source
+    risk_class: high
+  - id: interactsh
+    command: interactsh-client
+    provisioning: pinned_binary
+    risk_class: medium
+  - id: ffuf
+    command: ffuf
+    provisioning: pinned_binary
+    risk_class: medium
+  - id: cloudfox
+    command: cloudfox
+    provisioning: pinned_binary
+    risk_class: medium
+  - id: graphql_cop
+    command: graphql-cop
+    provisioning: pinned_source
+    risk_class: medium
+  - id: sqlmap
+    command: sqlmap
+    provisioning: pinned_source
+    risk_class: critical
+  - id: nuclei
+    command: nuclei
+    provisioning: pinned_binary
+    risk_class: medium
+  - id: subfinder
+    command: subfinder
+    provisioning: pinned_binary
+    risk_class: low
+  - id: httpx
+    command: httpx
+    provisioning: pinned_binary
+    risk_class: low
+  - id: gitleaks
+    command: gitleaks
+    provisioning: pinned_binary
+    risk_class: low
+  - id: trivy
+    command: trivy
+    provisioning: pinned_binary
+    risk_class: low
+  - id: custom_scripts
+    command: python3
+    provisioning: repository_runtime
+    risk_class: high

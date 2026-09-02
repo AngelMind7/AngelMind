@@ -114,7 +114,7 @@ export async function listOrganizationInvitations(userId: number, organizationId
   return db.select({ id: organizationInvitations.id, email: organizationInvitations.email, role: organizationInvitations.role, status: organizationInvitations.status, expiresAt: organizationInvitations.expiresAt, createdAt: organizationInvitations.createdAt }).from(organizationInvitations).where(eq(organizationInvitations.organizationId, organizationId)).orderBy(desc(organizationInvitations.createdAt));
 }
 export async function createOrganizationInvitation(userId: number, input: { organizationId: number; email: string; role: Exclude<OrganizationRole, "owner">; expiresInDays?: number }) {
-  if (!input || !Number.isInteger(input.organizationId) || input.organizationId < 1 || typeof input.email !== "string" || !organizationRoles.includes(input.role) || input.role === "owner" || (input.expiresInDays !== undefined && !Number.isFinite(input.expiresInDays))) throw new Error("Invitation input is invalid.");
+  if (!input || !Number.isInteger(input.organizationId) || input.organizationId < 1 || typeof input.email !== "string" || !organizationRoles.includes(input.role) || (input.expiresInDays !== undefined && !Number.isFinite(input.expiresInDays))) throw new Error("Invitation input is invalid.");
   const { db } = await requireMembership(userId, input.organizationId, "manage");
   const email = input.email.trim().toLowerCase();
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) throw new Error("Invitation email is invalid.");

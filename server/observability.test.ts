@@ -18,14 +18,14 @@ afterEach(() => {
   if (originalErrorBudget === undefined) delete process.env.SLO_ERROR_RATE_BUDGET; else process.env.SLO_ERROR_RATE_BUDGET = originalErrorBudget;
   if (originalSlowBudget === undefined) delete process.env.SLO_SLOW_RATE_BUDGET; else process.env.SLO_SLOW_RATE_BUDGET = originalSlowBudget;
   if (originalSlowRequest === undefined) delete process.env.SLO_SLOW_REQUEST_MS; else process.env.SLO_SLOW_REQUEST_MS = originalSlowRequest;
+});
 
-  it("falls back safely for malformed observability numbers", () => {
-    process.env.OBSERVABILITY_PROBE_TIMEOUT_MS = "NaN";
-    process.env.SLO_ERROR_RATE_BUDGET = "NaN";
-    process.env.SLO_SLOW_RATE_BUDGET = "Infinity";
-    process.env.SLO_SLOW_REQUEST_MS = "bad";
-    expect(sloConfig()).toEqual({ errorRateBudget: 0.01, slowRateBudget: 0.05, latencyThresholdMs: 1_000 });
-  });
+it("falls back safely for malformed observability numbers", () => {
+  process.env.OBSERVABILITY_PROBE_TIMEOUT_MS = "NaN";
+  process.env.SLO_ERROR_RATE_BUDGET = "NaN";
+  process.env.SLO_SLOW_RATE_BUDGET = "Infinity";
+  process.env.SLO_SLOW_REQUEST_MS = "bad";
+  expect(sloConfig()).toEqual({ errorRateBudget: 0.01, slowRateBudget: 0.05, latencyThresholdMs: 1_000 });
 });
 
 describe("production observability contracts", () => {

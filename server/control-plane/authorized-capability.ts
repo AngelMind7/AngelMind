@@ -16,6 +16,7 @@ function normalizeHost(value: string) {
   if (!raw) return "";
   try {
     const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+    if (url.username || url.password) return "";
     return url.hostname.toLowerCase().replace(/\.$/, "");
   } catch {
     return "";

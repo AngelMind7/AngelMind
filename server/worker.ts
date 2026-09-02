@@ -25,7 +25,10 @@ export const MEMORY_PURGE_INTERVAL_MS = 15 * 60_000;
 
 export function computeRetryDelayMs(attempts: number, capMs = 60 * 60 * 1_000) {
   const safeAttempts = Number.isFinite(attempts) ? Math.max(1, Math.floor(attempts)) : 1;
-  const safeCapMs = Number.isFinite(capMs) ? Math.max(0, Math.floor(capMs)) : 60 * 60 * 1_000;
+  // Invalid deployment configuration must fail closed at the durable maximum,
+  // not silently become a fast retry storm.
+  if (!Number.isFinite(capMs)) return 60 * 60 * 1_000;
+  const safeCapMs = Math.max(0, Math.floor(capMs));
   return Math.min(safeCapMs, 2 ** Math.max(0, safeAttempts - 1) * 5_000);
 }
 

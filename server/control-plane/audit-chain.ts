@@ -107,6 +107,7 @@ export type AuditChainVerificationResult = {
  * Dipakai untuk audit periodik / endpoint admin, bukan di hot path.
  */
 export async function verifyAuditChain(workspaceId: number): Promise<AuditChainVerificationResult> {
+  if (!Number.isInteger(workspaceId) || workspaceId < 1) throw new Error("workspaceId must be a positive integer.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const entries = await db
@@ -125,9 +126,11 @@ export async function verifyAuditChain(workspaceId: number): Promise<AuditChainV
     .orderBy(asc(auditEvents.id));
 
   let expectedPrevious = GENESIS;
+  let checkedCount = 0;
   for (const row of entries) {
+    checkedCount += 1;
     if (!row.chainHash) {
-      return { valid: false, workspaceId, checkedCount: entries.length, brokenAtEntryId: row.id, reason: "missing_chain_hash" };
+      return { valid: false, workspaceId, checkedCount, brokenAtEntryId: row.id, reason: "missing_chain_hash" };
     }
     const actualPrevious = row.previousEntryHash ?? GENESIS;
     if (actualPrevious !== expectedPrevious) {
@@ -148,5 +151,5 @@ export async function verifyAuditChain(workspaceId: number): Promise<AuditChainV
     expectedPrevious = row.chainHash;
   }
 
-  return { valid: true, workspaceId, checkedCount: entries.length, brokenAtEntryId: null, reason: null };
+  return { valid: true, workspaceId, checkedCount, brokenAtEntryId: null, reason: null };
 }

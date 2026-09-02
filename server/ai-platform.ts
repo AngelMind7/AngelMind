@@ -9,6 +9,7 @@ import { selectBestRegisteredModel } from "./ai-routing";
 import { discoverGatewayModels } from "./ai-catalog";
 import { currentTraceContext } from "./_core/trace-context";
 import { recordPurgeBatch } from "./purge-metrics";
+import { summarizeAiRuns } from "./ai-quality";
 
 async function requireWorkspace(userId: number, workspaceId: number, intent: "read" | "respond" = "read") {
   const db = await getDb();
@@ -135,9 +136,8 @@ export async function getAiEvaluationSummary(userId: number, workspaceId: number
   const verdicts = { pass: 0, fail: 0, needs_review: 0 };
   let scoreTotal = 0;
   for (const evaluation of evaluations) { verdicts[evaluation.verdict] += 1; scoreTotal += evaluation.score; }
-  const failedRunCount = runs.filter(run => run.status === "failed").length;
-  const measuredLatencies = runs.flatMap(run => run.startedAt && run.completedAt ? [Math.max(0, run.completedAt.getTime() - run.startedAt.getTime())] : []);
-  return { runCount: runs.length, completedRunCount: runs.filter(run => run.status === "completed" || run.status === "partial").length, failedRunCount, failureRate: runs.length ? Math.round((failedRunCount / runs.length) * 10000) / 100 : null, averageLatencyMs: measuredLatencies.length ? Math.round(measuredLatencies.reduce((total, value) => total + value, 0) / measuredLatencies.length) : null, evaluatedRunCount: evaluations.length, averageScore: evaluations.length ? Math.round((scoreTotal / evaluations.length) * 100) / 100 : null, verdicts, costCents: runs.reduce((total, run) => total + run.costCents, 0) };
+  const runQuality = summarizeAiRuns(runs);
+  return { ...runQuality, evaluatedRunCount: evaluations.length, averageScore: evaluations.length ? Math.round((scoreTotal / evaluations.length) * 100) / 100 : null, verdicts };
 }
 
 /** Purges expired AI memory payloads but preserves run metadata, cost, status, and trace lineage. */

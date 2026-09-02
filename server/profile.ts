@@ -3,6 +3,7 @@ import { findings, researchSessions, userProfiles, workspaces } from "../drizzle
 import { getDb } from "./db";
 
 async function getProfileRow(userId: number) {
+  if (!Number.isInteger(userId) || userId < 1) throw new Error("userId must be a positive integer.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const [profile] = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId)).limit(1);
@@ -14,6 +15,7 @@ async function getProfileRow(userId: number) {
 }
 
 function uniqueLines(values: string[]) {
+  if (!Array.isArray(values) || !values.every(value => typeof value === "string")) throw new Error("Profile list fields must contain strings.");
   return Array.from(new Set(values.map(value => value.trim()).filter(Boolean))).slice(0, 100);
 }
 
@@ -27,6 +29,10 @@ export async function getUserProfile(userId: number) {
 }
 
 export async function updateUserProfile(userId: number, input: { username?: string; avatarReference?: string; bio: string; specialization?: string; skills: string[]; experience: string[]; visibility: "private" | "organization" | "public" }) {
+  if (!input || typeof input.bio !== "string" || !["private", "organization", "public"].includes(input.visibility)) throw new Error("Profile input is invalid.");
+  if (input.username !== undefined && typeof input.username !== "string") throw new Error("Profile input is invalid.");
+  if (input.avatarReference !== undefined && typeof input.avatarReference !== "string") throw new Error("Profile input is invalid.");
+  if (input.specialization !== undefined && typeof input.specialization !== "string") throw new Error("Profile input is invalid.");
   const { db } = await getProfileRow(userId);
   const username = input.username?.trim().toLowerCase() || null;
   if (username && !/^[a-z0-9_][a-z0-9_.-]{2,63}$/.test(username)) throw new Error("Username hanya boleh berisi huruf kecil, angka, titik, dash, atau underscore.");

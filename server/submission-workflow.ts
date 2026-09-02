@@ -17,6 +17,7 @@ const transitions: Record<SubmissionStatus, SubmissionStatus[]> = {
 };
 
 async function requireSubmissionAccess(userId: number, submissionId: number, intent: "read" | "respond" = "read") {
+  if (!Number.isInteger(userId) || userId < 1 || !Number.isInteger(submissionId) || submissionId < 1) throw new Error("Submission identity is invalid.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const [submission] = await db.select().from(submissions).where(eq(submissions.id, submissionId)).limit(1);
@@ -25,6 +26,7 @@ async function requireSubmissionAccess(userId: number, submissionId: number, int
 }
 
 export async function createSubmission(userId: number, input: { findingId: number; reportVersionId: number; externalReference?: string }) {
+  if (!Number.isInteger(userId) || userId < 1 || !input || !Number.isInteger(input.findingId) || input.findingId < 1 || !Number.isInteger(input.reportVersionId) || input.reportVersionId < 1 || (input.externalReference !== undefined && typeof input.externalReference !== "string")) throw new Error("Submission input is invalid.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const [report] = await db.select().from(reportVersions).where(eq(reportVersions.id, input.reportVersionId)).limit(1);
@@ -41,6 +43,7 @@ export async function createSubmission(userId: number, input: { findingId: numbe
 }
 
 export async function listSubmissions(userId: number, workspaceId: number) {
+  if (!Number.isInteger(userId) || userId < 1 || !Number.isInteger(workspaceId) || workspaceId < 1) throw new Error("Workspace identity is invalid.");
   const db = await getDb();
   if (!db || !(await canAccessWorkspace(userId, workspaceId, "read"))) return [];
   return db.select().from(submissions).where(eq(submissions.workspaceId, workspaceId)).orderBy(desc(submissions.updatedAt));
@@ -52,9 +55,10 @@ export async function listSubmissionEvents(userId: number, submissionId: number)
 }
 
 export async function transitionSubmission(userId: number, input: { submissionId: number; status: SubmissionStatus; note?: string }) {
+  if (!input || !Number.isInteger(input.submissionId) || input.submissionId < 1 || !Object.prototype.hasOwnProperty.call(transitions, input.status) || (input.note !== undefined && typeof input.note !== "string")) throw new Error("Submission transition input is invalid.");
   const { db, submission } = await requireSubmissionAccess(userId, input.submissionId, "respond");
   if (!transitions[submission.status as SubmissionStatus]?.includes(input.status)) throw new Error(`Invalid submission transition: ${submission.status} -> ${input.status}`);
   await db.update(submissions).set({ status: input.status, updatedAt: new Date() }).where(eq(submissions.id, submission.id));
-  await db.insert(submissionEvents).values({ submissionId: submission.id, workspaceId: submission.workspaceId, fromStatus: submission.status, toStatus: input.status, note: input.note?.trim() || null, changedByUserId: userId });
+  await db.insert(submissionEvents).values({ submissionId: submission.id, workspaceId: submission.workspaceId, fromStatus: submission.status, toStatus: input.status, note: input.note?.trim().slice(0, 4_000) || null, changedByUserId: userId });
   return { success: true as const, submissionId: submission.id, status: input.status };
 }

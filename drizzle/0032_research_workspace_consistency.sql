@@ -1,4 +1,4 @@
-ALTER TABLE `researchSessions` ADD INDEX `research_session_id_workspace_idx` (`id`,`workspaceId`);
+ALTER TABLE `researchSessions` ADD UNIQUE INDEX `research_session_id_workspace_idx` (`id`,`workspaceId`);
 --> statement-breakpoint
 ALTER TABLE `researchAssets` ADD INDEX `research_asset_id_workspace_idx` (`id`,`workspaceId`);
 --> statement-breakpoint

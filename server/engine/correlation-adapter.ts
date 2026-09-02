@@ -188,7 +188,7 @@ export function evaluatePrerequisites(
         evidenceRefs: Array.from(
           new Set(sources.flatMap(source => source.evidenceRefs))
         ).sort(),
-        note: rule.note,
+        ...(rule.note ? { note: rule.note } : {}),
       },
     ];
   });

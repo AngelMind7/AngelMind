@@ -625,6 +625,7 @@ export const findings = mysqlTable("findings", {
   confidence: int("confidence").default(0).notNull(),
   impactSummary: text("impactSummary").notNull(),
   reportDraft: text("reportDraft").notNull(),
+  sourceObservationId: int("sourceObservationId"),
   humanReviewStatus: mysqlEnum("humanReviewStatus", ["pending", "approved", "rejected"] as const).default("pending").notNull(),
   traceId: varchar("traceId", { length: 128 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
@@ -632,6 +633,7 @@ export const findings = mysqlTable("findings", {
 }, table => [
   uniqueIndex("findings_workspace_fingerprint_uq").on(table.workspaceId, table.fingerprint),
   index("findings_workspace_status_idx").on(table.workspaceId, table.status),
+  index("findings_source_observation_idx").on(table.sourceObservationId),
 ]);
 
 export const approvals = mysqlTable("approvals", {

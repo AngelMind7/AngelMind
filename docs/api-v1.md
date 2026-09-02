@@ -8,11 +8,19 @@ All responses use JSON. Successful responses use `{ "data": ..., "apiVersion": "
 
 ## Authentication and authorization
 
-`/api/v1/health` is public. Every other endpoint requires the Firebase bearer authentication flow used by the web application:
+`/api/v1/health` is public. Every other endpoint requires either the Firebase bearer authentication flow used by the web application or a server-created AngelMind API key:
 
 ```http
 Authorization: Bearer <firebase-id-token>
 ```
+
+API keys use the same header and are shown only once at creation or rotation:
+
+```http
+Authorization: Bearer am_<secret>
+```
+
+REST API keys must include `search:read` for search endpoints or `ai-runs:read` for AI-run endpoints. A wildcard scope (`*`) is accepted for controlled internal keys. Keys are hashed at rest, can be revoked or rotated, and cannot be used after expiry.
 
 Workspace endpoints verify the authenticated user against the requested workspace. An inaccessible AI run returns `404 NOT_FOUND` rather than revealing whether a run exists in another workspace.
 
@@ -23,9 +31,9 @@ The server-side service-role credentials for Firebase, Supabase Storage, and any
 | Method | Path | Auth | Purpose |
 |---|---|---|---|
 | `GET` | `/api/v1/health` | Public | Liveness/version contract. |
-| `GET` | `/api/v1/workspaces/{workspaceId}/search` | Firebase bearer + workspace access | Search workspace-indexed records. |
-| `GET` | `/api/v1/workspaces/{workspaceId}/ai-runs` | Firebase bearer + workspace access | List recent AI runs for a workspace. |
-| `GET` | `/api/v1/ai-runs/{runId}` | Firebase bearer + workspace access | Read one AI run and its governed output. |
+| `GET` | `/api/v1/workspaces/{workspaceId}/search` | Firebase bearer or `search:read` API key + workspace access | Search workspace-indexed records. |
+| `GET` | `/api/v1/workspaces/{workspaceId}/ai-runs` | Firebase bearer or `ai-runs:read` API key + workspace access | List recent AI runs for a workspace. |
+| `GET` | `/api/v1/ai-runs/{runId}` | Firebase bearer or `ai-runs:read` API key + workspace access | Read one AI run and its governed output. |
 
 ## `GET /api/v1/health`
 
@@ -118,6 +126,7 @@ An expired or purged output may be `null` while the run metadata and trace linea
 | `401` | `UNAUTHENTICATED` | Missing or invalid Firebase bearer authentication. |
 | `403` | `FORBIDDEN` | The authenticated user does not have access to the workspace. |
 | `404` | `NOT_FOUND` | Resource does not exist or is intentionally hidden by workspace isolation. |
+| `429` | `RATE_LIMITED` | The client exceeded the configured API window; honor `Retry-After`. |
 
 Clients should log the `apiVersion`, HTTP status, and error code, but should not display raw internal error details to untrusted users.
 

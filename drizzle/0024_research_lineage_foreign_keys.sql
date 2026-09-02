@@ -1,4 +1,10 @@
+ALTER TABLE `evidenceProvenance` DROP FOREIGN KEY `evidenceProvenance_evidenceArtifactId_evidenceArtifacts_id_fk`;
+--> statement-breakpoint
 ALTER TABLE `evidenceProvenance` DROP INDEX `evidence_provenance_artifact_uq`;
+--> statement-breakpoint
+CREATE INDEX `evidence_provenance_artifact_created_idx` ON `evidenceProvenance` (`evidenceArtifactId`,`createdAt`);
+--> statement-breakpoint
+ALTER TABLE `evidenceProvenance` ADD CONSTRAINT `evidenceProvenance_evidenceArtifactId_evidenceArtifacts_id_fk` FOREIGN KEY (`evidenceArtifactId`) REFERENCES `evidenceArtifacts`(`id`) ON DELETE cascade ON UPDATE no action;
 --> statement-breakpoint
 ALTER TABLE `researchEvidenceLinks` ADD CONSTRAINT `researchEvidenceLinks_evidenceArtifactId_evidenceArtifacts_id_fk` FOREIGN KEY (`evidenceArtifactId`) REFERENCES `evidenceArtifacts`(`id`) ON DELETE cascade ON UPDATE no action;
 --> statement-breakpoint

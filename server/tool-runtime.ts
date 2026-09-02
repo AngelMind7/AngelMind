@@ -614,8 +614,10 @@ const MAX_TIMEOUT_MS = 120_000;
 const DEFAULT_MAX_OUTPUT_BYTES = 512_000;
 const MAX_OUTPUT_BYTES = 2_000_000;
 
+const registeredAdapters = adapters.filter(adapter => Boolean(getToolCatalogEntry(adapter.toolKey)));
+
 function getAdapter(toolKey: string) {
-  return adapters.find(adapter => adapter.toolKey === toolKey);
+  return registeredAdapters.find(adapter => adapter.toolKey === toolKey);
 }
 
 function boundedText(value: string, maxBytes: number) {
@@ -707,7 +709,7 @@ function executeAdapter(
 }
 
 export function listRegisteredAdapters() {
-  return adapters.map(adapter => ({
+  return registeredAdapters.map(adapter => ({
     toolKey: adapter.toolKey,
     binary: adapter.binary,
     allowedModes: adapter.allowedModes,
@@ -769,7 +771,7 @@ function probeBinary(binary: string) {
 
 export async function checkRegisteredAdapterHealth() {
   const health = await Promise.all(
-    adapters.map(async adapter => ({
+    registeredAdapters.map(async adapter => ({
       toolKey: adapter.toolKey,
       binary: adapter.binary,
       ...(await probeBinary(adapter.binary)),
@@ -795,7 +797,7 @@ export async function checkRuntimeReadiness(): Promise<RuntimeReadiness> {
   if (runtimeReadinessCache?.key === key && now - runtimeReadinessCache.checkedAt < RUNTIME_READINESS_CACHE_MS) {
     return runtimeReadinessCache.result;
   }
-  const registeredByBinary = new Map(adapters.map(adapter => [adapter.binary, adapter]));
+  const registeredByBinary = new Map(registeredAdapters.map(adapter => [adapter.binary, adapter]));
   const health = await Promise.all(requiredBinaries.map(async binary => ({ binary, available: (await probeBinary(binary)).available, registered: registeredByBinary.has(binary) })));
   const missing = health.filter(item => !item.available || !item.registered).map(item => item.binary);
   const result = { configured: true as const, ready: missing.length === 0, missing };

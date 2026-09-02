@@ -2,234 +2,20 @@ import { describe, expect, it } from "vitest";
 import { checkRuntimeReadiness, listRegisteredAdapters, runRegisteredTool, runtimePackAllows, runtimePackForMode } from "./tool-runtime";
 
 describe("registered tool runtime", () => {
-  it("exposes only explicitly registered safe adapters", () => {
+  it("exposes only explicitly registered catalog adapters", () => {
     expect(listRegisteredAdapters()).toEqual([
-      {
-        toolKey: "binary_artifact_analysis.24",
-        binary: "yara",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "binary_artifact_analysis.30",
-        binary: "objdump",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "validation.6",
-        binary: "foremost",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "validation.13",
-        binary: "mmls",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "validation.19",
-        binary: "dc3dd",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "validation.12",
-        binary: "scalpel",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "validation.8",
-        binary: "log2timeline.py",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "secrets_detection.1",
-        binary: "gitleaks",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "source_code.1",
-        binary: "bandit",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "source_code.19",
-        binary: "shellcheck",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "source_code.22",
-        binary: "cppcheck",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "source_code.9",
-        binary: "flawfinder",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "binary_artifact_analysis.8",
-        binary: "gdb",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "binary_artifact_analysis.2",
-        binary: "binwalk",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "binary_artifact_analysis.3",
-        binary: "python3",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "binary_artifact_analysis.23",
-        binary: "python3",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "source_code.10",
-        binary: "gosec",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "source_code.23",
-        binary: "njsscan",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "secrets_detection.8",
-        binary: "detect-secrets",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "dependencies.20",
-        binary: "pip-audit",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "dependencies.9",
-        binary: "safety",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "secrets_detection.6",
-        binary: "trufflehog",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "source_code.18",
-        binary: "semgrep",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "supply_chain.3",
-        binary: "cyclonedx-py",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "validation.17",
-        binary: "vol",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "log_analysis.2",
-        binary: "chainsaw",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "log_analysis.13",
-        binary: "sigmac",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "traffic_analysis.12",
-        binary: "tshark",
-        allowedModes: ["passive_readonly"],
-      },
-      {
-        toolKey: "traffic_analysis.17",
-        binary: "tcpdump",
-        allowedModes: ["passive_readonly"],
-      },
-      {
-        toolKey: "traffic_analysis.8",
-        binary: "snort",
-        allowedModes: ["passive_readonly"],
-      },
-      {
-        toolKey: "traffic_analysis.10",
-        binary: "suricata",
-        allowedModes: ["passive_readonly"],
-      },
-      {
-        toolKey: "email_dns_security.1",
-        binary: "checkdmarc",
-        allowedModes: ["passive_readonly"],
-        requiresTarget: true,
-      },
-      {
-        toolKey: "email_dns_security.2",
-        binary: "python3",
-        allowedModes: ["passive_readonly"],
-      },
-      {
-        toolKey: "asset_intelligence.33",
-        binary: "dnsx",
-        allowedModes: ["passive_readonly"],
-        requiresTarget: true,
-      },
-      {
-        toolKey: "asset_intelligence.28",
-        binary: "subfinder",
-        allowedModes: ["passive_readonly"],
-        requiresTarget: true,
-      },
-      {
-        toolKey: "asset_intelligence.30",
-        binary: "curl",
-        allowedModes: ["passive_readonly"],
-        requiresTarget: true,
-      },
-      {
-        toolKey: "asset_intelligence.32",
-        binary: "dnstwist",
-        allowedModes: ["passive_readonly"],
-        requiresTarget: true,
-      },
-      {
-        toolKey: "asset_intelligence.31",
-        binary: "dnsrecon",
-        allowedModes: ["passive_readonly"],
-        requiresTarget: true,
-      },
-      {
-        toolKey: "configuration.1",
-        binary: "checkov",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "configuration.17",
-        binary: "tfsec",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "dependencies.3",
-        binary: "grype",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "dependencies.6",
-        binary: "osv-scanner",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "dependencies.11",
-        binary: "syft",
-        allowedModes: ["offline_artifact"],
-      },
-      {
-        toolKey: "dependencies.12",
-        binary: "trivy",
-        allowedModes: ["offline_artifact"],
-      },
+      { toolKey: "burp_suite_pro", binary: "burp-rest-cli", allowedModes: ["passive_readonly","active_nondestructive"], requiresTarget: true },
+      { toolKey: "jwt_tool", binary: "jwt_tool.py", allowedModes: ["active_nondestructive"], requiresTarget: true },
+      { toolKey: "dalfox", binary: "dalfox", allowedModes: ["active_nondestructive"], requiresTarget: true },
+      { toolKey: "ssrfmap", binary: "ssrfmap", allowedModes: ["active_nondestructive"], requiresTarget: true },
+      { toolKey: "interactsh", binary: "interactsh-client", allowedModes: ["passive_readonly"] },
+      { toolKey: "ffuf", binary: "ffuf", allowedModes: ["active_nondestructive"], requiresTarget: true },
+      { toolKey: "cloudfox", binary: "cloudfox", allowedModes: ["passive_readonly"] },
+      { toolKey: "graphql_cop", binary: "graphql-cop", allowedModes: ["passive_readonly","active_nondestructive"], requiresTarget: true },
+      { toolKey: "sqlmap", binary: "sqlmap", allowedModes: ["privileged_or_destructive"], requiresTarget: true },
+      { toolKey: "nuclei", binary: "nuclei", allowedModes: ["passive_readonly","active_nondestructive"], requiresTarget: true },
+      { toolKey: "httpx", binary: "httpx", allowedModes: ["passive_readonly"], requiresTarget: true },
+      { toolKey: "custom_scripts", binary: "python3", allowedModes: ["offline_artifact","passive_readonly"] },
     ]);
   });
 
@@ -263,35 +49,27 @@ describe("registered tool runtime", () => {
   it("blocks execution when the configured pack does not match the mode", async () => {
     const previous = process.env.RUNTIME_PACK_ID;
     process.env.RUNTIME_PACK_ID = "passive-pack";
-    await expect(runRegisteredTool({ toolKey: "binary_artifact_analysis.30", mode: "offline_artifact", scopeValidated: true, humanApproval: false, input: "data" })).resolves.toMatchObject({ status: "blocked", reason: "runtime_pack_mismatch" });
+    await expect(runRegisteredTool({ toolKey: "custom_scripts", mode: "offline_artifact", scopeValidated: true, humanApproval: false, input: "data" })).resolves.toMatchObject({ status: "blocked", reason: "runtime_pack_mismatch" });
     if (previous === undefined) delete process.env.RUNTIME_PACK_ID;
     else process.env.RUNTIME_PACK_ID = previous;
   });
 
-  it("blocks malformed passive DNS domain input before spawning a process", async () => {
-    for (const toolKey of [
-      "asset_intelligence.28",
-      "asset_intelligence.30",
-      "asset_intelligence.31",
-      "asset_intelligence.32",
-      "asset_intelligence.33",
-    ]) {
-      await expect(
-        runRegisteredTool({
-          toolKey,
-          mode: "passive_readonly",
-          scopeValidated: true,
-          humanApproval: false,
-          input: "https://example.com",
-        })
-      ).resolves.toMatchObject({
-        status: "blocked",
-        reason: "invalid_adapter_input",
-      });
-    }
+  it("blocks empty input before spawning a process", async () => {
+    await expect(
+      runRegisteredTool({
+        toolKey: "httpx",
+        mode: "passive_readonly",
+        scopeValidated: true,
+        humanApproval: false,
+        input: "",
+      })
+    ).resolves.toMatchObject({
+      status: "blocked",
+      reason: "input_limit_exceeded",
+    });
   });
 
-  it("blocks unregistered provisional catalog entries before spawning a process", async () => {
+  it("blocks removed legacy catalog entries before spawning a process", async () => {
     await expect(
       runRegisteredTool({
         toolKey: "ai_llm_security.1",
@@ -301,8 +79,8 @@ describe("registered tool runtime", () => {
         input: "not an executable",
       })
     ).resolves.toMatchObject({
-      status: "unavailable",
-      reason: "adapter_not_registered",
+      status: "blocked",
+      reason: "tool_not_found",
     });
   });
 
@@ -319,8 +97,8 @@ describe("registered tool runtime", () => {
 
     await expect(
       runRegisteredTool({
-        toolKey: "binary_artifact_analysis.30",
-        mode: "passive_readonly",
+        toolKey: "httpx",
+        mode: "offline_artifact",
         scopeValidated: true,
         humanApproval: false,
         input: "data",

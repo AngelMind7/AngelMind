@@ -9,16 +9,20 @@ function deriveKey(secret: string) {
 }
 
 export function encryptAuditState(value: unknown, secret: string) {
+  const plaintext = JSON.stringify(value);
+  if (plaintext === undefined) throw new Error("Audit state must be JSON-serializable.");
   const iv = randomBytes(12);
   const cipher = createCipheriv(ALGORITHM, deriveKey(secret), iv);
-  const plaintext = JSON.stringify(value);
   const ciphertext = Buffer.concat([cipher.update(plaintext, "utf8"), cipher.final()]);
   const tag = cipher.getAuthTag();
   return `${VERSION}.${iv.toString("base64url")}.${tag.toString("base64url")}.${ciphertext.toString("base64url")}`;
 }
 
 export function decryptAuditState(serialized: string, secret: string) {
-  const [version, encodedIv, encodedTag, encodedCiphertext] = serialized.split(".");
+  if (typeof serialized !== "string") throw new Error("Encrypted audit state format is invalid.");
+  const parts = serialized.split(".");
+  if (parts.length !== 4) throw new Error("Encrypted audit state format is invalid.");
+  const [version, encodedIv, encodedTag, encodedCiphertext] = parts;
   if (version !== VERSION || !encodedIv || !encodedTag || !encodedCiphertext) throw new Error("Encrypted audit state format is invalid.");
   const decipher = createDecipheriv(ALGORITHM, deriveKey(secret), Buffer.from(encodedIv, "base64url"));
   decipher.setAuthTag(Buffer.from(encodedTag, "base64url"));
@@ -27,5 +31,5 @@ export function decryptAuditState(serialized: string, secret: string) {
 }
 
 export function isEncryptedAuditState(value: string) {
-  return value.startsWith(`${VERSION}.`);
+  return typeof value === "string" && value.startsWith(`${VERSION}.`);
 }

@@ -35,6 +35,8 @@ describe("API rate limiter", () => {
     limiter({ id: "first" } as never, response as never, () => undefined);
     limiter({ id: "second" } as never, response as never, () => undefined);
     limiter({ id: "first" } as never, response as never, () => undefined);
+    limiter({ id: "third" } as never, response as never, () => undefined);
+    limiter({ id: "first" } as never, response as never, () => undefined);
   });
 
   it("does not expose authorization credentials in the default key", () => {

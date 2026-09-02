@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { TargetRateLimiter, normalizeEvidence, verifyEvidenceHash } from "./evidence-normalizer";
+import { TargetRateLimiter, evidenceSchemas, normalizeEvidence, normalizeEvidenceForSchema, verifyEvidenceHash } from "./evidence-normalizer";
 
 describe("canonical evidence normalizer", () => {
   it("redacts credentials and sanitizes untrusted strings", () => {
@@ -40,5 +40,20 @@ describe("target-side rate limiter", () => {
     expect(limiter.allow("other.example", 60)).toBe(true);
     now = 1_000;
     expect(limiter.allow("example.com", 60)).toBe(true);
+  });
+});
+
+
+describe("15-schema evidence normalizer registry", () => {
+  it("contains every required canonical schema", () => {
+    expect(Object.keys(evidenceSchemas)).toHaveLength(15);
+  });
+
+  it("applies schema false-positive and redaction rules", () => {
+    const jwt = normalizeEvidenceForSchema("jwt_token_comparison", { data: { token: "abcdefghijk", status: 401 }, capabilities: [] });
+    expect(jwt.falsePositive).toBe(true);
+    expect(String(jwt.data.token)).not.toBe("abcdefghijk");
+    const xxe = normalizeEvidenceForSchema("xxe_evidence", { data: { message: "XML parser disabled", xml: "<secret/>" }, capabilities: [] });
+    expect(xxe.falsePositive).toBe(true);
   });
 });

@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, lte } from "drizzle-orm";
+import { and, asc, desc, eq, lte, or } from "drizzle-orm";
 import { aiMemories, workspaces, researchSessions } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
@@ -9,6 +9,9 @@ export type AiMemoryScope = "user" | "workspace" | "session" | "program";
 
 const MAX_CONTENT_LENGTH = 100_000;
 const MAX_RETENTION_DAYS = 3_650;
+const CONTEXT_MAX_MEMORIES = 8;
+const CONTEXT_ITEM_CHAR_LIMIT = 800;
+const CONTEXT_TOTAL_CHAR_LIMIT = 6_000;
 
 type MemoryInput = {
   scope: AiMemoryScope;
@@ -89,6 +92,39 @@ export async function listAiMemories(userId: number, input: { workspaceId?: numb
   }
   if (input.scope && input.scope !== "user") throw new Error("Workspace ID diperlukan untuk memory scope ini.");
   return db.select().from(aiMemories).where(and(eq(aiMemories.userId, userId), eq(aiMemories.scope, "user"), eq(aiMemories.status, "active"))).orderBy(desc(aiMemories.updatedAt), desc(aiMemories.id)).limit(limit);
+}
+
+/**
+ * Loads the active AI memories in scope for a given provider call — user memory owned by the
+ * caller plus any workspace/session/program memory tied to the supplied references — and renders
+ * them into a single bounded text block for injection into an LLM system message. Authorization
+ * for the workspace itself must already be checked by the caller before invoking this helper;
+ * this function only decides which rows are *relevant*, not whether the caller may see them.
+ */
+export async function buildMemoryContext(userId: number, input: { workspaceId?: number; sessionId?: number; programId?: number; limit?: number }): Promise<string | null> {
+  const db = await getDb();
+  if (!db) return null;
+  const limit = Math.min(CONTEXT_MAX_MEMORIES, Math.max(1, Math.trunc(input.limit ?? CONTEXT_MAX_MEMORIES)));
+
+  const scopeConditions = [and(eq(aiMemories.scope, "user"), eq(aiMemories.userId, userId))];
+  if (input.workspaceId !== undefined) scopeConditions.push(and(eq(aiMemories.scope, "workspace"), eq(aiMemories.workspaceId, input.workspaceId)));
+  if (input.sessionId !== undefined) scopeConditions.push(and(eq(aiMemories.scope, "session"), eq(aiMemories.sessionId, input.sessionId)));
+  if (input.programId !== undefined) scopeConditions.push(and(eq(aiMemories.scope, "program"), eq(aiMemories.programId, input.programId)));
+
+  const rows = await db.select().from(aiMemories).where(and(eq(aiMemories.status, "active"), or(...scopeConditions))).orderBy(desc(aiMemories.updatedAt), desc(aiMemories.id)).limit(limit);
+  if (rows.length === 0) return null;
+
+  let remaining = CONTEXT_TOTAL_CHAR_LIMIT;
+  const lines: string[] = [];
+  for (const row of rows) {
+    if (remaining <= 0) break;
+    const snippet = clean(row.content, CONTEXT_ITEM_CHAR_LIMIT);
+    const line = `- [${row.scope}] ${row.memoryKey}: ${snippet}`;
+    lines.push(line.slice(0, remaining));
+    remaining -= line.length;
+  }
+  if (lines.length === 0) return null;
+  return `Prior context recalled from AI memory (may be outdated; verify against current evidence before relying on it):\n${lines.join("\n")}`;
 }
 
 export async function saveAiMemory(userId: number, input: MemoryInput) {

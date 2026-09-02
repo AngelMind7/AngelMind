@@ -74,7 +74,12 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && rm -rf /tmp/subfinder /tmp/subfinder.zip /tmp/subfinder_checksums.txt \
     && curl -fsSL https://github.com/aquasecurity/trivy/releases/download/v0.74.0/trivy_0.74.0_Linux-64bit.tar.gz | tar -xz -C /usr/local/bin trivy \
     && curl -fsSL https://github.com/aquasecurity/tfsec/releases/download/v1.28.14/tfsec_1.28.14_linux_amd64.tar.gz | tar -xz -C /usr/local/bin tfsec \
-    && chmod 0755 /usr/local/bin/grype /usr/local/bin/syft /usr/local/bin/osv-scanner /usr/local/bin/trivy /usr/local/bin/tfsec /usr/local/bin/subfinder /usr/local/bin/dnsx /usr/local/bin/gosec /usr/local/bin/chainsaw \
+    && curl -fsSL -o /tmp/trufflehog.tar.gz https://github.com/trufflesecurity/trufflehog/releases/download/v3.97.1/trufflehog_3.97.1_linux_amd64.tar.gz \
+    && echo 'f863ea3a8d786f7d097870496c977944cce7372a2fe1e56707d965016e543ece  /tmp/trufflehog.tar.gz' | sha256sum -c - \
+    && tar -xzf /tmp/trufflehog.tar.gz -C /tmp trufflehog \
+    && install -m 0755 /tmp/trufflehog /usr/local/bin/trufflehog \
+    && rm -f /tmp/trufflehog.tar.gz /tmp/trufflehog \
+    && chmod 0755 /usr/local/bin/grype /usr/local/bin/syft /usr/local/bin/osv-scanner /usr/local/bin/trivy /usr/local/bin/tfsec /usr/local/bin/subfinder /usr/local/bin/dnsx /usr/local/bin/gosec /usr/local/bin/chainsaw /usr/local/bin/trufflehog \
     && corepack enable \
     && useradd --create-home --shell /usr/sbin/nologin angelmind
 COPY --from=build --chown=angelmind:angelmind /app/dist ./dist
@@ -92,7 +97,6 @@ RUN python3 -m pip install --no-cache-dir --break-system-packages \
        pip-audit==2.10.1 \
        semgrep==1.172.0 \
        safety==3.8.1 \
-       trufflehog==2.2.1 \
        sigmatools==0.23.1 \
        volatility3==2.28.0 \
     && pnpm install --prod --frozen-lockfile \

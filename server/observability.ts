@@ -3,7 +3,9 @@ export type ProviderProbeResult = { name: string; url: string; ready: boolean; s
 function configuredProbes() {
   return (process.env.OBSERVABILITY_PROBE_URLS ?? "").split(",").map(item => item.trim()).filter(Boolean).slice(0, 20).map(raw => {
     const url = new URL(raw);
+    if (url.username || url.password) throw new Error("OBSERVABILITY_PROBE_URLS must not include credentials.");
     if (url.protocol !== "https:" && process.env.NODE_ENV === "production") throw new Error("OBSERVABILITY_PROBE_URLS must use HTTPS in production.");
+    if (url.protocol !== "https:" && url.protocol !== "http:") throw new Error("OBSERVABILITY_PROBE_URLS must use HTTP or HTTPS.");
     return url;
   });
 }

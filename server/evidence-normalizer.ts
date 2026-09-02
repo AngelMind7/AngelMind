@@ -131,7 +131,10 @@ export function normalizeEvidenceForSchema(schemaId: EvidenceSchemaId, input: Om
   const redactedData = { ...input.data };
   for (const key of schema.redactedKeys) {
     for (const [actualKey, value] of Object.entries(redactedData)) {
-      if (actualKey.toLowerCase() === key.toLowerCase() && typeof value === "string") redactedData[actualKey] = redactEvidenceValue(actualKey, value);
+      if (actualKey.toLowerCase() === key.toLowerCase() && typeof value === "string") {
+        const normalized = redactEvidenceValue(actualKey, value);
+        redactedData[actualKey] = normalized === sanitizeString(value) ? mask(value, 4) : normalized;
+      }
     }
   }
   return normalizeEvidence({ ...input, data: redactedData, falsePositive: schema.falsePositive(redactedData) });

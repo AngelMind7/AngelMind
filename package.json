@@ -8,6 +8,7 @@
     "build": "vite build && esbuild server/_core/index.ts server/worker.ts server/scheduled.ts --platform=node --packages=external --bundle --format=esm --external:./vite --outdir=dist",
     "check:budget": "node scripts/check-bundle-budget.mjs",
     "check:migration-safety": "node scripts/check-migration-safety.mjs",
+    "check:migration-rollback": "node scripts/check-migration-rollback.mjs",
     "test:load": "node scripts/load-test.mjs",
     "start": "NODE_ENV=production node dist/_core/index.js",
     "start:worker": "NODE_ENV=production RUN_WORKER=true node dist/worker.js",

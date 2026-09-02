@@ -35,6 +35,8 @@ jobs:
         run: node scripts/check-migration-journal.mjs
       - name: Migration safety
         run: pnpm check:migration-safety
+      - name: Migration rollback contract
+        run: pnpm check:migration-rollback
       - name: Typecheck
         run: pnpm check
       - name: Test

@@ -16,6 +16,8 @@ import { getDb } from "../db";
  */
 
 const GENESIS = "genesis";
+type Database = NonNullable<Awaited<ReturnType<typeof getDb>>>;
+type Transaction = Parameters<Database["transaction"]>[0] extends (tx: infer T, ...args: any[]) => any ? T : never;
 
 export type AuditChainEntryInput = {
   workspaceId: number;
@@ -54,7 +56,7 @@ function computeChainHash(input: {
  * saat dua audit event untuk workspace yang sama ditulis bersamaan).
  */
 export async function appendAuditChainEntry(
-  trx: Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0],
+  trx: Transaction,
   entry: AuditChainEntryInput,
 ) {
   const [lastEntry] = await trx
@@ -105,7 +107,8 @@ export type AuditChainVerificationResult = {
  * Dipakai untuk audit periodik / endpoint admin, bukan di hot path.
  */
 export async function verifyAuditChain(workspaceId: number): Promise<AuditChainVerificationResult> {
-  const db = getDb();
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
   const entries = await db
     .select({
       id: auditEvents.id,

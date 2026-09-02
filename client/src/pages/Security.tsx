@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { trpc } from "@/lib/trpc";
-import { Clock3, Copy, FileLock2, KeyRound, Laptop2, Plus, RefreshCw, ShieldCheck, Smartphone, UserRound, XCircle } from "lucide-react";
+import { Clock3, Copy, Download, FileLock2, KeyRound, Laptop2, Plus, RefreshCw, ShieldCheck, Smartphone, UserRound, XCircle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 
@@ -57,6 +57,18 @@ export default function Security() {
     onSuccess: () => { setPrivacyReason(""); void utils.auth.privacyRequests.invalidate(); toast.success("Privacy request tercatat untuk diproses."); },
     onError: error => toast.error(error.message),
   });
+  const [downloadRequestId, setDownloadRequestId] = useState<number>();
+  const downloadPrivacyExport = async (requestId: number) => {
+    setDownloadRequestId(requestId);
+    try {
+      const result = await utils.auth.downloadPrivacyExport.fetch({ requestId });
+      window.open(result.url, "_blank", "noopener,noreferrer");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Export belum dapat diunduh.");
+    } finally {
+      setDownloadRequestId(undefined);
+    }
+  };
   const revokeApiKey = trpc.auth.revokeApiKey.useMutation({
     onSuccess: () => { void utils.auth.apiKeys.invalidate(); toast.success("API key berhasil dicabut."); },
     onError: error => toast.error(error.message),
@@ -129,7 +141,7 @@ export default function Security() {
       <NeonFrame className="p-5 sm:p-6">
         <div className="flex items-center justify-between gap-3"><div><Eyebrow>Privacy operations</Eyebrow><h2 className="mt-2 font-display text-2xl font-bold text-white">Data requests</h2></div><FileLock2 className="h-5 w-5 text-cyan-300" /></div>
         <div className="mt-5 grid gap-3 lg:grid-cols-[auto_1fr_auto]"><select aria-label="Privacy request type" value={privacyType} onChange={event => setPrivacyType(event.target.value as typeof privacyType)} className="h-10 border border-cyan-300/20 bg-[#0a0d19] px-3 text-sm text-slate-200"><option value="export">export my data</option><option value="rectify">rectify my data</option><option value="delete">request deletion</option></select><Input value={privacyReason} onChange={event => setPrivacyReason(event.target.value)} placeholder="Reason for this request" maxLength={20_000} /><Button disabled={privacyReason.trim().length < 3 || requestPrivacyAction.isPending} onClick={() => requestPrivacyAction.mutate({ requestType: privacyType, reason: privacyReason })}>Submit request</Button></div>
-        <div className="mt-4 space-y-2">{privacyRequests.data?.slice(0, 5).map(request => <div className="flex items-center justify-between gap-3 rounded-lg border border-white/10 p-3" key={request.id}><div><p className="text-sm font-semibold text-white">{request.requestType}</p><p className="mt-1 text-xs text-slate-500">{request.reason}</p></div><Badge variant="outline" className="border-cyan-300/40 text-cyan-200">{request.status}</Badge></div>)}</div>
+        <div className="mt-4 space-y-2">{privacyRequests.data?.slice(0, 5).map(request => <div className="flex items-center justify-between gap-3 rounded-lg border border-white/10 p-3" key={request.id}><div><p className="text-sm font-semibold text-white">{request.requestType}</p><p className="mt-1 text-xs text-slate-500">{request.reason}</p></div><div className="flex items-center gap-2"><Badge variant="outline" className="border-cyan-300/40 text-cyan-200">{request.status}</Badge>{request.requestType === "export" && request.status === "completed" && <Button variant="ghost" size="sm" onClick={() => void downloadPrivacyExport(request.id)} disabled={downloadRequestId === request.id}><Download className="mr-2 h-4 w-4" />{downloadRequestId === request.id ? "Preparing…" : "Download"}</Button>}</div></div>)}</div>
       </NeonFrame>
 
       <div className="grid gap-6 lg:grid-cols-2">

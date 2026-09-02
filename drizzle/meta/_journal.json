@@ -414,6 +414,13 @@
       "when": 1788335086745,
       "tag": "0058_ai_memory_scopes",
       "breakpoints": true
+    },
+    {
+      "idx": 58,
+      "version": "5",
+      "when": 1788440000000,
+      "tag": "0059_search_document_semantic_vectors",
+      "breakpoints": true
     }
   ]
 }

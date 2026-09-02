@@ -586,6 +586,7 @@ export const searchDocuments = mysqlTable("searchDocuments", {
   entityId: int("entityId").notNull(),
   title: varchar("title", { length: 512 }).notNull(),
   body: text("body").notNull(),
+  semanticVector: text("semanticVector"),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [uniqueIndex("search_document_entity_uq").on(table.workspaceId, table.entityType, table.entityId), index("search_document_workspace_updated_idx").on(table.workspaceId, table.updatedAt)]);

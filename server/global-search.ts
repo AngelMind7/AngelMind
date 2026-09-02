@@ -3,6 +3,7 @@ import { evidenceArtifacts, findings, intelligenceFeedItems, knowledgeNodes, pro
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 type SearchCursor = { score: number; updatedAt: string; rowId: number };
+const SEMANTIC_VECTOR_DIMENSIONS = 96;
 
 function encodeSearchCursor(cursor: SearchCursor): string {
   if (!Number.isInteger(cursor.score) || cursor.score < 0 || !Number.isInteger(cursor.rowId) || cursor.rowId < 1 || Number.isNaN(new Date(cursor.updatedAt).getTime())) throw new Error("Search cursor is invalid.");
@@ -31,28 +32,62 @@ function semanticTokens(value: string) {
   return Array.from(new Set(value.toLocaleLowerCase().replace(/[^A-Za-z0-9_\s-]/g, " ").split(/\s+/).filter(token => token.length >= 2))).slice(0, 32);
 }
 
-function vectorize(value: string) {
-  const tokens = semanticTokens(value);
-  const vector = new Map<string, number>();
-  for (const token of tokens) vector.set(token, (vector.get(token) ?? 0) + 1);
-  for (let index = 0; index < value.length - 2; index += 1) {
-    const gram = value.slice(index, index + 3).toLocaleLowerCase();
-    if (/\w/.test(gram)) vector.set(`~${gram}`, (vector.get(`~${gram}`) ?? 0) + 0.25);
+function hashFeature(feature: string) {
+  let hash = 2_166_136_261;
+  for (let index = 0; index < feature.length; index += 1) {
+    hash ^= feature.charCodeAt(index);
+    hash = Math.imul(hash, 16_777_619);
   }
-  return vector;
+  return hash >>> 0;
 }
 
-function cosineSimilarity(left: Map<string, number>, right: Map<string, number>) {
+export function createSemanticVector(value: string) {
+  const features = semanticTokens(value);
+  const normalized = value.toLocaleLowerCase();
+  for (let index = 0; index < normalized.length - 2; index += 1) {
+    const gram = normalized.slice(index, index + 3);
+    if (/\w/.test(gram)) features.push(`~${gram}`);
+  }
+  const vector = Array<number>(SEMANTIC_VECTOR_DIMENSIONS).fill(0);
+  for (const feature of features) {
+    const hash = hashFeature(feature);
+    const bucket = hash % SEMANTIC_VECTOR_DIMENSIONS;
+    const sign = hash & 1 ? 1 : -1;
+    vector[bucket] += sign;
+  }
+  const norm = Math.sqrt(vector.reduce((sum, value) => sum + value * value, 0));
+  return norm ? vector.map(value => value / norm) : vector;
+}
+
+function parseSemanticVector(value: string | null | undefined, fallbackText: string) {
+  if (value) {
+    try {
+      const parsed = JSON.parse(value);
+      if (Array.isArray(parsed) && parsed.length === SEMANTIC_VECTOR_DIMENSIONS && parsed.every(item => typeof item === "number" && Number.isFinite(item))) return parsed as number[];
+    } catch {
+      // Rebuild lazily for rows written before semanticVector was introduced.
+    }
+  }
+  return createSemanticVector(fallbackText);
+}
+
+export function semanticSimilarity(left: number[], right: number[]) {
   let dot = 0; let leftNorm = 0; let rightNorm = 0;
-  left.forEach((value, key) => { dot += value * (right.get(key) ?? 0); leftNorm += value * value; });
-  right.forEach(value => { rightNorm += value * value; });
+  for (let index = 0; index < Math.min(left.length, right.length); index += 1) {
+    dot += left[index] * right[index];
+    leftNorm += left[index] * left[index];
+    rightNorm += right[index] * right[index];
+  }
   return leftNorm && rightNorm ? dot / (Math.sqrt(leftNorm) * Math.sqrt(rightNorm)) : 0;
 }
 
 export async function upsertSearchDocument(input: { workspaceId: number; entityType: string; entityId: number; title: string; body: string }) {
   const db = await getDb();
   if (!db) return;
-  await db.insert(searchDocuments).values({ workspaceId: input.workspaceId, entityType: input.entityType, entityId: input.entityId, title: clean(input.title, 512), body: clean(input.body) }).onDuplicateKeyUpdate({ set: { title: clean(input.title, 512), body: clean(input.body), updatedAt: new Date() } });
+  const title = clean(input.title, 512);
+  const body = clean(input.body);
+  const semanticVector = JSON.stringify(createSemanticVector(`${title} ${body}`));
+  await db.insert(searchDocuments).values({ workspaceId: input.workspaceId, entityType: input.entityType, entityId: input.entityId, title, body, semanticVector }).onDuplicateKeyUpdate({ set: { title, body, semanticVector, updatedAt: new Date() } });
 }
 
 export async function deleteSearchDocument(input: { workspaceId: number; entityType: string; entityId: number }) {
@@ -83,18 +118,18 @@ export async function rebuildWorkspaceSearchIndex(userId: number, workspaceId: n
   const programId = workspaceRow[0]?.programId;
   const programRows = programId ? await db.select({ id: programs.id, title: programs.name, body: programs.description }).from(programs).where(eq(programs.id, programId)) : [];
   const rows = [
-    ...programRows.map(row => ({ workspaceId, entityType: "program", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
-    ...findingRows.map(row => ({ workspaceId, entityType: "finding", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
-    ...assetRows.map(row => ({ workspaceId, entityType: "asset", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
-    ...sessionRows.map(row => ({ workspaceId, entityType: "session", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
-    ...reportRows.map(row => ({ workspaceId, entityType: "report", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
-    ...knowledgeRows.map(row => ({ workspaceId, entityType: "knowledge_node", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
-    ...observationRows.map(row => ({ workspaceId, entityType: "observation", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
-    ...hypothesisRows.map(row => ({ workspaceId, entityType: "hypothesis", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
-    ...taskRows.map(row => ({ workspaceId, entityType: "task", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
-    ...evidenceRows.map(row => ({ workspaceId, entityType: "evidence", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
-    ...intelligenceRows.map(row => ({ workspaceId, entityType: "intelligence", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
-    ...noteRows.map(row => ({ workspaceId, entityType: "note", entityId: row.id, title: clean(row.title, 512), body: clean(row.body) })),
+    ...programRows.map(row => ({ workspaceId, entityType: "program", entityId: row.id, title: clean(row.title, 512), body: clean(row.body), semanticVector: JSON.stringify(createSemanticVector(`${clean(row.title, 512)} ${clean(row.body)}`)) })),
+    ...findingRows.map(row => ({ workspaceId, entityType: "finding", entityId: row.id, title: clean(row.title, 512), body: clean(row.body), semanticVector: JSON.stringify(createSemanticVector(`${clean(row.title, 512)} ${clean(row.body)}`)) })),
+    ...assetRows.map(row => ({ workspaceId, entityType: "asset", entityId: row.id, title: clean(row.title, 512), body: clean(row.body), semanticVector: JSON.stringify(createSemanticVector(`${clean(row.title, 512)} ${clean(row.body)}`)) })),
+    ...sessionRows.map(row => ({ workspaceId, entityType: "session", entityId: row.id, title: clean(row.title, 512), body: clean(row.body), semanticVector: JSON.stringify(createSemanticVector(`${clean(row.title, 512)} ${clean(row.body)}`)) })),
+    ...reportRows.map(row => ({ workspaceId, entityType: "report", entityId: row.id, title: clean(row.title, 512), body: clean(row.body), semanticVector: JSON.stringify(createSemanticVector(`${clean(row.title, 512)} ${clean(row.body)}`)) })),
+    ...knowledgeRows.map(row => ({ workspaceId, entityType: "knowledge_node", entityId: row.id, title: clean(row.title, 512), body: clean(row.body), semanticVector: JSON.stringify(createSemanticVector(`${clean(row.title, 512)} ${clean(row.body)}`)) })),
+    ...observationRows.map(row => ({ workspaceId, entityType: "observation", entityId: row.id, title: clean(row.title, 512), body: clean(row.body), semanticVector: JSON.stringify(createSemanticVector(`${clean(row.title, 512)} ${clean(row.body)}`)) })),
+    ...hypothesisRows.map(row => ({ workspaceId, entityType: "hypothesis", entityId: row.id, title: clean(row.title, 512), body: clean(row.body), semanticVector: JSON.stringify(createSemanticVector(`${clean(row.title, 512)} ${clean(row.body)}`)) })),
+    ...taskRows.map(row => ({ workspaceId, entityType: "task", entityId: row.id, title: clean(row.title, 512), body: clean(row.body), semanticVector: JSON.stringify(createSemanticVector(`${clean(row.title, 512)} ${clean(row.body)}`)) })),
+    ...evidenceRows.map(row => ({ workspaceId, entityType: "evidence", entityId: row.id, title: clean(row.title, 512), body: clean(row.body), semanticVector: JSON.stringify(createSemanticVector(`${clean(row.title, 512)} ${clean(row.body)}`)) })),
+    ...intelligenceRows.map(row => ({ workspaceId, entityType: "intelligence", entityId: row.id, title: clean(row.title, 512), body: clean(row.body), semanticVector: JSON.stringify(createSemanticVector(`${clean(row.title, 512)} ${clean(row.body)}`)) })),
+    ...noteRows.map(row => ({ workspaceId, entityType: "note", entityId: row.id, title: clean(row.title, 512), body: clean(row.body), semanticVector: JSON.stringify(createSemanticVector(`${clean(row.title, 512)} ${clean(row.body)}`)) })),
   ];
   if (rows.length > 0) await db.insert(searchDocuments).values(rows);
   return { workspaceId, indexed: rows.length };
@@ -112,9 +147,9 @@ export async function searchWorkspace(userId: number, input: { workspaceId: numb
   const freshnessCutoff = freshnessDays === undefined ? undefined : new Date(Date.now() - freshnessDays * 86_400_000);
   const cursor = decodeSearchCursor(input.cursor);
   const tokens = semanticTokens(query);
-  const candidates = await db.select({ rowId: searchDocuments.id, id: searchDocuments.entityId, entityType: searchDocuments.entityType, title: searchDocuments.title, body: searchDocuments.body, updatedAt: searchDocuments.updatedAt }).from(searchDocuments).where(and(eq(searchDocuments.workspaceId, input.workspaceId), entityTypes.length ? inArray(searchDocuments.entityType, entityTypes) : undefined, freshnessCutoff ? gte(searchDocuments.updatedAt, freshnessCutoff) : undefined)).orderBy(desc(searchDocuments.updatedAt), desc(searchDocuments.id)).limit(2_000);
+  const candidates = await db.select({ rowId: searchDocuments.id, id: searchDocuments.entityId, entityType: searchDocuments.entityType, title: searchDocuments.title, body: searchDocuments.body, semanticVector: searchDocuments.semanticVector, updatedAt: searchDocuments.updatedAt }).from(searchDocuments).where(and(eq(searchDocuments.workspaceId, input.workspaceId), entityTypes.length ? inArray(searchDocuments.entityType, entityTypes) : undefined, freshnessCutoff ? gte(searchDocuments.updatedAt, freshnessCutoff) : undefined)).orderBy(desc(searchDocuments.updatedAt), desc(searchDocuments.id)).limit(2_000);
   const normalizedQuery = query.toLocaleLowerCase();
-  const queryVector = vectorize(query);
+  const queryVector = createSemanticVector(query);
   const score = (result: typeof candidates[number]) => {
     const title = result.title.toLocaleLowerCase();
     const body = result.body.toLocaleLowerCase();
@@ -123,7 +158,7 @@ export async function searchWorkspace(userId: number, input: { workspaceId: numb
     const titleMatch = title.includes(normalizedQuery) ? 25 : 0;
     const bodyMatch = body.includes(normalizedQuery) ? 10 : 0;
     const tokenCoverage = tokens.length ? tokens.reduce((total, token) => total + (title.includes(token) ? 8 : body.includes(token) ? 3 : 0), 0) : 0;
-    const semantic = Math.round(cosineSimilarity(queryVector, vectorize(`${result.title} ${result.body}`)) * 35);
+    const semantic = Math.round(semanticSimilarity(queryVector, parseSemanticVector(result.semanticVector, `${result.title} ${result.body}`)) * 50);
     const freshness = Math.max(0, 10 - Math.floor((Date.now() - result.updatedAt.getTime()) / 86_400_000));
     return exactTitle + titlePrefix + titleMatch + bodyMatch + tokenCoverage + semantic + freshness;
   };

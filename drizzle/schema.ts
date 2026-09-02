@@ -243,6 +243,7 @@ export const researchSessionState = ["draft", "ready", "active", "paused", "comp
 export const researchAssetType = ["domain", "subdomain", "ip", "application", "api", "endpoint", "technology", "service"] as const;
 export const researchAssetState = ["discovered", "triaged", "in_scope", "out_of_scope", "archived"] as const;
 export const researchTaskStatus = ["queued", "running", "blocked", "paused", "failed", "retrying", "completed", "cancelled"] as const;
+export const researchTaskRiskClass = ["low", "medium", "high", "critical"] as const;
 export const researchObservationStatus = ["new", "reviewed", "linked", "archived"] as const;
 export const researchHypothesisStatus = ["proposed", "investigating", "supported", "disproven", "validated", "archived"] as const;
 
@@ -316,6 +317,12 @@ export const researchTasks = mysqlTable("researchTasks", {
   title: varchar("title", { length: 240 }).notNull(),
   priority: int("priority").default(50).notNull(),
   status: mysqlEnum("status", researchTaskStatus).default("queued").notNull(),
+  riskClass: mysqlEnum("riskClass", researchTaskRiskClass).default("low").notNull(),
+  approvalStatus: mysqlEnum("approvalStatus", approvalStatus).default("approved").notNull(),
+  vectorKey: varchar("vectorKey", { length: 160 }),
+  requiredCapabilities: text("requiredCapabilities").notNull(),
+  suggestedAdapters: text("suggestedAdapters").notNull(),
+  approvalId: int("approvalId"),
   revision: int("revision").default(0).notNull(),
   ownerUserId: int("ownerUserId"),
   dependencies: text("dependencies").notNull(),
@@ -327,7 +334,7 @@ export const researchTasks = mysqlTable("researchTasks", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   completedAt: timestamp("completedAt"),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
-}, table => [index("research_task_session_status_priority_idx").on(table.sessionId, table.status, table.priority), index("research_task_owner_status_idx").on(table.ownerUserId, table.status), foreignKey({ columns: [table.sessionId, table.workspaceId], foreignColumns: [researchSessions.id, researchSessions.workspaceId], name: "research_task_session_workspace_fk" })]);
+}, table => [index("research_task_session_status_priority_idx").on(table.sessionId, table.status, table.priority), index("research_task_owner_status_idx").on(table.ownerUserId, table.status), index("research_task_approval_status_idx").on(table.workspaceId, table.approvalStatus, table.riskClass), foreignKey({ columns: [table.sessionId, table.workspaceId], foreignColumns: [researchSessions.id, researchSessions.workspaceId], name: "research_task_session_workspace_fk" })]);
 
 export const researchTaskDependencies = mysqlTable("researchTaskDependencies", {
   id: int("id").autoincrement().primaryKey(),

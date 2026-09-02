@@ -1605,6 +1605,11 @@ export const appRouter = router({
             .max(50)
             .default([]),
           ownerUserId: z.number().int().positive().optional(),
+          assetId: z.number().int().positive().optional(),
+          vectorKey: z.string().min(2).max(160).optional(),
+          requiredCapabilities: z.array(z.string().min(2).max(120)).max(20).optional(),
+          suggestedAdapters: z.array(z.string().min(2).max(120)).max(20).optional(),
+          riskClass: z.enum(["low", "medium", "high", "critical"]).optional(),
           inputs: z.record(z.string(), z.unknown()).optional(),
         })
       )

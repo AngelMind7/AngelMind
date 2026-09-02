@@ -145,7 +145,7 @@ export async function runPlaybook(userId: number, input: { workspaceId: number; 
     const dependencyIndexes = Array.isArray(template.dependsOn) ? template.dependsOn.map(Number) : [];
     if (dependencyIndexes.some(dependencyIndex => !Number.isInteger(dependencyIndex) || dependencyIndex < 0 || dependencyIndex >= index)) throw new Error(`Dependency task ${index + 1} harus menunjuk ke task sebelumnya.`);
     const traceId = currentTraceContext()?.traceId ?? session.traceId ?? null;
-    await db.insert(researchTasks).values({ workspaceId: input.workspaceId, sessionId: session.id, type, title, priority, status: "queued", ownerUserId: null, dependencies: "[]", inputs: JSON.stringify(template.inputs && typeof template.inputs === "object" ? template.inputs : {}), outputs: "{}", retryCount: 0, traceId, createdByUserId: userId });
+    await db.insert(researchTasks).values({ workspaceId: input.workspaceId, sessionId: session.id, type, title, priority, status: "queued", riskClass: "low", approvalStatus: "approved", vectorKey: null, requiredCapabilities: "[]", suggestedAdapters: "[]", approvalId: null, ownerUserId: null, dependencies: "[]", inputs: JSON.stringify(template.inputs && typeof template.inputs === "object" ? template.inputs : {}), outputs: "{}", retryCount: 0, traceId, createdByUserId: userId });
     const [created] = await db.select({ id: researchTasks.id }).from(researchTasks).where(and(eq(researchTasks.sessionId, session.id), eq(researchTasks.title, title))).orderBy(desc(researchTasks.id)).limit(1);
     if (!created) throw new Error(`Task ${index + 1} could not be created.`);
     createdIds.push(created.id);

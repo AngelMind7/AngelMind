@@ -79,3 +79,7 @@ Notifications now create durable per-channel ledger rows for in-app, email, and 
 ## O — Audit archive retention and restore contract (2026-09-02)
 
 Audit archive rows now persist a deterministic immutable batch key, workspace-derived retention deadline, successful verification timestamp, and last restore-drill timestamp. Archive creation remains append-only at the application boundary; verification rechecks the signed manifest before recording status, and restore drills remain plan-only with explicit human confirmation and no data mutation. Object-lock/WORM enforcement, retention policy application, and an actual disaster-recovery restore must still be configured and exercised in the owner's live storage/database environment.
+
+## P — Discovery → fingerprint → vector selection (2026-09-02)
+
+Research task kini dapat menerima `assetId`, membaca metadata asset pada session yang sama, dan menghasilkan rekomendasi vector deterministik dengan capability, suggested adapters, risk class, serta rationale fingerprint. Metadata tersebut dipersist pada migration `0051_dashing_spectrum`. Task high/critical dibuat `blocked` dengan `approvalStatus=pending` dan transition ke `running` ditolak sampai approval manusia tersedia. Selector dan malformed-metadata behavior dilindungi oleh unit tests. Implementasi ini tetap passive-only; adapter recommendation bukan izin eksekusi dan tidak mengaktifkan target-facing tools.

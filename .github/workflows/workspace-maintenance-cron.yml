@@ -1,0 +1,24 @@
+name: Workspace maintenance cron
+
+on:
+  schedule:
+    - cron: "*/15 * * * *"
+  workflow_dispatch: {}
+
+jobs:
+  ping-maintenance-endpoint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger scheduled workspace maintenance
+        run: |
+          response=$(curl -sS -o /tmp/body.json -w "%{http_code}" \
+            -X POST "https://angelmind.up.railway.app/api/scheduled/workspace-maintenance" \
+            -H "x-railway-cron-secret: ${{ secrets.RAILWAY_CRON_SECRET }}" \
+            -H "Content-Type: application/json" \
+            -d '{}')
+          echo "HTTP status: $response"
+          cat /tmp/body.json
+          if [ "$response" -ge 300 ]; then
+            echo "Maintenance endpoint returned an error"
+            exit 1
+          fi

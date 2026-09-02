@@ -72,6 +72,13 @@ async function startServer() {
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
   });
+
+  // Free/single-service Railway plan: tidak ada service Worker terpisah.
+  // Set RUN_WORKER=true di service ini supaya worker loop ikut jalan in-process.
+  if (process.env.RUN_WORKER === "true") {
+    await import("../worker.js");
+    console.info("[startup] in-process worker loop enabled (RUN_WORKER=true)");
+  }
 }
 
 startServer().catch(console.error);

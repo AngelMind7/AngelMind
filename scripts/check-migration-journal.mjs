@@ -13,7 +13,7 @@ const tags = new Set(entries.map(entry => entry.tag));
 const indexes = entries.map(entry => entry.idx);
 const nonContiguousIndexes = indexes.filter((index, position) => index !== position);
 const duplicateTags = entries.filter((entry, index) => entries.findIndex(other => other.tag === entry.tag) !== index).map(entry => entry.tag);
-const dangling = entries.map(entry => entry.tag).filter(tag => !sqlFiles.some(file => file.replace(/\\.sql$/, "") === tag));
+const dangling = entries.map(entry => entry.tag).filter(tag => !sqlFiles.some(file => path.parse(file).name === tag));
 const missing = sqlFiles
   .map(file => file.replace(/\.sql$/, ""))
   .filter(tag => !tags.has(tag));

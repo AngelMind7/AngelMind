@@ -29,10 +29,10 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 
 | Area | Status awal | Target commit evidence |
 |---|---|---|
-| Report builder/versioning | Partial | Persisted draft autosave/restore, version/diff APIs, preview/export contracts, and ReportStudio autosave path; richer collaborative diff remains partial. |
+| Report builder/versioning | Implemented (core) | Persisted draft autosave/restore, version/diff APIs, structured policy comparison rendering, preview/export contracts, and ReportStudio autosave path are available; real-time multi-user collaborative editing remains partial. |
 | Submission tracking | Implemented (core) | `submissions` + `submissionEvents` migration, transition API, readiness/human-review gate. |
 | Comments/mentions/review | Implemented (core) | Workspace-scoped comments, persisted mentions, in-app mention notifications, parentCommentId validation, recursive threaded rendering, and reviewer checks are available; provider delivery remains environment-dependent. |
-| Notifications | Partial | Cursor polling, comment mention delivery, event preferences, and outbound boundary; provider retry/failure delivery remains gated. |
+| Notifications | Implemented (core) | Cursor polling, comment mention delivery, event preferences, bounded retry backoff, delivery ledger, and outbound safety boundary are available; provider activation remains gated. |
 | Search/saved views/tags/notes | Implemented (core) | Workspace-scoped global search across findings, assets, sessions, programs, and reports. Saved views/tags/notes remain partial. |
 | Knowledge graph/intelligence | Partial | Explicit relationship records and change detection signals. |
 
@@ -45,8 +45,8 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 | AI provenance/memory | Implemented (core) | Run trace, input/output references, workspace isolation, retention-aware output retrieval, scheduled purge worker, and expired payload deletion are available; live provider verification remains environment-dependent. |
 | Job queue/retry/DLQ | Implemented (core) | Persistent claim lease recovery, retry backoff, max-attempt dead-letter, and completion/failure helpers. |
 | Events/outbox/idempotency | Implemented (core) | Versioned schemaVersion, transactional persistence, dedupe/idempotency keys, bounded delivery transitions, worker dispatcher, unknown-handler dead-lettering, and admin-only failed-event replay are available; live replay drill remains environment-dependent. |
-| Scheduler/realtime | Partial | Safe scheduled metadata jobs and realtime event delivery boundaries. |
-| Cost governance/evaluation | Partial | Workspace budget ceiling, idempotent terminal billing, model health metadata, and rubric-based AI run evaluations; live evaluation dashboards remain partial. |
+| Scheduler/realtime | Implemented (core) | Explicit administrative scheduler registry, safe metadata jobs, realtime event delivery boundaries, and worker retention/outbox recovery hooks are available; live schedule activation remains environment-dependent. |
+| Cost governance/evaluation | Implemented (core) | Workspace budget ceiling, idempotent terminal billing, model health metadata, and rubric-based AI run evaluations are available; live dashboard visualization remains partial. |
 
 ## Commit group E — product surface and operations
 

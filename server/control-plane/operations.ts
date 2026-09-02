@@ -14,7 +14,7 @@ export type MemberRole = (typeof memberRoles)[number];
 export type WorkspaceRole = "owner" | MemberRole;
 export type WorkspaceAccessIntent = "read" | "review" | "respond" | "manage";
 
-export function roleAllowsWorkspaceAccess(role: WorkspaceRole, intent: WorkspaceAccessIntent): boolean {
+export function roleAllowsWorkspaceAccess(role: WorkspaceRole | "approval_authority", intent: WorkspaceAccessIntent): boolean {
   if (role === "owner") return true;
   if (intent === "read") return role === "operator" || role === "reviewer" || role === "auditor";
   if (intent === "review") return role === "reviewer";

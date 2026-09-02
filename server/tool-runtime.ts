@@ -69,7 +69,7 @@ type SupportedToolKey =
 
 export type ToolRuntimeRequest = {
   toolKey: string;
-  mode: "offline_artifact" | "passive_readonly";
+  mode: "offline_artifact" | "passive_readonly" | "active_nondestructive" | "privileged_or_destructive";
   scopeValidated: boolean;
   humanApproval: boolean;
   input: string;

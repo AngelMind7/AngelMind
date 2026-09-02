@@ -54,7 +54,7 @@ function computeChainHash(input: {
  * saat dua audit event untuk workspace yang sama ditulis bersamaan).
  */
 export async function appendAuditChainEntry(
-  trx: Parameters<Parameters<ReturnType<typeof getDb>["transaction"]>[0]>[0],
+  trx: Parameters<Parameters<NonNullable<Awaited<ReturnType<typeof getDb>>>["transaction"]>[0]>[0],
   entry: AuditChainEntryInput,
 ) {
   const [lastEntry] = await trx
@@ -105,7 +105,8 @@ export type AuditChainVerificationResult = {
  * Dipakai untuk audit periodik / endpoint admin, bukan di hot path.
  */
 export async function verifyAuditChain(workspaceId: number): Promise<AuditChainVerificationResult> {
-  const db = getDb();
+  const db = await getDb();
+  if (!db) throw new Error("Database connection unavailable");
   const entries = await db
     .select({
       id: auditEvents.id,

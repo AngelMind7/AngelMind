@@ -1,6 +1,7 @@
 ALTER TABLE `evidenceProvenance` DROP FOREIGN KEY `evidenceProvenance_evidenceArtifactId_evidenceArtifacts_id_fk`;
 --> statement-breakpoint
-ALTER TABLE `evidenceProvenance` DROP INDEX `evidence_provenance_artifact_uq`;
+-- The unique index also backs the foreign key above in MySQL, so the FK must be
+-- removed before dropping the index. Keep this ordering explicit for fresh DBs.
 --> statement-breakpoint
 CREATE INDEX `evidence_provenance_artifact_created_idx` ON `evidenceProvenance` (`evidenceArtifactId`,`createdAt`);
 --> statement-breakpoint

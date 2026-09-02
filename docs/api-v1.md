@@ -54,7 +54,7 @@ Response:
 
 ## `GET /api/v1/workspaces/{workspaceId}/search`
 
-Search is workspace-scoped. The `q` query parameter is the search text. The optional `limit` parameter is forwarded to the bounded search implementation and should be a positive integer; clients should keep it small enough for interactive use.
+Search is workspace-scoped. The `q` query parameter is the search text. The optional `limit` parameter is forwarded to the bounded search implementation and should be a positive integer; clients should keep it small enough for interactive use. `cursor` supports pagination, `entityTypes` accepts a comma-separated domain filter, and `freshnessDays` restricts results by update age.
 
 ```bash
 curl --fail-with-body \
@@ -66,13 +66,21 @@ Response shape:
 
 ```json
 {
-  "data": [
-    {
-      "id": 123,
-      "title": "...",
-      "snippet": "..."
-    }
-  ],
+  "data": {
+    "query": "authentication",
+    "results": [
+      {
+        "id": 123,
+        "entityType": "finding",
+        "title": "...",
+        "body": "...",
+        "updatedAt": "2026-09-03T00:00:00.000Z"
+      }
+    ],
+    "hasNextPage": false,
+    "nextCursor": null,
+    "facets": { "finding": 1 }
+  },
   "apiVersion": "v1"
 }
 ```
@@ -141,6 +149,20 @@ curl --fail-with-body -H "Authorization: Bearer $FIREBASE_ID_TOKEN" \
 ```
 
 Also verify that `/readyz` is healthy, `/metrics` is collected, and the worker uses the same database and server-side secrets as the web process. Do not use a production workspace or sensitive evidence for smoke tests.
+
+## SDK and CLI
+
+A dependency-light TypeScript client is available at [`api/rest-v1-client.ts`](../api/rest-v1-client.ts). It exposes typed `health()`, `search()`, `listAiRuns()`, and `getAiRun()` methods and throws `AngelMindApiError` with the HTTP status and stable error code for non-2xx responses. The client accepts an injected `fetch` implementation for testing.
+
+For shell automation, configure `ANGELMIND_BASE_URL` and `ANGELMIND_API_KEY`, then use:
+
+```bash
+npm run api:cli -- health
+npm run api:cli -- search 42 authentication 20
+npm run api:cli -- ai-runs 42
+```
+
+The CLI is intentionally read-only and does not expose target-facing execution, report submission, credential handling, or migration operations.
 
 ## Current limitations
 

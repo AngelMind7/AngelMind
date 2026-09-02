@@ -35,7 +35,7 @@ export async function authenticateApiKeyWithScopes(rawSecret: string) {
   await db.update(apiKeys).set({ lastUsedAt: new Date() }).where(eq(apiKeys.id, key.id));
   let scopes: string[] = [];
   try { const parsed = JSON.parse(key.scopes); scopes = Array.isArray(parsed) ? normalizeApiKeyScopes(parsed.filter((scope): scope is string => typeof scope === "string")) : []; } catch { scopes = []; }
-  return { user, scopes };
+  return { user, scopes, workspaceId: key.workspaceId };
 }
 
 export async function authenticateApiKey(rawSecret: string) {

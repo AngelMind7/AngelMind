@@ -15,6 +15,7 @@
     "check": "tsc --noEmit",
     "format": "prettier --write .",
     "test": "vitest run",
+    "api:cli": "tsx scripts/angelmind-api-cli.ts",
     "test:e2e": "playwright test",
     "test:python": "python3 -m pytest -q research-service/tests",
     "lint:python": "python3 -m ruff check research-service",

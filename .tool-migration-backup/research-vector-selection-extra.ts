@@ -22,8 +22,8 @@ export const extraFingerprintRules: Array<{
     { vectorKey: "deserialization-insecure", capability: "deserialization-testing", suggestedAdapters: ["custom_scripts_adapter"], riskClass: "critical", rationale: "Indikator deserialisasi tidak aman ditemukan; vector dibatasi approval." },
   ] },
   { needles: ["solidity", "smart contract", ".sol"], vectors: [
-    { vectorKey: "blockchain-reentrancy", capability: "solidity-analysis", suggestedAdapters: ["custom_scripts_adapter"], riskClass: "critical", rationale: "Smart contract Solidity ditemukan; berpotensi reentrancy, dibatasi approval." },
-    { vectorKey: "blockchain-access-control", capability: "solidity-analysis", suggestedAdapters: ["custom_scripts_adapter"], riskClass: "critical", rationale: "Smart contract Solidity ditemukan; berpotensi access-control bypass, dibatasi approval." },
+    { vectorKey: "blockchain-reentrancy", capability: "solidity-analysis", suggestedAdapters: ["slither_adapter", "mythril_adapter"], riskClass: "critical", rationale: "Smart contract Solidity ditemukan; berpotensi reentrancy, dibatasi approval." },
+    { vectorKey: "blockchain-access-control", capability: "solidity-analysis", suggestedAdapters: ["slither_adapter", "mythril_adapter"], riskClass: "critical", rationale: "Smart contract Solidity ditemukan; berpotensi access-control bypass, dibatasi approval." },
   ] },
   { needles: ["cache-control", "cdn", "x-cache"], vectors: [
     { vectorKey: "cache-poisoning", capability: "cache-behavior-analysis", suggestedAdapters: ["burp_pro_adapter"], riskClass: "high", rationale: "Cache header ditemukan pada metadata asset; berpotensi cache poisoning." },
@@ -39,8 +39,8 @@ export const extraFingerprintRules: Array<{
     { vectorKey: "info-stack-trace", capability: "error-analysis", suggestedAdapters: ["custom_scripts_adapter"], riskClass: "medium", rationale: "Stack trace / error verbose ditemukan pada respons." },
   ] },
   { needles: ["apk", "ipa", "mobile app"], vectors: [
-    { vectorKey: "mobile-hardcoded-secrets", capability: "mobile-reverse-engineering", suggestedAdapters: ["custom_scripts_adapter"], riskClass: "medium", rationale: "Aplikasi mobile (APK/IPA) ditemukan; berpotensi hardcoded secret." },
-    { vectorKey: "mobile-deep-link-hijack", capability: "mobile-reverse-engineering", suggestedAdapters: ["custom_scripts_adapter"], riskClass: "medium", rationale: "Aplikasi mobile (APK/IPA) ditemukan; berpotensi deep-link hijack." },
+    { vectorKey: "mobile-hardcoded-secrets", capability: "mobile-reverse-engineering", suggestedAdapters: ["mobsf_adapter", "jadx_adapter"], riskClass: "medium", rationale: "Aplikasi mobile (APK/IPA) ditemukan; berpotensi hardcoded secret." },
+    { vectorKey: "mobile-deep-link-hijack", capability: "mobile-reverse-engineering", suggestedAdapters: ["mobsf_adapter", "jadx_adapter"], riskClass: "medium", rationale: "Aplikasi mobile (APK/IPA) ditemukan; berpotensi deep-link hijack." },
   ] },
   { needles: ["subdomain", "cname", "dangling dns"], vectors: [
     { vectorKey: "subdomain-takeover", capability: "domain-validation-testing", suggestedAdapters: ["custom_scripts_adapter"], riskClass: "high", rationale: "Indikator CNAME/dangling DNS ditemukan; berpotensi subdomain takeover." },
@@ -55,11 +55,11 @@ export const extraFingerprintRules: Array<{
     { vectorKey: "race-condition", capability: "timing-analysis", suggestedAdapters: ["custom_scripts_adapter"], riskClass: "high", rationale: "Indikator operasi non-atomic ditemukan; berpotensi race condition." },
   ] },
   { needles: ["dependency", "package.json", "requirements.txt", "cve"], vectors: [
-    { vectorKey: "supply-chain-dependency-cve", capability: "dependency-scanning", suggestedAdapters: ["trivy_adapter"], riskClass: "high", rationale: "Manifest dependency ditemukan; perlu pemeriksaan CVE." },
+    { vectorKey: "supply-chain-dependency-cve", capability: "dependency-scanning", suggestedAdapters: ["trivy_adapter", "grype_adapter"], riskClass: "high", rationale: "Manifest dependency ditemukan; perlu pemeriksaan CVE." },
   ] },
   { needles: ["reflected", "xss", "unescaped output"], vectors: [
-    { vectorKey: "xss-reflected", capability: "input-validation-testing", suggestedAdapters: ["dalfox_adapter", "burp_pro_adapter"], riskClass: "medium", rationale: "Indikator output tidak di-escape ditemukan; berpotensi XSS reflected." },
-    { vectorKey: "xss-stored", capability: "stored-payload-testing", suggestedAdapters: ["dalfox_adapter", "burp_pro_adapter"], riskClass: "high", rationale: "Indikator output tidak di-escape pada konten tersimpan; berpotensi XSS stored." },
+    { vectorKey: "xss-reflected", capability: "input-validation-testing", suggestedAdapters: ["owasp_zap_adapter", "burp_pro_adapter"], riskClass: "medium", rationale: "Indikator output tidak di-escape ditemukan; berpotensi XSS reflected." },
+    { vectorKey: "xss-stored", capability: "stored-payload-testing", suggestedAdapters: ["owasp_zap_adapter", "burp_pro_adapter"], riskClass: "high", rationale: "Indikator output tidak di-escape pada konten tersimpan; berpotensi XSS stored." },
   ] },
   { needles: ["path traversal", "..%2f", "lfi", "../"], vectors: [
     { vectorKey: "path-traversal-lfi", capability: "file-read-validation", suggestedAdapters: ["custom_scripts_adapter"], riskClass: "high", rationale: "Indikator path traversal / LFI ditemukan pada parameter." },

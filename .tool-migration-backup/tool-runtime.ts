@@ -53,19 +53,7 @@ type SupportedToolKey =
   | "dependencies.3"
   | "dependencies.6"
   | "dependencies.11"
-  | "dependencies.12"
-  | "burp_suite_pro"
-  | "jwt_tool"
-  | "dalfox"
-  | "ssrfmap"
-  | "interactsh"
-  | "ffuf"
-  | "cloudfox"
-  | "graphql_cop"
-  | "sqlmap"
-  | "nuclei"
-  | "httpx"
-  | "custom_scripts";
+  | "dependencies.12";
 
 export type ToolRuntimeRequest = {
   toolKey: string;
@@ -97,102 +85,6 @@ type Adapter = {
 };
 
 const adapters: readonly Adapter[] = [
-  {
-    toolKey: "burp_suite_pro",
-    binary: "burp-rest-cli",
-    args: (inputPath, input) => [
-      "--project", "/app/runtime/burp-project.burp",
-      "--target", input,
-      "--scan-config", "/etc/angelmind/burp-scan-config.json",
-    ],
-    allowedModes: ["passive_readonly", "active_nondestructive"],
-    requiresTarget: true,
-  },
-  {
-    toolKey: "jwt_tool",
-    binary: "jwt_tool.py",
-    args: (inputPath, input) => ["-t", input, "-M", "at"],
-    allowedModes: ["active_nondestructive"],
-    requiresTarget: true,
-  },
-  {
-    toolKey: "dalfox",
-    binary: "dalfox",
-    args: (inputPath, input) => ["url", input, "--format", "json", "--silence"],
-    allowedModes: ["active_nondestructive"],
-    requiresTarget: true,
-  },
-  {
-    toolKey: "ssrfmap",
-    binary: "ssrfmap",
-    args: (inputPath, input) => ["-r", inputPath, "-p", input],
-    allowedModes: ["active_nondestructive"],
-    requiresTarget: true,
-  },
-  {
-    toolKey: "interactsh",
-    binary: "interactsh-client",
-    args: () => ["-json", "-poll-interval", "5"],
-    allowedModes: ["passive_readonly"],
-  },
-  {
-    toolKey: "ffuf",
-    binary: "ffuf",
-    args: (inputPath, input) => [
-      "-u", input,
-      "-w", "/etc/angelmind/wordlists/common.txt",
-      "-of", "json",
-      "-o", "-",
-    ],
-    allowedModes: ["active_nondestructive"],
-    requiresTarget: true,
-  },
-  {
-    toolKey: "cloudfox",
-    binary: "cloudfox",
-    args: () => ["aws", "all-checks", "--output", "json"],
-    allowedModes: ["passive_readonly"],
-  },
-  {
-    toolKey: "graphql_cop",
-    binary: "graphql-cop",
-    args: (inputPath, input) => ["-t", input, "-o", "json"],
-    allowedModes: ["passive_readonly", "active_nondestructive"],
-    requiresTarget: true,
-  },
-  {
-    toolKey: "sqlmap",
-    binary: "sqlmap",
-    args: (inputPath, input) => [
-      "-u", input,
-      "--batch",
-      "--output-dir=/tmp/angelmind-sqlmap",
-      "--level=1",
-      "--risk=1",
-    ],
-    allowedModes: ["privileged_or_destructive"],
-    requiresTarget: true,
-  },
-  {
-    toolKey: "nuclei",
-    binary: "nuclei",
-    args: (inputPath, input) => ["-u", input, "-jsonl", "-silent"],
-    allowedModes: ["passive_readonly", "active_nondestructive"],
-    requiresTarget: true,
-  },
-  {
-    toolKey: "httpx",
-    binary: "httpx",
-    args: (inputPath, input) => ["-u", input, "-json", "-silent"],
-    allowedModes: ["passive_readonly"],
-    requiresTarget: true,
-  },
-  {
-    toolKey: "custom_scripts",
-    binary: "python3",
-    args: inputPath => ["/app/runtime/custom_script_runner.py", inputPath],
-    allowedModes: ["offline_artifact", "passive_readonly"],
-  },
   {
     toolKey: "binary_artifact_analysis.24",
     binary: "yara",

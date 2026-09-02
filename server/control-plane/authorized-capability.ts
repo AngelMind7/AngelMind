@@ -12,11 +12,19 @@ export type AuthorizedCapabilityPolicy = {
 };
 
 function normalizeHost(value: string) {
-  return value.trim().toLowerCase().replace(/^https?:\/\//, "").split("/")[0]?.replace(/\.$/, "") ?? "";
+  const raw = value.trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+    return url.hostname.toLowerCase().replace(/\.$/, "");
+  } catch {
+    return "";
+  }
 }
 
 function matches(host: string, rule: string) {
-  const normalizedRule = normalizeHost(rule).replace(/^\*\./, "");
+  const normalizedRule = normalizeHost(rule.replace(/^\*\./, ""));
+  if (!normalizedRule) return false;
   return host === normalizedRule || host.endsWith(`.${normalizedRule}`);
 }
 

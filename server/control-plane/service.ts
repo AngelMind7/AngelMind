@@ -19,7 +19,7 @@ import { currentTraceContext } from "../_core/trace-context";
 import { ENV } from "../_core/env";
 import { encryptAuditState } from "./audit-state-crypto";
 import { enqueueJob } from "../ai-platform";
-import { scanEvidenceContent } from "../evidence-scanner";
+import { scanEvidenceWithProvider } from "../malware-scanner";
 import { createNotificationDeliveryLedger } from "../notification-delivery";
 import { isCronDueAt, normalizeUtcCronExpression } from "./cron";
 import { parseStoredProgramScope } from "./program-scope";
@@ -442,7 +442,7 @@ export async function executeEvidenceScanJob(payload: Record<string, unknown>) {
   const response = await fetch(downloadUrl);
   if (!response.ok) throw new Error(`Evidence download failed with HTTP ${response.status}.`);
   const bytes = Buffer.from(await response.arrayBuffer());
-  const result = scanEvidenceContent({ bytes, contentType, fileName });
+  const result = await scanEvidenceWithProvider({ bytes, contentType, fileName });
   await db.update(evidenceArtifacts).set({ status: result.passed ? "scanned" : "rejected", scannedAt: new Date(), quarantineReason: result.passed ? null : result.reason }).where(and(eq(evidenceArtifacts.id, artifact.id), eq(evidenceArtifacts.status, "quarantined")));
   await addAudit(artifact.workspaceId, "evidence", result.passed ? "artifact-auto-scanned" : "artifact-auto-rejected", { evidenceArtifactId: artifact.id, scanner: result.scanner, reason: result.reason });
   await upsertSearchDocument({ workspaceId: artifact.workspaceId, entityType: "evidence", entityId: artifact.id, title: artifact.artifactType, body: [artifact.artifactType, `status:${result.passed ? "scanned" : "rejected"}`, artifact.sha256, result.reason].filter(Boolean).join("\\n") });

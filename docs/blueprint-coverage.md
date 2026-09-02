@@ -40,7 +40,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 19 | Task dependency graph | **Partial** | Dependency validation, deterministic cycle-safe graph/readiness layout, task status transitions, and Research Workspace visualization are implemented; durable parallel worker orchestration remains incomplete. |
 | 20 | Hypothesis engine | **Partial** | AI evidence analyst mengeluarkan hypotheses; lifecycle persisted PROPOSED–VALIDATED belum. |
 | 21 | Observation engine | **Partial** | Passive inventory dan evidence intake ada; entity Observation terpisah sebelum hypothesis/evidence/finding belum. |
-| 22 | Evidence vault | **Implemented** | Upload validation, workspace authorization, SHA-256 reference, Supabase storage, metadata, audit tersedia; quarantine/security scan penuh belum. |
+| 22 | Evidence vault | **Implemented** | Upload validation, workspace authorization, SHA-256 reference, Supabase storage, metadata, quarantine lifecycle, built-in safety scan, optional external malware-provider verdict, and audit are available; live provider configuration remains environment-dependent. |
 | 23 | Evidence provenance | **Partial** | Storage reference/hash/audit and multi-event provenance records are implemented; full source–acquisition–transformation lineage semantics remain incomplete. |
 
 ## Requirement 24–46: findings, reports, collaboration, API, dan integrations

@@ -3,7 +3,7 @@ import { validateEvidenceBytes } from "./control-plane/evidence-validation";
 export type EvidenceScanResult = {
   passed: boolean;
   reason: string;
-  scanner: "built-in-format-safety";
+  scanner: "built-in-format-safety" | "external-http";
 };
 
 export function scanEvidenceContent(input: { bytes: Buffer; contentType: string; fileName: string }): EvidenceScanResult {

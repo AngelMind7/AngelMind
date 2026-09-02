@@ -25,7 +25,8 @@ export const MEMORY_PURGE_INTERVAL_MS = 15 * 60_000;
 
 export function computeRetryDelayMs(attempts: number, capMs = 60 * 60 * 1_000) {
   const safeAttempts = Number.isFinite(attempts) ? Math.max(1, Math.floor(attempts)) : 1;
-  return Math.min(capMs, 2 ** Math.max(0, safeAttempts - 1) * 5_000);
+  const safeCapMs = Number.isFinite(capMs) ? Math.max(0, Math.floor(capMs)) : 60 * 60 * 1_000;
+  return Math.min(safeCapMs, 2 ** Math.max(0, safeAttempts - 1) * 5_000);
 }
 
 export function shouldDeadLetter(attempts: number, maxAttempts: number) {
@@ -35,6 +36,7 @@ export function shouldDeadLetter(attempts: number, maxAttempts: number) {
 }
 
 function parsePayload(payload: string) {
+  if (typeof payload !== "string" || payload.length > 1_000_000) throw new Error("Job payload must be a JSON object.");
   const parsed: unknown = JSON.parse(payload);
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Job payload must be a JSON object.");
   return parsed as Record<string, unknown>;
@@ -47,7 +49,8 @@ export function resolveJobTraceContext(job: Pick<WorkerJob, "id" | "traceId">, p
 }
 
 export async function processAvailableJobs(handlers: Record<string, JobHandler>, limit = 10) {
-  const jobs = await claimPendingJobs(limit);
+  const safeLimit = Number.isFinite(limit) ? Math.min(100, Math.max(1, Math.floor(limit))) : 10;
+  const jobs = await claimPendingJobs(safeLimit);
   let succeeded = 0;
   let failed = 0;
   for (const job of jobs) {
@@ -73,8 +76,10 @@ export async function processAvailableJobs(handlers: Record<string, JobHandler>,
 }
 
 export function createWorkerLoop(handlers: Record<string, JobHandler>, options: { intervalMs?: number; batchSize?: number; outboxHandlers?: Record<string, OutboxEventHandler> } = {}) {
-  const intervalMs = Math.max(250, options.intervalMs ?? DEFAULT_POLL_INTERVAL_MS);
-  const batchSize = Math.min(100, Math.max(1, options.batchSize ?? 10));
+  const requestedIntervalMs = Number(options.intervalMs ?? DEFAULT_POLL_INTERVAL_MS);
+  const requestedBatchSize = Number(options.batchSize ?? 10);
+  const intervalMs = Number.isFinite(requestedIntervalMs) ? Math.max(250, Math.floor(requestedIntervalMs)) : DEFAULT_POLL_INTERVAL_MS;
+  const batchSize = Number.isFinite(requestedBatchSize) ? Math.min(100, Math.max(1, Math.floor(requestedBatchSize))) : 10;
   let stopped = false;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let running = false;

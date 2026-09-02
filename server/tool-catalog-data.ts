@@ -72,7 +72,7 @@ export const generatedToolCatalog = [
     "enabledByDefault": true
   },
   {
-    "toolKey": "gitleaks",
+    "toolKey": "secrets_detection.1",
     "name": "Gitleaks (auto-validate)",
     "category": "Supply Chain",
     "riskClass": "low",
@@ -112,7 +112,7 @@ export const generatedToolCatalog = [
     "enabledByDefault": true
   },
   {
-    "toolKey": "subfinder",
+    "toolKey": "asset_intelligence.28",
     "name": "Subfinder (custom permutation)",
     "category": "Discovery",
     "riskClass": "low",
@@ -132,7 +132,7 @@ export const generatedToolCatalog = [
     "enabledByDefault": true
   },
   {
-    "toolKey": "trivy",
+    "toolKey": "dependencies.12",
     "name": "Trivy (custom dependency)",
     "category": "Supply Chain",
     "riskClass": "low",

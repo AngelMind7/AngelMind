@@ -16,6 +16,11 @@ describe("canonical evidence normalizer", () => {
     expect(verifyEvidenceHash(result)).toBe(true);
   });
 
+  it("rejects malformed canonical input instead of coercing it", () => {
+    expect(() => normalizeEvidence({ data: null as never })).toThrow("Evidence data must be an object");
+    expect(() => normalizeEvidence({ data: {}, chainReferences: [7 as never] })).toThrow("chain references must be strings");
+  });
+
   it("normalizes timestamps and removes duplicate chain references", () => {
     const result = normalizeEvidence({
       data: { port: 443 },

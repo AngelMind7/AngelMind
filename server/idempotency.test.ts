@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const records = new Map<string, Record<string, unknown>>();
+let deadlockOnInsert = false;
 
 vi.mock("./db", () => ({
   getDb: async () => ({
@@ -13,6 +14,7 @@ vi.mock("./db", () => ({
     }),
     insert: () => ({
       values: async (value: Record<string, unknown>) => {
+        if (deadlockOnInsert) throw new Error("ER_LOCK_DEADLOCK: Deadlock found when trying to get lock");
         const key = `${value.userId}:${value.scope}:${value.idempotencyKey}`;
         if (records.has(key)) throw new Error("duplicate key");
         records.set(key, { id: records.size + 1, ...value });
@@ -32,7 +34,10 @@ vi.mock("./db", () => ({
 import { executeIdempotent, hashIdempotencyRequest, normalizeIdempotencyKey } from "./idempotency";
 
 describe("generic idempotency contract", () => {
-  beforeEach(() => records.clear());
+  beforeEach(() => {
+    records.clear();
+    deadlockOnInsert = false;
+  });
 
   it("normalizes valid keys and rejects invalid lengths", () => {
     expect(normalizeIdempotencyKey("  request-123  ")).toBe("request-123");
@@ -72,6 +77,19 @@ describe("generic idempotency contract", () => {
     expect(fulfilled[0]).toMatchObject({ status: "fulfilled", value: { value: { createdId: 42 }, replayed: false } });
     expect(rejected).toHaveLength(11);
     expect(rejected.every(result => result.status === "rejected" && /already in progress/.test(String(result.reason)))).toBe(true);
+  });
+
+  it("marks a network timeout as failed and refuses an unsafe retry", async () => {
+    const timeout = new Error("network timeout");
+    await expect(executeIdempotent({ userId: 7, scope: "finding.create", key: "request-timeout", request: { title: "timeout" }, handler: async () => { throw timeout; } })).rejects.toBe(timeout);
+    expect(records.values().next().value).toMatchObject({ status: "failed" });
+    await expect(executeIdempotent({ userId: 7, scope: "finding.create", key: "request-timeout", request: { title: "timeout" }, handler: async () => ({ createdId: 1 }) })).rejects.toThrow(/previous request.*failed/i);
+  });
+
+  it("propagates a database deadlock without creating a false idempotency replay", async () => {
+    deadlockOnInsert = true;
+    await expect(executeIdempotent({ userId: 7, scope: "finding.create", key: "request-deadlock", request: { title: "deadlock" }, handler: async () => ({ createdId: 2 }) })).rejects.toThrow(/ER_LOCK_DEADLOCK/);
+    expect(records).toHaveLength(0);
   });
 
   it("replays the completed response after the first request", async () => {

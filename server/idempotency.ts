@@ -42,10 +42,11 @@ export async function executeIdempotent<T>(input: {
   }
   try {
     await db.insert(idempotencyRecords).values({ userId: input.userId, scope, idempotencyKey: key, requestHash, status: "in_progress", expiresAt });
-  } catch {
+  } catch (error) {
     const [concurrent] = await db.select().from(idempotencyRecords).where(where).limit(1);
-    if (concurrent?.requestHash !== requestHash) throw new Error("Idempotency key is already used for a different request.");
-    if (concurrent?.status === "completed" && concurrent.responsePayload) return { value: JSON.parse(concurrent.responsePayload) as T, replayed: true };
+    if (!concurrent) throw error;
+    if (concurrent.requestHash !== requestHash) throw new Error("Idempotency key is already used for a different request.");
+    if (concurrent.status === "completed" && concurrent.responsePayload) return { value: JSON.parse(concurrent.responsePayload) as T, replayed: true };
     throw new Error("A request with this idempotency key is already in progress.");
   }
   try {

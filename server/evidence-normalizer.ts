@@ -61,6 +61,7 @@ function stableJson(value: unknown): string {
 }
 
 export function classifyEvidence(capabilities: string[] = []): EvidenceClassification {
+  if (!Array.isArray(capabilities) || !capabilities.every(value => typeof value === "string")) return "restricted";
   const normalized = capabilities.map(value => value.toLowerCase());
   if (normalized.some(value => value.includes("credential") || value.includes("identity") || value.includes("secret"))) return "restricted";
   if (normalized.some(value => value.includes("source") || value.includes("code"))) return "sensitive";
@@ -76,6 +77,8 @@ export function normalizeEvidence(input: {
   chainReferences?: string[];
   falsePositive?: boolean;
 }): CanonicalEvidence {
+  if (!input || !input.data || typeof input.data !== "object" || Array.isArray(input.data)) throw new Error("Evidence data must be an object.");
+  if (input.chainReferences !== undefined && (!Array.isArray(input.chainReferences) || !input.chainReferences.every(value => typeof value === "string"))) throw new Error("Evidence chain references must be strings.");
   const observedAt = input.observedAt ? new Date(input.observedAt) : new Date();
   if (Number.isNaN(observedAt.getTime())) throw new Error("Evidence timestamp must be a valid date.");
   const data = normalizeValue(input.data) as Record<string, unknown>;

@@ -9,5 +9,8 @@ describe("audit state encryption", () => {
     expect(decryptAuditState(encrypted, key)).toEqual({ actorUserId: 7, action: "review" });
     expect(() => decryptAuditState(`${encrypted}x`, key)).toThrow();
     expect(() => encryptAuditState({}, "short")).toThrow("at least 32");
+    expect(() => encryptAuditState(undefined, key)).toThrow("JSON-serializable");
+    expect(() => decryptAuditState("v1.too.few", key)).toThrow("format is invalid");
+    expect(isEncryptedAuditState(null as never)).toBe(false);
   });
 });

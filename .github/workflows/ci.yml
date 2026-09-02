@@ -58,3 +58,38 @@ jobs:
           python -m pip install -e '.[dev]'
           python -m pytest
           ruff check .
+
+  database-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: angelmind_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+    env:
+      DATABASE_URL: mysql://root:root@127.0.0.1:3306/angelmind_test
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Apply migrations to ephemeral database
+        run: pnpm drizzle-kit migrate
+      - name: Run database integration contracts
+        run: pnpm exec vitest run server/ai-memory-retention.integration.test.ts server/ai-memory-context.integration.test.ts server/global-search.integration.test.ts

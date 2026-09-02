@@ -25,6 +25,7 @@ function normalizeList(values: string[]) {
 }
 
 export function normalizeProgramScope(input: Omit<ProgramScope, "version"> & { version?: number }): ProgramScope {
+  if (!input || typeof input !== "object") throw new Error("Program scope input is required.");
   const includedAssets = normalizeList(input.includedAssets);
   const excludedAssets = normalizeList(input.excludedAssets);
   const rules = normalizeList(input.rules);
@@ -34,7 +35,10 @@ export function normalizeProgramScope(input: Omit<ProgramScope, "version"> & { v
   if (overlap.length > 0) throw new Error(`An asset cannot be both included and excluded: ${overlap.join(", ")}`);
   const version = input.version ?? 1;
   if (!Number.isInteger(version) || version < 1) throw new Error("Program scope version must be a positive integer.");
-  return { includedAssets, excludedAssets, rules, safeHarbor: input.safeHarbor.trim(), version };
+  const safeHarbor = input.safeHarbor.trim();
+  if (safeHarbor.length > 20_000) throw new Error("Program scope safe harbor text is too long.");
+  if ([...includedAssets, ...excludedAssets, ...rules].some(value => value.length > 2_048)) throw new Error("Program scope entry is too long.");
+  return { includedAssets, excludedAssets, rules, safeHarbor, version };
 }
 
 function listDiff(previous: string[], current: string[]) {

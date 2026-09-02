@@ -16,6 +16,9 @@ describe("registered tool runtime", () => {
       { toolKey: "nuclei", binary: "nuclei", allowedModes: ["passive_readonly","active_nondestructive"], requiresTarget: true },
       { toolKey: "httpx", binary: "httpx", allowedModes: ["passive_readonly"], requiresTarget: true },
       { toolKey: "custom_scripts", binary: "python3", allowedModes: ["offline_artifact","passive_readonly"] },
+      { toolKey: "secrets_detection.1", binary: "gitleaks", allowedModes: ["offline_artifact"] },
+      { toolKey: "asset_intelligence.28", binary: "subfinder", allowedModes: ["passive_readonly"], requiresTarget: true },
+      { toolKey: "dependencies.12", binary: "trivy", allowedModes: ["offline_artifact"] },
     ]);
   });
 

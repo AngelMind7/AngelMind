@@ -15,5 +15,7 @@ describe("in-app notification preferences", () => {
   it("only lets the notification recipient acknowledge an alert", () => {
     expect(canAcknowledgeNotification(101, 101)).toBe(true);
     expect(canAcknowledgeNotification(101, 202)).toBe(false);
+    expect(canAcknowledgeNotification(0, 0)).toBe(false);
+    expect(canAcknowledgeNotification(Number.NaN, Number.NaN)).toBe(false);
   });
 });

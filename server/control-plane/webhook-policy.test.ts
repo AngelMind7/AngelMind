@@ -8,6 +8,8 @@ describe("webhook draft policy", () => {
     expect(() => assertSafeWebhookEndpoint("https://127.0.0.1/events")).toThrow("local or private");
     expect(() => assertSafeWebhookEndpoint("https://[::1]/events")).toThrow("local or private");
     expect(() => assertSafeWebhookEndpoint("https://[fc00::1]/events")).toThrow("local or private");
+    expect(() => assertSafeWebhookEndpoint("https://[fd12:3456::1]/events")).toThrow("local or private");
+    expect(() => assertSafeWebhookEndpoint("https://[fe80::1]/events")).toThrow("local or private");
     expect(() => assertSafeWebhookEndpoint("https://hooks.example.com:8443/events")).toThrow("default HTTPS port");
     expect(normalizeWebhookEvents(["guardrail_blocked", "guardrail_blocked"])).toEqual(["guardrail_blocked"]);
   });

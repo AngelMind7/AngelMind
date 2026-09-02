@@ -30,6 +30,7 @@ async function recordSecurityEvent(userId: number, eventType: (typeof accountSec
 }
 
 export async function getAccountSecurity(userId: number) {
+  if (!Number.isInteger(userId) || userId < 1) throw new Error("userId must be a positive integer.");
   const db = await getDb();
   if (!db) {
     return { profile: null, devices: [], events: [], databaseAvailable: false as const };
@@ -50,6 +51,8 @@ export async function getAccountSecurity(userId: number) {
 }
 
 export async function registerAuthDevice(userId: number, input: { fingerprint: string; label?: string; platform?: "web" | "ios" | "android" | "unknown"; userAgent?: string }) {
+  if (!Number.isInteger(userId) || userId < 1 || !input || typeof input.fingerprint !== "string") throw new Error("Device registration input is invalid.");
+  if (input.platform !== undefined && !["web", "ios", "android", "unknown"].includes(input.platform)) throw new Error("Device platform is invalid.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const fingerprint = hashValue(input.fingerprint);
@@ -77,6 +80,7 @@ export async function registerAuthDevice(userId: number, input: { fingerprint: s
 }
 
 export async function revokeAuthDevice(userId: number, deviceId: number) {
+  if (!Number.isInteger(userId) || userId < 1 || !Number.isInteger(deviceId) || deviceId < 1) throw new Error("Device identity is invalid.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const [device] = await db.select().from(authDevices).where(and(eq(authDevices.id, deviceId), eq(authDevices.userId, userId))).limit(1);
@@ -87,6 +91,7 @@ export async function revokeAuthDevice(userId: number, deviceId: number) {
 }
 
 export async function saveOnboardingProfile(userId: number, input: { status: "not_started" | "in_progress" | "completed" | "skipped"; currentStep: (typeof onboardingSteps)[number]; organizationName?: string; roleIntent?: string }) {
+  if (!Number.isInteger(userId) || userId < 1 || !input || !["not_started", "in_progress", "completed", "skipped"].includes(input.status) || !onboardingSteps.includes(input.currentStep)) throw new Error("Onboarding profile input is invalid.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const organizationName = normalizeText(input.organizationName, 160);

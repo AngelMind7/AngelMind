@@ -57,17 +57,17 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 31 | Knowledge graph | **Partial** | Workspace-scoped relationship/evidence/finding records, search documents, and intelligence feed persistence exist; generic graph nodes/edges/traversal/temporal provenance engine remains incomplete. |
 | 32 | Intelligence center | **Partial** | Coverage dan analytics tersedia; correlation, historical intelligence, recommendation center belum. |
 | 33 | Change detection | **Implemented** | Workspace policy/configuration change detection tersedia; asset/technology change belum. |
-| 34 | Global search | **Partial** | `searchDocuments`, rebuild/index persistence, permission-aware ranked API/UI, saved views, workspace notes coverage, automatic mutation indexing, delete/reindex consistency, and cursor pagination are implemented; semantic search and a complete unified cross-domain UI remain incomplete. |
+| 34 | Global search | **Implemented (repository)** | `searchDocuments`, rebuild/index persistence, permission-aware ranked API/UI, deterministic vector-style semantic retrieval, unified cross-domain UI, saved views, workspace notes/AI memory coverage, mutation indexing, delete/reindex consistency, facets, filters, and cursor pagination are implemented. |
 | 35 | Command palette | **Implemented** | Ctrl/Cmd+K authenticated navigation tersedia. |
 | 36 | Saved views | **Implemented** | Workspace/user-scoped saved query and JSON filter persistence, authorization, audit event, migration, API, and authenticated UI tersedia. |
 | 37 | Tagging | **Partial** | Workspace-scoped tag schema, create/update, assignment, unassignment, authorization, audit boundary, API, UI, and entity assignment are implemented; richer domain taxonomy and full cross-domain tag filtering remain open. |
 | 38 | Notes | **Partial** | Workspace notes schema, workspace/entity assignment, visibility, create/edit/delete lifecycle, authorization, search indexing, API, UI, and tests are implemented; richer personal/research/program/asset/evidence note taxonomy remains open. |
-| 39 | Collaboration | **Partial** | Membership, workspace roles, assignment dasar, comments/mentions, organization invitation schema/token lifecycle/API/UI foundation are implemented; invitation email wiring, comment threading, review/activity feed, and full organization/team hierarchy remain open. |
+| 39 | Collaboration | **Partial** | Membership, workspace roles, assignment dasar, comments/mentions, threaded finding comments, review room UI, organization invitation schema/token lifecycle/API/UI foundation are implemented; invitation email wiring, activity feed, and full organization/team hierarchy remain open. |
 | 40 | Review system | **Partial** | Human approval dan finding review tersedia; peer-review/security-review sequence umum belum. |
 | 41 | Notification | **Partial** | In-app notifications/preferences, cursor polling, mention delivery, safe webhook boundary, and notification audit are implemented; generic notification queue, email delivery integration, retry/failure status, and unsubscribe lifecycle remain open. |
 | 42 | Reputation | **Planned** | Metrics internal ada; reputation, specialization, achievement belum menjadi domain. |
-| 43 | API platform | **Partial** | tRPC API nyata tersedia; public `/api/v1`, developer keys, SDK, CLI, docs platform belum. |
-| 44 | API security | **Partial** | Authz, validation, audit, body limits tersedia; API-key hashing/scopes/quota/rotation belum. |
+| 43 | API platform | **Partial** | tRPC dan public `/api/v1` read endpoints with versioned response envelopes are available; developer SDK, CLI, and docs platform remain open. |
+| 44 | API security | **Partial** | Authz, validation, audit, body limits, API-key hashing, explicit REST scopes, and rotation are implemented; quota/rate limiting remains open. |
 | 45 | Webhook engine | **Partial** | Draft, HTTPS confirmation, signing reference, activation approval tersedia; dispatcher/delivery/retry/backoff belum aktif. |
 | 46 | Integrations | **Planned** | GitHub/GitLab/Slack/Discord/custom integration lifecycle belum menjadi fitur production. |
 
@@ -93,7 +93,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 62 | Real-time | **Planned** | UI memakai request refresh; event-driven real-time updates belum. |
 | 63 | Event architecture | **Partial** | Audit/notification events domain ada; versioned event schemas/publishers/consumers belum. |
 | 64 | Outbox pattern | **Partial** | Versioned outbox schema, event records, leases, consumer receipts, retry/backoff, and bounded dispatcher exist; complete production publisher/consumer coverage and operational delivery monitoring remain incomplete. |
-| 65 | Idempotency | **Partial** | Beberapa workflow memiliki duplicate guards/idempotent escalation; generic idempotency key belum. |
+| 65 | Idempotency | **Partial** | Centralized jobs/outbox enforce bounded keys, unique persistence, duplicate replay, and payload-collision rejection; domain-wide mutation coverage remains incomplete. |
 
 ## Requirement 66–89: data, security, admin, billing
 

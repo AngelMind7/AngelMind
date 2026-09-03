@@ -31,6 +31,16 @@ export const notificationProviders: Record<NotificationChannel, NotificationProv
   webhook: { channel: "webhook", isEnabled: () => false, deliver: async () => ({ delivered: false, reason: "webhook-provider-disabled-until-approved-activation" }) },
 };
 
+function isDuplicateKeyError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const value = error as { code?: unknown; errno?: unknown; sqlState?: unknown; sqlMessage?: unknown; message?: unknown };
+  const code = typeof value.code === "string" ? value.code.toUpperCase() : "";
+  const errno = typeof value.errno === "number" ? value.errno : Number(value.errno);
+  const sqlState = typeof value.sqlState === "string" ? value.sqlState : "";
+  const message = typeof value.sqlMessage === "string" ? value.sqlMessage : typeof value.message === "string" ? value.message : "";
+  return code === "ER_DUP_ENTRY" || code === "SQLITE_CONSTRAINT_UNIQUE" || sqlState === "23505" || errno === 1062 || /duplicate entry|unique constraint|unique violation/i.test(message);
+}
+
 export async function createNotificationDeliveryLedger(notification: NotificationRecord) {
   const db = await getDb();
   if (!db) return [];
@@ -44,9 +54,9 @@ export async function createNotificationDeliveryLedger(notification: Notificatio
     const status = channel === "in_app" && provider.isEnabled() ? "sent" : provider.isEnabled() ? "queued" : "disabled";
     try {
       await db.insert(notificationDeliveries).values({ notificationId: notification.id, userId: notification.userId, workspaceId: notification.workspaceId, channel, status, idempotencyKey, attempts: status === "sent" ? 1 : 0, nextAttemptAt: new Date(), redactedPayload: payload });
-    } catch {
-      // The schema enforces uniqueness on both idempotencyKey and notification/channel.
-      // A concurrent worker may have won the insert; reconcile by reading the winner.
+    } catch (error) {
+      if (!isDuplicateKeyError(error)) throw error;
+      // A concurrent worker may have won the unique insert; reconcile by reading the winner.
     }
     const [created] = await db.select().from(notificationDeliveries).where(eq(notificationDeliveries.idempotencyKey, idempotencyKey)).limit(1);
     if (created) rows.push(created);

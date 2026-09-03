@@ -13,6 +13,7 @@
     "check:master-contract": "node scripts/check-master-contract.mjs",
     "check:execution-contract": "pnpm exec vitest run server/tool-execution-pipeline.test.ts server/tool-runtime.test.ts",
     "check:provider-neutral": "node scripts/check-provider-neutral.mjs",
+    "check:uuid-buffer-usage": "node scripts/check-uuid-buffer-usage.mjs",
     "test:load": "node scripts/load-test.mjs",
     "test:staging": "node scripts/run-staging-verification.mjs",
     "start": "NODE_ENV=production node dist/_core/index.js",

@@ -31,6 +31,8 @@ jobs:
         run: pnpm install --frozen-lockfile
       - name: Verify provider-neutral source
         run: node scripts/check-provider-neutral.mjs
+      - name: Verify UUID external-buffer usage
+        run: pnpm check:uuid-buffer-usage
       - name: Migration journal consistency
         run: pnpm check:migration-journal
       - name: Migration safety

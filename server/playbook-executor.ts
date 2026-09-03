@@ -72,10 +72,17 @@ export function hasDependencyCycle(taskIds: readonly number[], dependencies: Arr
 
 function affectedRowCount(result: unknown): number | undefined {
   if (!result || typeof result !== "object") return undefined;
-  const value = result as { affectedRows?: unknown; rowsAffected?: unknown };
+  const value = result as { affectedRows?: unknown; rowsAffected?: unknown; rowCount?: unknown };
   if (typeof value.affectedRows === "number") return value.affectedRows;
   if (typeof value.rowsAffected === "number") return value.rowsAffected;
+  if (typeof value.rowCount === "number") return value.rowCount;
   return undefined;
+}
+
+function assertAffectedRows(result: unknown, operation: string): number {
+  const count = affectedRowCount(result);
+  if (count === undefined) throw new Error(`Playbook ${operation} affected-row count is unavailable; execution is blocked fail-closed.`);
+  return count;
 }
 
 export type PlaybookExecutionResult =
@@ -101,15 +108,15 @@ export async function executePlaybookRunJob(payload: Record<string, unknown>): P
 
   if (run.status === "queued" || run.status === "paused") {
     const claim = await db.update(playbookRuns).set({ status: "running", startedAt: run.startedAt ?? new Date(), updatedAt: new Date() }).where(and(eq(playbookRuns.id, run.id), inArray(playbookRuns.status, ["queued", "paused"])));
-    const affected = affectedRowCount(claim);
-    if (affected === 0) return { status: "paused", runId, reason: "Playbook run is already being processed by another worker." };
+    if (assertAffectedRows(claim, "run claim") === 0) return { status: "paused", runId, reason: "Playbook run is already being processed by another worker." };
   }
 
   const tasks = ids.length ? await db.select().from(researchTasks).where(and(eq(researchTasks.workspaceId, run.workspaceId), inArray(researchTasks.id, ids))).orderBy(asc(researchTasks.id)) : [];
   const dependencies = ids.length ? await db.select({ taskId: researchTaskDependencies.taskId, dependsOnTaskId: researchTaskDependencies.dependsOnTaskId }).from(researchTaskDependencies).where(and(eq(researchTaskDependencies.workspaceId, run.workspaceId), inArray(researchTaskDependencies.taskId, ids))) : [];
 
   if (ids.length === 0 || completedIds.size >= ids.length) {
-    await db.update(playbookRuns).set({ status: "completed", checkpoint: JSON.stringify({ ...checkpoint, completedTaskIds: ids, nextTaskIndex: ids.length }), completedAt: new Date(), lastError: null, updatedAt: new Date() }).where(eq(playbookRuns.id, run.id));
+    const completion = await db.update(playbookRuns).set({ status: "completed", checkpoint: JSON.stringify({ ...checkpoint, completedTaskIds: ids, nextTaskIndex: ids.length }), completedAt: new Date(), lastError: null, updatedAt: new Date() }).where(eq(playbookRuns.id, run.id));
+    assertAffectedRows(completion, "completion");
     return { status: "completed", runId };
   }
 
@@ -154,7 +161,7 @@ export async function executePlaybookRunJob(payload: Record<string, unknown>): P
     const completedTaskIds = Array.from(new Set([...Array.from(completedIds), task.id]));
     const runCompleted = completedTaskIds.length >= ids.length;
     const taskUpdate = await db.update(researchTasks).set({ status: "completed", outputs: JSON.stringify(feedback), completedAt: new Date(), updatedAt: new Date() }).where(and(eq(researchTasks.id, task.id), eq(researchTasks.workspaceId, run.workspaceId), eq(researchTasks.status, "queued")));
-    if (affectedRowCount(taskUpdate) === 0) {
+    if (assertAffectedRows(taskUpdate, "task completion") === 0) {
       return { status: "paused", runId, taskId: task.id, reason: "Playbook task was already claimed or completed by another worker." };
     }
     await db.update(playbookRuns).set({ status: runCompleted ? "completed" : "queued", checkpoint: JSON.stringify({ ...checkpoint, completedTaskIds, nextTaskIndex: checkpoint.nextTaskIndex + 1, blockedTaskIds: (checkpoint.blockedTaskIds ?? []).filter(id => id !== task.id) }), completedAt: runCompleted ? new Date() : null, lastError: null, updatedAt: new Date() }).where(eq(playbookRuns.id, run.id));

@@ -22,6 +22,8 @@ export type JobHandler = (job: WorkerJob, payload: Record<string, unknown>) => P
 export const DEFAULT_POLL_INTERVAL_MS = 5_000;
 export const MODEL_CATALOG_REFRESH_INTERVAL_MS = 15 * 60_000;
 export const MEMORY_PURGE_INTERVAL_MS = 15 * 60_000;
+export const MAX_JOB_PAYLOAD_BYTES = 1_000_000;
+export const MAX_TRACE_FIELD_LENGTH = 256;
 
 export function computeRetryDelayMs(attempts: number, capMs = 60 * 60 * 1_000) {
   const safeAttempts = Number.isFinite(attempts) ? Math.max(1, Math.floor(attempts)) : 1;
@@ -38,16 +40,26 @@ export function shouldDeadLetter(attempts: number, maxAttempts: number) {
   return safeAttempts >= safeMaxAttempts;
 }
 
-function parsePayload(payload: string) {
-  if (typeof payload !== "string" || payload.length > 1_000_000) throw new Error("Job payload must be a JSON object.");
-  const parsed: unknown = JSON.parse(payload);
+export function parseJobPayload(payload: string): Record<string, unknown> {
+  if (typeof payload !== "string" || new TextEncoder().encode(payload).byteLength > MAX_JOB_PAYLOAD_BYTES) {
+    throw new Error("Job payload must be a JSON object within the size limit.");
+  }
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(payload);
+  } catch {
+    throw new Error("Job payload must be valid JSON.");
+  }
   if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) throw new Error("Job payload must be a JSON object.");
   return parsed as Record<string, unknown>;
 }
 
 export function resolveJobTraceContext(job: Pick<WorkerJob, "id" | "traceId">, payload: Record<string, unknown>) {
-  const traceId = typeof payload.traceId === "string" && payload.traceId.trim() ? payload.traceId : job.traceId ?? `job:${job.id}`;
-  const requestId = typeof payload.requestId === "string" && payload.requestId.trim() ? payload.requestId : `job:${job.id}`;
+  const payloadTraceId = typeof payload.traceId === "string" ? payload.traceId.trim() : "";
+  const jobTraceId = typeof job.traceId === "string" ? job.traceId.trim() : "";
+  const payloadRequestId = typeof payload.requestId === "string" ? payload.requestId.trim() : "";
+  const traceId = (payloadTraceId || jobTraceId || `job:${job.id}`).slice(0, MAX_TRACE_FIELD_LENGTH);
+  const requestId = (payloadRequestId || `job:${job.id}`).slice(0, MAX_TRACE_FIELD_LENGTH);
   return { requestId, traceId };
 }
 
@@ -63,7 +75,7 @@ export async function processAvailableJobs(handlers: Record<string, JobHandler>,
       const heartbeatTimer = setInterval(() => { void heartbeatJob(job.id).catch(() => undefined); }, 15_000);
       heartbeatTimer.unref?.();
       try {
-        const payload = parsePayload(job.payload);
+        const payload = parseJobPayload(job.payload);
         await withTraceContext(resolveJobTraceContext(job, payload), () => handler(job, payload));
       } finally {
         clearInterval(heartbeatTimer);

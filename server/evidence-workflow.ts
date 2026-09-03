@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { and, desc, eq, like, ne, or } from "drizzle-orm";
-import { evidenceArtifacts, evidenceProvenance, findingRelations, findingRetests, findings, researchEvidenceLinks, researchHypotheses, researchObservations, reportVersions, workspaces } from "../drizzle/schema";
+import { auditEvents, evidenceArtifacts, evidenceProvenance, findingRelations, findingRetests, findings, researchEvidenceLinks, researchHypotheses, researchObservations, reportVersions, workspaces } from "../drizzle/schema";
 import { upsertSearchDocument } from "./global-search";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
@@ -8,6 +8,21 @@ import { assertExpectedRevision, nextRevision } from "./_core/query-safety";
 
 function digest(value: unknown) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
+}
+
+async function recordRetestAudit(
+  db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
+  workspaceId: number,
+  details: Record<string, unknown>,
+) {
+  const evidenceHash = digest({ workspaceId, category: "finding", subject: "finding-retest", details });
+  await db.insert(auditEvents).values({
+    workspaceId,
+    category: "finding",
+    subject: "finding-retest",
+    evidenceHash,
+    details: JSON.stringify(details),
+  });
 }
 
 async function loadArtifact(userId: number, evidenceArtifactId: number, intent: "read" | "respond" = "read") {
@@ -119,11 +134,22 @@ export async function completeFindingRetest(userId: number, input: { retestId: n
   if (resultSummary.length < 3) throw new Error("Retest result summary is required.");
   const terminal = ["passed", "failed", "inconclusive", "cancelled"].includes(input.status);
   const now = new Date();
-  await db.update(findingRetests).set({ status: input.status, resultSummary, evidenceArtifactId: input.evidenceArtifactId ?? retest.evidenceArtifactId, reviewedByUserId: userId, startedAt: input.status === "in_progress" ? (retest.startedAt ?? now) : retest.startedAt, completedAt: terminal ? now : null }).where(and(eq(findingRetests.id, retest.id), or(eq(findingRetests.status, "requested"), eq(findingRetests.status, "in_progress"))));
+  const retestUpdate = await db.update(findingRetests).set({ status: input.status, resultSummary, evidenceArtifactId: input.evidenceArtifactId ?? retest.evidenceArtifactId, reviewedByUserId: userId, startedAt: input.status === "in_progress" ? (retest.startedAt ?? now) : retest.startedAt, completedAt: terminal ? now : null }).where(and(eq(findingRetests.id, retest.id), or(eq(findingRetests.status, "requested"), eq(findingRetests.status, "in_progress"))));
+  if (retestUpdate[0].affectedRows !== 1) throw new Error("Concurrent update detected; this retest was already updated by another reviewer.");
   const [finding] = await db.select().from(findings).where(eq(findings.id, retest.findingId)).limit(1);
   if (!finding) throw new Error("Finding retest parent tidak ditemukan.");
   const nextStatus = input.status === "passed" ? "resolved" : input.status === "failed" ? "remediation" : input.status === "inconclusive" ? "inconclusive" : input.status === "cancelled" ? "remediation" : "retest";
-  await db.update(findings).set({ status: nextStatus, resolvedAt: nextStatus === "resolved" ? now : null, humanReviewStatus: nextStatus === "resolved" ? "pending" : finding.humanReviewStatus, updatedAt: now }).where(eq(findings.id, finding.id));
+  const findingUpdate = await db.update(findings).set({ status: nextStatus, revision: nextRevision(finding.revision), resolvedAt: nextStatus === "resolved" ? now : null, humanReviewStatus: nextStatus === "resolved" ? "pending" : finding.humanReviewStatus, updatedAt: now }).where(and(eq(findings.id, finding.id), eq(findings.revision, finding.revision)));
+  if (findingUpdate[0].affectedRows !== 1) throw new Error("Concurrent update detected; reload the finding before recording the retest result.");
+  await recordRetestAudit(db, finding.workspaceId, {
+    findingId: finding.id,
+    retestId: retest.id,
+    previousFindingStatus: finding.status,
+    findingStatus: nextStatus,
+    retestStatus: input.status,
+    evidenceArtifactId: input.evidenceArtifactId ?? retest.evidenceArtifactId ?? null,
+    reviewedByUserId: userId,
+  });
   await upsertSearchDocument({ workspaceId: finding.workspaceId, entityType: "finding", entityId: finding.id, title: finding.title, body: [finding.impactSummary, finding.remediationNotes ?? "", `status:${nextStatus}`, `retest:${input.status}`, resultSummary].filter(Boolean).join("\\n") });
   return { success: true as const, retestId: retest.id, status: input.status, findingStatus: nextStatus };
 }

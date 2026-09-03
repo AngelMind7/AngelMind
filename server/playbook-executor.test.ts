@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { selectDependencyReadyTask } from "./playbook-executor";
+import {
+  hasDependencyCycle,
+  playbookJobPayload,
+  reconcileCompletedTaskIds,
+  selectDependencyReadyTask,
+} from "./playbook-executor";
 import {
   executePassiveAdapter,
   assertPassivePlaybookTaskType,
@@ -45,5 +50,30 @@ describe("playbook executor planning", () => {
     expect(() => assertPassivePlaybookTaskType("exploit-validation")).toThrow();
     expect(() => assertPassivePlaybookTaskType("credential-review")).toThrow();
     expect(assertPassivePlaybookTaskType("metadata-review")).toBe("metadata-review");
+  });
+
+  it("reconciles stale checkpoint IDs to the current run", () => {
+    expect(reconcileCompletedTaskIds([10, 20], [10, 999, 10])).toEqual(new Set([10]));
+  });
+
+  it("detects dependency cycles", () => {
+    expect(
+      hasDependencyCycle(
+        [10, 20, 30],
+        [
+          { taskId: 20, dependsOnTaskId: 10 },
+          { taskId: 30, dependsOnTaskId: 20 },
+          { taskId: 10, dependsOnTaskId: 30 },
+        ]
+      )
+    ).toBe(true);
+  });
+
+  it("ignores dependencies outside the current run when checking cycles", () => {
+    expect(hasDependencyCycle([10, 20], [{ taskId: 20, dependsOnTaskId: 999 }])).toBe(false);
+  });
+
+  it("creates the canonical durable worker payload", () => {
+    expect(playbookJobPayload(42)).toEqual({ type: "playbook_run", runId: 42 });
   });
 });

@@ -24,8 +24,7 @@ ENV VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY \
     VITE_ANALYTICS_WEBSITE_ID=$VITE_ANALYTICS_WEBSITE_ID
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
-RUN --mount=type=cache,id=angelmind-pnpm-store,target=/root/.local/share/pnpm/store \
-    corepack enable \
+RUN corepack enable \
     && pnpm install --frozen-lockfile --prefer-offline --store-dir=/root/.local/share/pnpm/store
 COPY . .
 RUN pnpm check && pnpm build
@@ -93,8 +92,7 @@ COPY --chown=angelmind:angelmind config/tool-runtime-packs.yaml ./config/tool-ru
 COPY --chown=angelmind:angelmind runtime/rules.yar /etc/angelmind/rules.yar
 COPY --chown=angelmind:angelmind runtime/capstone_inspect.py runtime/unicorn_probe.py runtime/dkim_verify.py runtime/custom_script_runner.py ./runtime/
 COPY scripts/install-python-runtime-deps.sh /usr/local/bin/install-python-runtime-deps
-RUN --mount=type=cache,id=angelmind-pnpm-store,target=/root/.local/share/pnpm/store \
-    chmod 0755 /usr/local/bin/install-python-runtime-deps \
+RUN chmod 0755 /usr/local/bin/install-python-runtime-deps \
     && /usr/local/bin/install-python-runtime-deps \
     && pnpm install --prod --frozen-lockfile --prefer-offline \
     && chown -R angelmind:angelmind /app

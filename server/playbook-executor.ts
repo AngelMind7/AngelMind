@@ -70,6 +70,14 @@ export function hasDependencyCycle(taskIds: readonly number[], dependencies: Arr
   return taskIds.some(visit);
 }
 
+function affectedRowCount(result: unknown): number | undefined {
+  if (!result || typeof result !== "object") return undefined;
+  const value = result as { affectedRows?: unknown; rowsAffected?: unknown };
+  if (typeof value.affectedRows === "number") return value.affectedRows;
+  if (typeof value.rowsAffected === "number") return value.rowsAffected;
+  return undefined;
+}
+
 export type PlaybookExecutionResult =
   | { status: "completed"; runId: number; taskId?: number }
   | { status: "paused"; runId: number; taskId?: number; reason: string }
@@ -93,7 +101,8 @@ export async function executePlaybookRunJob(payload: Record<string, unknown>): P
 
   if (run.status === "queued" || run.status === "paused") {
     const claim = await db.update(playbookRuns).set({ status: "running", startedAt: run.startedAt ?? new Date(), updatedAt: new Date() }).where(and(eq(playbookRuns.id, run.id), inArray(playbookRuns.status, ["queued", "paused"])));
-    if ("affectedRows" in claim && Number(claim.affectedRows) === 0) return { status: "paused", runId, reason: "Playbook run is already being processed by another worker." };
+    const affected = affectedRowCount(claim);
+    if (affected === 0) return { status: "paused", runId, reason: "Playbook run is already being processed by another worker." };
   }
 
   const tasks = ids.length ? await db.select().from(researchTasks).where(and(eq(researchTasks.workspaceId, run.workspaceId), inArray(researchTasks.id, ids))).orderBy(asc(researchTasks.id)) : [];
@@ -144,7 +153,10 @@ export async function executePlaybookRunJob(payload: Record<string, unknown>): P
     const feedback = executePassiveAdapter(taskInputs.adapterKey, taskInputs);
     const completedTaskIds = Array.from(new Set([...Array.from(completedIds), task.id]));
     const runCompleted = completedTaskIds.length >= ids.length;
-    await db.update(researchTasks).set({ status: "completed", outputs: JSON.stringify(feedback), completedAt: new Date(), updatedAt: new Date() }).where(and(eq(researchTasks.id, task.id), eq(researchTasks.workspaceId, run.workspaceId), eq(researchTasks.status, "queued")));
+    const taskUpdate = await db.update(researchTasks).set({ status: "completed", outputs: JSON.stringify(feedback), completedAt: new Date(), updatedAt: new Date() }).where(and(eq(researchTasks.id, task.id), eq(researchTasks.workspaceId, run.workspaceId), eq(researchTasks.status, "queued")));
+    if (affectedRowCount(taskUpdate) === 0) {
+      return { status: "paused", runId, taskId: task.id, reason: "Playbook task was already claimed or completed by another worker." };
+    }
     await db.update(playbookRuns).set({ status: runCompleted ? "completed" : "queued", checkpoint: JSON.stringify({ ...checkpoint, completedTaskIds, nextTaskIndex: checkpoint.nextTaskIndex + 1, blockedTaskIds: (checkpoint.blockedTaskIds ?? []).filter(id => id !== task.id) }), completedAt: runCompleted ? new Date() : null, lastError: null, updatedAt: new Date() }).where(eq(playbookRuns.id, run.id));
     await recordAudit(db, run.workspaceId, run.createdByUserId, "playbook-task-passive-adapter-completed", { playbookRunId: run.id, taskId: task.id, adapterKey: feedback.adapterKey, networkCalls: feedback.networkCalls });
     return { status: "completed", runId, taskId: task.id };

@@ -18,5 +18,7 @@ CREATE TABLE `playbookRuns` (
   CONSTRAINT `playbookRuns_playbook_fk` FOREIGN KEY (`playbookId`) REFERENCES `playbooks` (`id`) ON DELETE CASCADE,
   CONSTRAINT `playbookRuns_session_fk` FOREIGN KEY (`sessionId`) REFERENCES `researchSessions` (`id`) ON DELETE CASCADE
 );
+--> statement-breakpoint
 CREATE INDEX `playbook_run_workspace_status_idx` ON `playbookRuns` (`workspaceId`, `status`, `updatedAt`);
+--> statement-breakpoint
 CREATE INDEX `playbook_run_session_idx` ON `playbookRuns` (`sessionId`, `createdAt`);

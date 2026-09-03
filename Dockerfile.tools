@@ -28,7 +28,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 COPY --from=tools /go/bin/ /usr/local/bin/
 # Source-based tools are installed from pinned upstream revisions, never stubbed.
 ARG SQLMAP_VERSION=1.8.12
-ARG JWT_TOOL_REF=master
+ARG JWT_TOOL_REF=3bc7407cf2222d6a821dcc19c776e5a1b1cb9a9b
 RUN git clone --depth 1 --branch ${SQLMAP_VERSION} https://github.com/sqlmapproject/sqlmap.git /opt/sqlmap \
  && ln -s /opt/sqlmap/sqlmap.py /usr/local/bin/sqlmap \
  && git clone --depth 1 --branch ${JWT_TOOL_REF} https://github.com/ticarpi/jwt_tool.git /opt/jwt_tool \

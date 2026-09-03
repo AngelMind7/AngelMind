@@ -13,6 +13,8 @@ This checklist separates repository-complete work from checks that require a rea
 | Migration rollback contract                          | Complete   | `pnpm check:migration-rollback` |
 | Bundle budget and provider-neutral checks            | CI-covered | `.github/workflows/ci.yml`      |
 | Public accessibility and safety E2E                  | CI-covered | `.github/workflows/e2e.yml`     |
+| Governed adapter lifecycle and provenance contract   | Complete   | `pnpm check:execution-contract` |
+| Latest migration journal/safety/rollback checks      | Complete   | `pnpm check:migration-journal`  |
 
 ## Staging gates
 

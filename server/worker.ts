@@ -20,6 +20,7 @@ export type WorkerJob = {
 export type JobHandler = (job: WorkerJob, payload: Record<string, unknown>) => Promise<void>;
 
 export const DEFAULT_POLL_INTERVAL_MS = 5_000;
+export const WORKER_HEARTBEAT_INTERVAL_MS = 10_000;
 export const MODEL_CATALOG_REFRESH_INTERVAL_MS = 15 * 60_000;
 export const MEMORY_PURGE_INTERVAL_MS = 15 * 60_000;
 export const MAX_JOB_PAYLOAD_BYTES = 1_000_000;
@@ -72,7 +73,7 @@ export async function processAvailableJobs(handlers: Record<string, JobHandler>,
     try {
       const handler = handlers[job.kind];
       if (!handler) throw new Error(`No handler registered for job kind '${job.kind}'.`);
-      const heartbeatTimer = setInterval(() => { void heartbeatJob(job.id).catch(() => undefined); }, 15_000);
+      const heartbeatTimer = setInterval(() => { void heartbeatJob(job.id).catch(() => undefined); }, WORKER_HEARTBEAT_INTERVAL_MS);
       heartbeatTimer.unref?.();
       try {
         const payload = parseJobPayload(job.payload);

@@ -3,6 +3,7 @@ export type CorrelationFact = {
   value: string;
   confidence: number;
   evidenceRefs: string[];
+  observedAt?: string | Date;
 };
 
 export type CorrelationRule = {
@@ -33,12 +34,16 @@ export function evaluateCorrelationRules(facts: CorrelationFact[], rules: Correl
     const value = fact.value.trim();
     if (!key || !value || !Number.isFinite(fact.confidence) || fact.confidence < 0 || fact.confidence > 100) continue;
     const current = byKey.get(key) ?? [];
-    current.push({ ...fact, key, value, confidence: Math.round(fact.confidence), evidenceRefs: Array.from(new Set(fact.evidenceRefs.map(ref => ref.trim()).filter(Boolean))) });
+    const observedAt = fact.observedAt === undefined ? undefined : new Date(fact.observedAt);
+    if (observedAt && Number.isNaN(observedAt.getTime())) continue;
+    current.push({ ...fact, key, value, confidence: Math.round(fact.confidence), evidenceRefs: Array.from(new Set(fact.evidenceRefs.map(ref => ref.trim()).filter(Boolean))), observedAt: observedAt?.toISOString() });
     byKey.set(key, current);
   }
   return rules.filter(rule => rule.id.trim() && rule.requires.length > 0 && rule.emits.trim()).flatMap(rule => {
     const matched = rule.requires.flatMap(key => byKey.get(key) ?? []);
     if (rule.requires.some(key => !byKey.has(key))) return [];
+    const sequence = rule.category === "sequential" ? rule.requires.map(key => byKey.get(key)?.filter(fact => fact.observedAt).sort((a, b) => new Date(a.observedAt!).getTime() - new Date(b.observedAt!).getTime())[0]) : [];
+    if (rule.category === "sequential" && sequence.length === rule.requires.length && sequence.every(Boolean) && sequence.length > 1 && sequence.some((fact, index) => index > 0 && new Date(fact!.observedAt!).getTime() <= new Date(sequence[index - 1]!.observedAt!).getTime())) return [];
     const confidence = Math.round(matched.reduce((sum, fact) => sum + fact.confidence, 0) / matched.length);
     const evidenceRefs = Array.from(new Set(matched.flatMap(fact => fact.evidenceRefs))).sort();
     return [{ ruleId: rule.id, category: rule.category, title: rule.title.trim(), emittedKey: rule.emits.trim(), priority: Math.min(100, Math.max(1, Math.trunc(rule.priority))), confidence, evidenceRefs, taskRecommendation: rule.taskType ? { type: rule.taskType.trim(), title: rule.title.trim(), priority: Math.min(100, Math.max(1, Math.trunc(rule.priority))) } : undefined }];

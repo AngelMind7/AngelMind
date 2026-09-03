@@ -20,4 +20,16 @@ describe("correlation engine", () => {
     expect(merged).toHaveLength(1);
     expect(merged[0]).toMatchObject({ priority: 90, confidence: 80, evidenceRefs: ["e1", "e2"] });
   });
+
+  it("enforces chronological order when sequential facts provide timestamps", () => {
+    const rule = [{ id: "seq", category: "sequential" as const, requires: ["first", "second"], emits: "chain.complete", title: "Chain", priority: 80 }];
+    expect(evaluateCorrelationRules([
+      { key: "first", value: "ok", confidence: 90, evidenceRefs: ["a"], observedAt: "2026-01-01T00:00:00Z" },
+      { key: "second", value: "ok", confidence: 90, evidenceRefs: ["b"], observedAt: "2026-01-01T00:01:00Z" },
+    ], rule)).toHaveLength(1);
+    expect(evaluateCorrelationRules([
+      { key: "first", value: "ok", confidence: 90, evidenceRefs: ["a"], observedAt: "2026-01-01T00:02:00Z" },
+      { key: "second", value: "ok", confidence: 90, evidenceRefs: ["b"], observedAt: "2026-01-01T00:01:00Z" },
+    ], rule)).toEqual([]);
+  });
 });

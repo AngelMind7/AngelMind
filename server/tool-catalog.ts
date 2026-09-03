@@ -25,6 +25,17 @@ export type ToolCatalogEntry = {
 
 export const toolCatalog = generatedToolCatalog as readonly ToolCatalogEntry[];
 
+/** Canonical aliases retained for backward compatibility with pre-master data. */
+const TOOL_ALIASES: Readonly<Record<string, string>> = {
+  "secrets_detection.1": "gitleaks",
+  "asset_intelligence.28": "subfinder",
+  "dependencies.12": "trivy",
+};
+
+export function canonicalToolKey(toolKey: string) {
+  return TOOL_ALIASES[toolKey] ?? toolKey;
+}
+
 export function listToolCatalog(input?: {
   category?: string;
   disposition?: ToolDisposition;
@@ -49,7 +60,8 @@ export function searchToolCatalog(query: string) {
 }
 
 export function getToolCatalogEntry(toolKey: string) {
-  return toolCatalog.find(tool => tool.toolKey === toolKey);
+  const canonical = canonicalToolKey(toolKey);
+  return toolCatalog.find(tool => tool.toolKey === canonical || TOOL_ALIASES[tool.toolKey] === canonical);
 }
 
 export function canExecuteTool(input: {

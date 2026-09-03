@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeRetryDelayMs, resolveJobTraceContext, shouldDeadLetter } from "./worker";
+import { computeRetryDelayMs, parseJobPayload, resolveJobTraceContext, shouldDeadLetter } from "./worker";
 
 describe("durable worker retry policy", () => {
   it("uses bounded exponential backoff", () => {
@@ -21,9 +21,19 @@ describe("durable worker retry policy", () => {
     expect(shouldDeadLetter(1, Number.NaN)).toBe(true);
   });
 
+  it("parses only bounded JSON objects", () => {
+    expect(parseJobPayload('{"type":"test"}')).toEqual({ type: "test" });
+    expect(() => parseJobPayload("not-json")).toThrow("valid JSON");
+    expect(() => parseJobPayload("[]")).toThrow("JSON object");
+    expect(() => parseJobPayload('"string"')).toThrow("JSON object");
+  });
+
   it("preserves payload correlation and falls back to the durable job id", () => {
     expect(resolveJobTraceContext({ id: 41, traceId: "trace-from-job" }, { requestId: "req-7", traceId: "trace-from-payload" })).toEqual({ requestId: "req-7", traceId: "trace-from-payload" });
     expect(resolveJobTraceContext({ id: 41, traceId: "trace-from-job" }, {})).toEqual({ requestId: "job:41", traceId: "trace-from-job" });
     expect(resolveJobTraceContext({ id: 41, traceId: null }, {})).toEqual({ requestId: "job:41", traceId: "job:41" });
+    expect(resolveJobTraceContext({ id: 41, traceId: "  job-trace  " }, { requestId: "  request-id  " })).toEqual({ requestId: "request-id", traceId: "job-trace" });
+    expect(resolveJobTraceContext({ id: 41, traceId: "x".repeat(400) }, { requestId: "y".repeat(400) }).requestId).toHaveLength(256);
+    expect(resolveJobTraceContext({ id: 41, traceId: "x".repeat(400) }, { requestId: "y".repeat(400) }).traceId).toHaveLength(256);
   });
 });

@@ -39,7 +39,7 @@ export function assertEventPayload(payload: unknown): Record<string, unknown> {
   const normalized = result.data;
   const encoded = JSON.stringify(normalized);
   if (new TextEncoder().encode(encoded).byteLength > MAX_PAYLOAD_BYTES) {
-    throw new Error("Realtime event payload exceeds the size limit.");
+    throw new Error("Realtime event payload exceeds the size limit (256 KiB).");
   }
   return normalized;
 }

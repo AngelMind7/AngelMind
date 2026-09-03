@@ -1,7 +1,6 @@
 import { getCapabilityDefinition, selectAdapter } from "./capability-registry";
 import { runCanonicalTool, resolveCanonicalTool } from "./canonical-tool-runtime";
-import { assertAuthorizedTool, getToolByAdapter, getRuntimeToolKey } from "./tool-registry";
-import { listRegisteredAdapters } from "./tool-runtime";
+import { assertAuthorizedTool, getToolByAdapter, getRuntimeToolKey, listRegisteredTools } from "./tool-registry";
 import type { ToolRuntimeRequest, ToolRuntimeResult } from "./tool-runtime";
 
 export type CapabilityResolution = {
@@ -20,7 +19,7 @@ export function resolveCapability(capability: string): CapabilityResolution | un
   const definition = getCapabilityDefinition(capability);
   if (!definition) return undefined;
 
-  const registeredAdapters = listRegisteredAdapters().map((adapter) => adapter.toolKey);
+  const registeredAdapters = listRegisteredTools().map((tool) => tool.adapter);
   const adapter = selectAdapter(capability, registeredAdapters);
   if (!adapter) return undefined;
 

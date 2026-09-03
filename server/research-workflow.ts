@@ -161,7 +161,7 @@ export async function listResearchObservations(userId: number, sessionId: number
   return db.select().from(researchObservations).where(eq(researchObservations.sessionId, session.id)).orderBy(desc(researchObservations.createdAt));
 }
 
-export async function createResearchObservation(userId: number, input: { sessionId: number; assetId?: number; title: string; content: string }) {
+export async function createResearchObservation(userId: number, input: { sessionId: number; assetId?: number; title: string; content: string; sourceType?: string; sourceReference?: string; rawOutputSha256?: string; normalizedEvidenceSha256?: string }) {
   if (!input || typeof input.title !== "string" || typeof input.content !== "string" || (input.assetId !== undefined && (!Number.isInteger(input.assetId) || input.assetId < 1))) throw new Error("Research observation input is invalid.");
   const { db, session } = await requireSession(userId, input.sessionId, "respond");
   if (!input.title.trim() || !input.content.trim()) throw new Error("Research observation title and content are required.");
@@ -170,7 +170,10 @@ export async function createResearchObservation(userId: number, input: { session
     if (!asset) throw new Error("Observation must reference an in-scope asset from the same session.");
   }
   const traceId = currentTraceContext()?.traceId ?? session.traceId ?? null;
-  await db.insert(researchObservations).values({ workspaceId: session.workspaceId, sessionId: session.id, assetId: input.assetId ?? null, title: input.title.trim(), content: input.content.trim(), status: "new", traceId, createdByUserId: userId });
+  const sourceType = input.sourceType?.trim() || "manual";
+  if (sourceType.length > 80 || (input.sourceReference !== undefined && input.sourceReference.length > 512)) throw new Error("Observation provenance metadata is invalid.");
+  for (const hash of [input.rawOutputSha256, input.normalizedEvidenceSha256]) if (hash !== undefined && !/^[a-f0-9]{64}$/.test(hash)) throw new Error("Observation provenance hash is invalid.");
+  await db.insert(researchObservations).values({ workspaceId: session.workspaceId, sessionId: session.id, assetId: input.assetId ?? null, title: input.title.trim(), content: input.content.trim(), sourceType, sourceReference: input.sourceReference?.trim() || null, rawOutputSha256: input.rawOutputSha256 ?? null, normalizedEvidenceSha256: input.normalizedEvidenceSha256 ?? null, status: "new", traceId, createdByUserId: userId });
   const [observation] = await db.select().from(researchObservations).where(and(eq(researchObservations.sessionId, session.id), eq(researchObservations.title, input.title.trim()))).orderBy(desc(researchObservations.createdAt)).limit(1);
   if (!observation) throw new Error("Observation could not be created.");
   await addResearchAudit(db, session.workspaceId, userId, "research-observation-created", { sessionId: session.id, observationId: observation.id, assetId: input.assetId ?? null });

@@ -58,7 +58,7 @@ export function crossCheckObservations(observations: AgentObservation[]) {
 
 export function synthesizeObservations(observations: AgentObservation[], minimumConfidence = 0.6) {
   if (!Number.isFinite(minimumConfidence)) throw new Error("Minimum confidence is invalid.");
-  const crossCheck = crossCheckObservations(observations);
+  crossCheckObservations(observations);
   const threshold = Math.min(1, Math.max(0, minimumConfidence));
   const accepted = observations.filter(item => item.confidence >= threshold && item.conclusion.trim().length > 0);
   const references = Array.from(new Set(accepted.flatMap(item => item.evidenceReferences.map(reference => reference.trim())).filter(Boolean)));
@@ -66,7 +66,7 @@ export function synthesizeObservations(observations: AgentObservation[], minimum
     acceptedCount: accepted.length,
     conclusion: accepted.length === 0 ? "Insufficient confidence for synthesis." : accepted.map(item => `[${item.role}] ${item.conclusion.trim()}`).join("\n"),
     evidenceReferences: references,
-    requiresHumanReview: accepted.length === 0 || crossCheckObservations(accepted).verdict !== "pass" || crossCheck.verdict !== "pass",
+    requiresHumanReview: accepted.length === 0 || crossCheckObservations(accepted).verdict !== "pass",
   };
 }
 

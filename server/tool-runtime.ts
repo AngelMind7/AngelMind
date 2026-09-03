@@ -845,6 +845,14 @@ export async function runRegisteredTool(
   if (!adapter) return result("unavailable", "adapter_not_registered");
   if (!adapter.allowedModes.includes(request.mode))
     return result("blocked", "mode_not_supported");
+  // Target-facing execution is a separately approved deployment capability.
+  // Keep this gate before any process spawn so API callers cannot bypass the
+  // repository's passive-only boundary.
+  if (
+    (request.mode === "active_nondestructive" || request.mode === "privileged_or_destructive") &&
+    process.env.ANGELMIND_ENABLE_TARGET_EXECUTION !== "true"
+  )
+    return result("blocked", "target_execution_disabled");
   if (!runtimePackAllows(request.mode))
     return result("blocked", "runtime_pack_mismatch");
   if (

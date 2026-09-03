@@ -23,6 +23,9 @@ requireAtLeast((catalog.match(/"toolKey":/g) ?? []).length, 15, "tool catalog en
 const normalizer = read("server/evidence-normalizer.ts");
 const schemas = ["jwt_token_comparison", "sqli_evidence", "xss_evidence", "ssrf_evidence", "cloud_metadata_evidence", "graphql_introspection_evidence", "graphql_batching_evidence", "idor_evidence", "ssti_evidence", "rce_evidence", "host_header_evidence", "cache_poisoning_evidence", "race_condition_evidence", "file_upload_evidence", "xxe_evidence"];
 for (const schema of schemas) if (!normalizer.includes(`${schema}:`)) failures.push(`missing evidence schema ${schema}`);
+const pipeline = read("server/tool-execution-pipeline.ts");
+for (const phase of ["validate", "prepare", "execute", "collect", "parse", "normalize", "cleanup"]) if (!pipeline.includes(`"${phase}"`)) failures.push(`missing adapter lifecycle phase ${phase}`);
+if (!read("server/tool-runtime.ts").includes("target_execution_disabled")) failures.push("target-facing execution must fail closed without explicit deployment opt-in");
 
 const rules = read("server/engine/correlation-rules.ts");
 for (const prefix of ["SEQ", "COMP"]) {
@@ -39,7 +42,7 @@ for (const procedure of ["catalog", "runtimeAdapters", "runtimeHealth", "run", "
   if (!new RegExp(`\\b${procedure}:\\s*protectedProcedure`).test(router)) failures.push(`missing protected API procedure ${procedure}`);
 }
 const migrations = readdirSync(resolve(root, "drizzle")).filter(file => file.endsWith(".sql"));
-requireAtLeast(migrations.length, 63, "migration files");
+requireAtLeast(migrations.length, 64, "migration files");
 if (!read("runtime/custom_script_runner.py").includes("never executes input as code")) failures.push("custom script runner safety contract is missing");
 const toolsDockerfile = read("Dockerfile.tools");
 const smoke = read("scripts/runtime-tool-smoke-test.sh");

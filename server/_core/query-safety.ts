@@ -22,7 +22,8 @@ export function decodePageCursor(value: string | undefined): PageCursor | null {
 }
 
 export function pageResult<T extends { createdAt: Date; id: number }>(rows: T[], pageSize: number) {
-  const size = Math.min(Math.max(Math.floor(pageSize), 1), 100);
+  const normalizedPageSize = Number.isFinite(pageSize) ? Math.floor(pageSize) : 100;
+  const size = Math.min(Math.max(normalizedPageSize, 1), 100);
   const hasNextPage = rows.length > size;
   const items = rows.slice(0, size);
   const last = items.at(-1);
@@ -40,5 +41,11 @@ export function nextRevision(revision: number): number {
 }
 
 export function requestFingerprint(input: { method: string; path: string; body: unknown }): string {
-  return createHash("sha256").update(JSON.stringify({ method: input.method.toUpperCase(), path: input.path, body: input.body })).digest("hex");
+  const method = input.method.trim().toUpperCase();
+  const path = input.path.trim();
+  if (!method) throw new Error("Request method is required.");
+  if (!path.startsWith("/")) throw new Error("Request path must be absolute.");
+  const body = JSON.stringify(input.body);
+  if (body === undefined) throw new Error("Request body must be JSON-serializable.");
+  return createHash("sha256").update(JSON.stringify({ method, path, body: input.body })).digest("hex");
 }

@@ -10,11 +10,15 @@ const sqlFiles = fs.readdirSync(drizzleDir)
   .sort();
 const entries = journal.entries ?? [];
 const tags = new Set(entries.map(entry => entry.tag));
+const indexes = entries.map(entry => entry.idx);
+const nonContiguousIndexes = indexes.filter((index, position) => index !== position);
+const duplicateTags = entries.filter((entry, index) => entries.findIndex(other => other.tag === entry.tag) !== index).map(entry => entry.tag);
+const dangling = entries.map(entry => entry.tag).filter(tag => !sqlFiles.some(file => path.parse(file).name === tag));
 const missing = sqlFiles
   .map(file => file.replace(/\.sql$/, ""))
   .filter(tag => !tags.has(tag));
-if (missing.length > 0 || entries.length !== sqlFiles.length) {
-  console.error(JSON.stringify({ sqlFiles: sqlFiles.length, journalEntries: entries.length, missing }, null, 2));
+if (missing.length > 0 || dangling.length > 0 || duplicateTags.length > 0 || nonContiguousIndexes.length > 0 || entries.length !== sqlFiles.length) {
+  console.error(JSON.stringify({ sqlFiles: sqlFiles.length, journalEntries: entries.length, missing, dangling, duplicateTags: [...new Set(duplicateTags)], nonContiguousIndexes }, null, 2));
   process.exit(1);
 }
 console.log(`Migration journal consistent: ${sqlFiles.length} SQL files / ${entries.length} journal entries.`);

@@ -33,4 +33,10 @@ describe("evidence byte validation", () => {
     zip.writeUInt32LE(0x04034b50, 5);
     expect(() => validateEvidenceBytes({ contentType: "application/zip", fileName: "archive.zip", bytes: zip })).toThrow(/archive structure/i);
   });
+
+  it("rejects malformed metadata before reading file bytes", () => {
+    expect(() => validateEvidenceBytes({ contentType: null as never, fileName: "notes.txt", bytes: Buffer.from("ok") })).toThrow(/Unsupported evidence/);
+    expect(() => validateEvidenceBytes({ contentType: "text/plain", fileName: " ", bytes: Buffer.from("ok") })).toThrow(/file name is required/);
+    expect(() => validateEvidenceBytes({ contentType: "text/plain", fileName: "notes.txt", bytes: "not-bytes" as never })).toThrow(/must be a Buffer/);
+  });
 });

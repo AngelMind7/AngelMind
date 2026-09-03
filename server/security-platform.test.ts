@@ -11,5 +11,7 @@ describe("API key scope policy", () => {
     expect(() => normalizeApiKeyScopes([])).toThrow();
     expect(() => normalizeApiKeyScopes(["scope with spaces"])).toThrow();
     expect(() => normalizeApiKeyScopes(Array.from({ length: 33 }, (_, index) => `scope-${index}`))).toThrow();
+    expect(() => normalizeApiKeyScopes(null as never)).toThrow();
+    expect(() => normalizeApiKeyScopes(["valid", 7 as never])).toThrow();
   });
 });

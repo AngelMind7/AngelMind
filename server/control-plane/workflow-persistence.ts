@@ -7,6 +7,7 @@ import { parsePassiveInventory, type PassiveAsset } from "./passive-inventory";
 import { upsertSearchDocument } from "../global-search";
 
 export async function importPassiveAssets(userId: number, input: { workspaceId: number; content: string; format: "csv" | "json"; allowlist: string[]; exclusions: string[] }): Promise<PassiveAsset[]> {
+  if (!Number.isInteger(userId) || userId < 1 || !input || !Number.isInteger(input.workspaceId) || input.workspaceId < 1) throw new Error("Passive asset import input is invalid.");
   if (!(await canAccessWorkspace(userId, input.workspaceId, "respond"))) throw new Error("Workspace tidak dapat dikelola oleh user ini.");
   const parsed = parsePassiveInventory(input);
   const db = await getDb();
@@ -28,15 +29,17 @@ async function ensureFindingInWorkspace(db: NonNullable<Awaited<ReturnType<typeo
 }
 
 export async function saveReportDraft(userId: number, input: { findingId: number; workspaceId: number; platform: ReportPlatform; report: ReportInput }) {
+  if (!Number.isInteger(userId) || userId < 1 || !input || !Number.isInteger(input.findingId) || input.findingId < 1 || !Number.isInteger(input.workspaceId) || input.workspaceId < 1) throw new Error("Report draft input is invalid.");
   if (!(await canAccessWorkspace(userId, input.workspaceId, "respond"))) throw new Error("Workspace tidak dapat dikelola oleh user ini.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   await ensureFindingInWorkspace(db, input.findingId, input.workspaceId);
+  const composedPreview = composeReport(input.report, input.platform);
   const reportJson = JSON.stringify(input.report);
   await db.insert(reportDrafts).values({ findingId: input.findingId, workspaceId: input.workspaceId, platform: input.platform, reportJson, lastSavedByUserId: userId }).onDuplicateKeyUpdate({ set: { platform: input.platform, reportJson, lastSavedByUserId: userId, updatedAt: new Date() } });
   const [draft] = await db.select().from(reportDrafts).where(and(eq(reportDrafts.findingId, input.findingId), eq(reportDrafts.workspaceId, input.workspaceId))).limit(1);
   if (draft) await upsertSearchDocument({ workspaceId: input.workspaceId, entityType: "report_draft", entityId: draft.id, title: `Draft ${input.platform} · finding #${input.findingId}`, body: [input.platform, reportJson].join("\\n") });
-  return draft;
+  return draft ? { ...draft, readyForReview: composedPreview.readyForReview } : draft;
 }
 
 export async function getReportDraft(userId: number, findingId: number, workspaceId: number) {
@@ -62,6 +65,7 @@ export async function createReportVersion(userId: number, input: { findingId: nu
 }
 
 export async function compareReportVersions(userId: number, input: { findingId: number; workspaceId: number; fromVersionId: number; toVersionId: number }) {
+  if (!Number.isInteger(userId) || userId < 1 || !input || ![input.findingId, input.workspaceId, input.fromVersionId, input.toVersionId].every(value => Number.isInteger(value) && value > 0)) throw new Error("Report version comparison input is invalid.");
   if (!(await canAccessWorkspace(userId, input.workspaceId, "read"))) throw new Error("Workspace tidak dapat diakses oleh user ini.");
   if (input.fromVersionId === input.toVersionId) throw new Error("Report versions must be different.");
   const db = await getDb();

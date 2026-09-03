@@ -31,4 +31,12 @@ describe("authorized capability policy", () => {
     expect(() => validateAuthorizedCapabilityPolicy({ ...base, maxRequestsPerMinute: 121 }, now)).toThrow("Rate limit");
     expect(() => validateAuthorizedCapabilityPolicy({ ...base, expiresAt: "2025-12-31T00:00:00.000Z" }, now)).toThrow("Authorization window");
   });
+
+  it("rejects malformed hosts and does not let credentials or ports bypass scope matching", () => {
+    const now = new Date("2026-01-01T12:00:00.000Z");
+    expect(() => validateAuthorizedCapabilityPolicy({ ...base, target: "https://evil.test@example.com" }, now)).toThrow("outside the authorized allowlist");
+    expect(() => validateAuthorizedCapabilityPolicy({ ...base, target: "https://example.com.evil.test" }, now)).toThrow("outside the authorized allowlist");
+    expect(validateAuthorizedCapabilityPolicy({ ...base, target: "https://APP.example.com:8443/login" }, now).target).toBe("app.example.com");
+  });
+
 });

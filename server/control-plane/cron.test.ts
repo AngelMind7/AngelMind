@@ -6,6 +6,8 @@ describe("UTC cron scheduling", () => {
     expect(isValidUtcCronExpression("0 2 * * *")).toBe(true);
     expect(isValidUtcCronExpression("*/15 * * * *")).toBe(true);
     expect(isValidUtcCronExpression("0 0 2 * * *")).toBe(false);
+    expect(isValidUtcCronExpression("   ")).toBe(false);
+    expect(isValidUtcCronExpression(null as never)).toBe(false);
     expect(() => normalizeUtcCronExpression("0 0 2 * * *")).toThrow("lima kolom");
   });
 

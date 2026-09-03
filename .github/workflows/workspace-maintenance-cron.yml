@@ -5,9 +5,13 @@ on:
     - cron: "*/15 * * * *"
   workflow_dispatch: {}
 
+permissions:
+  contents: read
+
 jobs:
   ping-maintenance-endpoint:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: Trigger scheduled workspace maintenance
         run: |

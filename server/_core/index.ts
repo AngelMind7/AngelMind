@@ -64,12 +64,17 @@ async function startServer() {
     serveStatic(app);
   }
 
-  const preferredPort = parseInt(process.env.PORT || "3000");
-  const port = await findAvailablePort(preferredPort);
-
-  if (port !== preferredPort) {
-    console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
+  const preferredPort = parseInt(process.env.PORT || "3000", 10);
+  if (!Number.isInteger(preferredPort) || preferredPort < 1 || preferredPort > 65535) {
+    throw new Error(`Invalid PORT value: ${process.env.PORT ?? ""}`);
   }
+  // Production platforms route traffic to the exact PORT they provide. Falling back
+  // to another port can make a healthy process permanently unreachable.
+  const port = process.env.NODE_ENV === "production"
+    ? preferredPort
+    : await findAvailablePort(preferredPort);
+
+  if (port !== preferredPort) console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);

@@ -3,6 +3,10 @@ import { checkProviderProbes, sloConfig } from "./observability";
 
 const originalUrls = process.env.OBSERVABILITY_PROBE_URLS;
 const originalNodeEnv = process.env.NODE_ENV;
+const originalTimeout = process.env.OBSERVABILITY_PROBE_TIMEOUT_MS;
+const originalErrorBudget = process.env.SLO_ERROR_RATE_BUDGET;
+const originalSlowBudget = process.env.SLO_SLOW_RATE_BUDGET;
+const originalSlowRequest = process.env.SLO_SLOW_REQUEST_MS;
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -10,6 +14,18 @@ afterEach(() => {
   else process.env.OBSERVABILITY_PROBE_URLS = originalUrls;
   if (originalNodeEnv === undefined) delete process.env.NODE_ENV;
   else process.env.NODE_ENV = originalNodeEnv;
+  if (originalTimeout === undefined) delete process.env.OBSERVABILITY_PROBE_TIMEOUT_MS; else process.env.OBSERVABILITY_PROBE_TIMEOUT_MS = originalTimeout;
+  if (originalErrorBudget === undefined) delete process.env.SLO_ERROR_RATE_BUDGET; else process.env.SLO_ERROR_RATE_BUDGET = originalErrorBudget;
+  if (originalSlowBudget === undefined) delete process.env.SLO_SLOW_RATE_BUDGET; else process.env.SLO_SLOW_RATE_BUDGET = originalSlowBudget;
+  if (originalSlowRequest === undefined) delete process.env.SLO_SLOW_REQUEST_MS; else process.env.SLO_SLOW_REQUEST_MS = originalSlowRequest;
+});
+
+it("falls back safely for malformed observability numbers", () => {
+  process.env.OBSERVABILITY_PROBE_TIMEOUT_MS = "NaN";
+  process.env.SLO_ERROR_RATE_BUDGET = "NaN";
+  process.env.SLO_SLOW_RATE_BUDGET = "Infinity";
+  process.env.SLO_SLOW_REQUEST_MS = "bad";
+  expect(sloConfig()).toEqual({ errorRateBudget: 0.01, slowRateBudget: 0.05, latencyThresholdMs: 1_000 });
 });
 
 describe("production observability contracts", () => {

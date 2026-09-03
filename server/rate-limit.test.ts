@@ -29,10 +29,24 @@ describe("API rate limiter", () => {
     expect(responses).toEqual([{ code: 429, error: "RATE_LIMITED" }, { code: 429, error: "RATE_LIMITED" }, { code: 429, error: "ABUSE_BLOCKED" }]);
   });
 
+  it("keeps a configured single-entry cache bounded", () => {
+    const limiter = createRateLimiter({ windowMs: 60_000, max: 1, maxEntries: 1, key: req => (req as { id: string }).id });
+    const response = { setHeader: () => undefined, status: () => ({ json: () => undefined }) };
+    limiter({ id: "first" } as never, response as never, () => undefined);
+    limiter({ id: "second" } as never, response as never, () => undefined);
+    limiter({ id: "first" } as never, response as never, () => undefined);
+    limiter({ id: "third" } as never, response as never, () => undefined);
+    limiter({ id: "first" } as never, response as never, () => undefined);
+  });
+
   it("does not expose authorization credentials in the default key", () => {
     const request = { socket: { remoteAddress: "10.0.0.4" }, get: (name: string) => name === "authorization" ? "Bearer secret-value" : undefined } as never;
     const key = getClientRateLimitKey(request);
     expect(key).toMatch(/^ip:10\.0\.0\.4:credential:[a-f0-9]{24}$/);
     expect(key).not.toContain("secret-value");
+  });
+
+  it("rejects missing limiter options", () => {
+    expect(() => createRateLimiter(null as never)).toThrow("options are required");
   });
 });

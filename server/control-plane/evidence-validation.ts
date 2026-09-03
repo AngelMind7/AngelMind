@@ -20,7 +20,7 @@ const MAGIC_RULES: Record<string, (bytes: Buffer) => boolean> = {
 };
 
 function normalizedMime(contentType: string) {
-  return contentType.trim().toLowerCase().split(";", 1)[0];
+  return typeof contentType === "string" ? contentType.trim().toLowerCase().split(";", 1)[0] : "";
 }
 
 function validateTextSafety(bytes: Buffer) {
@@ -39,9 +39,13 @@ function validateZipSafety(bytes: Buffer) {
 }
 
 export function validateEvidenceBytes(input: { contentType: string; fileName: string; bytes: Buffer }) {
+  if (!Buffer.isBuffer(input.bytes)) throw new Error("Evidence bytes must be a Buffer.");
+  if (typeof input.fileName !== "string" || !input.fileName.trim()) throw new Error("Evidence file name is required.");
   const contentType = normalizedMime(input.contentType);
   if (!MIME_EXTENSION_MAP[contentType]) throw new Error(`Unsupported evidence content type: ${contentType || "missing"}.`);
-  const extension = input.fileName.toLowerCase().slice(input.fileName.lastIndexOf("."));
+  const normalizedFileName = input.fileName.trim().toLowerCase();
+  const extensionIndex = normalizedFileName.lastIndexOf(".");
+  const extension = extensionIndex > 0 ? normalizedFileName.slice(extensionIndex) : "";
   if (extension && extension !== input.fileName.toLowerCase() && !MIME_EXTENSION_MAP[contentType].includes(extension)) {
     throw new Error("Evidence file extension does not match its declared content type.");
   }

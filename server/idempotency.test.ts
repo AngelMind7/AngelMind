@@ -48,10 +48,13 @@ describe("generic idempotency contract", () => {
   it("produces a stable SHA-256 request fingerprint", () => {
     const first = hashIdempotencyRequest({ workspaceId: 7, action: "create" });
     const second = hashIdempotencyRequest({ workspaceId: 7, action: "create" });
+    const reordered = hashIdempotencyRequest({ action: "create", workspaceId: 7 });
     const different = hashIdempotencyRequest({ workspaceId: 7, action: "delete" });
     expect(first).toMatch(/^[a-f0-9]{64}$/);
     expect(second).toBe(first);
+    expect(reordered).toBe(first);
     expect(different).not.toBe(first);
+    expect(() => hashIdempotencyRequest(undefined)).toThrow(/JSON-serializable/);
   });
 
   it("executes a concurrent idempotent request at most once", async () => {

@@ -615,9 +615,12 @@ const DEFAULT_MAX_OUTPUT_BYTES = 512_000;
 const MAX_OUTPUT_BYTES = 2_000_000;
 
 const registeredAdapters = adapters.filter(adapter => Boolean(getToolCatalogEntry(adapter.toolKey)));
+const adapterKeys = new Set(registeredAdapters.map(adapter => adapter.toolKey));
 
 function getAdapter(toolKey: string) {
-  return registeredAdapters.find(adapter => adapter.toolKey === toolKey);
+  return adapterKeys.has(toolKey as SupportedToolKey)
+    ? registeredAdapters.find(adapter => adapter.toolKey === toolKey)
+    : undefined;
 }
 
 function boundedText(value: string, maxBytes: number) {

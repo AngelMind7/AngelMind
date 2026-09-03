@@ -121,6 +121,7 @@ export async function storageGet(relKey: string): Promise<{ key: string; url: st
 
 export async function storageGetSignedUrl(relKey: string, expiresInSeconds = SIGNED_URL_TTL_SECONDS): Promise<string> {
   const { client, bucket } = getSupabaseStorage();
-  const ttl = Math.min(MAX_SIGNED_URL_TTL_SECONDS, Math.max(60, Math.floor(expiresInSeconds)));
+  const normalizedTtl = Number.isFinite(expiresInSeconds) ? Math.floor(expiresInSeconds) : SIGNED_URL_TTL_SECONDS;
+  const ttl = Math.min(MAX_SIGNED_URL_TTL_SECONDS, Math.max(60, normalizedTtl));
   return createSignedUrl(client, bucket, normalizeStorageKey(relKey), ttl);
 }

@@ -59,6 +59,7 @@ export async function appendAuditChainEntry(
   trx: Transaction,
   entry: AuditChainEntryInput,
 ) {
+  if (!trx || !entry || !Number.isInteger(entry.workspaceId) || entry.workspaceId < 1 || typeof entry.category !== "string" || !entry.category.trim() || typeof entry.subject !== "string" || !entry.subject.trim() || typeof entry.evidenceHash !== "string" || !/^[a-f0-9]{64}$/i.test(entry.evidenceHash) || typeof entry.details !== "string") throw new Error("Audit chain entry is invalid.");
   const [lastEntry] = await trx
     .select({ chainHash: auditEvents.chainHash })
     .from(auditEvents)
@@ -107,6 +108,7 @@ export type AuditChainVerificationResult = {
  * Dipakai untuk audit periodik / endpoint admin, bukan di hot path.
  */
 export async function verifyAuditChain(workspaceId: number): Promise<AuditChainVerificationResult> {
+  if (!Number.isInteger(workspaceId) || workspaceId < 1) throw new Error("workspaceId must be a positive integer.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const entries = await db
@@ -125,14 +127,17 @@ export async function verifyAuditChain(workspaceId: number): Promise<AuditChainV
     .orderBy(asc(auditEvents.id));
 
   let expectedPrevious = GENESIS;
+  let checkedCount = 0;
   for (const row of entries) {
+    checkedCount += 1;
     if (!row.chainHash) {
-      return { valid: false, workspaceId, checkedCount: entries.length, brokenAtEntryId: row.id, reason: "missing_chain_hash" };
+      return { valid: false, workspaceId, checkedCount, brokenAtEntryId: row.id, reason: "missing_chain_hash" };
     }
     const actualPrevious = row.previousEntryHash ?? GENESIS;
     if (actualPrevious !== expectedPrevious) {
       return { valid: false, workspaceId, checkedCount: entries.length, brokenAtEntryId: row.id, reason: "previous_hash_mismatch" };
     }
+    if (!(row.createdAt instanceof Date) || !Number.isFinite(row.createdAt.getTime()) || typeof row.category !== "string" || typeof row.subject !== "string" || typeof row.evidenceHash !== "string" || typeof row.details !== "string") return { valid: false, workspaceId, checkedCount, brokenAtEntryId: row.id, reason: "malformed_entry" };
     const recomputed = computeChainHash({
       previousHash: expectedPrevious,
       workspaceId,
@@ -148,5 +153,5 @@ export async function verifyAuditChain(workspaceId: number): Promise<AuditChainV
     expectedPrevious = row.chainHash;
   }
 
-  return { valid: true, workspaceId, checkedCount: entries.length, brokenAtEntryId: null, reason: null };
+  return { valid: true, workspaceId, checkedCount, brokenAtEntryId: null, reason: null };
 }

@@ -1,7 +1,13 @@
 CREATE TABLE `workspaceTags` (`id` int AUTO_INCREMENT NOT NULL, `workspaceId` int NOT NULL, `name` varchar(80) NOT NULL, `color` varchar(16) NOT NULL, `createdByUserId` int NOT NULL, `createdAt` timestamp NOT NULL DEFAULT (now()), CONSTRAINT `workspaceTags_id` PRIMARY KEY(`id`), CONSTRAINT `workspace_tag_name_uq` UNIQUE(`workspaceId`,`name`), CONSTRAINT `workspaceTags_workspaceId_workspaces_id_fk` FOREIGN KEY (`workspaceId`) REFERENCES `workspaces`(`id`) ON DELETE cascade);
+--> statement-breakpoint
 CREATE INDEX `workspace_tag_workspace_idx` ON `workspaceTags` (`workspaceId`,`createdAt`);
+--> statement-breakpoint
 CREATE TABLE `tagAssignments` (`id` int AUTO_INCREMENT NOT NULL, `workspaceId` int NOT NULL, `tagId` int NOT NULL, `entityType` varchar(60) NOT NULL, `entityId` int NOT NULL, `assignedByUserId` int NOT NULL, `createdAt` timestamp NOT NULL DEFAULT (now()), CONSTRAINT `tagAssignments_id` PRIMARY KEY(`id`), CONSTRAINT `tag_assignment_entity_uq` UNIQUE(`tagId`,`entityType`,`entityId`), CONSTRAINT `tagAssignments_workspaceId_workspaces_id_fk` FOREIGN KEY (`workspaceId`) REFERENCES `workspaces`(`id`) ON DELETE cascade, CONSTRAINT `tagAssignments_tagId_workspaceTags_id_fk` FOREIGN KEY (`tagId`) REFERENCES `workspaceTags`(`id`) ON DELETE cascade);
+--> statement-breakpoint
 CREATE INDEX `tag_assignment_entity_idx` ON `tagAssignments` (`workspaceId`,`entityType`,`entityId`);
+--> statement-breakpoint
 CREATE TABLE `workspaceNotes` (`id` int AUTO_INCREMENT NOT NULL, `workspaceId` int NOT NULL, `authorUserId` int NOT NULL, `entityType` varchar(60) NOT NULL, `entityId` int, `title` varchar(240) NOT NULL, `body` text NOT NULL, `visibility` enum('private','workspace') NOT NULL DEFAULT 'workspace', `createdAt` timestamp NOT NULL DEFAULT (now()), `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE CURRENT_TIMESTAMP, CONSTRAINT `workspaceNotes_id` PRIMARY KEY(`id`), CONSTRAINT `workspaceNotes_workspaceId_workspaces_id_fk` FOREIGN KEY (`workspaceId`) REFERENCES `workspaces`(`id`) ON DELETE cascade);
+--> statement-breakpoint
 CREATE INDEX `workspace_note_entity_idx` ON `workspaceNotes` (`workspaceId`,`entityType`,`entityId`);
+--> statement-breakpoint
 CREATE INDEX `workspace_note_author_updated_idx` ON `workspaceNotes` (`authorUserId`,`updatedAt`);

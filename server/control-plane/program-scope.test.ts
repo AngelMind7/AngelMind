@@ -14,4 +14,10 @@ describe("program scope engine", () => {
     expect(diff.impact).toBe("high");
     expect(nextProgramScopeVersion({ includedAssets: ["app.example"], excludedAssets: [], rules: [], safeHarbor: "v1", version: 2 }, { includedAssets: ["app.example"], excludedAssets: [], rules: ["review"], safeHarbor: "v1" }).version).toBe(3);
   });
+
+  it("rejects malformed lists and invalid versions", () => {
+    expect(() => normalizeProgramScope({ includedAssets: null as never, excludedAssets: [], rules: [], safeHarbor: "Authorized" })).toThrow(/lists must be arrays/);
+    expect(() => normalizeProgramScope({ includedAssets: ["app"], excludedAssets: [], rules: [], safeHarbor: "Authorized", version: 0 })).toThrow(/positive integer/);
+    expect(() => normalizeProgramScope({ includedAssets: ["app"], excludedAssets: [], rules: [], safeHarbor: "Authorized", version: Number.NaN })).toThrow(/positive integer/);
+  });
 });

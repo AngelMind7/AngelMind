@@ -12,4 +12,5 @@ CREATE TABLE `savedViews` (
   CONSTRAINT `savedViews_workspaceId_workspaces_id_fk` FOREIGN KEY (`workspaceId`) REFERENCES `workspaces`(`id`) ON DELETE cascade,
   CONSTRAINT `savedViews_userId_users_id_fk` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE cascade
 );
+--> statement-breakpoint
 CREATE INDEX `saved_view_workspace_user_updated_idx` ON `savedViews` (`workspaceId`,`updatedAt`);

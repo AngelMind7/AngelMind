@@ -1,5 +1,7 @@
+# syntax=docker/dockerfile:1.7
 FROM node:22-bookworm-slim AS build
 WORKDIR /app
+ENV COREPACK_DEFAULT_TO_LATEST=0
 # Railway exposes service variables during the build, but Docker requires
 # explicit ARG declarations before Vite can embed public VITE_* values.
 ARG VITE_FIREBASE_API_KEY
@@ -22,13 +24,14 @@ ENV VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY \
     VITE_ANALYTICS_WEBSITE_ID=$VITE_ANALYTICS_WEBSITE_ID
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
-RUN corepack enable && pnpm install --frozen-lockfile
+RUN corepack enable \
+    && pnpm install --frozen-lockfile --prefer-offline --store-dir=/root/.local/share/pnpm/store
 COPY . .
 RUN pnpm check && pnpm build
 
 FROM node:22-bookworm-slim AS runtime
 WORKDIR /app
-ENV NODE_ENV=production
+ENV NODE_ENV=production COREPACK_DEFAULT_TO_LATEST=0
 # Safe offline/passive utilities only. Active scanners, exploit frameworks,
 # credential tooling, phishing tooling, and remote execution tools are excluded.
 RUN DEBIAN_FRONTEND=noninteractive apt-get update \
@@ -85,23 +88,14 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && useradd --create-home --shell /usr/sbin/nologin angelmind
 COPY --from=build --chown=angelmind:angelmind /app/dist ./dist
 COPY --from=build --chown=angelmind:angelmind /app/package.json /app/pnpm-lock.yaml ./
-COPY --from=build --chown=angelmind:angelmind /app/patches ./patches
+COPY --chown=angelmind:angelmind patches ./patches
 COPY --chown=angelmind:angelmind config/tool-runtime-packs.yaml ./config/tool-runtime-packs.yaml
 COPY --chown=angelmind:angelmind runtime/rules.yar /etc/angelmind/rules.yar
-COPY --chown=angelmind:angelmind runtime/capstone_inspect.py runtime/unicorn_probe.py runtime/dkim_verify.py ./runtime/
-RUN python3 -m pip install --no-cache-dir --break-system-packages \
-       checkov==3.3.16 \
-       checkdmarc==6.0.0 \
-       cyclonedx-bom==4.6.1 \
-       dkimpy==1.1.8 \
-       detect-secrets==1.5.0 \
-       njsscan==1.0.0 \
-       pip-audit==2.10.1 \
-       semgrep==1.172.0 \
-       safety==3.8.1 \
-       sigmatools==0.23.1 \
-       volatility3==2.28.0 \
-    && pnpm install --prod --frozen-lockfile \
+COPY --chown=angelmind:angelmind runtime/capstone_inspect.py runtime/unicorn_probe.py runtime/dkim_verify.py runtime/custom_script_runner.py ./runtime/
+COPY scripts/install-python-runtime-deps.sh /usr/local/bin/install-python-runtime-deps
+RUN chmod 0755 /usr/local/bin/install-python-runtime-deps \
+    && /usr/local/bin/install-python-runtime-deps \
+    && pnpm install --prod --frozen-lockfile --prefer-offline \
     && chown -R angelmind:angelmind /app
 USER angelmind
 EXPOSE 3000

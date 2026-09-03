@@ -10,6 +10,7 @@ CREATE TABLE IF NOT EXISTS `organizationInvitations` (
   `acceptedByUserId` int,
   `acceptedAt` timestamp,
   `createdAt` timestamp NOT NULL DEFAULT (now()),
+  CONSTRAINT `organization_invitations_id` PRIMARY KEY(`id`),
   CONSTRAINT `organization_invite_token_uq` UNIQUE(`tokenHash`),
   INDEX `organization_invite_status_idx` (`organizationId`,`status`),
   INDEX `organization_invite_email_idx` (`email`,`status`),

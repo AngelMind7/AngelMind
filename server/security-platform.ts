@@ -12,6 +12,7 @@ function hashSecret(secret: string) {
 }
 
 export function normalizeApiKeyScopes(scopes: string[]): string[] {
+  if (!Array.isArray(scopes) || !scopes.every(scope => typeof scope === "string")) throw new Error("API key scopes are invalid or exceed the allowed limit.");
   const normalized = Array.from(new Set(scopes.map(scope => scope.trim().toLowerCase()).filter(Boolean)));
   if (!normalized.length || normalized.length > 32 || normalized.some(scope => !/^[a-z0-9._:-]{2,80}$/.test(scope))) throw new Error("API key scopes are invalid or exceed the allowed limit.");
   return normalized;
@@ -27,7 +28,7 @@ async function requireOrganizationMember(userId: number, organizationId: number,
 
 export async function authenticateApiKeyWithScopes(rawSecret: string) {
   const db = await getDb();
-  if (!db || rawSecret.length < 12 || rawSecret.length > 256) return null;
+  if (!db || typeof rawSecret !== "string" || rawSecret.length < 12 || rawSecret.length > 256) return null;
   const [key] = await db.select().from(apiKeys).where(eq(apiKeys.secretHash, hashSecret(rawSecret))).limit(1);
   if (!key || key.status !== "active" || (key.expiresAt && key.expiresAt.getTime() <= Date.now())) return null;
   const [user] = await db.select().from(users).where(eq(users.id, key.userId)).limit(1);
@@ -61,6 +62,8 @@ export async function listApiKeysPage(userId: number, input: { pageSize?: number
 }
 
 export async function createApiKey(userId: number, input: { name: string; workspaceId?: number; scopes: string[]; expiresAt?: Date }) {
+  if (!Number.isInteger(userId) || userId < 1) throw new Error("API key user id is invalid.");
+  if (!input || typeof input.name !== "string") throw new Error("API key input is invalid.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const name = input.name.trim();

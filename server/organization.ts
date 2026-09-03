@@ -15,6 +15,7 @@ function slugify(value: string) {
 }
 
 async function requireMembership(userId: number, organizationId: number, minimum: "read" | "manage" = "read") {
+  if (!Number.isInteger(userId) || userId < 1 || !Number.isInteger(organizationId) || organizationId < 1) throw new Error("Organization identity is invalid.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const [membership] = await db.select().from(organizationMembers).where(and(eq(organizationMembers.organizationId, organizationId), eq(organizationMembers.userId, userId))).limit(1);
@@ -32,6 +33,7 @@ export async function listOrganizations(userId: number) {
 }
 
 export async function createOrganization(userId: number, input: { name: string }) {
+  if (!Number.isInteger(userId) || userId < 1 || !input || typeof input.name !== "string") throw new Error("Organization input is invalid.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const name = input.name.trim();
@@ -112,8 +114,10 @@ export async function listOrganizationInvitations(userId: number, organizationId
   return db.select({ id: organizationInvitations.id, email: organizationInvitations.email, role: organizationInvitations.role, status: organizationInvitations.status, expiresAt: organizationInvitations.expiresAt, createdAt: organizationInvitations.createdAt }).from(organizationInvitations).where(eq(organizationInvitations.organizationId, organizationId)).orderBy(desc(organizationInvitations.createdAt));
 }
 export async function createOrganizationInvitation(userId: number, input: { organizationId: number; email: string; role: Exclude<OrganizationRole, "owner">; expiresInDays?: number }) {
+  if (!input || !Number.isInteger(input.organizationId) || input.organizationId < 1 || typeof input.email !== "string" || !organizationRoles.includes(input.role) || (input.expiresInDays !== undefined && !Number.isFinite(input.expiresInDays))) throw new Error("Invitation input is invalid.");
   const { db } = await requireMembership(userId, input.organizationId, "manage");
   const email = input.email.trim().toLowerCase();
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) throw new Error("Invitation email is invalid.");
   const existing = await db.select().from(organizationInvitations).where(and(eq(organizationInvitations.organizationId, input.organizationId), eq(organizationInvitations.email, email), eq(organizationInvitations.status, "pending"))).limit(1);
   if (existing[0]) throw new Error("A pending invitation already exists for this email.");
   const token = `inv_${randomBytes(32).toString("base64url")}`;
@@ -127,6 +131,7 @@ export async function createOrganizationInvitation(userId: number, input: { orga
   return { token, expiresAt, email: input.email.trim().toLowerCase(), role: input.role };
 }
 export async function acceptOrganizationInvitation(userId: number, token: string) {
+  if (!Number.isInteger(userId) || userId < 1 || typeof token !== "string" || token.trim().length < 16 || token.length > 512) throw new Error("Invitation acceptance input is invalid.");
   const db = await getDb(); if (!db) throw new Error("Database tidak tersedia.");
   const user = await db.select().from((await import("../drizzle/schema")).users).where(eq((await import("../drizzle/schema")).users.id, userId)).limit(1);
   const [invite] = await db.select().from(organizationInvitations).where(eq(organizationInvitations.tokenHash, invitationHash(token.trim()))).limit(1);

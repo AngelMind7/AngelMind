@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { and, asc, desc, eq, inArray, isNotNull, lte, lt, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, inArray, isNotNull, lte, lt, ne, or, sql } from "drizzle-orm";
 import { aiModels, aiRunEvaluations, aiRunOutputs, aiRuns, jobs, outboxConsumerReceipts, outboxEvents, researchSessions, researchTasks, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
@@ -147,7 +147,7 @@ export async function purgeExpiredAiRunMemory(limit = 100) {
   try {
     const db = await getDb();
     if (!db) throw new Error("Database tidak tersedia.");
-    const expired = await db.select({ id: aiRuns.id }).from(aiRuns).where(and(isNotNull(aiRuns.retentionUntil), lte(aiRuns.retentionUntil, new Date()))).orderBy(asc(aiRuns.retentionUntil), asc(aiRuns.id)).limit(boundedLimit);
+    const expired = await db.select({ id: aiRuns.id }).from(aiRuns).where(and(isNotNull(aiRuns.retentionUntil), lte(aiRuns.retentionUntil, new Date()), ne(aiRuns.inputReference, "retention://purged"))).orderBy(asc(aiRuns.retentionUntil), asc(aiRuns.id)).limit(boundedLimit);
     const ids = expired.map(run => run.id);
     if (!ids.length) {
       recordPurgeBatch(Date.now() - startedAt, 0);

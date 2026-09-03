@@ -12,20 +12,32 @@ export type AuthorizedCapabilityPolicy = {
 };
 
 function normalizeHost(value: string) {
-  return value.trim().toLowerCase().replace(/^https?:\/\//, "").split("/")[0]?.replace(/\.$/, "") ?? "";
+  const raw = value.trim();
+  if (!raw) return "";
+  try {
+    const url = new URL(/^https?:\/\//i.test(raw) ? raw : `https://${raw}`);
+    if (url.username || url.password) return "";
+    return url.hostname.toLowerCase().replace(/\.$/, "");
+  } catch {
+    return "";
+  }
 }
 
 function matches(host: string, rule: string) {
-  const normalizedRule = normalizeHost(rule).replace(/^\*\./, "");
+  const normalizedRule = normalizeHost(rule.replace(/^\*\./, ""));
+  if (!normalizedRule) return false;
   return host === normalizedRule || host.endsWith(`.${normalizedRule}`);
 }
 
 export function validateAuthorizedCapabilityPolicy(policy: AuthorizedCapabilityPolicy, now = new Date()) {
+  if (!policy || typeof policy !== "object" || !Array.isArray(policy.allowlist) || !Array.isArray(policy.exclusions)) throw new Error("Authorized capability policy is invalid.");
+  if (!policy.allowlist.every(value => typeof value === "string") || !policy.exclusions.every(value => typeof value === "string")) throw new Error("Authorized capability policy is invalid.");
+  if (!(now instanceof Date) || !Number.isFinite(now.getTime())) throw new Error("Authorization window is invalid or expired.");
   const target = normalizeHost(policy.target);
   if (!target || !policy.allowlist.some(rule => matches(target, rule))) throw new Error("Target is outside the authorized allowlist.");
   if (policy.exclusions.some(rule => matches(target, rule))) throw new Error("Target is explicitly excluded from the authorized scope.");
-  if (policy.safeHarbor.trim().length < 20) throw new Error("A documented safe-harbor policy is required.");
-  if (!policy.operatorId.trim()) throw new Error("An accountable operator is required.");
+  if (typeof policy.safeHarbor !== "string" || policy.safeHarbor.trim().length < 20) throw new Error("A documented safe-harbor policy is required.");
+  if (typeof policy.operatorId !== "string" || !policy.operatorId.trim()) throw new Error("An accountable operator is required.");
   const approvedAt = new Date(policy.approvedAt);
   const expiresAt = new Date(policy.expiresAt);
   if (!Number.isFinite(approvedAt.getTime()) || !Number.isFinite(expiresAt.getTime()) || expiresAt <= approvedAt || now < approvedAt || now >= expiresAt) throw new Error("Authorization window is invalid or expired.");

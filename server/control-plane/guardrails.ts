@@ -14,6 +14,7 @@ const actionTier: Record<ActionKind, GovernanceTier> = {
 const prohibitedConductActions = new Set<ActionKind>(["denial_of_service", "social_engineering", "data_exfiltration"]);
 
 export function violatesCodeOfConduct(action: ActionKind, codeOfConduct: string): boolean {
+  if (typeof codeOfConduct !== "string") return true;
   const policy = codeOfConduct.toLowerCase();
   if (prohibitedConductActions.has(action)) return true;
   if (action === "privileged_proof" && /(no\s+(privilege|account takeover|destructive)|no destructive)/.test(policy)) return true;
@@ -34,6 +35,7 @@ export function ruleMatchesTarget(rule: string, target: string): boolean {
 }
 
 export function isTargetInScope(target: string, allowlist: string[], exclusions: string[]): boolean {
+  if (typeof target !== "string" || !Array.isArray(allowlist) || !Array.isArray(exclusions) || !allowlist.every(rule => typeof rule === "string") || !exclusions.every(rule => typeof rule === "string")) return false;
   const excluded = exclusions.some(rule => ruleMatchesTarget(rule, target));
   const allowed = allowlist.some(rule => ruleMatchesTarget(rule, target));
   return allowed && !excluded;
@@ -56,17 +58,18 @@ export function evaluatePolicy(input: {
   sessionLimitMinutes: number;
   dryRun: boolean;
 }): PolicyDecision {
+  if (!input || typeof input !== "object") throw new Error("Policy input is invalid.");
   const tier = classifyGovernanceTier(input.action);
   const reasons: string[] = [];
 
-  if (!input.safeHarbor.trim()) reasons.push("Safe-harbor record is required.");
-  if (!input.codeOfConduct.trim()) reasons.push("Code-of-conduct record is required.");
+  if (typeof input.safeHarbor !== "string" || !input.safeHarbor.trim()) reasons.push("Safe-harbor record is required.");
+  if (typeof input.codeOfConduct !== "string" || !input.codeOfConduct.trim()) reasons.push("Code-of-conduct record is required.");
   if (violatesCodeOfConduct(input.action, input.codeOfConduct)) reasons.push("Action is prohibited by the deterministic code-of-conduct policy.");
   if (!isTargetInScope(input.target, input.allowlist, input.exclusions)) {
     reasons.push("Target is not permitted by the allowlist/exclusion policy.");
   }
-  if (input.spentCents >= input.budgetCents) reasons.push("Budget ceiling has been reached.");
-  if (input.elapsedMinutes >= input.sessionLimitMinutes) reasons.push("Session duration limit has been reached.");
+  if (!Number.isFinite(input.spentCents) || !Number.isFinite(input.budgetCents) || input.spentCents >= input.budgetCents) reasons.push("Budget ceiling has been reached.");
+  if (!Number.isFinite(input.elapsedMinutes) || !Number.isFinite(input.sessionLimitMinutes) || input.elapsedMinutes >= input.sessionLimitMinutes) reasons.push("Session duration limit has been reached.");
   if (tier === "tier3") reasons.push("Tier 3 actions are blocked until a human approval exists.");
 
   return {

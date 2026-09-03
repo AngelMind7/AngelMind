@@ -42,9 +42,13 @@ export function isFeatureEnabled(input: {
   config?: FeatureFlagConfig;
   entitlementFlags?: string[];
 }): boolean {
+  if (!input || typeof input.flag !== "string" || !/^[A-Za-z0-9._-]{1,120}$/.test(input.flag) || typeof input.environment !== "string" || !input.environment.trim()) return false;
+  if (input.userId !== undefined && (!Number.isInteger(input.userId) || input.userId < 1)) return false;
+  if (input.organizationId !== undefined && (!Number.isInteger(input.organizationId) || input.organizationId < 1)) return false;
+  if (input.entitlementFlags !== undefined && (!Array.isArray(input.entitlementFlags) || !input.entitlementFlags.every(value => typeof value === "string"))) return false;
   const definition = input.config?.[input.flag];
   if (!definition || definition.enabled !== true) return false;
-  if (definition.environments?.length && !definition.environments.includes(input.environment)) return false;
+  if (definition.environments?.length && !definition.environments.includes(input.environment.trim())) return false;
   if (definition.allowUsers?.length) return input.userId !== undefined && definition.allowUsers.includes(input.userId);
   if (definition.allowOrganizations?.length) return input.organizationId !== undefined && definition.allowOrganizations.includes(input.organizationId);
   if (input.entitlementFlags?.includes(input.flag)) return true;

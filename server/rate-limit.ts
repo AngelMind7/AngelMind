@@ -32,21 +32,25 @@ export function getClientRateLimitKey(req: Request) {
 
 function evictExpired<T extends { resetAt?: number; blockedUntil?: number }>(map: Map<string, T>, now: number, maxEntries: number) {
   map.forEach((value, key) => {
-    if ((value.resetAt !== undefined && value.resetAt <= now) || (value.blockedUntil !== undefined && value.blockedUntil <= now)) map.delete(key);
+    const bucketExpired = value.resetAt !== undefined && value.resetAt <= now;
+    const abuseExpired = value.blockedUntil !== undefined && value.blockedUntil <= now;
+    if (bucketExpired || abuseExpired) map.delete(key);
   });
-  if (map.size > maxEntries) {
+  while (map.size > maxEntries) {
     const oldest = map.keys().next().value;
-    if (oldest) map.delete(oldest);
+    if (oldest === undefined) break;
+    map.delete(oldest);
   }
 }
 
 export function createRateLimiter(options: RateLimitOptions): RequestHandler {
+  if (!options || typeof options !== "object") throw new Error("Rate limit options are required.");
   const windowMs = boundedNumber(options.windowMs, 60_000, 1_000, 86_400_000);
   const max = boundedNumber(options.max, 120, 1, 100_000);
-  const maxEntries = boundedNumber(options.maxEntries ?? 10_000, 10_000, 100, 100_000);
+  const maxEntries = boundedNumber(options.maxEntries ?? 10_000, 10_000, 1, 100_000);
   const strikeThreshold = boundedNumber(options.abuseStrikeThreshold ?? 5, 5, 1, 100);
   const cooldownMs = boundedNumber(options.abuseCooldownMs ?? Math.min(windowMs * 4, 3_600_000), windowMs, 1_000, 86_400_000);
-  const keyFor = options.key ?? getClientRateLimitKey;
+  const keyFor = typeof options.key === "function" ? options.key : getClientRateLimitKey;
   const buckets = new Map<string, Bucket>();
   const abuse = new Map<string, AbuseState>();
   return (req: Request, res: Response, next: NextFunction) => {
@@ -85,8 +89,10 @@ export function createRateLimiter(options: RateLimitOptions): RequestHandler {
 }
 
 export function registerApiRateLimit(app: { use: (path: string, handler: RequestHandler) => void }, options?: Partial<RateLimitOptions>) {
-  const windowMs = Number(process.env.API_RATE_LIMIT_WINDOW_MS ?? options?.windowMs ?? 60_000);
-  const max = Number(process.env.API_RATE_LIMIT_MAX ?? options?.max ?? 120);
+  const configuredWindowMs = Number(process.env.API_RATE_LIMIT_WINDOW_MS ?? options?.windowMs ?? 60_000);
+  const configuredMax = Number(process.env.API_RATE_LIMIT_MAX ?? options?.max ?? 120);
+  const windowMs = boundedNumber(configuredWindowMs, 60_000, 1_000, 86_400_000);
+  const max = boundedNumber(configuredMax, 120, 1, 100_000);
   const maxEntries = options?.maxEntries ?? 20_000;
   app.use("/api/auth/firebase", createRateLimiter({ windowMs, max: Math.min(max, 10), maxEntries, abuseStrikeThreshold: 3 }));
   app.use("/api/scheduled", createRateLimiter({ windowMs, max: Math.min(max, 30), maxEntries, abuseStrikeThreshold: 3 }));

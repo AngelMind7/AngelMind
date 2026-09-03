@@ -26,8 +26,11 @@ function encrypt(value: string) {
 }
 
 function decrypt(value: string) {
-  const [iv, tag, ciphertext] = value.split(".").map(part => Buffer.from(part, "base64url"));
-  if (!iv || !tag || !ciphertext) throw new Error("Stored MFA secret is invalid.");
+  if (typeof value !== "string") throw new Error("Stored MFA secret is invalid.");
+  const parts = value.split(".");
+  if (parts.length !== 3 || parts.some(part => !part)) throw new Error("Stored MFA secret is invalid.");
+  const [iv, tag, ciphertext] = parts.map(part => Buffer.from(part, "base64url"));
+  if (iv.length !== 12 || tag.length !== 16 || ciphertext.length === 0) throw new Error("Stored MFA secret is invalid.");
   const decipher = createDecipheriv("aes-256-gcm", encryptionKey(), iv);
   decipher.setAuthTag(tag);
   return Buffer.concat([decipher.update(ciphertext), decipher.final()]).toString("utf8");
@@ -59,6 +62,7 @@ function base32Encode(value: Buffer) {
 }
 
 export function generateTotpCode(secret: string, timestampMs = Date.now()) {
+  if (!Number.isFinite(timestampMs) || timestampMs < 0) throw new Error("Invalid TOTP timestamp.");
   const counter = Math.floor(timestampMs / 1000 / TOTP_STEP_SECONDS);
   const key = base32Decode(secret);
   const message = Buffer.alloc(8);

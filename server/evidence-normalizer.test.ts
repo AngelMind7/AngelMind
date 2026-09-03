@@ -63,4 +63,18 @@ describe("15-schema evidence normalizer registry", () => {
     const xxe = normalizeEvidenceForSchema("xxe_evidence", { data: { message: "XML parser disabled", xml: "<secret/>" }, capabilities: [] });
     expect(xxe.falsePositive).toBe(true);
   });
+
+  it("normalizes and hashes every registered Appendix C schema", () => {
+    for (const [schemaId, definition] of Object.entries(evidenceSchemas)) {
+      const result = normalizeEvidenceForSchema(schemaId as keyof typeof evidenceSchemas, {
+        data: { message: `fixture:${schemaId}`, status: 200 },
+        capabilities: [],
+      });
+      expect(result.schema).toBe("angelmind.canonical-evidence.v1");
+      expect(definition.vectors.length).toBeGreaterThan(0);
+      expect(result.chainReferences).toEqual([]);
+      expect(typeof result.falsePositive).toBe("boolean");
+      expect(verifyEvidenceHash(result)).toBe(true);
+    }
+  });
 });

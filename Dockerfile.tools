@@ -11,6 +11,8 @@ ARG SUBFINDER_VERSION=v2.6.8
 ARG HTTPX_VERSION=v1.7.1
 ARG GITLEAKS_VERSION=v8.28.0
 ARG TRIVY_VERSION=v0.62.1
+ARG SSRFMAP_COMMIT=290e07d75c52d68e021b6d0b4200c2a41ea20365
+ARG GRAPHQL_COP_COMMIT=2b7e086efae672f28b419c7fcdfe6b48d846c9dc
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates git python3 python3-pip unzip curl && rm -rf /var/lib/apt/lists/*
 RUN set -eux; \
   go install github.com/ffuf/ffuf/v2@${FFUF_VERSION}; \
@@ -28,12 +30,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates
 COPY --from=tools /go/bin/ /usr/local/bin/
 # Source-based tools are installed from pinned upstream revisions, never stubbed.
 ARG SQLMAP_VERSION=1.8.12
-ARG JWT_TOOL_REF=3bc7407cf2222d6a821dcc19c776e5a1b1cb9a9b
+ARG JWT_TOOL_REF=v2.3.0
 RUN git clone --depth 1 --branch ${SQLMAP_VERSION} https://github.com/sqlmapproject/sqlmap.git /opt/sqlmap \
  && ln -s /opt/sqlmap/sqlmap.py /usr/local/bin/sqlmap \
  && git clone --depth 1 --branch ${JWT_TOOL_REF} https://github.com/ticarpi/jwt_tool.git /opt/jwt_tool \
  && chmod +x /opt/jwt_tool/jwt_tool.py \
- && ln -s /opt/jwt_tool/jwt_tool.py /usr/local/bin/jwt_tool.py
+ && ln -s /opt/jwt_tool/jwt_tool.py /usr/local/bin/jwt_tool.py \
+ && git clone --depth 1 https://github.com/swisskyrepo/SSRFmap.git /opt/ssrfmap \
+ && test "$(git -C /opt/ssrfmap rev-parse HEAD)" = "${SSRFMAP_COMMIT}" \
+ && python3 -m pip install --no-cache-dir --break-system-packages \
+      dnslib==0.9.24 dnspython==2.6.1 flask==3.0.3 requests==2.31.0 tldextract==5.1.2 \
+ && printf '#!/bin/sh\nexec python3 /opt/ssrfmap/ssrfmap.py "$@"\n' > /usr/local/bin/ssrfmap \
+ && chmod 0755 /usr/local/bin/ssrfmap \
+ && git clone --depth 1 https://github.com/dolevf/graphql-cop.git /opt/graphql-cop \
+ && test "$(git -C /opt/graphql-cop rev-parse HEAD)" = "${GRAPHQL_COP_COMMIT}" \
+ && python3 -m pip install --no-cache-dir --break-system-packages -r /opt/graphql-cop/requirements.txt \
+ && printf '#!/bin/sh\nexec python3 /opt/graphql-cop/graphql-cop.py "$@"\n' > /usr/local/bin/graphql-cop \
+ && chmod 0755 /usr/local/bin/graphql-cop
 # Burp Suite Professional and custom GraphQL/SSRF adapters require separately
 # licensed/vendor-supplied artifacts and are deliberately not downloaded here.
 COPY config/tool-runtime-packs.yaml /etc/angelmind/tool-runtime-packs.yaml

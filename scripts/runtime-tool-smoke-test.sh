@@ -3,7 +3,7 @@ set -eu
 
 # This is an execution smoke test, not catalog metadata: each command must
 # start successfully and emit a version/help response without contacting a target.
-required="ffuf dalfox interactsh-client cloudfox nuclei subfinder httpx gitleaks trivy sqlmap jwt_tool.py"
+required="ffuf dalfox interactsh-client cloudfox nuclei subfinder httpx gitleaks trivy sqlmap jwt_tool.py ssrfmap graphql-cop"
 missing=0
 for command in $required; do
   if ! command -v "$command" >/dev/null 2>&1; then
@@ -24,8 +24,8 @@ for command in $required; do
   fi
 done
 
-# The following are intentionally external artifacts, not downloadable substitutes.
-for command in burp-rest-cli ssrfmap graphql-cop; do
+# Burp remains an intentionally external artifact, not a downloadable substitute.
+for command in burp-rest-cli; do
   if command -v "$command" >/dev/null 2>&1; then
     echo "EXECUTED_EXTERNAL_ARTIFACT $command"
   else

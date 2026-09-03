@@ -214,6 +214,21 @@ export async function executePlaybookRunJob(
     return { status: "completed", runId };
   }
 
+  if (tasks.length !== ids.length) {
+    const reason = "Playbook run references one or more missing tasks.";
+    await db.update(playbookRuns).set({ status: "failed", lastError: reason, updatedAt: new Date() }).where(eq(playbookRuns.id, run.id));
+    await recordAudit(db, run.workspaceId, run.createdByUserId, "playbook-run-failed-missing-task", { playbookRunId: run.id, expectedTaskCount: ids.length, actualTaskCount: tasks.length });
+    return { status: "failed", runId, reason };
+  }
+
+  const hasOutOfRunDependency = dependencies.some(dependency => !ids.includes(dependency.dependsOnTaskId));
+  if (hasOutOfRunDependency) {
+    const reason = "Playbook dependency references a task outside the run; execution is blocked fail-closed.";
+    await db.update(playbookRuns).set({ status: "failed", lastError: reason, updatedAt: new Date() }).where(eq(playbookRuns.id, run.id));
+    await recordAudit(db, run.workspaceId, run.createdByUserId, "playbook-run-failed-external-dependency", { playbookRunId: run.id });
+    return { status: "failed", runId, reason };
+  }
+
   if (hasDependencyCycle(ids, dependencies)) {
     const reason = "Playbook dependency graph contains a cycle.";
     await db.update(playbookRuns).set({ status: "failed", lastError: reason, updatedAt: new Date() }).where(eq(playbookRuns.id, run.id));
@@ -246,7 +261,7 @@ export async function executePlaybookRunJob(
   }
   if (typeof taskInputs.adapterKey === "string") {
     const feedback = executePassiveAdapter(taskInputs.adapterKey, taskInputs);
-    const completedTaskIds = [...completedIds, task.id];
+    const completedTaskIds = Array.from(new Set([...completedIds, task.id]));
     const runCompleted = completedTaskIds.length >= ids.length;
     await db.update(researchTasks).set({ status: "completed", outputs: JSON.stringify(feedback), completedAt: new Date(), updatedAt: new Date() }).where(and(eq(researchTasks.id, task.id), eq(researchTasks.workspaceId, run.workspaceId), eq(researchTasks.status, "queued")));
     await db.update(playbookRuns).set({ status: runCompleted ? "completed" : "queued", checkpoint: JSON.stringify({ ...checkpoint, completedTaskIds, nextTaskIndex: checkpoint.nextTaskIndex + 1, blockedTaskIds: (checkpoint.blockedTaskIds ?? []).filter(id => id !== task.id) }), completedAt: runCompleted ? new Date() : null, lastError: null, updatedAt: new Date() }).where(eq(playbookRuns.id, run.id));

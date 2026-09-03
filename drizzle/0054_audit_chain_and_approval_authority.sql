@@ -1,5 +1,6 @@
 -- P5: audit hash chain (previousEntryHash + chainHash)
 ALTER TABLE `auditEvents` ADD COLUMN `previousEntryHash` varchar(64) NULL AFTER `evidenceHash`;
+--> statement-breakpoint
 ALTER TABLE `auditEvents` ADD COLUMN `chainHash` varchar(64) NULL AFTER `previousEntryHash`;
 
 -- P6: role approval_authority pada workspace membership

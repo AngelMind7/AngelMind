@@ -6,6 +6,9 @@ This package is the Python 3.12+ reference implementation of the core safety con
 cd research-service
 python -m pip install -e '.[dev]'
 PYTHONPATH=src pytest
+ruff check .
 ```
+
+The repository root exposes the same checks as `pnpm test:python` and `pnpm lint:python`; CI installs the editable `.[dev]` extra before running them. The current deterministic suite contains 12 passing tests and does not require network access or production credentials.
 
 The main invariants are that scope exclusions win over allowlists, Tier 3 never proceeds without an external human approval process, workspace identifiers cannot cross the guardrail boundary, and rehearsal always reports zero network calls and tool executions.

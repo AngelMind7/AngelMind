@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { selectDependencyReadyTask } from "./playbook-executor";
+import {
+  executePassiveAdapter,
+  assertPassivePlaybookTaskType,
+} from "./control-plane/intelligence-engine";
 
 describe("playbook executor planning", () => {
   it("selects only dependency-ready queued tasks", () => {
@@ -26,5 +30,20 @@ describe("playbook executor planning", () => {
       new Set()
     );
     expect(task?.id).toBe(7);
+  });
+
+  it("allows only registered passive adapters", () => {
+    expect(executePassiveAdapter("metadata-review", { target: "example.test" })).toMatchObject({
+      adapterKey: "metadata-review",
+      status: "completed",
+      networkCalls: 0,
+    });
+    expect(() => executePassiveAdapter("sqlmap", {})).toThrow(/not registered|safety boundary/i);
+  });
+
+  it("rejects target-facing playbook task vocabulary", () => {
+    expect(() => assertPassivePlaybookTaskType("exploit-validation")).toThrow();
+    expect(() => assertPassivePlaybookTaskType("credential-review")).toThrow();
+    expect(assertPassivePlaybookTaskType("metadata-review")).toBe("metadata-review");
   });
 });

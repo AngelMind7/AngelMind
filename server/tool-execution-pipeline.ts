@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { normalizeEvidence, type CanonicalEvidence } from "./evidence-normalizer";
 import { runRegisteredTool, type ToolRuntimeRequest, type ToolRuntimeResult } from "./tool-runtime";
+import { createResearchObservation } from "./research-workflow";
 
 export const adapterLifecycle = ["validate", "prepare", "execute", "collect", "parse", "normalize", "cleanup"] as const;
 export type AdapterLifecyclePhase = (typeof adapterLifecycle)[number];
@@ -69,4 +70,11 @@ export async function executeToolPipeline(request: ToolRuntimeRequest & { capabi
 
 export function isLifecycleComplete(phases: readonly AdapterLifecyclePhase[]) {
   return adapterLifecycle.every((phase, index) => phases[index] === phase);
+}
+
+export async function persistToolPipelineObservation(userId: number, input: { sessionId: number; assetId?: number; request: ToolRuntimeRequest & { capabilities?: string[] } }, result: ToolExecutionPipelineResult) {
+  if (result.runtime.status !== "completed") throw new Error("Only completed tool executions can be persisted as observations.");
+  if (!isLifecycleComplete(result.phases)) throw new Error("Tool execution lifecycle is incomplete.");
+  const content = JSON.stringify({ toolKey: result.provenance.toolKey, requestId: result.provenance.requestId, records: result.parsedRecords, evidence: result.evidence });
+  return createResearchObservation(userId, { sessionId: input.sessionId, assetId: input.assetId, title: `Tool observation: ${result.provenance.toolKey}`, content, sourceType: "tool_execution", sourceReference: result.provenance.requestId, rawOutputSha256: result.provenance.rawOutputSha256 ?? undefined, normalizedEvidenceSha256: result.provenance.normalizedEvidenceSha256 ?? undefined });
 }

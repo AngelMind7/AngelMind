@@ -49,6 +49,8 @@ export function registerRealtimeWebSocket(server: Server) {
     const url = new URL(request.url ?? "/", "http://localhost");
     if (url.pathname !== WS_PATH) return;
     try {
+      const bearerProtocol = (request.headers["sec-websocket-protocol"] ?? "").toString().split(",").map(value => value.trim()).find(value => value.startsWith("angelmind.bearer."));
+      if (!request.headers.authorization && bearerProtocol) request.headers.authorization = `Bearer ${bearerProtocol.slice("angelmind.bearer.".length)}`;
       const user = await sdk.authenticateRequest(request as never);
       if (!user) { socket.write("HTTP/1.1 401 Unauthorized\r\n\r\n"); socket.destroy(); return; }
       wss.handleUpgrade(request, socket, head, ws => wss.emit("connection", ws, request, user.id));

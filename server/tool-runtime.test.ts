@@ -111,4 +111,9 @@ describe("registered tool runtime", () => {
       reason: "mode_not_supported",
     });
   });
+
+  it("fails closed when scope is not validated or input exceeds the cap", async () => {
+    await expect(runRegisteredTool({ toolKey: "httpx", mode: "passive_readonly", scopeValidated: false, humanApproval: false, input: "https://example.com" })).resolves.toMatchObject({ status: "blocked", reason: "scope_not_validated" });
+    await expect(runRegisteredTool({ toolKey: "custom_scripts", mode: "offline_artifact", scopeValidated: true, humanApproval: false, input: "x".repeat(2_000_001) })).resolves.toMatchObject({ status: "blocked", reason: "input_limit_exceeded" });
+  });
 });

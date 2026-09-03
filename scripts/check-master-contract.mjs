@@ -35,6 +35,9 @@ const router = read("server/routers.ts");
 for (const domain of ["auth", "workspace", "organization", "research", "evidence", "knowledge", "finding", "control", "audit", "tools", "ai", "notification"]) {
   if (!new RegExp(`\\b${domain}:\\s*router\\(`).test(router)) failures.push(`missing API router domain ${domain}`);
 }
+for (const procedure of ["catalog", "runtimeAdapters", "runtimeHealth", "run", "approveTask", "createObservation", "promoteObservationToFinding", "createSubmission", "createArchive", "verifyArchive", "runRestoreDrill"]) {
+  if (!new RegExp(`\\b${procedure}:\\s*protectedProcedure`).test(router)) failures.push(`missing protected API procedure ${procedure}`);
+}
 const migrations = readdirSync(resolve(root, "drizzle")).filter(file => file.endsWith(".sql"));
 requireAtLeast(migrations.length, 63, "migration files");
 if (!read("runtime/custom_script_runner.py").includes("never executes input as code")) failures.push("custom script runner safety contract is missing");

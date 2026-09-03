@@ -1,6 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { notificationDeliveries, notifications, type notificationDeliveryChannel } from "../drizzle/schema";
 import { getDb } from "./db";
+import { enqueueJob } from "./ai-platform";
 
 type NotificationChannel = (typeof notificationDeliveryChannel)[number];
 type NotificationRecord = typeof notifications.$inferSelect;
@@ -59,7 +60,12 @@ export async function createNotificationDeliveryLedger(notification: Notificatio
       // A concurrent worker may have won the unique insert; reconcile by reading the winner.
     }
     const [created] = await db.select().from(notificationDeliveries).where(eq(notificationDeliveries.idempotencyKey, idempotencyKey)).limit(1);
-    if (created) rows.push(created);
+    if (created) {
+      rows.push(created);
+      if (created.status === "queued") {
+        await enqueueJob(notification.userId, { workspaceId: notification.workspaceId ?? undefined, kind: "notification.deliver", idempotencyKey: `notification-deliver:${created.id}`, payload: { type: "notification_delivery", deliveryId: created.id }, maxAttempts: 3 });
+      }
+    }
   }
   return rows;
 }

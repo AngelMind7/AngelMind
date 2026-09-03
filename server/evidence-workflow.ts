@@ -10,7 +10,7 @@ function digest(value: unknown) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
 }
 
-async function recordRetestAudit(
+async function recordEvidenceWorkflowAudit(
   db: NonNullable<Awaited<ReturnType<typeof getDb>>>,
   workspaceId: number,
   details: Record<string, unknown>,
@@ -46,14 +46,16 @@ export async function linkEvidenceToResearchNode(userId: number, input: { eviden
   if ((input.observationId ? 1 : 0) + (input.hypothesisId ? 1 : 0) !== 1) throw new Error("Exactly one research target is required.");
   if (input.linkType.trim().length < 2) throw new Error("Evidence link type is required.");
   if (input.observationId) {
-    const [observation] = await db.select({ id: researchObservations.id }).from(researchObservations).where(and(eq(researchObservations.id, input.observationId), eq(researchObservations.workspaceId, artifact.workspaceId))).limit(1);
+    const [observation] = await db.select({ id: researchObservations.id, sessionId: researchObservations.sessionId }).from(researchObservations).where(and(eq(researchObservations.id, input.observationId), eq(researchObservations.workspaceId, artifact.workspaceId))).limit(1);
     if (!observation) throw new Error("Observation tidak ditemukan pada workspace evidence.");
+    if (input.hypothesisId) throw new Error("Evidence hanya boleh ditautkan ke satu research node.");
   }
   if (input.hypothesisId) {
-    const [hypothesis] = await db.select({ id: researchHypotheses.id }).from(researchHypotheses).where(and(eq(researchHypotheses.id, input.hypothesisId), eq(researchHypotheses.workspaceId, artifact.workspaceId))).limit(1);
+    const [hypothesis] = await db.select({ id: researchHypotheses.id, sessionId: researchHypotheses.sessionId }).from(researchHypotheses).where(and(eq(researchHypotheses.id, input.hypothesisId), eq(researchHypotheses.workspaceId, artifact.workspaceId))).limit(1);
     if (!hypothesis) throw new Error("Hypothesis tidak ditemukan pada workspace evidence.");
   }
   await db.insert(researchEvidenceLinks).values({ workspaceId: artifact.workspaceId, evidenceArtifactId: artifact.id, observationId: input.observationId ?? null, hypothesisId: input.hypothesisId ?? null, linkType: input.linkType.trim(), createdByUserId: userId });
+  await recordEvidenceWorkflowAudit(db, artifact.workspaceId, { evidenceArtifactId: artifact.id, observationId: input.observationId ?? null, hypothesisId: input.hypothesisId ?? null, linkType: input.linkType.trim(), linkedByUserId: userId, lineage: "research-node" });
   return { success: true as const, evidenceArtifactId: artifact.id, observationId: input.observationId ?? null, hypothesisId: input.hypothesisId ?? null };
 }
 
@@ -115,7 +117,7 @@ export async function requestFindingRetest(userId: number, input: { findingId: n
   const updated = await db.update(findings).set({ status: "retest", revision: nextRevision(finding.revision), updatedAt: new Date() }).where(and(eq(findings.id, finding.id), eq(findings.revision, input.expectedRevision)));
   if (updated[0].affectedRows !== 1) throw new Error("Concurrent update detected; reload the finding and retry.");
   const [retest] = await db.select().from(findingRetests).where(and(eq(findingRetests.findingId, finding.id), eq(findingRetests.requestedByUserId, userId))).orderBy(desc(findingRetests.createdAt)).limit(1);
-  await recordRetestAudit(db, finding.workspaceId, {
+  await recordEvidenceWorkflowAudit(db, finding.workspaceId, {
     findingId: finding.id,
     retestId: retest?.id ?? null,
     previousFindingStatus: finding.status,
@@ -150,7 +152,7 @@ export async function completeFindingRetest(userId: number, input: { retestId: n
   const nextStatus = input.status === "passed" ? "resolved" : input.status === "failed" ? "remediation" : input.status === "inconclusive" ? "inconclusive" : input.status === "cancelled" ? "remediation" : "retest";
   const findingUpdate = await db.update(findings).set({ status: nextStatus, revision: nextRevision(finding.revision), resolvedAt: nextStatus === "resolved" ? now : null, humanReviewStatus: nextStatus === "resolved" ? "pending" : finding.humanReviewStatus, updatedAt: now }).where(and(eq(findings.id, finding.id), eq(findings.revision, finding.revision)));
   if (findingUpdate[0].affectedRows !== 1) throw new Error("Concurrent update detected; reload the finding before recording the retest result.");
-  await recordRetestAudit(db, finding.workspaceId, {
+  await recordEvidenceWorkflowAudit(db, finding.workspaceId, {
     findingId: finding.id,
     retestId: retest.id,
     previousFindingStatus: finding.status,

@@ -1,7 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { computeRetryDelayMs, parseJobPayload, resolveJobTraceContext, shouldDeadLetter } from "./worker";
+import { computeRetryDelayMs, parseJobPayload, resolveJobTraceContext, shouldDeadLetter, toolExecutionJobHandler } from "./worker";
 
 describe("durable worker retry policy", () => {
+  it("validates and forwards tool execution jobs to the governed pipeline", async () => {
+    const calls: unknown[] = [];
+    const handler = toolExecutionJobHandler(async payload => { calls.push(payload); return {} as never; });
+    await handler({ id: 1, kind: "tool_execution", payload: "{}", attempts: 1, maxAttempts: 3 }, { type: "tool_execution", toolKey: "custom_scripts", mode: "offline_artifact", input: "artifact", scopeValidated: true, humanApproval: false });
+    expect(calls).toHaveLength(1);
+    await expect(handler({ id: 1, kind: "tool_execution", payload: "{}", attempts: 1, maxAttempts: 3 }, { type: "tool_execution", toolKey: "custom_scripts" })).rejects.toThrow("Unsupported tool execution payload");
+  });
+
   it("uses bounded exponential backoff", () => {
     expect(computeRetryDelayMs(1)).toBe(5_000);
     expect(computeRetryDelayMs(2)).toBe(10_000);

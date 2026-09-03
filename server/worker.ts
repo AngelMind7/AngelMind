@@ -7,6 +7,8 @@ import { executeEmailDeliveryJob } from "./email-delivery";
 import { executePlaybookRunJob } from "./playbook-executor";
 import { withTraceContext } from "./_core/trace-context";
 import { executeNotificationDeliveryJob } from "./notification-delivery";
+import { executeToolPipeline } from "./tool-execution-pipeline";
+import type { ToolRuntimeRequest } from "./tool-runtime";
 
 export type WorkerJob = {
   id: number;
@@ -128,6 +130,15 @@ export function orchestrationPlanHandler(onPlan: (payload: Record<string, unknow
   };
 }
 
+export function toolExecutionJobHandler(onExecute: typeof executeToolPipeline = executeToolPipeline): JobHandler {
+  return async (_job, payload) => {
+    if (payload.type !== "tool_execution" || typeof payload.toolKey !== "string" || typeof payload.mode !== "string" || typeof payload.input !== "string" || typeof payload.scopeValidated !== "boolean" || typeof payload.humanApproval !== "boolean") throw new Error("Unsupported tool execution payload.");
+    const mode = payload.mode as ToolRuntimeRequest["mode"];
+    if (!["offline_artifact", "passive_readonly", "active_nondestructive", "privileged_or_destructive"].includes(mode)) throw new Error("Unsupported tool execution mode.");
+    await onExecute({ toolKey: payload.toolKey, mode, input: payload.input, scopeValidated: payload.scopeValidated, humanApproval: payload.humanApproval, capabilities: Array.isArray(payload.capabilities) ? payload.capabilities.filter((value): value is string => typeof value === "string") : [] });
+  };
+}
+
 if (process.env.RUN_WORKER === "true") {
   const refreshCatalog = async () => {
     try {
@@ -172,6 +183,7 @@ if (process.env.RUN_WORKER === "true") {
       if (payload.type !== "playbook_run") throw new Error("Unsupported playbook run payload type.");
       await executePlaybookRunJob(payload);
     },
+    tool_execution: toolExecutionJobHandler(),
   });
   console.info(`[worker] started; poll interval=${DEFAULT_POLL_INTERVAL_MS}ms`);
 }

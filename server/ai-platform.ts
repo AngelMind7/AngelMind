@@ -10,6 +10,7 @@ import { discoverGatewayModels } from "./ai-catalog";
 import { currentTraceContext } from "./_core/trace-context";
 import { recordPurgeBatch } from "./purge-metrics";
 import { summarizeAiRuns } from "./ai-quality";
+import { assertEventPayload, assertEventType } from "./event-contract";
 
 async function requireWorkspace(userId: number, workspaceId: number, intent: "read" | "respond" = "read") {
   const db = await getDb();
@@ -205,8 +206,9 @@ export async function publishOutboxEvent(userId: number, input: { workspaceId?: 
   if (!db) throw new Error("Database tidak tersedia.");
   if (input.workspaceId) await requireWorkspace(userId, input.workspaceId, "respond");
   const idempotencyKey = input.idempotencyKey.trim();
-  const payload = JSON.stringify(input.payload);
-  const eventType = input.eventType.trim();
+  const eventPayload = assertEventPayload(input.payload);
+  const payload = JSON.stringify(eventPayload);
+  const eventType = assertEventType(input.eventType.trim());
   const aggregateType = input.aggregateType.trim();
   if (idempotencyKey.length < 8 || idempotencyKey.length > 180) throw new Error("Idempotency key must contain 8-180 characters.");
   if (eventType.length < 3 || eventType.length > 120 || aggregateType.length < 2 || aggregateType.length > 80) throw new Error("Outbox event identity is invalid.");

@@ -3,20 +3,14 @@ import { and, asc, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { outboxEvents, workspaceMemberships, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
 import { sdk } from "./_core/sdk";
+import { parseEventEnvelope, type EventEnvelope } from "./event-contract";
 
 const POLL_INTERVAL_MS = 3_000;
 const HEARTBEAT_INTERVAL_MS = 15_000;
 const MAX_EVENTS_PER_POLL = 50;
 const MAX_LAST_EVENT_ID = 2_147_483_647;
 
-type StreamEvent = {
-  id: number;
-  eventType: string;
-  aggregateType: string;
-  aggregateId: number;
-  schemaVersion: number;
-  payload: Record<string, unknown>;
-};
+type StreamEvent = EventEnvelope & { id: number };
 
 function writeEvent(res: Response, event: StreamEvent) {
   res.write(`id: ${event.id}\n`);
@@ -66,15 +60,22 @@ async function loadEvents(userId: number, afterId: number) {
     .limit(MAX_EVENTS_PER_POLL);
   return rows.flatMap(row => {
     try {
-      const payload = JSON.parse(row.payload) as unknown;
-      if (!payload || typeof payload !== "object" || Array.isArray(payload)) return [];
-      return [{
+      const parsed = parseEventEnvelope({
         id: row.id,
         eventType: row.eventType,
         aggregateType: row.aggregateType,
         aggregateId: row.aggregateId,
         schemaVersion: row.schemaVersion,
-        payload: payload as Record<string, unknown>,
+        payload: JSON.parse(row.payload),
+      });
+      if (!parsed || parsed.id !== row.id) return [];
+      return [{
+        id: row.id,
+        eventType: parsed.eventType,
+        aggregateType: parsed.aggregateType,
+        aggregateId: parsed.aggregateId,
+        schemaVersion: parsed.schemaVersion,
+        payload: parsed.payload,
       }];
     } catch {
       return [];

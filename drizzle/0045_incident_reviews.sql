@@ -14,6 +14,7 @@ CREATE TABLE `incidentReviews` (
   `closedAt` timestamp,
   `createdAt` timestamp NOT NULL DEFAULT (now()),
   `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE now(),
+  CONSTRAINT `incidentReviews_id` PRIMARY KEY(`id`),
   CONSTRAINT `incident_review_incident_uq` UNIQUE(`incidentId`),
   CONSTRAINT `incidentReviews_workspaceId_workspaces_id_fk` FOREIGN KEY (`workspaceId`) REFERENCES `workspaces`(`id`) ON DELETE CASCADE ON UPDATE NO ACTION
 );

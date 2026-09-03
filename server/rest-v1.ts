@@ -8,6 +8,7 @@ import { searchWorkspace } from "./global-search";
 import { sdk } from "./_core/sdk";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { authenticateApiKeyWithScopes } from "./security-platform";
+import { createResearchAsset, createResearchObservation, createResearchSession, listResearchAssets, promoteObservationToFinding } from "./research-workflow";
 
 export const REST_API_VERSION = "v1" as const;
 type RestAuth = { user: Awaited<ReturnType<typeof sdk.authenticateRequest>> extends infer User ? NonNullable<User> : never; workspaceId?: number | null };
@@ -103,6 +104,46 @@ export function registerRestV1Routes(app: Express) {
       if (!run || (auth.workspaceId !== undefined && auth.workspaceId !== null && auth.workspaceId !== run.workspaceId) || !(await canAccessWorkspace(auth.user.id, run?.workspaceId ?? 0, "read"))) return res.status(404).json({ error: true, code: "NOT_FOUND", message: "AI run tidak ditemukan.", details: {}, request_id: requestId(res), apiVersion: REST_API_VERSION });
       const output = await getAiRunOutput(auth.user.id, runId);
       res.json({ data: { ...run, output }, request_id: requestId(res), apiVersion: REST_API_VERSION });
+    } catch (error) { sendError(res, error); }
+  });
+  app.post("/api/v1/workspaces/:workspaceId/research-sessions", async (req, res) => {
+    try {
+      const auth = await requireUser(req, "research:write");
+      const workspaceId = parsePositiveInteger(req.params.workspaceId, "workspaceId");
+      requireBoundWorkspace(auth, workspaceId);
+      const session = await createResearchSession(auth.user.id, { workspaceId, title: typeof req.body?.title === "string" ? req.body.title : "" });
+      res.status(201).json({ data: session, request_id: requestId(res), apiVersion: REST_API_VERSION });
+    } catch (error) { sendError(res, error); }
+  });
+  app.get("/api/v1/research-sessions/:sessionId/assets", async (req, res) => {
+    try {
+      const auth = await requireUser(req, "research:read");
+      const assets = await listResearchAssets(auth.user.id, parsePositiveInteger(req.params.sessionId, "sessionId"));
+      res.json({ data: assets, request_id: requestId(res), apiVersion: REST_API_VERSION });
+    } catch (error) { sendError(res, error); }
+  });
+  app.post("/api/v1/research-sessions/:sessionId/assets", async (req, res) => {
+    try {
+      const auth = await requireUser(req, "research:write");
+      const body = req.body ?? {};
+      const asset = await createResearchAsset(auth.user.id, { sessionId: parsePositiveInteger(req.params.sessionId, "sessionId"), assetType: body.assetType, value: typeof body.value === "string" ? body.value : "", hostname: typeof body.hostname === "string" ? body.hostname : undefined, metadata: body.metadata && typeof body.metadata === "object" ? body.metadata : undefined });
+      res.status(201).json({ data: asset, request_id: requestId(res), apiVersion: REST_API_VERSION });
+    } catch (error) { sendError(res, error); }
+  });
+  app.post("/api/v1/research-sessions/:sessionId/observations", async (req, res) => {
+    try {
+      const auth = await requireUser(req, "research:write");
+      const body = req.body ?? {};
+      const observation = await createResearchObservation(auth.user.id, { sessionId: parsePositiveInteger(req.params.sessionId, "sessionId"), assetId: body.assetId === undefined ? undefined : parsePositiveInteger(String(body.assetId), "assetId"), title: typeof body.title === "string" ? body.title : "", content: typeof body.content === "string" ? body.content : "", sourceType: typeof body.sourceType === "string" ? body.sourceType : undefined, sourceReference: typeof body.sourceReference === "string" ? body.sourceReference : undefined, rawOutputSha256: typeof body.rawOutputSha256 === "string" ? body.rawOutputSha256 : undefined, normalizedEvidenceSha256: typeof body.normalizedEvidenceSha256 === "string" ? body.normalizedEvidenceSha256 : undefined });
+      res.status(201).json({ data: observation, request_id: requestId(res), apiVersion: REST_API_VERSION });
+    } catch (error) { sendError(res, error); }
+  });
+  app.post("/api/v1/research-sessions/:sessionId/findings", async (req, res) => {
+    try {
+      const auth = await requireUser(req, "research:write");
+      const body = req.body ?? {};
+      const finding = await promoteObservationToFinding(auth.user.id, { sessionId: parsePositiveInteger(req.params.sessionId, "sessionId"), observationId: parsePositiveInteger(String(body.observationId ?? ""), "observationId"), confidence: body.confidence === undefined ? undefined : Number(body.confidence), impactSummary: typeof body.impactSummary === "string" ? body.impactSummary : "" });
+      res.status(201).json({ data: finding, request_id: requestId(res), apiVersion: REST_API_VERSION });
     } catch (error) { sendError(res, error); }
   });
 }

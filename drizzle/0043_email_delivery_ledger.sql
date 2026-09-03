@@ -19,4 +19,5 @@ CREATE TABLE `emailDeliveries` (
 );
 
 CREATE INDEX `email_delivery_status_attempt_idx` ON `emailDeliveries` (`status`,`nextAttemptAt`);
+--> statement-breakpoint
 CREATE INDEX `email_delivery_recipient_idx` ON `emailDeliveries` (`recipient`);

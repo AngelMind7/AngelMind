@@ -42,7 +42,12 @@ export async function createNotificationDeliveryLedger(notification: Notificatio
     if (existing) { rows.push(existing); continue; }
     const provider = notificationProviders[channel];
     const status = channel === "in_app" && provider.isEnabled() ? "sent" : provider.isEnabled() ? "queued" : "disabled";
-    await db.insert(notificationDeliveries).values({ notificationId: notification.id, userId: notification.userId, workspaceId: notification.workspaceId, channel, status, idempotencyKey, attempts: status === "sent" ? 1 : 0, nextAttemptAt: new Date(), redactedPayload: payload });
+    try {
+      await db.insert(notificationDeliveries).values({ notificationId: notification.id, userId: notification.userId, workspaceId: notification.workspaceId, channel, status, idempotencyKey, attempts: status === "sent" ? 1 : 0, nextAttemptAt: new Date(), redactedPayload: payload });
+    } catch {
+      // The schema enforces uniqueness on both idempotencyKey and notification/channel.
+      // A concurrent worker may have won the insert; reconcile by reading the winner.
+    }
     const [created] = await db.select().from(notificationDeliveries).where(eq(notificationDeliveries.idempotencyKey, idempotencyKey)).limit(1);
     if (created) rows.push(created);
   }

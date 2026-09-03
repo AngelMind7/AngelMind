@@ -24,6 +24,8 @@ Use separate values for development, staging, and production. Rotate application
 
 ## Release procedure
 
+Use the executable [`release-checklist.md`](./release-checklist.md) for every promotion. It maps each release gate to a command, workflow, or required evidence record; a missing staging or production prerequisite is recorded as `blocked`, never as an assumed pass.
+
 Before deployment, review [`threat-model-register.md`](./threat-model-register.md) for any changed asset, trust boundary, provider, migration, worker handler, or capability. A release must identify affected threat IDs, confirm relevant tests and migration checks, and record unresolved residual risk before the owner approves promotion.
 
 1. Confirm the target commit is on `main`, the GitHub CI checks are green, and the threat-model review has no unowned High residual risk.

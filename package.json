@@ -92,6 +92,7 @@
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
     "wouter": "^3.3.5",
+    "ws": "^8.21.3",
     "zod": "^4.1.12"
   },
   "devDependencies": {
@@ -106,6 +107,7 @@
     "@types/nodemailer": "^8.0.1",
     "@types/react": "^19.2.1",
     "@types/react-dom": "^19.2.1",
+    "@types/ws": "^8.18.1",
     "@vitejs/plugin-react": "^5.0.4",
     "@vitest/coverage-v8": "2.1.9",
     "add": "^2.0.6",

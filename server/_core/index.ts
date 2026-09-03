@@ -12,6 +12,7 @@ import { registerFirebaseAuthRoutes } from "../firebase-auth";
 import { validateRuntimeConfig } from "./env";
 import { registerRestV1Routes } from "../rest-v1";
 import { registerRealtimeRoutes } from "../realtime";
+import { registerRealtimeWebSocket } from "../realtime-websocket";
 import { registerApiRateLimit } from "../rate-limit";
 
 function isPortAvailable(port: number): Promise<boolean> {
@@ -47,6 +48,7 @@ async function startServer() {
   registerFirebaseAuthRoutes(app);
   registerRestV1Routes(app);
   registerRealtimeRoutes(app);
+  registerRealtimeWebSocket(server);
   app.post("/api/scheduled/workspace-maintenance", workspaceMaintenanceHandler);
   // tRPC API
   app.use(

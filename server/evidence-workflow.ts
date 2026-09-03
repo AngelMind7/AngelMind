@@ -115,6 +115,15 @@ export async function requestFindingRetest(userId: number, input: { findingId: n
   const updated = await db.update(findings).set({ status: "retest", revision: nextRevision(finding.revision), updatedAt: new Date() }).where(and(eq(findings.id, finding.id), eq(findings.revision, input.expectedRevision)));
   if (updated[0].affectedRows !== 1) throw new Error("Concurrent update detected; reload the finding and retry.");
   const [retest] = await db.select().from(findingRetests).where(and(eq(findingRetests.findingId, finding.id), eq(findingRetests.requestedByUserId, userId))).orderBy(desc(findingRetests.createdAt)).limit(1);
+  await recordRetestAudit(db, finding.workspaceId, {
+    findingId: finding.id,
+    retestId: retest?.id ?? null,
+    previousFindingStatus: finding.status,
+    findingStatus: "retest",
+    retestStatus: "requested",
+    scopeDigest,
+    requestedByUserId: userId,
+  });
   await upsertSearchDocument({ workspaceId: finding.workspaceId, entityType: "finding", entityId: finding.id, title: finding.title, body: [finding.impactSummary, finding.remediationNotes ?? "", "status:retest"].filter(Boolean).join("\\n") });
   return retest;
 }

@@ -37,6 +37,7 @@ RUN git clone --depth 1 --branch ${SQLMAP_VERSION} https://github.com/sqlmapproj
 # Burp Suite Professional and custom GraphQL/SSRF adapters require separately
 # licensed/vendor-supplied artifacts and are deliberately not downloaded here.
 COPY config/tool-runtime-packs.yaml /etc/angelmind/tool-runtime-packs.yaml
+COPY runtime/custom_script_runner.py /app/runtime/custom_script_runner.py
 COPY scripts/runtime-tool-smoke-test.sh /usr/local/bin/runtime-tool-smoke-test
 RUN chmod 0755 /usr/local/bin/runtime-tool-smoke-test
 ENTRYPOINT ["runtime-tool-smoke-test"]

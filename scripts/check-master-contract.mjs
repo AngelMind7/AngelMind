@@ -37,6 +37,7 @@ for (const domain of ["auth", "workspace", "organization", "research", "evidence
 }
 const migrations = readdirSync(resolve(root, "drizzle")).filter(file => file.endsWith(".sql"));
 requireAtLeast(migrations.length, 63, "migration files");
+if (!read("runtime/custom_script_runner.py").includes("never executes input as code")) failures.push("custom script runner safety contract is missing");
 
 if (failures.length) {
   console.error("Master contract check failed:");

@@ -88,18 +88,9 @@ COPY --from=build --chown=angelmind:angelmind /app/package.json /app/pnpm-lock.y
 COPY --chown=angelmind:angelmind config/tool-runtime-packs.yaml ./config/tool-runtime-packs.yaml
 COPY --chown=angelmind:angelmind runtime/rules.yar /etc/angelmind/rules.yar
 COPY --chown=angelmind:angelmind runtime/capstone_inspect.py runtime/unicorn_probe.py runtime/dkim_verify.py runtime/custom_script_runner.py ./runtime/
-RUN python3 -m pip install --no-cache-dir --break-system-packages \
-       checkov==3.3.16 \
-       checkdmarc==6.0.0 \
-       cyclonedx-bom==4.6.1 \
-       dkimpy==1.1.8 \
-       detect-secrets==1.5.0 \
-       njsscan==1.0.0 \
-       pip-audit==2.10.1 \
-       semgrep==1.172.0 \
-       safety==3.8.1 \
-       sigmatools==0.23.1 \
-       volatility3==2.28.0 \
+COPY scripts/install-python-runtime-deps.sh /usr/local/bin/install-python-runtime-deps
+RUN chmod 0755 /usr/local/bin/install-python-runtime-deps \
+    && /usr/local/bin/install-python-runtime-deps \
     && pnpm install --prod --frozen-lockfile \
     && chown -R angelmind:angelmind /app
 USER angelmind

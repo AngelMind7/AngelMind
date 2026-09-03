@@ -22,6 +22,10 @@ describe("versioned realtime event contract", () => {
     expect(() => assertEventPayload(["not-an-object"])).toThrow("payload must be a JSON object");
   });
 
+  it("rejects oversized payloads", () => {
+    expect(() => assertEventPayload({ data: "x".repeat(256 * 1024) })).toThrow("exceeds the size limit");
+  });
+
   it("rejects malformed persisted envelopes", () => {
     expect(parseEventEnvelope({ id: 2, eventType: "finding.created", aggregateType: "finding", aggregateId: 1, schemaVersion: 0, payload: {} })).toBeNull();
   });

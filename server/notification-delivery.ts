@@ -26,21 +26,9 @@ export function buildRedactedNotificationPayload(notification: Pick<Notification
 }
 
 export const notificationProviders: Record<NotificationChannel, NotificationProvider> = {
-  in_app: {
-    channel: "in_app",
-    isEnabled: () => true,
-    deliver: async () => ({ delivered: true }),
-  },
-  email: {
-    channel: "email",
-    isEnabled: () => Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD),
-    deliver: async () => ({ delivered: false, reason: "email-provider-delegated-to-email-delivery-ledger" }),
-  },
-  webhook: {
-    channel: "webhook",
-    isEnabled: () => false,
-    deliver: async () => ({ delivered: false, reason: "webhook-provider-disabled-until-approved-activation" }),
-  },
+  in_app: { channel: "in_app", isEnabled: () => true, deliver: async () => ({ delivered: true }) },
+  email: { channel: "email", isEnabled: () => Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD), deliver: async () => ({ delivered: false, reason: "email-provider-delegated-to-email-delivery-ledger" }) },
+  webhook: { channel: "webhook", isEnabled: () => false, deliver: async () => ({ delivered: false, reason: "webhook-provider-disabled-until-approved-activation" }) },
 };
 
 export async function createNotificationDeliveryLedger(notification: NotificationRecord) {
@@ -61,6 +49,14 @@ export async function createNotificationDeliveryLedger(notification: Notificatio
   return rows;
 }
 
+function affectedRowCount(result: unknown): number | undefined {
+  if (!result || typeof result !== "object") return undefined;
+  const value = result as { affectedRows?: unknown; rowsAffected?: unknown };
+  if (typeof value.affectedRows === "number") return value.affectedRows;
+  if (typeof value.rowsAffected === "number") return value.rowsAffected;
+  return undefined;
+}
+
 export async function executeNotificationDeliveryJob(payload: Record<string, unknown>) {
   const deliveryId = Number(payload.deliveryId);
   if (!Number.isInteger(deliveryId) || deliveryId < 1) throw new Error("Invalid notification delivery job payload.");
@@ -78,13 +74,19 @@ export async function executeNotificationDeliveryJob(payload: Record<string, unk
   if (!notification) throw new Error("Notification source tidak ditemukan.");
   let parsedPayload: Record<string, unknown>;
   try { parsedPayload = JSON.parse(delivery.redactedPayload) as Record<string, unknown>; } catch { throw new Error("Notification delivery payload is invalid."); }
-  await db.update(notificationDeliveries).set({ status: "sending", attempts: delivery.attempts + 1, updatedAt: new Date() }).where(and(eq(notificationDeliveries.id, delivery.id), eq(notificationDeliveries.status, delivery.status)));
+  const attempt = delivery.attempts + 1;
+  const claim = await db.update(notificationDeliveries).set({ status: "sending", attempts: attempt, updatedAt: new Date() }).where(and(eq(notificationDeliveries.id, delivery.id), eq(notificationDeliveries.status, delivery.status)));
+  const claimedRows = affectedRowCount(claim);
+  if (claimedRows !== 1) {
+    if (claimedRows === undefined) throw new Error("Notification delivery claim could not be verified safely.");
+    return { ...delivery, status: "sending" as const, reason: "Notification delivery is already being processed by another worker." };
+  }
   const result = await provider.deliver(notification, parsedPayload);
   if (result.delivered) {
-    await db.update(notificationDeliveries).set({ status: "sent", providerMessageId: result.providerMessageId ?? null, lastError: null, updatedAt: new Date() }).where(eq(notificationDeliveries.id, delivery.id));
+    await db.update(notificationDeliveries).set({ status: "sent", providerMessageId: result.providerMessageId ?? null, lastError: null, updatedAt: new Date() }).where(and(eq(notificationDeliveries.id, delivery.id), eq(notificationDeliveries.status, "sending")));
     return { ...delivery, status: "sent" as const, providerMessageId: result.providerMessageId ?? null };
   }
   const reason = result.reason ?? "Notification provider delivery failed.";
-  await db.update(notificationDeliveries).set({ status: "failed", lastError: reason, nextAttemptAt: new Date(Date.now() + getNotificationRetryDelayMs(delivery.attempts)), updatedAt: new Date() }).where(eq(notificationDeliveries.id, delivery.id));
+  await db.update(notificationDeliveries).set({ status: "failed", lastError: reason, nextAttemptAt: new Date(Date.now() + getNotificationRetryDelayMs(attempt)), updatedAt: new Date() }).where(and(eq(notificationDeliveries.id, delivery.id), eq(notificationDeliveries.status, "sending")));
   throw new Error(reason);
 }

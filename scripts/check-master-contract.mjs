@@ -10,7 +10,7 @@ const requireAtLeast = (actual, expected, label) => {
 
 const routes = read("client/src/authenticatedRoutes.ts").match(/path:\s*"[^"]+"/g) ?? [];
 requireAtLeast(routes.length, 27, "authenticated routes");
-for (const route of ["/assets", "/tools", "/ai", "/research", "/knowledge", "/findings", "/reports", "/audit"]) {
+for (const route of ["/assets", "/tools", "/tools/:id", "/ai", "/research", "/research/:id", "/knowledge", "/findings", "/reports", "/audit"]) {
   if (!routes.some(value => value.includes(`"${route}"`))) failures.push(`missing required route ${route}`);
 }
 

@@ -13,6 +13,7 @@ CREATE TABLE `notificationDeliveries` (
   `redactedPayload` text NOT NULL,
   `createdAt` timestamp NOT NULL DEFAULT (now()),
   `updatedAt` timestamp NOT NULL DEFAULT (now()) ON UPDATE now(),
+  CONSTRAINT `notificationDeliveries_id` PRIMARY KEY(`id`),
   CONSTRAINT `notification_delivery_idempotency_uq` UNIQUE(`idempotencyKey`),
   CONSTRAINT `notification_delivery_channel_uq` UNIQUE(`notificationId`,`channel`),
   CONSTRAINT `notificationDeliveries_notificationId_notifications_id_fk` FOREIGN KEY (`notificationId`) REFERENCES `notifications`(`id`) ON DELETE CASCADE ON UPDATE NO ACTION,

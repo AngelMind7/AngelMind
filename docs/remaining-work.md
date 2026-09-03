@@ -141,3 +141,7 @@ Full Vitest suite, production build, and diff validation pass.
 Audit archive restore drills now persist a durable `restoreDrillRuns` ledger keyed by archive and idempotency key. A drill retrieves the managed-storage manifest, verifies SHA-256/HMAC integrity, validates workspace identity and record collections, records checked counts, and updates the archive's last-drill timestamp. Duplicate requests replay completed results; concurrent requests are rejected; failed drills remain failed and require a new key. The drill is explicitly plan-only and performs no production data writes or deletes. A real recovery environment and human-confirmed restore execution remain deployment-level work.
 
 Typecheck, archive integrity tests, migration safety, full Vitest suite, production build, and diff validation pass.
+
+## Latest repository closure — 2026-09-03
+
+The repository completion pass added a fail-closed UUID v3/v5/v6 external-buffer guard to the package scripts and CI, standardized REST v1 request correlation with validated `request_id` responses, and routed queued notification deliveries through the durable worker with idempotent job keys. The governed tool execution pipeline now has a durable `tool_execution` worker handler and tests. Local typecheck, contract checks, full Vitest suite, and production build pass. Live staging verification, provider-backed delivery, WebSocket deployment, and production operations remain environment-dependent.

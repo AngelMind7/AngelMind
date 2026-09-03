@@ -24,3 +24,15 @@ jobs:
         run: docker build --target runtime --tag angelmind:${{ github.sha }} .
       - name: Inspect image metadata
         run: docker image inspect angelmind:${{ github.sha }} --format '{{.Config.User}} {{.Config.ExposedPorts}}'
+
+  tools-smoke:
+    name: Build and execute tools adapter smoke suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Build tools image
+        run: docker build --file Dockerfile.tools --tag angelmind-tools:${{ github.sha }} .
+      - name: Execute every provisioned adapter
+        run: docker run --rm angelmind-tools:${{ github.sha }}

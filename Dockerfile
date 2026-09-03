@@ -1,5 +1,7 @@
+# syntax=docker/dockerfile:1.7
 FROM node:22-bookworm-slim AS build
 WORKDIR /app
+ENV COREPACK_DEFAULT_TO_LATEST=0
 # Railway exposes service variables during the build, but Docker requires
 # explicit ARG declarations before Vite can embed public VITE_* values.
 ARG VITE_FIREBASE_API_KEY
@@ -22,13 +24,15 @@ ENV VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY \
     VITE_ANALYTICS_WEBSITE_ID=$VITE_ANALYTICS_WEBSITE_ID
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
-RUN corepack enable && pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=angelmind-pnpm-store,target=/root/.local/share/pnpm/store \
+    corepack enable \
+    && pnpm install --frozen-lockfile --prefer-offline --store-dir=/root/.local/share/pnpm/store
 COPY . .
 RUN pnpm check && pnpm build
 
 FROM node:22-bookworm-slim AS runtime
 WORKDIR /app
-ENV NODE_ENV=production
+ENV NODE_ENV=production COREPACK_DEFAULT_TO_LATEST=0
 # Safe offline/passive utilities only. Active scanners, exploit frameworks,
 # credential tooling, phishing tooling, and remote execution tools are excluded.
 RUN DEBIAN_FRONTEND=noninteractive apt-get update \
@@ -89,9 +93,10 @@ COPY --chown=angelmind:angelmind config/tool-runtime-packs.yaml ./config/tool-ru
 COPY --chown=angelmind:angelmind runtime/rules.yar /etc/angelmind/rules.yar
 COPY --chown=angelmind:angelmind runtime/capstone_inspect.py runtime/unicorn_probe.py runtime/dkim_verify.py runtime/custom_script_runner.py ./runtime/
 COPY scripts/install-python-runtime-deps.sh /usr/local/bin/install-python-runtime-deps
-RUN chmod 0755 /usr/local/bin/install-python-runtime-deps \
+RUN --mount=type=cache,id=angelmind-pnpm-store,target=/root/.local/share/pnpm/store \
+    chmod 0755 /usr/local/bin/install-python-runtime-deps \
     && /usr/local/bin/install-python-runtime-deps \
-    && pnpm install --prod --frozen-lockfile \
+    && pnpm install --prod --frozen-lockfile --prefer-offline \
     && chown -R angelmind:angelmind /app
 USER angelmind
 EXPOSE 3000

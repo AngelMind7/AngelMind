@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { assertArchiveManifest, sha256, signArchiveManifest, verifyArchiveIntegrity } from "./archive-integrity";
+import { assertArchiveManifest, assertRestoreDrillEvidence, sha256, signArchiveManifest, verifyArchiveIntegrity } from "./archive-integrity";
 
 describe("audit archive integrity", () => {
   it("rejects malformed or cross-workspace manifests", () => {
@@ -19,5 +19,12 @@ describe("audit archive integrity", () => {
     expect(verifyArchiveIntegrity(`${manifest}x`, hash, signature, "test-key-for-archive-integrity")).toBe(false);
     expect(verifyArchiveIntegrity(manifest, hash, `${signature}x`, "test-key-for-archive-integrity")).toBe(false);
     expect(verifyArchiveIntegrity(manifest, hash, signature, "short")).toBe(false);
+  });
+
+  it("requires complete, checksummed restore-drill evidence", () => {
+    const valid = { archiveId: "archive-7", startedAt: "2026-09-03T00:00:00Z", completedAt: "2026-09-03T00:01:00Z", owner: "ops", sourceBackupId: "backup-7", databaseChecksum: "a".repeat(64), objectChecksum: "b".repeat(64), decision: "pass", recordsChecked: 10, rtoSeconds: 60, rpoSeconds: 300 };
+    expect(assertRestoreDrillEvidence(valid)).toEqual(valid);
+    expect(() => assertRestoreDrillEvidence({ ...valid, objectChecksum: "missing" })).toThrow("SHA-256");
+    expect(() => assertRestoreDrillEvidence({ ...valid, recordsChecked: -1 })).toThrow("non-negative");
   });
 });

@@ -37,3 +37,14 @@ export function assertArchiveManifest(manifestJson: string, expectedWorkspaceId:
   for (const key of ["auditEvents", "evidence", "runs", "approvals", "notifications"]) if (manifest[key] !== undefined && !Array.isArray(manifest[key])) throw new Error(`Archive manifest field '${key}' must be an array.`);
   return manifest;
 }
+
+export function assertRestoreDrillEvidence(input: unknown) {
+  if (!input || typeof input !== "object" || Array.isArray(input)) throw new Error("Restore drill evidence must be an object.");
+  const evidence = input as Record<string, unknown>;
+  const requiredStrings = ["archiveId", "startedAt", "completedAt", "owner", "sourceBackupId", "databaseChecksum", "objectChecksum", "decision"];
+  for (const key of requiredStrings) if (typeof evidence[key] !== "string" || !String(evidence[key]).trim()) throw new Error(`Restore drill evidence field '${key}' is required.`);
+  if (!/^(pass|fail)$/.test(String(evidence.decision))) throw new Error("Restore drill decision must be pass or fail.");
+  for (const key of ["databaseChecksum", "objectChecksum"]) if (!/^[a-f0-9]{64}$/i.test(String(evidence[key]))) throw new Error(`Restore drill field '${key}' must be a SHA-256 checksum.`);
+  for (const key of ["recordsChecked", "rtoSeconds", "rpoSeconds"]) if (!Number.isFinite(Number(evidence[key])) || Number(evidence[key]) < 0) throw new Error(`Restore drill field '${key}' must be a non-negative number.`);
+  return evidence;
+}

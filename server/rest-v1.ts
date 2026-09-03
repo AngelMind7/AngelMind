@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import type { Express, Request, Response } from "express";
 import { eq } from "drizzle-orm";
 import { aiRuns } from "../drizzle/schema";
@@ -56,17 +57,21 @@ function withVersion(res: Response) {
   res.setHeader("X-Content-Type-Options", "nosniff");
 }
 
+function requestId(res: Response) {
+  return typeof res.locals.requestId === "string" ? res.locals.requestId : randomUUID();
+}
+
 function sendError(res: Response, error: unknown) {
   withVersion(res);
   const message = error instanceof Error ? error.message : "Request failed.";
   const status = message.includes("Authentication required") ? 401 : message.includes("tidak dapat diakses") ? 403 : message.includes("tidak ditemukan") ? 404 : message.includes("Database tidak tersedia") ? 503 : message.includes("Too many") ? 429 : 400;
   const code = status === 401 ? "UNAUTHENTICATED" : status === 403 ? "FORBIDDEN" : status === 404 ? "NOT_FOUND" : status === 503 ? "DEPENDENCY_UNAVAILABLE" : status === 429 ? "RATE_LIMITED" : "BAD_REQUEST";
-  res.status(status).json({ error: { code, message }, apiVersion: REST_API_VERSION });
+  res.status(status).json({ error: true, code, message, details: {}, request_id: requestId(res), apiVersion: REST_API_VERSION });
 }
 
 export function registerRestV1Routes(app: Express) {
-  app.use("/api/v1", (_req, res, next) => { withVersion(res); next(); });
-  app.get("/api/v1/health", (_req, res) => res.json({ ok: true, apiVersion: REST_API_VERSION }));
+  app.use("/api/v1", (req, res, next) => { const supplied = req.header("x-request-id")?.trim() ?? ""; res.locals.requestId = /^[A-Za-z0-9._:-]{1,128}$/.test(supplied) ? supplied : randomUUID(); res.setHeader("X-Request-ID", res.locals.requestId); withVersion(res); next(); });
+  app.get("/api/v1/health", (_req, res) => res.json({ data: { ok: true }, request_id: requestId(res), apiVersion: REST_API_VERSION }));
   app.get("/api/v1/workspaces/:workspaceId/search", async (req, res) => {
     try {
       const auth = await requireUser(req, "search:read");
@@ -77,7 +82,7 @@ export function registerRestV1Routes(app: Express) {
       const cursor = req.query.cursor === undefined ? undefined : String(req.query.cursor).trim();
       if (cursor && cursor.length > 512) throw new Error("cursor terlalu panjang.");
       const result = await searchWorkspace(auth.user.id, { workspaceId, query: String(req.query.q ?? ""), limit, cursor: cursor || undefined, entityTypes: parseEntityTypes(req.query.entityTypes), freshnessDays });
-      res.json({ data: result, apiVersion: REST_API_VERSION });
+      res.json({ data: result, request_id: requestId(res), apiVersion: REST_API_VERSION });
     } catch (error) { sendError(res, error); }
   });
   app.get("/api/v1/workspaces/:workspaceId/ai-runs", async (req, res) => {
@@ -85,7 +90,7 @@ export function registerRestV1Routes(app: Express) {
       const auth = await requireUser(req, "ai-runs:read");
       const workspaceId = parsePositiveInteger(req.params.workspaceId, "workspaceId");
       requireBoundWorkspace(auth, workspaceId);
-      res.json({ data: await listAiRuns(auth.user.id, workspaceId), apiVersion: REST_API_VERSION });
+      res.json({ data: await listAiRuns(auth.user.id, workspaceId), request_id: requestId(res), apiVersion: REST_API_VERSION });
     } catch (error) { sendError(res, error); }
   });
   app.get("/api/v1/ai-runs/:runId", async (req, res) => {
@@ -95,9 +100,9 @@ export function registerRestV1Routes(app: Express) {
       const db = await getDb();
       if (!db) throw new Error("Database tidak tersedia.");
       const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, runId)).limit(1);
-      if (!run || (auth.workspaceId !== undefined && auth.workspaceId !== null && auth.workspaceId !== run.workspaceId) || !(await canAccessWorkspace(auth.user.id, run?.workspaceId ?? 0, "read"))) return res.status(404).json({ error: { code: "NOT_FOUND", message: "AI run tidak ditemukan." }, apiVersion: REST_API_VERSION });
+      if (!run || (auth.workspaceId !== undefined && auth.workspaceId !== null && auth.workspaceId !== run.workspaceId) || !(await canAccessWorkspace(auth.user.id, run?.workspaceId ?? 0, "read"))) return res.status(404).json({ error: true, code: "NOT_FOUND", message: "AI run tidak ditemukan.", details: {}, request_id: requestId(res), apiVersion: REST_API_VERSION });
       const output = await getAiRunOutput(auth.user.id, runId);
-      res.json({ data: { ...run, output }, apiVersion: REST_API_VERSION });
+      res.json({ data: { ...run, output }, request_id: requestId(res), apiVersion: REST_API_VERSION });
     } catch (error) { sendError(res, error); }
   });
 }

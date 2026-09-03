@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "statusModel": ["DISCOVERED", "VERIFIED", "PROVISIONED", "ADAPTER_READY", "HEALTHY", "READY", "OPERATIONAL", "DEPRECATED", "RETIRED"],
+  "tools": [
+    {"id":"burp_pro","displayName":"Burp Suite Professional","adapter":"burp_pro_adapter","capabilities":["file-upload-testing","jwt-analysis","token-manipulation","crypto-testing","sql-injection-testing","ssrf-testing","graphql-introspection","graphql-batching-testing","parameter-manipulation"],"artifact":"vendor-supplied","execution":"authorized-only"},
+    {"id":"jwt_tool","displayName":"jwt_tool","adapter":"jwt_tool_adapter","capabilities":["jwt-analysis","token-manipulation","crypto-testing"],"artifact":"pinned-source","execution":"authorized-only"},
+    {"id":"dalfox","displayName":"Dalfox","adapter":"dalfox_adapter","capabilities":[],"artifact":"pinned-binary","execution":"authorized-only"},
+    {"id":"ssrfmap","displayName":"SSRFmap","adapter":"ssrfmap_adapter","capabilities":["ssrf-testing"],"artifact":"pinned-source","execution":"authorized-only"},
+    {"id":"interactsh","displayName":"Interactsh","adapter":"interactsh_adapter","capabilities":[],"artifact":"pinned-binary","execution":"authorized-only"},
+    {"id":"ffuf","displayName":"ffuf","adapter":"ffuf_adapter","capabilities":["parameter-manipulation"],"artifact":"pinned-binary","execution":"authorized-only"},
+    {"id":"cloudfox","displayName":"CloudFox","adapter":"cloudfox_adapter","capabilities":["cloud-metadata-testing","iam-analysis"],"artifact":"pinned-binary","execution":"authorized-only"},
+    {"id":"gitleaks","displayName":"Gitleaks","adapter":"gitleaks_adapter","capabilities":["secret-detection"],"artifact":"pinned-binary","execution":"authorized-only"},
+    {"id":"graphql_cop","displayName":"graphql-cop","adapter":"graphql_cop_adapter","capabilities":["graphql-introspection","graphql-batching-testing"],"artifact":"pinned-source","execution":"authorized-only"},
+    {"id":"sqlmap","displayName":"sqlmap","adapter":"sqlmap_adapter","capabilities":["sql-injection-testing"],"artifact":"pinned-source","execution":"authorized-only"},
+    {"id":"nuclei","displayName":"Nuclei","adapter":"nuclei_adapter","capabilities":["cve-scanning"],"artifact":"pinned-binary","execution":"authorized-only"},
+    {"id":"subfinder","displayName":"Subfinder","adapter":"subfinder_adapter","capabilities":["dns-enumeration"],"artifact":"pinned-binary","execution":"authorized-only"},
+    {"id":"httpx","displayName":"httpx","adapter":"httpx_adapter","capabilities":[],"artifact":"pinned-binary","execution":"authorized-only"},
+    {"id":"trivy","displayName":"Trivy","adapter":"trivy_adapter","capabilities":["dependency-scanning"],"artifact":"pinned-binary","execution":"authorized-only"},
+    {"id":"custom_scripts","displayName":"Custom Scripts","adapter":"custom_scripts_adapter","capabilities":["template-injection-testing","file-upload-testing"],"artifact":"repository-controlled","execution":"authorized-only"}
+  ]
+}

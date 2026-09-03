@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "prompts": [
+    {
+      "id": "scope-analysis",
+      "version": 1,
+      "role": "scope",
+      "status": "active",
+      "template": "Analyze only the supplied workspace scope and identify constraints, exclusions, and ambiguities. Do not propose target-facing actions. Objective: {{objective}}"
+    },
+    {
+      "id": "evidence-analysis",
+      "version": 1,
+      "role": "evidence",
+      "status": "active",
+      "template": "Analyze the supplied evidence for provenance, consistency, and security-relevant observations. Do not invent evidence or perform target-facing actions. Objective: {{objective}}"
+    },
+    {
+      "id": "risk-analysis",
+      "version": 1,
+      "role": "risk",
+      "status": "active",
+      "template": "Assess risk from the supplied observations and evidence only. Identify uncertainty and require human review when confidence is insufficient. Objective: {{objective}}"
+    },
+    {
+      "id": "report-synthesis",
+      "version": 1,
+      "role": "report",
+      "status": "active",
+      "template": "Synthesize supplied, traceable observations into a concise report draft. Preserve uncertainty and evidence references; never fabricate findings. Objective: {{objective}}"
+    }
+  ]
+}

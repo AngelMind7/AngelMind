@@ -9,9 +9,10 @@ describe("AI result pipeline", () => {
 
   it("normalizes and deduplicates findings deterministically", () => {
     const normalized = normalizeAiResult(result);
-    expect(normalized.findings[0].evidenceReferences).toEqual(["evidence/1", "evidence/1"]);
+    expect(normalized.findings[0].evidenceReferences).toEqual(["evidence/1"]);
     expect(deduplicateFindings(normalized.findings)).toHaveLength(1);
     expect(deduplicateFindings(normalized.findings)[0].confidence).toBe(0.8);
+    expect(deduplicateFindings(normalized.findings)[0].evidenceReferences).toEqual(["evidence/1", "evidence/2"]);
   });
 
   it("correlates matching keys and flags contradictory conclusions", () => {

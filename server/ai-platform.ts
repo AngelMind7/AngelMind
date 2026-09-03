@@ -302,6 +302,14 @@ export async function heartbeatJob(jobId: number) {
   return { success: true as const, jobId };
 }
 
+function affectedRowCount(result: unknown): number | undefined {
+  if (!result || typeof result !== "object") return undefined;
+  const value = result as { affectedRows?: unknown; rowsAffected?: unknown };
+  if (typeof value.affectedRows === "number") return value.affectedRows;
+  if (typeof value.rowsAffected === "number") return value.rowsAffected;
+  return undefined;
+}
+
 export async function claimPendingJobs(limit = 25) {
   const db = await getDb();
   if (!db) return [];
@@ -312,7 +320,13 @@ export async function claimPendingJobs(limit = 25) {
   const claimed = [];
   for (const job of available) {
     const leaseExpiresAt = new Date(now.getTime() + WORKER_LEASE_MS);
-    await db.update(jobs).set({ status: "running", attempts: job.attempts + 1, lockedAt: now, heartbeatAt: now, leaseExpiresAt, workerId: WORKER_ID, updatedAt: now }).where(and(eq(jobs.id, job.id), or(eq(jobs.status, "queued"), eq(jobs.status, "retrying"))));
+    const claim = await db.update(jobs).set({ status: "running", attempts: job.attempts + 1, lockedAt: now, heartbeatAt: now, leaseExpiresAt, workerId: WORKER_ID, updatedAt: now }).where(and(eq(jobs.id, job.id), or(eq(jobs.status, "queued"), eq(jobs.status, "retrying"))));
+    const claimedRows = affectedRowCount(claim);
+    if (claimedRows !== undefined && claimedRows !== 1) continue;
+    if (claimedRows === undefined) {
+      const [verified] = await db.select({ id: jobs.id, workerId: jobs.workerId, status: jobs.status, lockedAt: jobs.lockedAt }).from(jobs).where(eq(jobs.id, job.id)).limit(1);
+      if (!verified || verified.status !== "running" || verified.workerId !== WORKER_ID || !verified.lockedAt || verified.lockedAt.getTime() !== now.getTime()) continue;
+    }
     claimed.push({ ...job, status: "running" as const, attempts: job.attempts + 1, lockedAt: now, heartbeatAt: now, leaseExpiresAt, workerId: WORKER_ID });
   }
   return claimed;
@@ -338,24 +352,16 @@ export async function failJob(jobId: number, errorMessage: string) {
   return { success: true as const, jobId, status: nextStatus };
 }
 
-
 export async function enqueueOrchestrationPlan(userId: number, input: { workspaceId: number; objective: string; roles: ("scope" | "evidence" | "risk" | "report")[]; evidenceReferences?: string[]; idempotencyKey: string }) {
   const plan = planMultiAgentRun(input);
   const job = await enqueueJob(userId, {
     workspaceId: input.workspaceId,
     kind: "orchestration.plan",
     idempotencyKey: input.idempotencyKey,
-    payload: {
-      type: "orchestration_plan",
-      planId: input.idempotencyKey,
-      userId,
-      workspaceId: input.workspaceId,
-      plan,
-    },
+    payload: { type: "orchestration_plan", planId: input.idempotencyKey, userId, workspaceId: input.workspaceId, plan },
   });
   return { job, plan };
 }
-
 
 export async function executeOrchestrationPlanJob(payload: Record<string, unknown>) {
   const plan = payload.plan as { objective?: string; evidenceReferences?: string[]; tasks?: Array<{ id: string; role: string; objective: string; dependsOn: string[]; status: string }> };
@@ -382,24 +388,10 @@ export async function executeOrchestrationPlanJob(payload: Record<string, unknow
 export async function startDurableAiRun(userId: number, input: { workspaceId: number; sessionId?: number; taskId?: number; modelKey?: string; capabilities?: string[]; minimumContextWindow?: number; maxCostCentsPerMillionTokens?: number; allowDegraded?: boolean; purpose: string; inputReference: string; messages: Message[]; estimatedCostCents?: number; retentionDays?: number; idempotencyKey: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
-  const model = input.modelKey?.trim()
-    ? (await db.select().from(aiModels).where(eq(aiModels.modelKey, input.modelKey.trim())).limit(1))[0]
-    : (await selectRegisteredModel({ capabilities: input.capabilities, minimumContextWindow: input.minimumContextWindow, maxCostCentsPerMillionTokens: input.maxCostCentsPerMillionTokens, allowDegraded: input.allowDegraded })).model;
+  const model = input.modelKey?.trim() ? (await db.select().from(aiModels).where(eq(aiModels.modelKey, input.modelKey.trim())).limit(1))[0] : (await selectRegisteredModel({ capabilities: input.capabilities, minimumContextWindow: input.minimumContextWindow, maxCostCentsPerMillionTokens: input.maxCostCentsPerMillionTokens, allowDegraded: input.allowDegraded })).model;
   if (!model || model.status !== "active") throw new Error("AI model tidak terdaftar atau tidak aktif.");
   const run = await startAiRun(userId, { ...input, modelKey: model.modelKey, gateway: model.gateway });
-  const job = await enqueueJob(userId, {
-    workspaceId: input.workspaceId,
-    kind: "ai.run.execute",
-    idempotencyKey: input.idempotencyKey,
-    payload: {
-      type: "ai_run_execute",
-      runId: run.id,
-      userId,
-      workspaceId: input.workspaceId,
-      modelKey: model.modelKey,
-      messages: input.messages,
-    },
-  });
+  const job = await enqueueJob(userId, { workspaceId: input.workspaceId, kind: "ai.run.execute", idempotencyKey: input.idempotencyKey, payload: { type: "ai_run_execute", runId: run.id, userId, workspaceId: input.workspaceId, modelKey: model.modelKey, messages: input.messages } });
   return { run, job };
 }
 
@@ -415,23 +407,12 @@ export async function executeAiRunJob(payload: Record<string, unknown>) {
   const [model] = await db.select().from(aiModels).where(eq(aiModels.modelKey, run.modelKey)).limit(1);
   if (!model || model.status !== "active" || model.gateway !== run.gateway) throw new Error("AI model registry validation failed.");
   const modelCapabilities = JSON.parse(model.capabilities) as string[];
-  const registeredFallbacks = (await db.select().from(aiModels))
-    .filter(candidate => candidate.modelKey !== model.modelKey && candidate.status === "active")
-    .filter(candidate => {
-      const capabilities = new Set(JSON.parse(candidate.capabilities) as string[]);
-      return modelCapabilities.every(capability => capabilities.has(capability)) && candidate.contextWindow >= model.contextWindow;
-    })
-    .sort((left, right) => {
-      const gatewayOrder = (gateway: string) => gateway === run.gateway ? 0 : 1;
-      return gatewayOrder(left.gateway) - gatewayOrder(right.gateway) || left.modelKey.localeCompare(right.modelKey);
-    })
-    .map(candidate => candidate.modelKey);
+  const registeredFallbacks = (await db.select().from(aiModels)).filter(candidate => candidate.modelKey !== model.modelKey && candidate.status === "active").filter(candidate => { const capabilities = new Set(JSON.parse(candidate.capabilities) as string[]); return modelCapabilities.every(capability => capabilities.has(capability)) && candidate.contextWindow >= model.contextWindow; }).sort((left, right) => { const gatewayOrder = (gateway: string) => gateway === run.gateway ? 0 : 1; return gatewayOrder(left.gateway) - gatewayOrder(right.gateway) || left.modelKey.localeCompare(right.modelKey); }).map(candidate => candidate.modelKey);
   await updateAiRun(userId, { runId, status: "running" });
   try {
     const response = await invokeLLM({ model: model.modelKey, fallbackModels: registeredFallbacks, messages });
     await db.insert(aiRunOutputs).values({ workspaceId: run.workspaceId, runId, outputJson: JSON.stringify(response) }).onDuplicateKeyUpdate({ set: { outputJson: JSON.stringify(response), createdAt: new Date() } });
-    const outputReference = `ai-run-output:${runId}`;
-    await updateAiRun(userId, { runId, status: "completed", outputReference, inputTokens: response.usage?.prompt_tokens ?? 0, outputTokens: response.usage?.completion_tokens ?? 0 });
+    await updateAiRun(userId, { runId, status: "completed", outputReference: `ai-run-output:${runId}`, inputTokens: response.usage?.prompt_tokens ?? 0, outputTokens: response.usage?.completion_tokens ?? 0 });
   } catch (error) {
     await updateAiRun(userId, { runId, status: "failed", errorCode: error instanceof Error ? error.message.slice(0, 120) : "AI_RUN_FAILED" });
     throw error;
@@ -448,7 +429,6 @@ export async function getAiRunOutput(userId: number, runId: number) {
   return output ? { ...output, output: JSON.parse(output.outputJson) as unknown } : null;
 }
 
-
 export type OutboxEventHandler = (event: { id: number; eventType: string; aggregateType: string; aggregateId: number; schemaVersion: number; payload: Record<string, unknown> }) => Promise<void>;
 
 export async function dispatchPendingOutbox(handlers: Record<string, OutboxEventHandler>, limit = 25) {
@@ -463,11 +443,7 @@ export async function dispatchPendingOutbox(handlers: Record<string, OutboxEvent
     const handler = handlers[event.eventType];
     if (!handler) {
       const claim = await claimOutboxEvent(event.id, now);
-      if (claim.claimed) {
-        claimed += 1;
-        await failOutboxEvent(event.id, `No outbox handler registered for event type '${event.eventType}'.`);
-        failed += 1;
-      }
+      if (claim.claimed) { claimed += 1; await failOutboxEvent(event.id, `No outbox handler registered for event type '${event.eventType}'.`); failed += 1; }
       continue;
     }
     const claim = await claimOutboxEvent(event.id, now);

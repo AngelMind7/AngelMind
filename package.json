@@ -12,6 +12,7 @@
     "check:migration-rollback": "node scripts/check-migration-rollback.mjs",
     "check:master-contract": "node scripts/check-master-contract.mjs",
     "check:execution-contract": "pnpm exec vitest run server/tool-execution-pipeline.test.ts server/tool-runtime.test.ts",
+    "check:provider-neutral": "node scripts/check-provider-neutral.mjs",
     "test:load": "node scripts/load-test.mjs",
     "test:staging": "node scripts/run-staging-verification.mjs",
     "start": "NODE_ENV=production node dist/_core/index.js",

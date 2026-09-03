@@ -82,13 +82,18 @@ export function deduplicateFindings(findings: AiResultFinding[]): AiResultFindin
   return Array.from(byKey.values()).sort((a, b) => a.key.localeCompare(b.key));
 }
 
+function normalizeConclusionForComparison(value: string): string {
+  return value.trim().replace(/\s+/g, " ").toLocaleLowerCase();
+}
+
 export function correlateFindings(results: AiResultInput[]) {
   const normalized = results.map(normalizeAiResult);
   const groups = new Map<string, { key: string; conclusions: string[]; taskIds: string[]; evidenceReferences: string[]; confidence: number }>();
   for (const result of normalized) {
     for (const finding of deduplicateFindings(result.findings)) {
       const group = groups.get(finding.key) ?? { key: finding.key, conclusions: [], taskIds: [], evidenceReferences: [], confidence: 0 };
-      group.conclusions.push(finding.conclusion);
+      const existingConclusion = group.conclusions.find(conclusion => normalizeConclusionForComparison(conclusion) === normalizeConclusionForComparison(finding.conclusion));
+      if (!existingConclusion) group.conclusions.push(finding.conclusion);
       group.taskIds.push(result.taskId);
       group.evidenceReferences = Array.from(new Set([...group.evidenceReferences, ...finding.evidenceReferences])).slice(0, MAX_REFERENCES);
       group.confidence = Math.max(group.confidence, finding.confidence);
@@ -97,7 +102,6 @@ export function correlateFindings(results: AiResultInput[]) {
   }
   return Array.from(groups.values()).map(group => ({
     ...group,
-    conclusions: Array.from(new Set(group.conclusions)),
     taskIds: Array.from(new Set(group.taskIds)),
     requiresHumanReview: group.conclusions.length > 1 || group.confidence < 0.6,
   })).sort((a, b) => a.key.localeCompare(b.key));

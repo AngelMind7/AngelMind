@@ -20,6 +20,7 @@ type LedgerPayload = ExecutionLedgerInput & {
   revision: number;
   path: readonly ExecutionState[];
   assuranceReport?: Record<string, unknown>;
+  terminalReason?: string;
 };
 
 function readPayload(payload: string): LedgerPayload {
@@ -35,12 +36,7 @@ export async function createExecutionLedger(userId: number, input: ExecutionLedg
     workspaceId: input.workspaceId,
     kind: "governed.execution",
     idempotencyKey: `execution:${input.requestId}`,
-    payload: {
-      ...input,
-      state: "INIT",
-      revision: 0,
-      path: canonicalExecutionPath(),
-    },
+    payload: { ...input, state: "INIT", revision: 0, path: canonicalExecutionPath() },
     maxAttempts: 3,
   });
   return { jobId: result.id, payload: readPayload(result.payload), status: result.status };
@@ -57,12 +53,7 @@ export async function getExecutionLedger(userId: number, jobId: number) {
 export async function advanceExecutionLedger(userId: number, jobId: number) {
   const current = await getExecutionLedger(userId, jobId);
   const payload = current.payload;
-  const result = advanceExecution({
-    state: payload.state,
-    risk: payload.risk,
-    scopeValidated: payload.scopeValidated,
-    approval: payload.approval,
-  });
+  const result = advanceExecution({ state: payload.state, risk: payload.risk, scopeValidated: payload.scopeValidated, approval: payload.approval });
   if (result.state === payload.state) throw new Error(result.reason ?? "Execution state cannot advance.");
   const nextPayload: LedgerPayload = { ...payload, state: result.state, revision: payload.revision + 1 };
   const db = await getDb();
@@ -77,14 +68,29 @@ export async function persistExecutionReport(userId: number, jobId: number, repo
   if (current.payload.state !== "REPORT_GENERATION") throw new Error("Execution report can only be persisted at REPORT_GENERATION.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
-  const nextPayload: LedgerPayload = {
-    ...current.payload,
-    assuranceReport: report,
-    revision: current.payload.revision + 1,
-  };
-  const updated = await db.update(jobs)
-    .set({ payload: JSON.stringify(nextPayload), status: "succeeded", lockedAt: null, leaseExpiresAt: null, heartbeatAt: null, workerId: null, completedAt: new Date(), updatedAt: new Date() })
-    .where(and(eq(jobs.id, jobId), eq(jobs.status, current.status)));
+  const nextPayload: LedgerPayload = { ...current.payload, assuranceReport: report, revision: current.payload.revision + 1, terminalReason: "report_generated_review_required" };
+  const updated = await db.update(jobs).set({ payload: JSON.stringify(nextPayload), status: "succeeded", lockedAt: null, leaseExpiresAt: null, heartbeatAt: null, workerId: null, completedAt: new Date(), updatedAt: new Date() }).where(and(eq(jobs.id, jobId), eq(jobs.status, current.status)));
   if (updated[0].affectedRows !== 1) throw new Error("Execution ledger changed concurrently; report persistence was not committed.");
   return { jobId, state: nextPayload.state, revision: nextPayload.revision, status: "succeeded" as const };
+}
+
+export async function completeExecutionLedger(userId: number, jobId: number, reason: string) {
+  const current = await getExecutionLedger(userId, jobId);
+  if (current.payload.state === "DONE") return { jobId, state: current.payload.state, status: current.status };
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const nextPayload: LedgerPayload = { ...current.payload, revision: current.payload.revision + 1, terminalReason: reason.trim().slice(0, 500) || "execution_completed" };
+  const updated = await db.update(jobs).set({ payload: JSON.stringify(nextPayload), status: "succeeded", lockedAt: null, leaseExpiresAt: null, heartbeatAt: null, workerId: null, completedAt: new Date(), updatedAt: new Date() }).where(and(eq(jobs.id, jobId), eq(jobs.status, current.status)));
+  if (updated[0].affectedRows !== 1) throw new Error("Execution ledger changed concurrently; completion was not committed.");
+  return { jobId, state: nextPayload.state, revision: nextPayload.revision, status: "succeeded" as const };
+}
+
+export async function failExecutionLedger(userId: number, jobId: number, reason: string) {
+  const current = await getExecutionLedger(userId, jobId);
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const nextPayload: LedgerPayload = { ...current.payload, revision: current.payload.revision + 1, terminalReason: reason.trim().slice(0, 500) || "execution_failed" };
+  const updated = await db.update(jobs).set({ payload: JSON.stringify(nextPayload), status: "dead_letter", lockedAt: null, leaseExpiresAt: null, heartbeatAt: null, workerId: null, lastError: nextPayload.terminalReason, completedAt: new Date(), updatedAt: new Date() }).where(and(eq(jobs.id, jobId), eq(jobs.status, current.status)));
+  if (updated[0].affectedRows !== 1) throw new Error("Execution ledger changed concurrently; failure was not committed.");
+  return { jobId, state: nextPayload.state, revision: nextPayload.revision, status: "dead_letter" as const };
 }

@@ -16,7 +16,9 @@ export default function ClientPortal() {
 
   useEffect(() => {
     document.documentElement.dataset.portal = "client";
-    return () => delete document.documentElement.dataset.portal;
+    return () => {
+      delete document.documentElement.dataset.portal;
+    };
   }, []);
 
   function audit(event: string) {

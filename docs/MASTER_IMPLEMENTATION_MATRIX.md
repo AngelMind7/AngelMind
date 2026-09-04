@@ -17,6 +17,8 @@ Governed execution binds durable state to queue, worker, parser, normalizer, obs
 
 A runtime resource policy module defines bounded input, timeout, output, concurrency, and privileged-runtime limits. Existing runtime execution already enforces bounded timeout/output and the target-execution fail-closed gate; integration of the new concurrency/resource policy into the process runner remains a separate wiring task.
 
+A deterministic recovery planner now defines restart/lease-expiry behavior from durable execution checkpoints. It resumes safe non-terminal checkpoints, finalizes a worker checkpoint when runtime completion is already known, retries failed or expired workers, and holds active workers to avoid duplicate execution. The planner is side-effect free and covered by regression tests.
+
 ## Current execution chain
 
 `Capability → Adapter Selection → Health → Authorization → Durable Ledger → Runtime → Parse → Normalize → Observation → Evidence → Finding → Correlation → Chain Validation → Impact Proof → Report Generation`
@@ -26,7 +28,7 @@ A runtime resource policy module defines bounded input, timeout, output, concurr
 ## Next implementation gates
 
 1. Persist/report assurance artifacts through the existing control-plane/storage layer where the schema supports them, with reviewer provenance.
-2. Queue/worker handoff and recovery semantics across every execution path.
+2. Bind the recovery planner to the durable worker loop and execution ledger without duplicating runtime work.
 3. Wire the runtime resource/concurrency policy into the process runner without weakening fail-closed authorization.
 4. Realtime progress and dashboard consumption of persisted execution truth.
 5. Final repository-wide blueprint audit, contract tests, and CI verification before deployment work.

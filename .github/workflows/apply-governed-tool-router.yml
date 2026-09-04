@@ -32,9 +32,7 @@ jobs:
                   raise SystemExit('tool-runtime import anchor not found')
               s = s.replace(import_line, import_line + policy_import, 1)
           start = s.find('  tools: router({')
-          end = s.find('  control: router({', start)
-          if start < 0 or end < 0:
-              raise SystemExit('tools router boundaries not found')
+          end = s.find('  governance: router({', start if start >= 0 else 0)
           new = '''  tools: router({
     catalog: protectedProcedure
       .input(z.object({
@@ -77,7 +75,14 @@ jobs:
       }),
   }),
 '''
-          s = s[:start] + new + s[end:]
+          if start < 0:
+              if end < 0:
+                  raise SystemExit('governance router boundary not found')
+              s = s[:end] + new + s[end:]
+          else:
+              if end < 0:
+                  raise SystemExit('governance router boundary not found')
+              s = s[:start] + new + s[end:]
           p.write_text(s)
           PY
       - name: Commit router integration

@@ -70,6 +70,31 @@ export async function getExecutionLedger(userId: number, jobId: number) {
   return { ...job, payload: readPayload(job.payload) };
 }
 
+export async function getExecutionProgress(userId: number, jobId: number) {
+  const execution = await getExecutionLedger(userId, jobId);
+  const payload = execution.payload;
+  const pathIndex = payload.path.findIndex(state => state === payload.state);
+  const report = payload.assuranceReport;
+  const reportId = report && typeof report.reportId === "string" ? report.reportId : null;
+  return {
+    jobId: execution.id,
+    workspaceId: execution.workspaceId,
+    requestId: payload.requestId,
+    capability: payload.capability,
+    toolKey: payload.toolKey,
+    risk: payload.risk,
+    state: payload.state,
+    revision: payload.revision,
+    pathIndex: pathIndex < 0 ? null : pathIndex,
+    pathLength: payload.path.length,
+    status: execution.status,
+    terminalReason: payload.terminalReason ?? null,
+    reportId,
+    updatedAt: execution.updatedAt,
+    completedAt: execution.completedAt,
+  } as const;
+}
+
 export async function advanceExecutionLedger(userId: number, jobId: number) {
   const current = await getExecutionLedger(userId, jobId);
   const payload = current.payload;
@@ -113,7 +138,7 @@ export async function failExecutionLedger(userId: number, jobId: number, reason:
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const nextPayload: LedgerPayload = { ...current.payload, revision: current.payload.revision + 1, terminalReason: reason.trim().slice(0, 500) || "execution_failed" };
-  const updated = await db.update(jobs).set({ payload: JSON.stringify(nextPayload), status: "dead_letter", lockedAt: null, leaseExpiresAt: null, heartbeatAt: null, workerId: null, completedAt: new Date(), updatedAt: new Date() }).where(and(eq(jobs.id, jobId), eq(jobs.status, current.status)));
+  const updated = await db.update(jobs).set({ payload: JSON.stringify(nextPayload), status: "dead_letter", lockedAt: null, leaseExpiresAt: null, heartbeatAt: null, workerId: null, completedAt: new Date(), updatedAt: new Date(), lastError: nextPayload.terminalReason }).where(and(eq(jobs.id, jobId), eq(jobs.status, current.status)));
   if (updated[0].affectedRows !== 1) throw new Error("Execution ledger changed concurrently; failure was not committed.");
   await publishProgress(nextPayload, jobId);
   return { jobId, state: nextPayload.state, revision: nextPayload.revision, status: "dead_letter" as const };

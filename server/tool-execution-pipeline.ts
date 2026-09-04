@@ -2,6 +2,7 @@ import { createHash } from "node:crypto";
 import { normalizeEvidence, type CanonicalEvidence } from "./evidence-normalizer";
 import { runRegisteredTool, type ToolRuntimeRequest, type ToolRuntimeResult } from "./tool-runtime";
 import { createResearchObservation } from "./research-workflow";
+import { evaluateMasterCorrelation, type MasterCorrelationResult } from "./master-correlation-service";
 
 export const adapterLifecycle = ["validate", "prepare", "execute", "collect", "parse", "normalize", "cleanup"] as const;
 export type AdapterLifecyclePhase = (typeof adapterLifecycle)[number];
@@ -12,6 +13,7 @@ export type ToolExecutionPipelineResult = {
   rawOutputSha256: string | null;
   parsedRecords: Record<string, unknown>[];
   evidence: CanonicalEvidence | null;
+  correlation: MasterCorrelationResult | null;
   provenance: {
     toolKey: string;
     requestId: string;
@@ -34,6 +36,24 @@ function parseOutput(stdout: string): Record<string, unknown>[] {
   return records.slice(0, 500);
 }
 
+function recordsToCorrelationFacts(records: Record<string, unknown>[]) {
+  return records.flatMap(record => {
+    const key = typeof record.key === "string" ? record.key : typeof record.vectorKey === "string" ? record.vectorKey : undefined;
+    const value = typeof record.value === "string" ? record.value : typeof record.status === "string" ? record.status : undefined;
+    if (!key || !value) return [];
+    const evidenceRefs = Array.isArray(record.evidenceRefs)
+      ? record.evidenceRefs.filter((ref): ref is string => typeof ref === "string")
+      : typeof record.evidenceRef === "string" ? [record.evidenceRef] : [];
+    return [{
+      key,
+      value,
+      confidence: typeof record.confidence === "number" ? record.confidence : 1,
+      evidenceRefs,
+      observedAt: typeof record.observedAt === "string" ? record.observedAt : undefined,
+    }];
+  });
+}
+
 export async function executeToolPipeline(request: ToolRuntimeRequest & { capabilities?: string[] }): Promise<ToolExecutionPipelineResult> {
   const phases: AdapterLifecyclePhase[] = ["validate", "prepare", "execute", "collect"];
   const runtime = await runRegisteredTool(request);
@@ -51,13 +71,18 @@ export async function executeToolPipeline(request: ToolRuntimeRequest & { capabi
         chainReferences: [runtime.requestId],
       })
     : null;
-  phases.push("normalize", "cleanup");
+  phases.push("normalize");
+  const correlation = evidence && !evidence.falsePositive
+    ? evaluateMasterCorrelation(recordsToCorrelationFacts(parsedRecords))
+    : null;
+  phases.push("cleanup");
   return {
     runtime,
     phases,
     rawOutputSha256,
     parsedRecords,
     evidence,
+    correlation,
     provenance: {
       toolKey: request.toolKey,
       requestId: runtime.requestId,
@@ -75,6 +100,6 @@ export function isLifecycleComplete(phases: readonly AdapterLifecyclePhase[]) {
 export async function persistToolPipelineObservation(userId: number, input: { sessionId: number; assetId?: number; request: ToolRuntimeRequest & { capabilities?: string[] } }, result: ToolExecutionPipelineResult) {
   if (result.runtime.status !== "completed") throw new Error("Only completed tool executions can be persisted as observations.");
   if (!isLifecycleComplete(result.phases)) throw new Error("Tool execution lifecycle is incomplete.");
-  const content = JSON.stringify({ toolKey: result.provenance.toolKey, requestId: result.provenance.requestId, records: result.parsedRecords, evidence: result.evidence });
+  const content = JSON.stringify({ toolKey: result.provenance.toolKey, requestId: result.provenance.requestId, records: result.parsedRecords, evidence: result.evidence, correlation: result.correlation });
   return createResearchObservation(userId, { sessionId: input.sessionId, assetId: input.assetId, title: `Tool observation: ${result.provenance.toolKey}`, content, sourceType: "tool_execution", sourceReference: result.provenance.requestId, rawOutputSha256: result.provenance.rawOutputSha256 ?? undefined, normalizedEvidenceSha256: result.provenance.normalizedEvidenceSha256 ?? undefined });
 }

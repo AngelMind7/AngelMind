@@ -6,6 +6,7 @@ export const realtimeEventTypes = [
   "research.completed",
   "execution.queued",
   "execution.started",
+  "execution.progress",
   "execution.completed",
   "execution.failed",
   "finding.created",

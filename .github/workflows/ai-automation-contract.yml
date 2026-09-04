@@ -1,0 +1,18 @@
+name: AI Automation Contract
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/ai-automation.ts'
+      - 'server/rest-v1-ai-automation.ts'
+      - 'server/ai-platform.ts'
+      - 'server/ai-routing.ts'
+      - 'docs/domain/13-ai-automation.md'
+      - 'scripts/check-ai-automation-contract.mjs'
+      - '.github/workflows/ai-automation-contract.yml'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: node scripts/check-ai-automation-contract.mjs

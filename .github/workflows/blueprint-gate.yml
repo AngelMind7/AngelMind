@@ -29,7 +29,7 @@ jobs:
       - run: node scripts/check-v4-route-contract.mjs
       - run: node scripts/check-application-menu.mjs
       - run: pnpm check:tool-runtime-contract
-      - run: pnpm check:execution-contract
+      - run: pnpm exec vitest run server/tool-execution-pipeline.test.ts server/tool-runtime.test.ts server/simulation-engine.test.ts server/simulation-rest.test.ts
       - run: pnpm check:provider-neutral
       - run: pnpm check:uuid-buffer-usage
       - run: pnpm check:migration-journal

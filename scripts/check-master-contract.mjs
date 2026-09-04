@@ -16,6 +16,12 @@ if (!apiContract.includes('API_V1_BLUEPRINT_TARGET = "260+"')) failures.push("V4
 const apiKeys = new Set(apiEntries.map(match => `${match[3]} ${match[4]}`));
 if (apiKeys.size !== apiEntries.length) failures.push("V4 API contract contains duplicate method/path pairs");
 
+const router = read("server/routers.ts");
+const executableApiLeaves = (router.match(/^\s*[A-Za-z0-9_$]+\s*:\s*(?:admin|protected|public)Procedure\b/gm) ?? []).length;
+requireAtLeast(executableApiLeaves, 260, "concrete executable tRPC API leaves");
+for (const domain of ["auth","workspace","organization","research","evidence","knowledge","finding","control","audit","tools","ai","notification"]) if (!new RegExp(`\\b${domain}:\\s*router\\(`).test(router)) failures.push(`missing API router domain ${domain}`);
+for (const procedure of ["catalog","runtimeAdapters","runtimeHealth","run","approveTask","createObservation","promoteObservationToFinding","createSubmission","createArchive","verifyArchive","runRestoreDrill"]) if (!new RegExp(`\\b${procedure}:\\s*protectedProcedure`).test(router)) failures.push(`missing protected API procedure ${procedure}`);
+
 const routeSource = read("client/src/authenticatedRoutes.ts");
 const routes = routeSource.match(/path:\s*"[^"]+"/g) ?? [];
 requireAtLeast(routes.length, 27, "authenticated routes");
@@ -85,9 +91,6 @@ const chainEngine = read("server/chain-engine.ts");
 for (const nodeType of ["module","action","condition","foreach","while","parallel","merge","sleep","subchain"]) if (!chainEngine.includes(`"${nodeType}"`)) failures.push(`missing DAG chain node type ${nodeType}`);
 if (!chainEngine.includes("cycle_detected") || !chainEngine.includes("planChainExecution")) failures.push("DAG chain validation/planning contract is missing");
 
-const router = read("server/routers.ts");
-for (const domain of ["auth","workspace","organization","research","evidence","knowledge","finding","control","audit","tools","ai","notification"]) if (!new RegExp(`\\b${domain}:\\s*router\\(`).test(router)) failures.push(`missing API router domain ${domain}`);
-for (const procedure of ["catalog","runtimeAdapters","runtimeHealth","run","approveTask","createObservation","promoteObservationToFinding","createSubmission","createArchive","verifyArchive","runRestoreDrill"]) if (!new RegExp(`\\b${procedure}:\\s*protectedProcedure`).test(router)) failures.push(`missing protected API procedure ${procedure}`);
 const migrations = readdirSync(resolve(root, "drizzle")).filter(file => file.endsWith(".sql"));
 requireAtLeast(migrations.length, 64, "migration files");
 if (!read("runtime/custom_script_runner.py").includes("never executes input as code")) failures.push("custom script runner safety contract is missing");
@@ -96,4 +99,4 @@ for (const command of ["ffuf","dalfox","interactsh-client","cloudfox","nuclei","
 for (const marker of ["docker build --file Dockerfile.tools","docker run --rm angelmind-tools"]) if (!read(".github/workflows/container.yml").includes(marker)) failures.push(`container E2E workflow omits ${marker}`);
 
 if (failures.length) { console.error("Master contract check failed:"); for (const failure of failures) console.error(`- ${failure}`); process.exit(1); }
-console.log(`Master contract OK: ${routes.length} routes, 14 domains, ${apiEntries.length} named API endpoints across ${apiGroups.size} groups, ${literalModules + generatedModules} UTF modules, ${schemas.length} evidence schemas, ${migrations.length} migrations.`);
+console.log(`Master contract OK: ${routes.length} routes, ${executableApiLeaves} executable API leaves, 14 domains, ${apiEntries.length} named API endpoints across ${apiGroups.size} groups, ${literalModules + generatedModules} UTF modules, ${schemas.length} evidence schemas, ${migrations.length} migrations.`);

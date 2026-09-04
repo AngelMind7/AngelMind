@@ -14,6 +14,7 @@ import { registerRestV1Routes } from "../rest-v1";
 import { registerRealtimeRoutes } from "../realtime";
 import { registerRealtimeWebSocket } from "../realtime-websocket";
 import { registerApiRateLimit } from "../rate-limit";
+import { registerSimulationRoutes } from "../simulation-rest";
 
 function isPortAvailable(port: number): Promise<boolean> {
   return new Promise(resolve => {
@@ -27,9 +28,7 @@ function isPortAvailable(port: number): Promise<boolean> {
 
 async function findAvailablePort(startPort: number = 3000): Promise<number> {
   for (let port = startPort; port < startPort + 20; port++) {
-    if (await isPortAvailable(port)) {
-      return port;
-    }
+    if (await isPortAvailable(port)) return port;
   }
   throw new Error(`No available port found starting from ${startPort}`);
 }
@@ -42,23 +41,15 @@ async function startServer() {
   registerApiRateLimit(app);
   registerHealthRoutes(app);
   registerMetricsRoute(app);
-  // Configure body parser with larger size limit for file uploads
   app.use(express.json({ limit: "8mb" }));
   app.use(express.urlencoded({ limit: "1mb", extended: true }));
   registerFirebaseAuthRoutes(app);
   registerRestV1Routes(app);
+  registerSimulationRoutes(app);
   registerRealtimeRoutes(app);
   registerRealtimeWebSocket(server);
   app.post("/api/scheduled/workspace-maintenance", workspaceMaintenanceHandler);
-  // tRPC API
-  app.use(
-    "/api/trpc",
-    createExpressMiddleware({
-      router: appRouter,
-      createContext,
-    })
-  );
-  // development mode uses Vite, production mode uses static files
+  app.use("/api/trpc", createExpressMiddleware({ router: appRouter, createContext }));
   if (process.env.NODE_ENV === "development") {
     const { setupVite } = await import("./vite");
     await setupVite(app, server);
@@ -67,23 +58,10 @@ async function startServer() {
   }
 
   const preferredPort = parseInt(process.env.PORT || "3000", 10);
-  if (!Number.isInteger(preferredPort) || preferredPort < 1 || preferredPort > 65535) {
-    throw new Error(`Invalid PORT value: ${process.env.PORT ?? ""}`);
-  }
-  // Production platforms route traffic to the exact PORT they provide. Falling back
-  // to another port can make a healthy process permanently unreachable.
-  const port = process.env.NODE_ENV === "production"
-    ? preferredPort
-    : await findAvailablePort(preferredPort);
-
+  if (!Number.isInteger(preferredPort) || preferredPort < 1 || preferredPort > 65535) throw new Error(`Invalid PORT value: ${process.env.PORT ?? ""}`);
+  const port = process.env.NODE_ENV === "production" ? preferredPort : await findAvailablePort(preferredPort);
   if (port !== preferredPort) console.log(`Port ${preferredPort} is busy, using port ${port} instead`);
-
-  server.listen(port, () => {
-    console.log(`Server running on http://localhost:${port}/`);
-  });
-
-  // Free/single-service Railway plan: tidak ada service Worker terpisah.
-  // Set RUN_WORKER=true di service ini supaya worker loop ikut jalan in-process.
+  server.listen(port, () => console.log(`Server running on http://localhost:${port}/`));
   if (process.env.RUN_WORKER === "true") {
     await import("../worker.js");
     console.info("[startup] in-process worker loop enabled (RUN_WORKER=true)");

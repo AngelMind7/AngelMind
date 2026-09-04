@@ -13,6 +13,7 @@ import { executeResearchTask } from "./research-execution-service";
 import { executeGovernedCapability } from "./governed-execution-service";
 import { getToolCatalogSummary, listToolCatalog, searchToolCatalog } from "./tool-catalog";
 import { checkRegisteredAdapterHealth, listRegisteredAdapters } from "./tool-runtime";
+import { getExecutionProgress } from "./execution-ledger";
 
 export const REST_API_VERSION = "v1" as const;
 type RestAuth = { user: Awaited<ReturnType<typeof sdk.authenticateRequest>> extends infer User ? NonNullable<User> : never; workspaceId?: number | null };
@@ -125,6 +126,15 @@ export function registerRestV1Routes(app: Express) {
         assetId: body.assetId === undefined ? undefined : parsePositiveInteger(String(body.assetId), "assetId"),
       });
       res.status(result.status === "completed" ? 200 : 202).json({ data: result, request_id: requestId(res), apiVersion: REST_API_VERSION });
+    } catch (error) { sendError(res, error); }
+  });
+  app.get("/api/v1/executions/:jobId", async (req, res) => {
+    try {
+      const auth = await requireUser(req, "tools:read");
+      const jobId = parsePositiveInteger(req.params.jobId, "jobId");
+      const progress = await getExecutionProgress(auth.user.id, jobId);
+      requireBoundWorkspace(auth, progress.workspaceId);
+      res.json({ data: progress, request_id: requestId(res), apiVersion: REST_API_VERSION });
     } catch (error) { sendError(res, error); }
   });
   app.post("/api/v1/research-tasks/:taskId/execute", async (req, res) => {

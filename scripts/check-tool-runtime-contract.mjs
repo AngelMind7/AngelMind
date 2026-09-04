@@ -12,6 +12,7 @@ const files = Object.fromEntries(await Promise.all([
 ].map(async path => [path, await readFile(resolve(root, path), "utf8")]));
 
 const expected = ["burp_suite_pro","jwt_tool","dalfox","ssrfmap","interactsh","ffuf","cloudfox","graphql_cop","sqlmap","nuclei","subfinder","httpx","gitleaks","trivy","naabu","katana","custom_scripts"];
+const runtimeAliases = { gitleaks: "secrets_detection.1", subfinder: "asset_intelligence.28", trivy: "dependencies.12" };
 const catalog = files["server/tool-catalog-data.ts"];
 const config = files["config/tool-runtime-packs.yaml"];
 const runtime = files["server/tool-runtime.ts"];
@@ -23,7 +24,7 @@ const catalogKeys = new Set([...catalog.matchAll(/"toolKey":\s*"([^"]+)"/g)].map
 for (const key of expected) if (!catalogKeys.has(key)) failures.push(`catalog missing ${key}`);
 const generatedFamilies = new Set([...catalog.matchAll(/"(?:recon_|scan_|research_|fuzz_|c2_|phish_|intel_|osint_|post_|custom_)[^"]+"/g)].map(match => match[0]));
 if (catalogKeys.size + generatedFamilies.size < 50) failures.push(`catalog must represent at least 50 UTF modules; found ${catalogKeys.size + generatedFamilies.size}`);
-for (const key of expected) if (!runtime.includes(`toolKey: "${key}"`)) failures.push(`runtime adapter missing ${key}`);
+for (const key of expected) { const runtimeKey = runtimeAliases[key] ?? key; if (!runtime.includes(`toolKey: "${runtimeKey}"`)) failures.push(`runtime adapter missing ${key} (${runtimeKey})`); }
 for (const binary of ["ffuf","dalfox","interactsh-client","cloudfox","nuclei","subfinder","httpx","gitleaks","trivy","sqlmap","jwt_tool.py","ssrfmap","graphql-cop","naabu","katana"]) if (!smoke.includes(binary)) failures.push(`smoke test missing ${binary}`);
 for (const binary of ["naabu","katana"]) if (!docker.includes(`go install github.com/projectdiscovery/${binary}`)) failures.push(`tools image does not provision ${binary}`);
 for (const key of ["naabu","katana"]) if (!config.includes(`id: ${key}`)) failures.push(`runtime pack manifest missing ${key}`);

@@ -27,7 +27,16 @@
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <main aria-live="polite" style="min-height:100vh;background:#05060b;color:#e2e8f0;display:grid;place-items:center;padding:2rem;font-family:system-ui,sans-serif;text-align:center">
+        <div>
+          <p style="letter-spacing:.28em;color:#67e8f9;font-size:.75rem">ANGELMIND</p>
+          <h1 style="font-size:1.5rem;margin:.75rem 0">Loading secure control plane…</h1>
+          <p style="color:#94a3b8;max-width:32rem">If this message remains visible, refresh the page or clear the site cache. The application bundle may still be downloading.</p>
+        </div>
+      </main>
+    </div>
+    <noscript><style>#root > main { display: grid !important; }</style></noscript>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 

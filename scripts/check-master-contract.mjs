@@ -37,11 +37,11 @@ for (const file of ["docs/application-menu.md","docs/database-schema-contract.md
 const catalog = read("server/tool-catalog-data.ts");
 const requiredTools = ["burp_suite_pro","jwt_tool","dalfox","ssrfmap","interactsh","ffuf","cloudfox","graphql_cop","sqlmap","nuclei","subfinder","httpx","gitleaks","trivy","naabu","katana","custom_scripts"];
 const toolAliases = { subfinder: "asset_intelligence.28", gitleaks: "secrets_detection.1", trivy: "dependencies.12" };
-for (const tool of requiredTools) if (!catalog.includes(`"toolKey":"${tool}"`) && !catalog.includes(`"toolKey": "${tool}"`) && !catalog.includes(`"toolKey":"${toolAliases[tool] ?? tool}"`) && !catalog.includes(`"toolKey": "${toolAliases[tool] ?? tool}"`)) failures.push(`missing master tool ${tool}`);
-const literalModules = (catalog.match(/"toolKey"\s*:/g) ?? []).length;
+for (const tool of requiredTools) if (!catalog.includes(`"toolKey":"${tool}"`) && !catalog.includes(`"toolKey": "${tool}"`) && !catalog.includes(`toolKey: "${tool}"`) && !catalog.includes(`toolKey: "${toolAliases[tool] ?? tool}"`) && !catalog.includes(`"toolKey":"${toolAliases[tool] ?? tool}"`)) failures.push(`missing master tool ${tool}`);
+const literalModules = (catalog.match(/(?:["']toolKey["']\s*:|\btoolKey\s*:)/g) ?? []).length;
 const generatedModules = new Set(catalog.match(/"(?:recon_|scan_|research_|fuzz_|c2_|phish_|intel_|osint_|post_|custom_)[^"]+"/g) ?? []).size;
 requireAtLeast(literalModules + generatedModules, 50, "UTF catalog modules");
-if (!catalog.includes("enabledByDefault:true") && !catalog.includes("enabledByDefault: true")) failures.push("UTF catalog must expose enabled modules by default");
+if (!catalog.includes("enabledByDefault:true") && !catalog.includes("enabledByDefault: true") && !catalog.includes("enabledByDefault = true")) failures.push("UTF catalog must expose enabled modules by default");
 
 const normalizer = read("server/evidence-normalizer.ts");
 const schemas = ["jwt_token_comparison","sqli_evidence","xss_evidence","ssrf_evidence","cloud_metadata_evidence","graphql_introspection_evidence","graphql_batching_evidence","idor_evidence","ssti_evidence","rce_evidence","host_header_evidence","cache_poisoning_evidence","race_condition_evidence","file_upload_evidence","xxe_evidence"];

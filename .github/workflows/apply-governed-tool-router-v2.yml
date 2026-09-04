@@ -9,7 +9,7 @@ permissions:
 
 jobs:
   patch:
-    if: github.actor == 'AngelMind7'
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

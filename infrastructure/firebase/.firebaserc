@@ -1,0 +1,6 @@
+{
+  "projects": {
+    "staging": "REPLACE_WITH_ANGELMIND_FIREBASE_PROJECT_ID",
+    "production": "REPLACE_WITH_ANGELMIND_FIREBASE_PROJECT_ID"
+  }
+}

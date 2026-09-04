@@ -4,6 +4,7 @@ compatibility_date = "2026-09-04"
 
 [vars]
 ENVIRONMENT = "staging"
+TURNSTILE_SITE_KEY = "REPLACE_WITH_STAGING_TURNSTILE_SITE_KEY"
 
 # Production values must be configured in the Cloudflare dashboard or CI secrets.
 # Never commit API tokens, service keys, or private credentials.
@@ -20,6 +21,14 @@ id = "REPLACE_WITH_STAGING_SESSION_KV_ID"
 binding = "CACHE_KV"
 id = "REPLACE_WITH_STAGING_CACHE_KV_ID"
 
+[[kv_namespaces]]
+binding = "PROXY_POOL_KV"
+id = "REPLACE_WITH_STAGING_PROXY_POOL_KV_ID"
+
+[[kv_namespaces]]
+binding = "EXECUTION_STATE_KV"
+id = "REPLACE_WITH_STAGING_EXECUTION_STATE_KV_ID"
+
 [[r2_buckets]]
 binding = "EVIDENCE_BUCKET"
 bucket_name = "angelmind-evidence"
@@ -28,10 +37,27 @@ bucket_name = "angelmind-evidence"
 binding = "REPORTS_BUCKET"
 bucket_name = "angelmind-reports"
 
+[[r2_buckets]]
+binding = "TOOL_OUTPUT_BUCKET"
+bucket_name = "angelmind-tool-output"
+
+[[r2_buckets]]
+binding = "BACKUPS_BUCKET"
+bucket_name = "angelmind-backups"
+
 [[d1_databases]]
 binding = "EDGE_DB"
 database_name = "angelmind-edge"
 database_id = "REPLACE_WITH_STAGING_D1_ID"
+
+[durable_objects]
+bindings = [
+  { name = "EXECUTION_ROOMS", class_name = "ExecutionRoom" }
+]
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["ExecutionRoom"]
 
 [observability]
 enabled = true

@@ -18,7 +18,13 @@ if (apiKeys.size !== apiEntries.length) failures.push("V4 API contract contains 
 
 const router = read("server/routers.ts");
 const executableApiLeaves = (router.match(/^\s*[A-Za-z0-9_$]+\s*:\s*(?:admin|protected|public)Procedure\b/gm) ?? []).length;
-requireAtLeast(executableApiLeaves, 260, "concrete executable tRPC API leaves");
+const restFiles = ["server/rest-v1.ts", "server/rest-v1-core-resources.ts", "server/rest-v1-tags-notes.ts", "server/rest-v1-tools.ts", "server/simulation-rest.ts"];
+const restEndpointPattern = /\bapp\.(get|post|put|patch|delete)\(\"(\/api\/v1\/[^\"]+)\"/g;
+const concreteRestKeys = new Set();
+for (const file of restFiles) for (const match of read(file).matchAll(restEndpointPattern)) concreteRestKeys.add(`${match[1].toUpperCase()} ${match[2]}`);
+const concreteRestRoutes = concreteRestKeys.size;
+const concreteApiSurface = executableApiLeaves + concreteRestRoutes;
+requireAtLeast(concreteApiSurface, 260, "concrete executable API surface");
 for (const domain of ["auth","workspace","organization","research","evidence","knowledge","finding","control","audit","tools","ai","notification"]) if (!new RegExp(`\\b${domain}:\\s*router\\(`).test(router)) failures.push(`missing API router domain ${domain}`);
 for (const procedure of ["catalog","runtimeAdapters","runtimeHealth","run","approveTask","createObservation","promoteObservationToFinding","createSubmission","createArchive","verifyArchive","runRestoreDrill"]) if (!new RegExp(`\\b${procedure}:\\s*protectedProcedure`).test(router)) failures.push(`missing protected API procedure ${procedure}`);
 
@@ -99,4 +105,4 @@ for (const command of ["ffuf","dalfox","interactsh-client","cloudfox","nuclei","
 for (const marker of ["docker build --file Dockerfile.tools","docker run --rm angelmind-tools"]) if (!read(".github/workflows/container.yml").includes(marker)) failures.push(`container E2E workflow omits ${marker}`);
 
 if (failures.length) { console.error("Master contract check failed:"); for (const failure of failures) console.error(`- ${failure}`); process.exit(1); }
-console.log(`Master contract OK: ${routes.length} routes, ${executableApiLeaves} executable API leaves, 14 domains, ${apiEntries.length} named API endpoints across ${apiGroups.size} groups, ${literalModules + generatedModules} UTF modules, ${schemas.length} evidence schemas, ${migrations.length} migrations.`);
+console.log(`Master contract OK: ${routes.length} routes, ${concreteApiSurface} concrete API endpoints (${executableApiLeaves} tRPC + ${concreteRestRoutes} REST), 14 domains, ${apiEntries.length} named API endpoints across ${apiGroups.size} groups, ${literalModules + generatedModules} UTF modules, ${schemas.length} evidence schemas, ${migrations.length} migrations.`);

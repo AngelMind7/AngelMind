@@ -16,7 +16,15 @@ const MAX_OUTPUT_BYTES = 2_000_000;
 const MAX_INPUT_BYTES = 2_000_000;
 
 export function decideRuntimeResources(request: RuntimeResourceRequest): RuntimeResourceDecision {
-  if (request.inputBytes < 0 || request.inputBytes > MAX_INPUT_BYTES) return { allowed: false, reason: "input_limit_exceeded" };
+  if (!Number.isFinite(request.inputBytes) || !Number.isInteger(request.inputBytes) || request.inputBytes < 0 || request.inputBytes > MAX_INPUT_BYTES) {
+    return { allowed: false, reason: "input_limit_exceeded" };
+  }
+  if (request.timeoutMs !== undefined && (!Number.isFinite(request.timeoutMs) || request.timeoutMs <= 0)) {
+    return { allowed: false, reason: "invalid_timeout" };
+  }
+  if (request.maxOutputBytes !== undefined && (!Number.isFinite(request.maxOutputBytes) || request.maxOutputBytes <= 0)) {
+    return { allowed: false, reason: "invalid_output_limit" };
+  }
   const timeoutMs = Math.min(Math.max(request.timeoutMs ?? DEFAULT_TIMEOUT_MS, 1_000), MAX_TIMEOUT_MS);
   const maxOutputBytes = Math.min(Math.max(request.maxOutputBytes ?? DEFAULT_MAX_OUTPUT_BYTES, 1_024), MAX_OUTPUT_BYTES);
   if (request.mode === "privileged_or_destructive") return { allowed: false, reason: "privileged_runtime_disabled" };

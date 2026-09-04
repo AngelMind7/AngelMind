@@ -26,6 +26,7 @@ export type ResearchTaskExecutionResult = {
   taskId: number;
   status: "blocked" | "completed" | "failed" | "unavailable" | "timed_out";
   reason?: string;
+  findingId?: number;
   execution?: Awaited<ReturnType<typeof executeGovernedCapability>>;
 };
 
@@ -54,24 +55,10 @@ export async function executeResearchTask(userId: number, taskId: number): Promi
   const approvalId = task.approvalId ?? inputApprovalId;
 
   // Approval of the persisted task is not itself the execution authorization.
-  // The governed policy requires the concrete, server-recorded approvalId/context.
-  // Never convert an incomplete approval record into an executable request.
-  if (highRisk && !approvalId) {
-    return { taskId, status: "blocked", reason: "approval_record_required" };
-  }
+  if (highRisk && !approvalId) return { taskId, status: "blocked", reason: "approval_record_required" };
 
   await transitionResearchTask(userId, task.id, "running", { startedCapability: capability }, task.revision);
-  const execution = await executeGovernedCapability({
-    userId,
-    workspaceId: task.workspaceId,
-    capability,
-    mode,
-    input: task.inputs,
-    target,
-    approvalId,
-    sessionId: task.sessionId,
-    assetId,
-  });
+  const execution = await executeGovernedCapability({ userId, workspaceId: task.workspaceId, capability, mode, input: task.inputs, target, approvalId, sessionId: task.sessionId, assetId });
 
   const latest = (await db.select().from(researchTasks).where(and(eq(researchTasks.id, task.id), eq(researchTasks.workspaceId, task.workspaceId))).limit(1))[0];
   if (latest?.status === "running") {
@@ -80,24 +67,17 @@ export async function executeResearchTask(userId: number, taskId: number): Promi
         executionState: execution.state,
         toolKey: execution.plan.toolKey,
         observationId: execution.observationId ?? null,
+        findingId: execution.findingId ?? null,
         requestId: execution.pipeline.provenance.requestId,
         rawOutputSha256: execution.pipeline.provenance.rawOutputSha256,
         normalizedEvidenceSha256: execution.pipeline.provenance.normalizedEvidenceSha256,
         correlation: execution.pipeline.correlation,
       }, latest.revision);
     } else if (execution.status === "blocked") {
-      // A policy/scope block is not an execution failure. Pause the task so it
-      // cannot be retried blindly and preserve the authoritative denial reason.
-      await transitionResearchTask(userId, task.id, "paused", {
-        executionState: execution.state,
-        reason: execution.reason,
-      }, latest.revision);
+      await transitionResearchTask(userId, task.id, "paused", { executionState: execution.state, reason: execution.reason }, latest.revision);
     } else {
-      await transitionResearchTask(userId, task.id, "failed", {
-        executionState: execution.state,
-        reason: execution.status,
-      }, latest.revision);
+      await transitionResearchTask(userId, task.id, "failed", { executionState: execution.state, reason: execution.status }, latest.revision);
     }
   }
-  return { taskId, status: execution.status, execution };
+  return { taskId, status: execution.status, findingId: execution.status === "completed" ? execution.findingId : undefined, execution };
 }

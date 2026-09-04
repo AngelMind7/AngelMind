@@ -7,7 +7,7 @@ on:
     branches: [main]
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.ref }}
@@ -16,83 +16,10 @@ concurrency:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Migrate governed tool router
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.actor == 'AngelMind7'
-        shell: bash
-        run: |
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('server/routers.ts')
-          s = p.read_text()
-          import_line = 'import * as toolRuntime from "./tool-runtime";\n'
-          policy_import = 'import { authorizeToolExecution } from "./tool-execution-policy";\n'
-          if policy_import not in s:
-              if import_line not in s:
-                  raise SystemExit('tool-runtime import anchor not found')
-              s = s.replace(import_line, import_line + policy_import, 1)
-          start = s.find('  tools: router({')
-          end = s.find('  governance: router({', start if start >= 0 else 0)
-          new = '''  tools: router({
-    catalog: protectedProcedure
-      .input(z.object({
-        category: z.string().trim().min(1).max(120).optional(),
-        disposition: z.enum(["candidate_offline_or_artifact", "candidate_passive_review", "disabled_high_risk", "disabled_review_required"]).optional(),
-        riskClass: z.enum(["low", "medium", "high", "critical", "unknown"]).optional(),
-      }).optional())
-      .query(({ input }) => toolCatalog.listToolCatalog(input)),
-    search: protectedProcedure
-      .input(z.object({ query: z.string().trim().min(1).max(120) }))
-      .query(({ input }) => toolCatalog.searchToolCatalog(input.query)),
-    summary: protectedProcedure.query(() => toolCatalog.getToolCatalogSummary()),
-    runtimeAdapters: protectedProcedure.query(() => toolRuntime.listRegisteredAdapters()),
-    runtimeHealth: protectedProcedure.query(() => toolRuntime.checkRegisteredAdapterHealth()),
-    run: protectedProcedure
-      .input(z.object({
-        workspaceId: z.number().int().positive(),
-        target: z.string().trim().min(1).max(255).optional(),
-        toolKey: z.string().trim().min(1).max(160),
-        mode: z.enum(["offline_artifact", "passive_readonly", "active_nondestructive", "privileged_or_destructive"]),
-        approvalId: z.number().int().positive().optional(),
-        input: z.string().max(2_000_000),
-        timeoutMs: z.number().int().min(1_000).max(120_000).optional(),
-        maxOutputBytes: z.number().int().min(1_024).max(2_000_000).optional(),
-      }))
-      .mutation(async ({ ctx, input }) => {
-        const authorization = await authorizeToolExecution({
-          userId: ctx.user.id,
-          workspaceId: input.workspaceId,
-          toolKey: input.toolKey,
-          mode: input.mode,
-          target: input.target,
-          input: input.input,
-          approvalId: input.approvalId,
-        });
-        if (!authorization.allowed) {
-          return { requestId: "", toolKey: input.toolKey, status: "blocked" as const, exitCode: null, stdout: "", stderr: "", durationMs: 0, reason: authorization.reason };
-        }
-        return toolRuntime.runRegisteredTool({ ...input, scopeValidated: true, humanApproval: authorization.humanApproval });
-      }),
-  }),
-'''
-          if end < 0:
-              raise SystemExit('governance router boundary not found')
-          if start < 0:
-              s = s[:end] + new + s[end:]
-          else:
-              s = s[:start] + new + s[end:]
-          p.write_text(s)
-          PY
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add server/routers.ts
-          git diff --cached --check
-          if git diff --cached --quiet; then exit 0; fi
-          git commit -m 'feat: enforce governed tool execution at router boundary'
-          git push
       - name: Setup pnpm
         uses: pnpm/action-setup@v4
       - name: Setup Node

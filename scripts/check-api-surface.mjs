@@ -5,11 +5,10 @@ const root = process.cwd();
 const routerPath = path.join(root, "server", "routers.ts");
 const source = fs.readFileSync(routerPath, "utf8");
 
-// Count executable tRPC leaves in the canonical router. This is intentionally
-// separate from the PDF route inventory so documentation cannot satisfy it.
-const procedureMatches = source.match(/^\s*[A-Za-z0-9_$]+\s*:\s*(?:admin|protected|public)Procedure\b/gm) ?? [];
-const queryMatches = source.match(/^\s*[A-Za-z0-9_$]+\s*:\s*[^\n]*\.(?:query|mutation|subscription)\(/gm) ?? [];
-const executableLeaves = procedureMatches.length + queryMatches.length;
+// Every executable tRPC leaf in the canonical router starts with one of the
+// authenticated/public procedure builders. Chained .input().query() or
+// .mutation() calls are deliberately not counted a second time.
+const executableLeaves = (source.match(/^\s*[A-Za-z0-9_$]+\s*:\s*(?:admin|protected|public)Procedure\b/gm) ?? []).length;
 
 const contractPath = path.join(root, "server", "api-v1-contract.ts");
 const contractSource = fs.readFileSync(contractPath, "utf8");

@@ -1,7 +1,12 @@
 import type { Express, Request } from "express";
+import { eq, desc } from "drizzle-orm";
+import { auditEvents } from "../drizzle/schema";
+import { getDb } from "./db";
+import { canAccessWorkspace } from "./control-plane/operations";
 import { sdk } from "./_core/sdk";
-import { createApproval, createIncident, createPolicy, decideApproval, listApprovals, listIncidents, listPolicies, updateIncident, verifyAuditIntegrity, appendAuditEvent, buildComplianceMap, buildRiskAssessment, buildVendorAssessment } from "./governance-audit";
+import { createIncident, createPolicy, decideApproval, listApprovals, listIncidents, listPolicies, updateIncident, verifyAuditIntegrity, appendAuditEvent, buildComplianceMap, buildRiskAssessment, buildVendorAssessment } from "./governance-audit";
 
+const governanceFrameworks = ["SOC2", "ISO27001", "PCI-DSS", "GDPR"] as const;
 const userId = (req: Request) => { const value = Number((req as any).user?.id); if (!Number.isInteger(value) || value <= 0) throw new Error("Unauthorized"); return value; };
 const auth = async (req: Request) => { await sdk.authenticateRequest(req); return userId(req); };
 
@@ -12,7 +17,7 @@ export function registerGovernanceRestV1Routes(app: Express) {
   app.post("/api/v1/governance/approvals/:id/approve", async (req, res) => { try { const uid = await auth(req); res.json(await decideApproval(uid, { id: Number(req.params.id), decision: "approve", note: req.body?.note })); } catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : "Bad request" }); } });
   app.post("/api/v1/governance/approvals/:id/reject", async (req, res) => { try { const uid = await auth(req); res.json(await decideApproval(uid, { id: Number(req.params.id), decision: "reject", note: req.body?.note })); } catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : "Bad request" }); } });
   app.post("/api/v1/governance/approvals/:id/escalate", async (req, res) => { try { const uid = await auth(req); res.status(501).json({ error: "Escalation requires an explicit policy escalation workflow; no automatic target action is performed.", requestedByUserId: uid }); } catch (e) { res.status(403).json({ error: e instanceof Error ? e.message : "Forbidden" }); } });
-  app.get("/api/v1/audit/logs", async (req, res) => { try { const uid = await auth(req); const workspaceId = Number(req.query.workspaceId); const { listApprovals: _unused } = await import("./governance-audit"); void _unused; const db = await (await import("./db")).getDb(); if (!db || !(await (await import("./control-plane/operations")).canAccessWorkspace(uid, workspaceId, "read"))) throw new Error("Forbidden"); const { auditEvents } = await import("../drizzle/schema"); res.json({ logs: await db.select().from(auditEvents).where((await import("drizzle-orm")).eq(auditEvents.workspaceId, workspaceId)).orderBy((await import("drizzle-orm")).desc(auditEvents.id)).limit(500) }); } catch (e) { res.status(403).json({ error: e instanceof Error ? e.message : "Forbidden" }); } });
+  app.get("/api/v1/audit/logs", async (req, res) => { try { const uid = await auth(req); const workspaceId = Number(req.query.workspaceId); const db = await getDb(); if (!db || !(await canAccessWorkspace(uid, workspaceId, "read"))) throw new Error("Forbidden"); res.json({ logs: await db.select().from(auditEvents).where(eq(auditEvents.workspaceId, workspaceId)).orderBy(desc(auditEvents.id)).limit(500) }); } catch (e) { res.status(403).json({ error: e instanceof Error ? e.message : "Forbidden" }); } });
   app.get("/api/v1/audit/integrity", async (req, res) => { try { const uid = await auth(req); res.json(await verifyAuditIntegrity(uid, Number(req.query.workspaceId))); } catch (e) { res.status(403).json({ error: e instanceof Error ? e.message : "Forbidden" }); } });
   app.post("/api/v1/audit/events", async (req, res) => { try { const uid = await auth(req); res.status(201).json(await appendAuditEvent(uid, req.body)); } catch (e) { res.status(400).json({ error: e instanceof Error ? e.message : "Bad request" }); } });
   app.get("/api/v1/incidents", async (req, res) => { try { const uid = await auth(req); res.json({ incidents: await listIncidents(uid, Number(req.query.workspaceId)) }); } catch (e) { res.status(403).json({ error: e instanceof Error ? e.message : "Forbidden" }); } });
@@ -22,5 +27,3 @@ export function registerGovernanceRestV1Routes(app: Express) {
   app.post("/api/v1/governance/risk/assess", async (req, res) => { try { await auth(req); res.json(buildRiskAssessment(req.body)); } catch (e) { res.status(403).json({ error: e instanceof Error ? e.message : "Forbidden" }); } });
   app.post("/api/v1/governance/vendors/assess", async (req, res) => { try { await auth(req); res.json(buildVendorAssessment(req.body)); } catch (e) { res.status(403).json({ error: e instanceof Error ? e.message : "Forbidden" }); } });
 }
-
-const governanceFrameworks = ["SOC2", "ISO27001", "PCI-DSS", "GDPR"] as const;

@@ -3,23 +3,23 @@
 // modules resolve to simulation-only adapters until an authorized production
 // execution integration is explicitly implemented and verified.
 const baseToolCatalog = [
-  {toolKey:"burp_suite_pro",name:"Burp Suite Professional",category:"Web Application Testing",riskClass:"medium",approvalGate:"scope_check",verificationStatus:"verified",disposition:"candidate_passive_review",enabledByDefault:true},
-  {toolKey:"jwt_tool",name:"jwt_tool (custom wrapper)",category:"Authentication",riskClass:"high",approvalGate:"human_approval",verificationStatus:"verified",disposition:"simulation_only",enabledByDefault:true},
-  {toolKey:"dalfox",name:"Dalfox (custom polyglot)",category:"Injection",riskClass:"high",approvalGate:"human_approval",verificationStatus:"verified",disposition:"simulation_only",enabledByDefault:true},
-  {toolKey:"ssrfmap",name:"SSRFmap (custom probe)",category:"Network",riskClass:"high",approvalGate:"human_approval",verificationStatus:"verified",disposition:"simulation_only",enabledByDefault:true},
-  {toolKey:"interactsh",name:"Interactsh (custom OOB)",category:"Network",riskClass:"medium",approvalGate:"scope_check",verificationStatus:"verified",disposition:"candidate_passive_review",enabledByDefault:true},
-  {toolKey:"ffuf",name:"ffuf (custom wordlist)",category:"Discovery",riskClass:"medium",approvalGate:"scope_check",verificationStatus:"verified",disposition:"candidate_passive_review",enabledByDefault:true},
-  {toolKey:"cloudfox",name:"CloudFox (custom IAM mapper)",category:"Cloud",riskClass:"medium",approvalGate:"scope_check",verificationStatus:"verified",disposition:"candidate_passive_review",enabledByDefault:true},
-  {toolKey:"gitleaks",name:"Gitleaks (auto-validate)",category:"Supply Chain",riskClass:"low",approvalGate:"auto_run",verificationStatus:"verified",disposition:"candidate_offline_or_artifact",enabledByDefault:true},
-  {toolKey:"graphql_cop",name:"graphql-cop + InQL (custom)",category:"API",riskClass:"medium",approvalGate:"scope_check",verificationStatus:"verified",disposition:"candidate_passive_review",enabledByDefault:true},
-  {toolKey:"sqlmap",name:"sqlmap (custom tamper)",category:"Injection",riskClass:"critical",approvalGate:"human_approval",verificationStatus:"verified",disposition:"simulation_only",enabledByDefault:true},
-  {toolKey:"nuclei",name:"Nuclei (custom template)",category:"Discovery",riskClass:"medium",approvalGate:"scope_check",verificationStatus:"verified",disposition:"candidate_passive_review",enabledByDefault:true},
-  {toolKey:"subfinder",name:"Subfinder (custom permutation)",category:"Discovery",riskClass:"low",approvalGate:"auto_run",verificationStatus:"verified",disposition:"candidate_passive_review",enabledByDefault:true},
-  {toolKey:"httpx",name:"httpx (custom probe)",category:"Discovery",riskClass:"low",approvalGate:"auto_run",verificationStatus:"verified",disposition:"candidate_passive_review",enabledByDefault:true},
-  {toolKey:"trivy",name:"Trivy (custom dependency)",category:"Supply Chain",riskClass:"low",approvalGate:"auto_run",verificationStatus:"verified",disposition:"candidate_offline_or_artifact",enabledByDefault:true},
-  {toolKey:"naabu",name:"naabu (custom port profile)",category:"Discovery",riskClass:"low",approvalGate:"scope_check",verificationStatus:"verified",disposition:"candidate_passive_review",enabledByDefault:true},
-  {toolKey:"katana",name:"katana (custom crawler)",category:"Discovery",riskClass:"low",approvalGate:"scope_check",verificationStatus:"verified",disposition:"candidate_passive_review",enabledByDefault:true},
-  {toolKey:"custom_scripts",name:"Custom Scripts (Python/Node)",category:"Fallback",riskClass:"high",approvalGate:"human_approval",verificationStatus:"verified",disposition:"simulation_only",enabledByDefault:true},
+  {"toolKey":"burp_suite_pro","name":"Burp Suite Professional","category":"Web Application Testing","riskClass":"medium","approvalGate":"scope_check","verificationStatus":"verified","disposition":"candidate_passive_review","enabledByDefault":true},
+  {"toolKey":"jwt_tool","name":"jwt_tool (custom wrapper)","category":"Authentication","riskClass":"high","approvalGate":"human_approval","verificationStatus":"verified","disposition":"simulation_only","enabledByDefault":true},
+  {"toolKey":"dalfox","name":"Dalfox (custom polyglot)","category":"Injection","riskClass":"high","approvalGate":"human_approval","verificationStatus":"verified","disposition":"simulation_only","enabledByDefault":true},
+  {"toolKey":"ssrfmap","name":"SSRFmap (custom probe)","category":"Network","riskClass":"high","approvalGate":"human_approval","verificationStatus":"verified","disposition":"simulation_only","enabledByDefault":true},
+  {"toolKey":"interactsh","name":"Interactsh (custom OOB)","category":"Network","riskClass":"medium","approvalGate":"scope_check","verificationStatus":"verified","disposition":"candidate_passive_review","enabledByDefault":true},
+  {"toolKey":"ffuf","name":"ffuf (custom wordlist)","category":"Discovery","riskClass":"medium","approvalGate":"scope_check","verificationStatus":"verified","disposition":"candidate_passive_review","enabledByDefault":true},
+  {"toolKey":"cloudfox","name":"CloudFox (custom IAM mapper)","category":"Cloud","riskClass":"medium","approvalGate":"scope_check","verificationStatus":"verified","disposition":"candidate_passive_review","enabledByDefault":true},
+  {"toolKey":"gitleaks","name":"Gitleaks (auto-validate)","category":"Supply Chain","riskClass":"low","approvalGate":"auto_run","verificationStatus":"verified","disposition":"candidate_offline_or_artifact","enabledByDefault":true},
+  {"toolKey":"graphql_cop","name":"graphql-cop + InQL (custom)","category":"API","riskClass":"medium","approvalGate":"scope_check","verificationStatus":"verified","disposition":"candidate_passive_review","enabledByDefault":true},
+  {"toolKey":"sqlmap","name":"sqlmap (custom tamper)","category":"Injection","riskClass":"critical","approvalGate":"human_approval","verificationStatus":"verified","disposition":"simulation_only","enabledByDefault":true},
+  {"toolKey":"nuclei","name":"Nuclei (custom template)","category":"Discovery","riskClass":"medium","approvalGate":"scope_check","verificationStatus":"verified","disposition":"candidate_passive_review","enabledByDefault":true},
+  {"toolKey":"subfinder","name":"Subfinder (custom permutation)","category":"Discovery","riskClass":"low","approvalGate":"auto_run","verificationStatus":"verified","disposition":"candidate_passive_review","enabledByDefault":true},
+  {"toolKey":"httpx","name":"httpx (custom probe)","category":"Discovery","riskClass":"low","approvalGate":"auto_run","verificationStatus":"verified","disposition":"candidate_passive_review","enabledByDefault":true},
+  {"toolKey":"trivy","name":"Trivy (custom dependency)","category":"Supply Chain","riskClass":"low","approvalGate":"auto_run","verificationStatus":"verified","disposition":"candidate_offline_or_artifact","enabledByDefault":true},
+  {"toolKey":"naabu","name":"naabu (custom port profile)","category":"Discovery","riskClass":"low","approvalGate":"scope_check","verificationStatus":"verified","disposition":"candidate_passive_review","enabledByDefault":true},
+  {"toolKey":"katana","name":"katana (custom crawler)","category":"Discovery","riskClass":"low","approvalGate":"scope_check","verificationStatus":"verified","disposition":"candidate_passive_review","enabledByDefault":true},
+  {"toolKey":"custom_scripts","name":"Custom Scripts (Python/Node)","category":"Fallback","riskClass":"high","approvalGate":"human_approval","verificationStatus":"verified","disposition":"simulation_only","enabledByDefault":true},
 ];
 
 const generatedFamilies = [
@@ -40,14 +40,14 @@ export const generatedToolCatalog = [
   ...generatedFamilies.map(toolKey => {
     const targetFacing = toolKey.startsWith("c2_") || toolKey.startsWith("phish_") || toolKey.startsWith("post_") || toolKey.startsWith("research_");
     return {
-      toolKey,
-      name: toolKey.replaceAll("_", " "),
-      category: toolKey.split("_")[0].toUpperCase(),
-      riskClass: targetFacing ? "high" : "low",
-      approvalGate: targetFacing ? "human_approval" : "scope_check",
-      verificationStatus: "manifest_only",
-      disposition: targetFacing ? "simulation_only" : "candidate_passive_review",
-      enabledByDefault: true,
+      "toolKey": toolKey,
+      "name": toolKey.replaceAll("_", " "),
+      "category": toolKey.split("_")[0].toUpperCase(),
+      "riskClass": targetFacing ? "high" : "low",
+      "approvalGate": targetFacing ? "human_approval" : "scope_check",
+      "verificationStatus": "manifest_only",
+      "disposition": targetFacing ? "simulation_only" : "candidate_passive_review",
+      "enabledByDefault": true,
     };
   }),
 ];

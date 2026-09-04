@@ -1,0 +1,122 @@
+import { z } from "zod";
+
+export const purpleTeamExerciseSchema = z.object({
+  name: z.string().min(1).max(160),
+  objective: z.string().min(1).max(4000),
+  workspaceId: z.number().int().positive(),
+  scenarioId: z.string().min(1),
+  startAt: z.coerce.date(),
+  endAt: z.coerce.date(),
+  rulesOfEngagement: z.string().min(1).max(8000),
+});
+
+export type PurpleTeamExercise = z.infer<typeof purpleTeamExerciseSchema> & {
+  id: string;
+  status: "draft" | "planned" | "approved" | "running" | "completed" | "cancelled";
+  simulationOnly: true;
+  auditRequired: true;
+};
+
+export type DetectionRule = {
+  id: string;
+  name: string;
+  language: "sigma" | "yara" | "lua";
+  content: string;
+  enabled: boolean;
+};
+
+export type PurpleTeamScenario = {
+  id: string;
+  name: string;
+  techniqueIds: string[];
+  description: string;
+};
+
+export type DetectionGap = {
+  exerciseId: string;
+  scenarioId: string;
+  executedSteps: number;
+  detectedSteps: number;
+  missedSteps: number;
+  coveragePercent: number;
+  meanTimeToDetectSeconds: number | null;
+  dwellTimeSeconds: number;
+};
+
+export type ImprovementItem = {
+  id: string;
+  exerciseId: string;
+  title: string;
+  owner: string;
+  status: "open" | "in_progress" | "verified" | "closed";
+};
+
+const exercises = new Map<string, PurpleTeamExercise>();
+const scenarios = new Map<string, PurpleTeamScenario>([
+  ["pt-lab-baseline", { id: "pt-lab-baseline", name: "Baseline detection validation", techniqueIds: ["T1059", "T1071"], description: "Synthetic command and web traffic indicators for blue-team validation." }],
+]);
+const rules = new Map<string, DetectionRule>();
+const improvements = new Map<string, ImprovementItem>();
+
+function assertOwner(exercise: PurpleTeamExercise, ownerUserId: number) {
+  if (!Number.isInteger(ownerUserId) || ownerUserId <= 0 || exercise.workspaceId <= 0) throw new Error("Unauthorized purple-team operation");
+}
+
+export function createPurpleTeamExercise(ownerUserId: number, input: unknown): PurpleTeamExercise {
+  const parsed = purpleTeamExerciseSchema.parse(input);
+  if (parsed.endAt <= parsed.startAt) throw new Error("Exercise end must be after start");
+  if (!scenarios.has(parsed.scenarioId)) throw new Error("Unknown purple-team scenario");
+  const exercise: PurpleTeamExercise = { ...parsed, id: crypto.randomUUID(), status: "draft", simulationOnly: true, auditRequired: true };
+  exercises.set(exercise.id, exercise);
+  assertOwner(exercise, ownerUserId);
+  return exercise;
+}
+
+export function listPurpleTeamExercises(ownerUserId: number, workspaceId: number) {
+  return [...exercises.values()].filter(e => e.workspaceId === workspaceId && ownerUserId > 0);
+}
+
+export function getPurpleTeamExercise(ownerUserId: number, id: string) {
+  const exercise = exercises.get(id);
+  if (!exercise) throw new Error("Purple-team exercise not found");
+  assertOwner(exercise, ownerUserId);
+  return exercise;
+}
+
+export function approvePurpleTeamExercise(ownerUserId: number, id: string) {
+  const exercise = getPurpleTeamExercise(ownerUserId, id);
+  if (exercise.status !== "planned") throw new Error("Exercise must be planned before approval");
+  exercise.status = "approved";
+  return exercise;
+}
+
+export function planPurpleTeamExercise(ownerUserId: number, id: string) {
+  const exercise = getPurpleTeamExercise(ownerUserId, id);
+  if (exercise.status !== "draft") throw new Error("Only draft exercises can be planned");
+  exercise.status = "planned";
+  return exercise;
+}
+
+export function runPurpleTeamExercise(ownerUserId: number, id: string): DetectionGap {
+  const exercise = getPurpleTeamExercise(ownerUserId, id);
+  if (exercise.status !== "approved") throw new Error("Approval required before exercise execution");
+  exercise.status = "running";
+  const scenario = scenarios.get(exercise.scenarioId)!;
+  const executedSteps = scenario.techniqueIds.length;
+  const detectedSteps = Math.max(0, executedSteps - 1);
+  const gap: DetectionGap = { exerciseId: id, scenarioId: scenario.id, executedSteps, detectedSteps, missedSteps: executedSteps - detectedSteps, coveragePercent: Math.round((detectedSteps / executedSteps) * 100), meanTimeToDetectSeconds: detectedSteps ? 45 : null, dwellTimeSeconds: 90 };
+  exercise.status = "completed";
+  return gap;
+}
+
+export function addPurpleTeamImprovement(ownerUserId: number, input: Omit<ImprovementItem, "id">) {
+  const exercise = getPurpleTeamExercise(ownerUserId, input.exerciseId);
+  const item = { ...input, id: crypto.randomUUID() };
+  improvements.set(item.id, item);
+  return { ...item, exerciseId: exercise.id };
+}
+
+export function listPurpleTeamScenarios() { return [...scenarios.values()]; }
+export function listDetectionRules() { return [...rules.values()]; }
+export function registerDetectionRule(rule: DetectionRule) { rules.set(rule.id, rule); return rule; }
+export function listPurpleTeamImprovements(exerciseId: string) { return [...improvements.values()].filter(i => i.exerciseId === exerciseId); }

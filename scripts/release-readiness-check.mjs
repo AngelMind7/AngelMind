@@ -35,9 +35,7 @@ for (const tool of [
   "katana",
   "custom_scripts",
 ]) {
-  if (!manifest.includes(`  - ${tool}`) && !manifest.includes(`- id: ${tool}`)) {
-    failures.push(`manifest-tool:${tool}`);
-  }
+  if (!manifest.includes(`  - ${tool}`) && !manifest.includes(`- id: ${tool}`)) failures.push(`manifest-tool:${tool}`);
 }
 
 const runtime = readFileSync("server/tool-runtime.ts", "utf8");
@@ -50,6 +48,21 @@ for (const token of [
 ]) {
   if (!runtime.includes(token)) failures.push(`runtime-policy:${token}`);
 }
+
+const ledger = readFileSync("server/execution-ledger.ts", "utf8");
+for (const token of ["createExecutionLedger", "getExecutionProgress", "persistExecutionReport", "completeExecutionLedger", "failExecutionLedger"]) {
+  if (!ledger.includes(`export async function ${token}`)) failures.push(`execution-ledger:${token}`);
+}
+const progressEvents = readFileSync("server/execution-progress-events.ts", "utf8");
+for (const token of ["execution.queued", "execution.started", "execution.progress", "execution.completed", "execution.failed"]) {
+  if (!progressEvents.includes(`"${token}"`)) failures.push(`execution-event:${token}`);
+}
+const runner = readFileSync("server/governed-tool-runner.ts", "utf8");
+for (const token of ["decideRuntimeResources", "runtimeConcurrencyLimit", "runRegisteredTool"]) {
+  if (!runner.includes(token)) failures.push(`governed-runner:${token}`);
+}
+if (!readFileSync("server/rest-v1.ts", "utf8").includes("/api/v1/executions/:jobId")) failures.push("execution-api:missing-progress-route");
+if (!readFileSync("client/src/pages/MissionControl.tsx", "utf8").includes("/api/v1/executions/")) failures.push("execution-ui:missing-persisted-ledger-binding");
 
 if (failures.length) {
   console.error("Release readiness contract failed:");

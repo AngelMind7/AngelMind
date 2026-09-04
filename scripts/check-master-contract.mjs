@@ -13,7 +13,7 @@ requireAtLeast(routes.length, 27, "authenticated routes");
 const requiredRoutes = [
   "/dashboard","/mission-control","/coverage","/research","/research/new","/research/:id","/research/:id/objectives","/research/:id/hypotheses","/research/:id/tasks","/research/:id/executions","/research/:id/observations","/research/:id/evidence","/research/:id/findings","/research/:id/reports","/research/:id/timeline",
   "/assets","/assets/new","/assets/:id","/tools","/tools/capabilities","/tools/installed","/tools/health","/tools/history","/tools/:id",
-  "/agents","/agents/new","/agents/:id","/playbooks","/playbooks/new","/playbooks/:id","/evidence","/evidence/:id",
+  "/ai/workers","/ai/workers/new","/ai/workers/:id","/utf/runners","/utf/runners/new","/utf/runners/:id","/utf/runners/:id/execute","/redteam/implants/:id/beacon","/redteam/implants/:id/status","/playbooks","/playbooks/new","/playbooks/:id","/evidence","/evidence/:id",
   "/ai","/ai/providers","/ai/models","/ai/connections","/ai/routing","/ai/usage","/knowledge","/search","/collaboration","/saved-views","/tags-notes",
   "/reports","/reports/new","/reports/:id","/workspaces","/workspaces/new","/workspaces/:id","/organizations","/organizations/new","/organizations/:id",
   "/governance","/governance/approvals","/governance/policies","/findings","/findings/:id","/audit","/operations","/operations/health","/operations/queue","/operations/workers",
@@ -28,11 +28,11 @@ const requiredRoutes = [
 for (const route of requiredRoutes) if (!routeSource.includes(`path: "${route}"`)) failures.push(`missing blueprint route ${route}`);
 
 const publicSource = read("client/src/publicRoutes.ts");
-for (const route of ["/","/product","/features","/how-it-works","/bug-bounty","/for-researchers","/trust-center","/docs","/blog","/api-playground","/security","/pricing","/changelog","/roadmap","/status","/contact","/academy","/legal/privacy","/legal/terms","/legal/cookies","/legal/acceptable-use","/legal/responsible-disclosure","/legal/data-processing"]) if (!publicSource.includes(`path: "${route}"`)) failures.push(`missing public blueprint route ${route}`);
+for (const route of ["/","/product","/features","/how-it-works","/bug-bounty","/for-researchers","/trust-center","/docs","/blog","/api-playground","/security","/pricing","/changelog","/roadmap","/status","/contact","/academy","/legal/privacy","/legal/terms","/legal/cookies","/legal/acceptable-use","/legal/responsible-disclosure","/legal/data-processing","/client/:orgSlug"]) if (!publicSource.includes(`path: "${route}"`)) failures.push(`missing public blueprint route ${route}`);
 
 const domainDocs = ["01-identity","02-organization","03-asset-intel","04-threat-surface","05-vuln-research","06-offensive-engine","07-red-team","08-purple-team","09-bug-bounty","10-findings","11-reporting","12-threat-intel","13-ai-automation","14-governance"];
 for (const doc of domainDocs) requireFile(`docs/domain/${doc}.md`);
-for (const file of ["docs/application-menu.md","docs/database-schema-contract.md","docs/api/openapi.yaml","docs/api/endpoint-inventory.md","docs/blueprint-conformance.md","docs/launch-gate.md","railway.json","infrastructure/cloudflare/wrangler.toml","infrastructure/supabase/config.toml","infrastructure/firebase/firebase.json","infrastructure/firebase/.firebaserc","infrastructure/firebase/firestore.rules","infrastructure/firebase/firestore.indexes.json","infrastructure/cloudflare/src/index.ts","infrastructure/firebase/functions/index.js","infrastructure/firebase/public/index.html"]) requireFile(file);
+for (const file of ["docs/application-menu.md","docs/database-schema-contract.md","docs/api/openapi.yaml","docs/api/endpoint-inventory.md","docs/blueprint-conformance.md","docs/launch-gate.md","docs/architecture/system-architecture.md","docs/architecture/data-flow.md","docs/architecture/security-model.md","railway.json","infrastructure/cloudflare/wrangler.toml","infrastructure/supabase/config.toml","infrastructure/firebase/firebase.json","infrastructure/firebase/.firebaserc","infrastructure/firebase/firestore.rules","infrastructure/firebase/firestore.indexes.json","infrastructure/cloudflare/src/index.ts","infrastructure/firebase/functions/index.js","infrastructure/firebase/public/index.html"]) requireFile(file);
 
 const catalog = read("server/tool-catalog-data.ts");
 const requiredTools = ["burp_suite_pro","jwt_tool","dalfox","ssrfmap","interactsh","ffuf","cloudfox","graphql_cop","sqlmap","nuclei","subfinder","httpx","gitleaks","trivy","naabu","katana","custom_scripts"];
@@ -60,8 +60,10 @@ for (const marker of ["execution.queued","execution.started","execution.progress
 if (!read("server/rest-v1.ts").includes("/api/v1/executions/:jobId")) failures.push("missing authenticated execution progress endpoint");
 if (!read("client/src/pages/MissionControl.tsx").includes("/api/v1/executions/")) failures.push("Mission Control is not bound to persisted execution progress");
 
-const rules = read("server/engine/correlation-rules.ts");
-for (const prefix of ["SEQ","COMP"]) { const expected = prefix === "SEQ" ? 37 : 10; const ids = new Set([...rules.matchAll(new RegExp(`\\b${prefix}-\\d{3}\\b`, "g"))].map(match => match[0])); requireAtLeast(ids.size, expected, `${prefix} correlation rules`); }
+const chainEngine = read("server/chain-engine.ts");
+for (const nodeType of ["module","action","condition","foreach","while","parallel","merge","sleep","subchain"]) if (!chainEngine.includes(`"${nodeType}"`)) failures.push(`missing DAG chain node type ${nodeType}`);
+if (!chainEngine.includes("cycle_detected") || !chainEngine.includes("planChainExecution")) failures.push("DAG chain validation/planning contract is missing");
+
 const router = read("server/routers.ts");
 for (const domain of ["auth","workspace","organization","research","evidence","knowledge","finding","control","audit","tools","ai","notification"]) if (!new RegExp(`\\b${domain}:\\s*router\\(`).test(router)) failures.push(`missing API router domain ${domain}`);
 for (const procedure of ["catalog","runtimeAdapters","runtimeHealth","run","approveTask","createObservation","promoteObservationToFinding","createSubmission","createArchive","verifyArchive","runRestoreDrill"]) if (!new RegExp(`\\b${procedure}:\\s*protectedProcedure`).test(router)) failures.push(`missing protected API procedure ${procedure}`);

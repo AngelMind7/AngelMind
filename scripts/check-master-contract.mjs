@@ -1,4 +1,4 @@
-import { readFileSync, readdirSync } from "node:fs";
+import { readFileSync, readdirSync, existsSync } from "node:fs";
 import { resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
@@ -6,6 +6,9 @@ const read = file => readFileSync(resolve(root, file), "utf8");
 const failures = [];
 const requireAtLeast = (actual, expected, label) => {
   if (actual < expected) failures.push(`${label}: expected at least ${expected}, found ${actual}`);
+};
+const requireFile = file => {
+  if (!existsSync(resolve(root, file))) failures.push(`missing required repository contract ${file}`);
 };
 
 const routeSource = read("client/src/authenticatedRoutes.ts");
@@ -33,6 +36,18 @@ const requiredRoutes = [
 for (const route of requiredRoutes) {
   if (!routeSource.includes(`path: "${route}"`)) failures.push(`missing blueprint route ${route}`);
 }
+
+for (const file of [
+  "docs/blueprint-conformance.md",
+  "docs/launch-gate.md",
+  "railway.json",
+  "infrastructure/cloudflare/wrangler.toml",
+  "infrastructure/supabase/config.toml",
+  "infrastructure/firebase/firebase.json",
+  "infrastructure/firebase/.firebaserc",
+  "infrastructure/firebase/firestore.rules",
+  "infrastructure/firebase/firestore.indexes.json"
+]) requireFile(file);
 
 const catalog = read("server/tool-catalog-data.ts");
 const requiredTools = ["burp_suite_pro", "jwt_tool", "dalfox", "ssrfmap", "interactsh", "ffuf", "cloudfox", "graphql_cop", "sqlmap", "nuclei", "subfinder", "httpx", "gitleaks", "trivy", "naabu", "katana", "custom_scripts"];

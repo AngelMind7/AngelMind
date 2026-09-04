@@ -108,7 +108,7 @@ export async function authorizeToolExecution(
       if (typeof approvalContext.target !== "string") {
         return blocked("approval_target_missing");
       }
-      if (approvalContext.target.toLowerCase() !== target!.toLowerCase()) {
+      if (approvalContext.target.toLowerCase() !== target.toLowerCase()) {
         return blocked("approval_target_mismatch");
       }
     }

@@ -1,8 +1,7 @@
 import type { CorrelationRule } from "./correlation-engine";
 
-// Canonical priorities are represented numerically for the rule engine while
-// retaining the master specification's CRITICAL/HIGH/MEDIUM semantics.
-const priority = (severity: "CRITICAL" | "HIGH" | "MEDIUM") =>
+type MasterSeverity = "CRITICAL" | "HIGH" | "MEDIUM";
+const priority = (severity: MasterSeverity) =>
   severity === "CRITICAL" ? 100 : severity === "HIGH" ? 75 : 50;
 
 export const masterSequentialCorrelationRules: readonly CorrelationRule[] = [
@@ -49,7 +48,7 @@ export const masterSequentialCorrelationRules: readonly CorrelationRule[] = [
   requires: [trigger],
   emits: target,
   title,
-  priority: priority(severity),
+  priority: priority(severity as MasterSeverity),
 }));
 
 export const masterCompoundCorrelationRules: readonly CorrelationRule[] = [

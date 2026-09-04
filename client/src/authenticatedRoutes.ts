@@ -27,6 +27,7 @@ const notifications = lazy(() => import("@/pages/Notifications"));
 const profile = lazy(() => import("@/pages/Profile"));
 const operationsAdmin = lazy(() => import("@/pages/OperationsAdmin"));
 const blueprintModule = lazy(() => import("@/pages/BlueprintModule"));
+const clientPortal = lazy(() => import("@/pages/ClientPortal"));
 
 export const authenticatedRoutes = [
   { path: "/app", component: home }, { path: "/dashboard", component: home },
@@ -49,9 +50,9 @@ export const authenticatedRoutes = [
   { path: "/redteam", component: blueprintModule }, { path: "/redteam/operations", component: blueprintModule }, { path: "/redteam/operations/new", component: blueprintModule }, { path: "/redteam/implants", component: blueprintModule }, { path: "/redteam/phishing", component: blueprintModule },
   { path: "/purpleteam", component: blueprintModule }, { path: "/purpleteam/exercises", component: blueprintModule }, { path: "/purpleteam/exercises/new", component: blueprintModule },
   { path: "/bugbounty", component: blueprintModule }, { path: "/bugbounty/programs", component: blueprintModule }, { path: "/bugbounty/programs/new", component: blueprintModule }, { path: "/bugbounty/submissions", component: blueprintModule },
+  { path: "/client/:orgSlug", component: clientPortal }, { path: "/client", component: clientPortal },
   { path: "/app/security", component: security }, { path: "/security", component: security }, { path: "/security/sessions", component: security }, { path: "/security/mfa", component: security }, { path: "/security/history", component: security }, { path: "/security/api-keys", component: security }, { path: "/notifications", component: notifications }, { path: "/notifications/settings", component: notifications },
   { path: "/profile", component: profile }, { path: "/settings", component: profile }, { path: "/settings/profile", component: profile }, { path: "/settings/team", component: profile }, { path: "/settings/policies", component: profile }, { path: "/settings/credentials", component: profile }, { path: "/settings/preferences", component: profile }, { path: "/settings/integrations", component: profile }, { path: "/settings/integrations/new", component: profile }, { path: "/settings/developer", component: profile }, { path: "/settings/developer/sdk", component: profile }, { path: "/settings/developer/keys", component: profile }, { path: "/settings/developer/logs", component: profile }, { path: "/settings/billing", component: profile }, { path: "/settings/billing/invoices", component: profile }, { path: "/settings/billing/payment", component: profile }, { path: "/settings/billing/upgrade", component: profile },
   { path: "/privacy", component: profile }, { path: "/privacy/export", component: profile }, { path: "/privacy/delete", component: profile }, { path: "/privacy/requests", component: profile }, { path: "/privacy/downloads", component: profile },
-  // Deprecated compatibility aliases. Canonical V4 namespaces are /ai/workers, /redteam/implants and /utf/runners.
   { path: "/agents", component: blueprintModule }, { path: "/agents/new", component: blueprintModule }, { path: "/agents/:id", component: blueprintModule },
 ] as const;

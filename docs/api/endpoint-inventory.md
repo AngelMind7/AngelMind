@@ -39,6 +39,10 @@ The PDF enumerates 28 API route groups and a 260+ endpoint target. The route-gro
 
 The contract is deliberately separate from implementation status: a route is not considered implemented merely because it appears in the blueprint. Concrete REST handlers must be backed by authenticated services, tenant/workspace authorization, validation, persistence where applicable, and the existing fail-closed execution policy.
 
+## Executable API gate
+
+The canonical tRPC router is also part of the API surface. `scripts/check-api-surface.mjs` counts executable tRPC leaves directly from `server/routers.ts` and fails CI unless at least 260 concrete procedures exist. This prevents the 260+ requirement from being satisfied by documentation-only entries.
+
 ## Concrete V4 additions already implemented
 
 | Method | Endpoint | Purpose |

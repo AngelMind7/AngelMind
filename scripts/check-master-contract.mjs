@@ -26,6 +26,9 @@ const requiredRoutes = [
   "/privacy","/privacy/export","/privacy/delete","/privacy/requests","/privacy/downloads"
 ];
 for (const route of requiredRoutes) if (!routeSource.includes(`path: "${route}"`)) failures.push(`missing blueprint route ${route}`);
+const utfExecuteIndex = routeSource.indexOf('path: "/utf/runners/:id/execute"');
+const utfDynamicIndex = routeSource.indexOf('path: "/utf/runners/:id"');
+if (utfExecuteIndex < 0 || utfDynamicIndex < 0 || utfExecuteIndex > utfDynamicIndex) failures.push("UTF execute route must precede dynamic runner-id route to prevent first-match shadowing");
 
 const publicSource = read("client/src/publicRoutes.ts");
 for (const route of ["/","/product","/features","/how-it-works","/bug-bounty","/for-researchers","/trust-center","/docs","/blog","/api-playground","/security","/pricing","/changelog","/roadmap","/status","/contact","/academy","/legal/privacy","/legal/terms","/legal/cookies","/legal/acceptable-use","/legal/responsible-disclosure","/legal/data-processing","/client/:orgSlug"]) if (!publicSource.includes(`path: "${route}"`)) failures.push(`missing public blueprint route ${route}`);

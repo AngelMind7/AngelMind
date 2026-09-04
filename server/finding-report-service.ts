@@ -26,10 +26,7 @@ function stringArray(value: unknown): string[] {
     : [];
 }
 
-/**
- * Reporting is deliberately downstream of finding human review. This function
- * only prepares a reviewable report; it never submits externally.
- */
+/** Reporting is downstream of validated, human-reviewed findings and never submits externally. */
 export async function generateFindingReportPreview(
   userId: number,
   findingId: number,
@@ -38,12 +35,8 @@ export async function generateFindingReportPreview(
   const findings = await controlPlane.listFindings(userId);
   const finding = findings.find(item => item.id === findingId);
   if (!finding) throw new Error("Finding tidak ditemukan atau tidak dapat diakses.");
-  if (finding.status !== "validated") {
-    throw new Error("Report hanya dapat dibuat dari finding yang sudah validated.");
-  }
-  if (finding.humanReviewStatus !== "approved") {
-    throw new Error("Human review wajib disetujui sebelum report generation.");
-  }
+  if (finding.status !== "validated") throw new Error("Report hanya dapat dibuat dari finding yang sudah validated.");
+  if (finding.humanReviewStatus !== "approved") throw new Error("Human review wajib disetujui sebelum report generation.");
 
   const draft = parseDraft(finding.reportDraft);
   const evidence = stringArray(draft.evidenceRefs);
@@ -51,28 +44,17 @@ export async function generateFindingReportPreview(
   const reportInput = {
     title: finding.title,
     severity: finding.severity,
-    summary: typeof draft.summary === "string" && draft.summary.trim().length >= 20
-      ? draft.summary.trim()
-      : finding.impactSummary,
+    summary: typeof draft.summary === "string" && draft.summary.trim().length >= 20 ? draft.summary.trim() : finding.impactSummary,
     impact: finding.impactSummary,
-    evidence: evidence.length ? evidence : [
-      typeof draft.requestId === "string" ? `request:${draft.requestId}` : `finding:${finding.id}`,
-    ],
-    reproductionNotes: reproductionNotes.length
-      ? reproductionNotes
-      : ["Reproduce using the preserved execution evidence and request provenance."],
+    evidence: evidence.length ? evidence : [typeof draft.requestId === "string" ? `request:${draft.requestId}` : `finding:${finding.id}`],
+    reproductionNotes: reproductionNotes.length ? reproductionNotes : ["Reproduce using the preserved execution evidence and request provenance."],
     remediation: typeof draft.remediation === "string" ? draft.remediation.trim() : undefined,
   } as const;
 
   const validation = validateReportInput(reportInput, "");
-  if (!validation.valid) {
-    throw new Error(`Report input invalid: ${validation.errors.join("; ")}`);
+  if (validation.blocked || !validation.readyForReview) {
+    throw new Error(`Report input is not ready: ${[...validation.missingFields, ...validation.warnings].join("; ")}`);
   }
   const report = composeReport(reportInput, platform);
-  return {
-    findingId,
-    platform,
-    report,
-    readyForReview: report.readyForReview,
-  };
+  return { findingId, platform, report, readyForReview: report.readyForReview };
 }

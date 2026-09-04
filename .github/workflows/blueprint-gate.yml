@@ -25,6 +25,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm check
       - run: pnpm check:master-contract
+      - run: node scripts/check-v4-route-contract.mjs
       - run: node scripts/check-application-menu.mjs
       - run: pnpm check:tool-runtime-contract
       - run: pnpm check:execution-contract

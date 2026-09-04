@@ -8,7 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { registerWithEmail, resetPassword, resendEmailVerification, signInWithEmail } from "@/firebase";
+import { registerWithEmail, resetPassword, resendEmailVerification, signInWithEmail, signInWithGoogle } from "@/firebase";
 import { useState } from "react";
 
 type AuthMode = "signin" | "register" | "reset";
@@ -34,6 +34,9 @@ function readableAuthError(error: unknown) {
     return "Email tersebut sudah terdaftar.";
   if (code === "auth/weak-password") return "Password minimal 6 karakter.";
   if (code === "auth/invalid-email") return "Format email tidak valid.";
+  if (code === "auth/network-request-failed") return "Koneksi ke Firebase gagal. Periksa internet dan Authorized domains Firebase, lalu coba lagi.";
+  if (code === "auth/unauthorized-domain") return "Domain aplikasi belum diizinkan di Firebase Authentication.";
+  if (code === "auth/popup-closed-by-user") return "Login Google dibatalkan.";
   if (error instanceof Error && error.message.includes("not configured"))
     return "Konfigurasi Firebase belum tersedia di environment ini.";
   return error instanceof Error
@@ -103,6 +106,40 @@ export function AuthDialog({ open, onOpenChange, onAuthenticated }: Props) {
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
+          {mode === "signin" && (
+            <>
+              <Button
+                type="button"
+                variant="outline"
+                disabled={busy}
+                className="w-full border-slate-600 bg-slate-900/60 text-slate-100 hover:bg-slate-800"
+                onClick={async () => {
+                  if (busy) return;
+                  setBusy(true);
+                  setError(null);
+                  setNotice(null);
+                  try {
+                    const user = await signInWithGoogle();
+                    if (user) {
+                      onOpenChange(false);
+                      onAuthenticated();
+                    }
+                  } catch (googleError) {
+                    setError(readableAuthError(googleError));
+                  } finally {
+                    setBusy(false);
+                  }
+                }}
+              >
+                Continue with Google
+              </Button>
+              <div className="flex items-center gap-3 text-xs text-slate-500" aria-hidden="true">
+                <span className="h-px flex-1 bg-slate-700" />
+                <span>or use email</span>
+                <span className="h-px flex-1 bg-slate-700" />
+              </div>
+            </>
+          )}
           <label
             className="block text-sm text-slate-300"
             htmlFor="angelmind-auth-email"

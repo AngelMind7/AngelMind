@@ -7,6 +7,15 @@ const failures = [];
 const requireAtLeast = (actual, expected, label) => { if (actual < expected) failures.push(`${label}: expected at least ${expected}, found ${actual}`); };
 const requireFile = file => { if (!existsSync(resolve(root, file))) failures.push(`missing required repository contract ${file}`); };
 
+const apiContract = read("server/api-v1-contract.ts");
+const apiEntries = [...apiContract.matchAll(/endpoint\("([^"]+)",\s*"([^"]+)",\s*"([^"]+)",\s*"([^"]+)"(?:,\s*"([^"]+)")?\)/g)];
+const apiGroups = new Set(apiEntries.map(match => match[1]));
+requireAtLeast(apiEntries.length, 240, "named V4 API endpoints");
+requireAtLeast(apiGroups.size, 28, "V4 API route groups");
+if (!apiContract.includes('API_V1_BLUEPRINT_TARGET = "260+"')) failures.push("V4 API contract must preserve the PDF 260+ target");
+const apiKeys = new Set(apiEntries.map(match => `${match[3]} ${match[4]}`));
+if (apiKeys.size !== apiEntries.length) failures.push("V4 API contract contains duplicate method/path pairs");
+
 const routeSource = read("client/src/authenticatedRoutes.ts");
 const routes = routeSource.match(/path:\s*"[^"]+"/g) ?? [];
 requireAtLeast(routes.length, 27, "authenticated routes");
@@ -87,4 +96,4 @@ for (const command of ["ffuf","dalfox","interactsh-client","cloudfox","nuclei","
 for (const marker of ["docker build --file Dockerfile.tools","docker run --rm angelmind-tools"]) if (!read(".github/workflows/container.yml").includes(marker)) failures.push(`container E2E workflow omits ${marker}`);
 
 if (failures.length) { console.error("Master contract check failed:"); for (const failure of failures) console.error(`- ${failure}`); process.exit(1); }
-console.log(`Master contract OK: ${routes.length} routes, 14 domains, ${literalModules + generatedModules} UTF modules, ${schemas.length} evidence schemas, >=47 correlation rules, ${migrations.length} migrations.`);
+console.log(`Master contract OK: ${routes.length} routes, 14 domains, ${apiEntries.length} named API endpoints across ${apiGroups.size} groups, ${literalModules + generatedModules} UTF modules, ${schemas.length} evidence schemas, ${migrations.length} migrations.`);

@@ -96,7 +96,7 @@ master_tools:
   - id: burp
     command: burp-rest-cli
     provisioning: external_artifact
-    risk_class: medium
+    risk_class: high
   - id: jwt_tool
     command: jwt_tool.py
     provisioning: pinned_source
@@ -147,6 +147,14 @@ master_tools:
     risk_class: low
   - id: trivy
     command: trivy
+    provisioning: pinned_binary
+    risk_class: low
+  - id: naabu
+    command: naabu
+    provisioning: pinned_binary
+    risk_class: low
+  - id: katana
+    command: katana
     provisioning: pinned_binary
     risk_class: low
   - id: custom_scripts

@@ -1,7 +1,7 @@
 import { getToolCatalogEntry } from "./tool-catalog";
 import { resolveCapability } from "./master-capability-registry";
 import { authorizeToolExecution } from "./tool-execution-policy";
-import { executeToolPipeline, type ToolExecutionPipelineResult } from "./tool-execution-pipeline";
+import { executeToolPipeline, persistToolPipelineObservation, type ToolExecutionPipelineResult } from "./tool-execution-pipeline";
 import { canonicalExecutionPath, type ExecutionState } from "./execution-state-machine";
 import { checkRegisteredAdapterHealth } from "./tool-runtime";
 
@@ -29,7 +29,7 @@ export type GovernedExecutionPlan = {
 
 export type GovernedExecutionResult =
   | { status: "blocked"; reason: string; plan: GovernedExecutionPlan | null }
-  | { status: "completed" | "failed" | "unavailable" | "timed_out"; plan: GovernedExecutionPlan; pipeline: ToolExecutionPipelineResult };
+  | { status: "completed" | "failed" | "unavailable" | "timed_out"; plan: GovernedExecutionPlan; pipeline: ToolExecutionPipelineResult; observationId?: number };
 
 function adapterIsHealthy(health: Awaited<ReturnType<typeof checkRegisteredAdapterHealth>>, toolKey: string) {
   return health.some(item => item.toolKey === toolKey && item.available === true);
@@ -88,5 +88,25 @@ export async function executeGovernedCapability(input: GovernedExecutionInput): 
     capabilities: [capability],
   });
 
-  return { status: pipeline.runtime.status, plan, pipeline };
+  let observationId: number | undefined;
+  if (input.sessionId && pipeline.runtime.status === "completed") {
+    const observation = await persistToolPipelineObservation(
+      input.userId,
+      { sessionId: input.sessionId, assetId: input.assetId, request: {
+        userId: input.userId,
+        workspaceId: input.workspaceId,
+        toolKey: plan.toolKey,
+        mode: input.mode,
+        target: input.target,
+        input: input.input,
+        scopeValidated: true,
+        humanApproval: authorization.humanApproval,
+        capabilities: [capability],
+      } },
+      pipeline
+    );
+    observationId = observation.id;
+  }
+
+  return { status: pipeline.runtime.status, plan, pipeline, observationId };
 }

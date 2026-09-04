@@ -48,7 +48,13 @@ export async function authorizeToolExecution(
     input.userId,
     input.workspaceId
   );
-  if (!context.allowed) return blocked(context.reason);
+  if (!context.allowed) {
+    return blocked(
+      "reason" in context && typeof context.reason === "string"
+        ? context.reason
+        : "execution_context_denied"
+    );
+  }
 
   const targetRequired = adapterRequiresTargetScope(input.toolKey);
   const target = input.target?.trim();

@@ -5,7 +5,7 @@ import { authorizeToolExecution } from "./tool-execution-policy";
 import { executeToolPipeline, persistToolPipelineObservation, type ToolExecutionPipelineResult } from "./tool-execution-pipeline";
 import { advanceExecution, canonicalExecutionPath, type ExecutionRisk, type ExecutionState } from "./execution-state-machine";
 import { checkRegisteredAdapterHealth } from "./tool-runtime";
-import { createExecutionLedger, advanceExecutionLedger } from "./execution-ledger";
+import { createExecutionLedger, advanceExecutionLedger, getExecutionLedger } from "./execution-ledger";
 import * as controlPlane from "./control-plane/service";
 
 export type GovernedExecutionInput = {
@@ -50,10 +50,13 @@ function stateBeforeExecution(risk: ExecutionRisk, scopeValidated: boolean, huma
 async function advanceLedgerTo(userId: number, jobId: number, target: ExecutionState) {
   let guard = 0;
   while (guard++ < canonicalExecutionPath().length) {
-    const ledger = await import("./execution-ledger").then(module => module.getExecutionLedger(userId, jobId));
+    const ledger = await getExecutionLedger(userId, jobId);
     if (ledger.payload.state === target) return ledger.payload.state;
     if (ledger.payload.state === "DONE") throw new Error(`Execution ledger cannot advance past DONE to ${target}.`);
+    const before = ledger.payload.state;
     await advanceExecutionLedger(userId, jobId);
+    const after = (await getExecutionLedger(userId, jobId)).payload.state;
+    if (after === before) throw new Error(`Execution ledger stalled at ${before}.`);
   }
   throw new Error(`Execution ledger could not reach ${target}.`);
 }
@@ -100,12 +103,11 @@ export async function executeGovernedCapability(input: GovernedExecutionInput): 
   const plan: GovernedExecutionPlan = { capability, toolKey: selectedTool.toolKey, fallbackToolKey: selectedTool.toolKey === primary.toolKey ? fallback?.toolKey : primary.toolKey, riskClass: selectedTool.riskClass as ExecutionRisk, selectedToolAvailable: primaryAvailable || fallbackAvailable, fallbackAvailable, states: canonicalExecutionPath() };
   if (!plan.selectedToolAvailable) return { status: "blocked", reason: "no_healthy_tool_adapter", plan, state: "FINGERPRINT" };
 
-  const ledgerRequestId = createHash("sha256").update(JSON.stringify({ userId: input.userId, workspaceId: input.workspaceId, capability, toolKey: plan.toolKey, mode: input.mode, input: input.input, target: input.target ?? null, sessionId: input.sessionId ?? null, assetId: input.assetId ?? null, createdAt: new Date().toISOString() })).digest("hex");
-  const ledger = await createExecutionLedger(input.userId, { workspaceId: input.workspaceId, capability, toolKey: plan.toolKey, risk: plan.riskClass, scopeValidated: false, approval: plan.riskClass === "high" || plan.riskClass === "critical" ? "pending" : "not_required", requestId: ledgerRequestId });
-  await advanceLedgerTo(input.userId, ledger.jobId, "POLICY_CHECK");
-
   const authorization = await authorizeToolExecution({ userId: input.userId, workspaceId: input.workspaceId, toolKey: plan.toolKey, mode: input.mode, target: input.target, input: input.input, approvalId: input.approvalId });
   if (!authorization.allowed) return { status: "blocked", reason: authorization.reason, plan, state: stateBeforeExecution(plan.riskClass, false, false) };
+
+  const ledgerRequestId = createHash("sha256").update(JSON.stringify({ userId: input.userId, workspaceId: input.workspaceId, capability, toolKey: plan.toolKey, mode: input.mode, input: input.input, target: input.target ?? null, sessionId: input.sessionId ?? null, assetId: input.assetId ?? null, createdAt: new Date().toISOString() })).digest("hex");
+  const ledger = await createExecutionLedger(input.userId, { workspaceId: input.workspaceId, capability, toolKey: plan.toolKey, risk: plan.riskClass, scopeValidated: true, approval: authorization.humanApproval ? "approved" : "not_required", requestId: ledgerRequestId });
   await advanceLedgerTo(input.userId, ledger.jobId, "QUEUE");
   const runtimeRequest = { toolKey: plan.toolKey, mode: input.mode, input: input.input, scopeValidated: true, humanApproval: authorization.humanApproval, capabilities: [capability] };
   await advanceLedgerTo(input.userId, ledger.jobId, "WORKER_EXECUTION");

@@ -1,0 +1,178 @@
+openapi: 3.1.0
+info:
+  title: AngelMind API
+  version: 4.0.0
+  description: >-
+    Blueprint-aligned API contract for the AngelMind unified security research
+    platform. High-risk security workflows are authorization-, scope-, policy-
+    and approval-gated; simulation adapters are used where an operational
+    capability would create unsafe external impact.
+servers:
+  - url: /api/v1
+security:
+  - bearerAuth: []
+tags:
+  - name: Health
+  - name: Identity
+  - name: Research
+  - name: Assets
+  - name: Tools
+  - name: AI
+  - name: Evidence
+  - name: Findings
+  - name: Reports
+  - name: Playbooks
+  - name: Knowledge
+  - name: Governance
+  - name: Audit
+  - name: Incidents
+  - name: Notifications
+  - name: Privacy
+  - name: Bug Bounty
+paths:
+  /health:
+    get:
+      security: []
+      tags: [Health]
+      responses:
+        '200': {description: Healthy}
+  /me:
+    get:
+      tags: [Identity]
+      responses: {'200': {description: Current user}}
+    patch:
+      tags: [Identity]
+      responses: {'200': {description: Updated user}}
+  /researches:
+    get:
+      tags: [Research]
+      responses: {'200': {description: Research list}}
+    post:
+      tags: [Research]
+      responses: {'201': {description: Research created}}
+  /researches/{id}:
+    parameters: [{name: id, in: path, required: true, schema: {type: integer}}]
+    get:
+      tags: [Research]
+      responses: {'200': {description: Research detail}}
+    patch:
+      tags: [Research]
+      responses: {'200': {description: Research updated}}
+    delete:
+      tags: [Research]
+      responses: {'204': {description: Research archived}}
+  /assets:
+    get:
+      tags: [Assets]
+      responses: {'200': {description: Asset list}}
+    post:
+      tags: [Assets]
+      responses: {'201': {description: Asset created}}
+  /tools:
+    get:
+      tags: [Tools]
+      responses: {'200': {description: UTF catalog}}
+  /tools/{id}:
+    parameters: [{name: id, in: path, required: true, schema: {type: string}}]
+    get:
+      tags: [Tools]
+      responses: {'200': {description: Tool detail}}
+    post:
+      tags: [Tools]
+      summary: Governed tool operation
+      responses:
+        '202': {description: Queued execution}
+        '403': {description: Scope or approval denied}
+  /tools/executions/{id}:
+    parameters: [{name: id, in: path, required: true, schema: {type: integer}}]
+    get:
+      tags: [Tools]
+      responses: {'200': {description: Execution status}}
+  /evidence:
+    get:
+      tags: [Evidence]
+      responses: {'200': {description: Evidence list}}
+    post:
+      tags: [Evidence]
+      responses: {'201': {description: Evidence created}}
+  /findings:
+    get:
+      tags: [Findings]
+      responses: {'200': {description: Findings list}}
+    post:
+      tags: [Findings]
+      responses: {'201': {description: Finding created}}
+  /reports:
+    get:
+      tags: [Reports]
+      responses: {'200': {description: Report list}}
+    post:
+      tags: [Reports]
+      responses: {'201': {description: Report created}}
+  /playbooks:
+    get:
+      tags: [Playbooks]
+      responses: {'200': {description: Playbook list}}
+    post:
+      tags: [Playbooks]
+      responses: {'201': {description: Playbook created}}
+  /knowledge/graph:
+    get:
+      tags: [Knowledge]
+      responses: {'200': {description: Unified knowledge graph}}
+  /governance/policies:
+    get:
+      tags: [Governance]
+      responses: {'200': {description: Policy list}}
+    post:
+      tags: [Governance]
+      responses: {'201': {description: Policy created}}
+  /governance/approvals:
+    get:
+      tags: [Governance]
+      responses: {'200': {description: Approval queue}}
+  /audit/integrity:
+    get:
+      tags: [Audit]
+      responses: {'200': {description: Audit chain verification}}
+  /incidents:
+    get:
+      tags: [Incidents]
+      responses: {'200': {description: Incident list}}
+    post:
+      tags: [Incidents]
+      responses: {'201': {description: Incident created}}
+  /notifications:
+    get:
+      tags: [Notifications]
+      responses: {'200': {description: Notification list}}
+  /privacy/requests:
+    get:
+      tags: [Privacy]
+      responses: {'200': {description: Privacy requests}}
+  /bugbounty/programs:
+    get:
+      tags: [Bug Bounty]
+      responses: {'200': {description: Bug bounty programs}}
+    post:
+      tags: [Bug Bounty]
+      responses: {'201': {description: Program created}}
+  /bugbounty/submissions:
+    get:
+      tags: [Bug Bounty]
+      responses: {'200': {description: Submission list}}
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: opaque
+x-angelmind-blueprint:
+  domains: 14
+  sidebarMenus: 24
+  utfModules: 50+
+  websitePages: 100+
+  apiEndpoints: 260+
+  databaseTables: 50+
+  source: "ANGELMIND V4.0 master blueprint"
+  executionPolicy: "scope + authorization + policy + approval + audit"

@@ -29,7 +29,6 @@ jobs:
               s = s.replace(old_import, new_import, 1)
           start = s.index('  tools: router({')
           end = s.index('  control: router({', start)
-          old = s[start:end]
           new = '''  tools: router({
     catalog: protectedProcedure
       .input(
@@ -111,8 +110,8 @@ jobs:
       }),
   }),
 '''
-          if old.count('  tools: router({') != 1:
-              raise SystemExit('unexpected tools router anchor count')
+          if s.count('  tools: router({') != 1 or s.count('  control: router({') < 1:
+              raise SystemExit('router anchors not found')
           s = s[:start] + new + s[end:]
           p.write_text(s)
       - name: Commit router integration and remove one-shot workflow

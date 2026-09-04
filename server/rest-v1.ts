@@ -133,7 +133,8 @@ export function registerRestV1Routes(app: Express) {
       const auth = await requireUser(req, "tools:read");
       const jobId = parsePositiveInteger(req.params.jobId, "jobId");
       const progress = await getExecutionProgress(auth.user.id, jobId);
-      requireBoundWorkspace(auth, progress.workspaceId);
+      const workspaceId = progress.workspaceId;
+      requireBoundWorkspace(auth, workspaceId);
       res.json({ data: progress, request_id: requestId(res), apiVersion: REST_API_VERSION });
     } catch (error) { sendError(res, error); }
   });
@@ -174,7 +175,7 @@ export function registerRestV1Routes(app: Express) {
       const db = await getDb();
       if (!db) throw new Error("Database tidak tersedia.");
       const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, runId)).limit(1);
-      if (!run || (auth.workspaceId !== undefined && auth.workspaceId !== null && auth.workspaceId !== run.workspaceId) || !(await canAccessWorkspace(auth.user.id, run?.workspaceId ?? 0, "read"))) return res.status(404).json({ error: true, code: "NOT_FOUND", message: "AI run tidak ditemukan.", details: {}, request_id: requestId(res), apiVersion: REST_API_VERSION });
+      if (!run || run.workspaceId === null || (auth.workspaceId !== undefined && auth.workspaceId !== null && auth.workspaceId !== run.workspaceId) || !(await canAccessWorkspace(auth.user.id, run.workspaceId, "read"))) return res.status(404).json({ error: true, code: "NOT_FOUND", message: "AI run tidak ditemukan.", details: {}, request_id: requestId(res), apiVersion: REST_API_VERSION });
       const output = await getAiRunOutput(auth.user.id, runId);
       res.json({ data: { ...run, output }, request_id: requestId(res), apiVersion: REST_API_VERSION });
     } catch (error) { sendError(res, error); }

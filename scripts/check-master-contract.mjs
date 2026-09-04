@@ -32,7 +32,7 @@ for (const route of ["/","/product","/features","/how-it-works","/bug-bounty","/
 
 const domainDocs = ["01-identity","02-organization","03-asset-intel","04-threat-surface","05-vuln-research","06-offensive-engine","07-red-team","08-purple-team","09-bug-bounty","10-findings","11-reporting","12-threat-intel","13-ai-automation","14-governance"];
 for (const doc of domainDocs) requireFile(`docs/domain/${doc}.md`);
-for (const file of ["docs/application-menu.md","docs/database-schema-contract.md","docs/api/openapi.yaml","docs/api/endpoint-inventory.md","docs/blueprint-conformance.md","docs/launch-gate.md","docs/architecture/system-architecture.md","docs/architecture/data-flow.md","docs/architecture/security-model.md","railway.json","infrastructure/cloudflare/wrangler.toml","infrastructure/supabase/config.toml","infrastructure/firebase/firebase.json","infrastructure/firebase/.firebaserc","infrastructure/firebase/firestore.rules","infrastructure/firebase/firestore.indexes.json","infrastructure/cloudflare/src/index.ts","infrastructure/firebase/functions/index.js","infrastructure/firebase/public/index.html","server/tool-simulation.ts","server/chain-engine.ts","server/egress-policy.ts","server/mobile-analysis.ts","client/src/pages/ClientPortal.tsx"]) requireFile(file);
+for (const file of ["docs/application-menu.md","docs/database-schema-contract.md","docs/api/openapi.yaml","docs/api/endpoint-inventory.md","docs/blueprint-conformance.md","docs/launch-gate.md","docs/architecture/system-architecture.md","docs/architecture/data-flow.md","docs/architecture/security-model.md","railway.json","infrastructure/cloudflare/wrangler.toml","infrastructure/supabase/config.toml","infrastructure/firebase/firebase.json","infrastructure/firebase/.firebaserc","infrastructure/firebase/firestore.rules","infrastructure/firebase/firestore.indexes.json","infrastructure/cloudflare/src/index.ts","infrastructure/firebase/functions/index.js","infrastructure/firebase/public/index.html","server/tool-simulation.ts","server/tool-simulation.test.ts","server/simulation-rest.ts","server/chain-engine.ts","server/egress-policy.ts","server/mobile-analysis.ts","client/src/pages/ClientPortal.tsx"]) requireFile(file);
 
 const catalog = read("server/tool-catalog-data.ts");
 const requiredTools = ["burp_suite_pro","jwt_tool","dalfox","ssrfmap","interactsh","ffuf","cloudfox","graphql_cop","sqlmap","nuclei","subfinder","httpx","gitleaks","trivy","naabu","katana","custom_scripts"];
@@ -62,6 +62,8 @@ if (!read("client/src/pages/MissionControl.tsx").includes("/api/v1/executions/")
 
 const simulation = read("server/tool-simulation.ts");
 for (const marker of ["simulateRegisteredTool","synthetic","inputSha256","mode: \"simulation\""]) if (!simulation.includes(marker)) failures.push(`simulation engine missing ${marker}`);
+const simulationRest = read("server/simulation-rest.ts");
+for (const marker of ["registerSimulationRoutes","/api/v1/simulations/run","authenticateRequest","canAccessWorkspace","simulateGovernedChain"]) if (!simulationRest.includes(marker)) failures.push(`simulation API missing ${marker}`);
 const egress = read("server/egress-policy.ts");
 for (const marker of ["allowedTargetsOnly","blockInternalRanges","validateEgressPolicy"]) if (!egress.includes(marker)) failures.push(`egress governance missing ${marker}`);
 const mobile = read("server/mobile-analysis.ts");

@@ -12,6 +12,7 @@ import { registerFirebaseAuthRoutes } from "../firebase-auth";
 import { validateRuntimeConfig } from "./env";
 import { registerRestV1Routes } from "../rest-v1";
 import { registerRestV1CoreResourceRoutes } from "../rest-v1-core-resources";
+import { registerToolRestV1Routes } from "../rest-v1-tools";
 import { registerRealtimeRoutes } from "../realtime";
 import { registerRealtimeWebSocket } from "../realtime-websocket";
 import { registerApiRateLimit } from "../rate-limit";
@@ -41,6 +42,7 @@ async function startServer() {
   registerFirebaseAuthRoutes(app);
   registerRestV1Routes(app);
   registerRestV1CoreResourceRoutes(app);
+  registerToolRestV1Routes(app);
   registerSimulationRoutes(app);
   registerRealtimeRoutes(app);
   registerRealtimeWebSocket(server);

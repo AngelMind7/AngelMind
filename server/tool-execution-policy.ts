@@ -27,6 +27,7 @@ export type GovernedToolExecutionDecision =
       scopeDigest: string;
       riskClass: ToolRiskClass;
       target?: string;
+      humanApproval: boolean;
     }
   | {
       allowed: false;
@@ -71,10 +72,7 @@ export async function authorizeToolExecution(
   let humanApproval = false;
   if (tool.riskClass === "high" || tool.riskClass === "critical") {
     if (!input.approvalId) return blocked("human_approval_required");
-    const approvals = await controlPlane.listApprovals(
-      input.userId,
-      "user"
-    );
+    const approvals = await controlPlane.listApprovals(input.userId, "user");
     const approval = approvals.find(item => item.id === input.approvalId);
     if (!approval || approval.status !== "approved") {
       return blocked("approval_not_approved");
@@ -94,7 +92,10 @@ export async function authorizeToolExecution(
     } catch {
       return blocked("approval_context_invalid");
     }
-    if (approvalContext.toolId !== input.toolKey && approvalContext.tool !== input.toolKey) {
+    if (
+      approvalContext.toolId !== input.toolKey &&
+      approvalContext.tool !== input.toolKey
+    ) {
       return blocked("approval_tool_mismatch");
     }
     if (approvalContext.mode !== input.mode) {
@@ -126,5 +127,6 @@ export async function authorizeToolExecution(
     scopeDigest: context.scopeDigest,
     riskClass: tool.riskClass,
     target,
+    humanApproval,
   };
 }

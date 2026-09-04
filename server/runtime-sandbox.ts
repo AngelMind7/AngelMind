@@ -6,11 +6,13 @@ export type SandboxLimits = {
 };
 
 const MAX_INPUT_ENV_BYTES = 64 * 1024;
+const MAX_CONCURRENT_PROCESSES = 8;
+let activeProcesses = 0;
 
 /**
  * Process-level containment for the runtime boundary. The hard isolation
  * boundary remains the deployment container; this layer adds fail-closed
- * environment, resource and output limits before a tool process starts.
+ * environment, timeout, concurrency and output limits before a tool process starts.
  */
 export function sandboxSpawn(
   binary: string,
@@ -33,16 +35,38 @@ export function sandboxSpawn(
     throw new Error("sandbox_timeout_limit");
   if (limits.maxOutputBytes < 1_024 || limits.maxOutputBytes > 2_000_000)
     throw new Error("sandbox_output_limit");
+  if (activeProcesses >= MAX_CONCURRENT_PROCESSES)
+    throw new Error("sandbox_concurrency_limit");
 
-  return spawn(binary, args, {
-    cwd: "/tmp",
-    env,
-    shell: false,
-    stdio: ["ignore", "pipe", "pipe"],
-    windowsHide: true,
-  });
+  activeProcesses += 1;
+  let released = false;
+  const release = () => {
+    if (released) return;
+    released = true;
+    activeProcesses = Math.max(0, activeProcesses - 1);
+  };
+
+  try {
+    const child = spawn(binary, args, {
+      cwd: "/tmp",
+      env,
+      shell: false,
+      stdio: ["ignore", "pipe", "pipe"],
+      windowsHide: true,
+    });
+    child.once("close", release);
+    child.once("error", release);
+    return child;
+  } catch (error) {
+    release();
+    throw error;
+  }
 }
 
 export function sandboxOutputWithinLimit(value: string, maxBytes: number) {
   return Buffer.byteLength(value, "utf8") <= maxBytes;
+}
+
+export function getSandboxConcurrency() {
+  return { active: activeProcesses, limit: MAX_CONCURRENT_PROCESSES } as const;
 }

@@ -40,8 +40,8 @@ export function validateChainDefinition(chain: ChainDefinition) {
 
   const visiting = new Set<string>();
   const visited = new Set<string>();
-  const byId = new Map(chain.nodes.map(node => [node.id, node]));
-  function visit(id: string) {
+  const byId = new Map<string, ChainNode>(chain.nodes.map(node => [node.id, node]));
+  function visit(id: string): boolean {
     if (visiting.has(id)) return false;
     if (visited.has(id)) return true;
     visiting.add(id);
@@ -60,12 +60,12 @@ export function planChainExecution(chain: ChainDefinition) {
   const validation = validateChainDefinition(chain);
   if (!validation.valid) throw new Error(`Invalid chain: ${validation.errors.join(",")}`);
 
-  const remaining = new Map(chain.nodes.map(node => [node.id, node]));
+  const remaining = new Map<string, ChainNode>(chain.nodes.map(node => [node.id, node]));
   const completed = new Set<string>();
   const waves: ChainNode[][] = [];
 
   while (remaining.size) {
-    const ready = [...remaining.values()].filter(node => (node.dependsOn ?? []).every(id => completed.has(id)));
+    const ready = Array.from(remaining.values()).filter(node => (node.dependsOn ?? []).every((id: string) => completed.has(id)));
     if (!ready.length) throw new Error("Unable to produce a chain execution plan.");
     waves.push(ready);
     for (const node of ready) {

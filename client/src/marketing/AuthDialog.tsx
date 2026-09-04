@@ -106,7 +106,7 @@ export function AuthDialog({ open, onOpenChange, onAuthenticated }: Props) {
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          {mode === "signin" && (
+          {(mode === "signin" || mode === "register") && (
             <>
               <Button
                 type="button"

@@ -3,9 +3,9 @@ import { getToolCatalogEntry } from "./tool-catalog";
 import { resolveCapability } from "./master-capability-registry";
 import { authorizeToolExecution } from "./tool-execution-policy";
 import { executeToolPipeline, persistToolPipelineObservation, type ToolExecutionPipelineResult } from "./tool-execution-pipeline";
-import { advanceExecution, canonicalExecutionPath, type ExecutionRisk, type ExecutionState } from "./execution-state-machine";
+import { canonicalExecutionPath, type ExecutionRisk, type ExecutionState } from "./execution-state-machine";
 import { checkRegisteredAdapterHealth } from "./tool-runtime";
-import { createExecutionLedger, advanceExecutionLedger, getExecutionLedger } from "./execution-ledger";
+import { createExecutionLedger, advanceExecutionLedger, getExecutionLedger, persistExecutionReport } from "./execution-ledger";
 import { generateExecutionReport, type ExecutionReport } from "./execution-assurance";
 import * as controlPlane from "./control-plane/service";
 
@@ -33,7 +33,7 @@ export type GovernedExecutionPlan = {
 
 export type GovernedExecutionResult =
   | { status: "blocked"; reason: string; plan: GovernedExecutionPlan | null; state: ExecutionState }
-  | { status: "completed" | "failed" | "unavailable" | "timed_out"; plan: GovernedExecutionPlan; pipeline: ToolExecutionPipelineResult; observationId?: number; findingId?: number; report?: ExecutionReport; state: ExecutionState };
+  | { status: "completed" | "failed" | "unavailable" | "timed_out" | "blocked"; plan: GovernedExecutionPlan; pipeline: ToolExecutionPipelineResult; observationId?: number; findingId?: number; report?: ExecutionReport; state: ExecutionState };
 
 function adapterIsHealthy(health: Awaited<ReturnType<typeof checkRegisteredAdapterHealth>>, toolKey: string) {
   return health.some(item => item.toolKey === toolKey && item.available === true);
@@ -42,7 +42,10 @@ function adapterIsHealthy(health: Awaited<ReturnType<typeof checkRegisteredAdapt
 function stateBeforeExecution(risk: ExecutionRisk, scopeValidated: boolean, humanApproval: boolean): ExecutionState {
   let context = { state: "INIT" as ExecutionState, risk, scopeValidated, approval: humanApproval ? "approved" as const : "not_required" as const };
   for (const _ of ["RECON", "FINGERPRINT", "VECTOR_SELECTION", "POLICY_CHECK", "APPROVAL_GATE", "QUEUE"] as const) {
-    context = advanceExecution(context);
+    const previous = context.state;
+    const next = require("./execution-state-machine") as typeof import("./execution-state-machine");
+    context = next.advanceExecution(context);
+    if (context.state === previous) return context.state;
     if (context.state === "APPROVAL_GATE" && !humanApproval && (risk === "high" || risk === "critical")) return context.state;
   }
   return context.state;
@@ -155,6 +158,7 @@ export async function executeGovernedCapability(input: GovernedExecutionInput): 
         await advanceLedgerTo(input.userId, ledger.jobId, "CHAIN_VALIDATION");
         await advanceLedgerTo(input.userId, ledger.jobId, "IMPACT_PROOF");
         await advanceLedgerTo(input.userId, ledger.jobId, "REPORT_GENERATION");
+        await persistExecutionReport(input.userId, ledger.jobId, report as unknown as Record<string, unknown>);
       }
     }
   }

@@ -35,33 +35,74 @@ const expected = [
   "custom_scripts",
 ];
 
+const catalogKeysExpected = new Set([
+  "burp_suite_pro",
+  "jwt_tool",
+  "dalfox",
+  "ssrfmap",
+  "interactsh",
+  "ffuf",
+  "cloudfox",
+  "secrets_detection.1",
+  "graphql_cop",
+  "sqlmap",
+  "nuclei",
+  "asset_intelligence.28",
+  "httpx",
+  "dependencies.12",
+  "naabu",
+  "katana",
+  "custom_scripts",
+]);
+
 const catalog = files["server/tool-catalog-data.ts"];
 const config = files["config/tool-runtime-packs.yaml"];
 const runtime = files["server/tool-runtime.ts"];
 const smoke = files["scripts/runtime-tool-smoke-test.sh"];
 const docker = files["Dockerfile.tools"];
-
-const count = (text, value) => (text.match(new RegExp(value.replace(/[.*+?^${}()|[\\]\\]/g, "\\$&"), "g")) ?? []).length;
 const failures = [];
-
-if ((catalog.match(/"toolKey":/g) ?? []).length !== expected.length) {
-  failures.push(`catalog must contain exactly ${expected.length} toolKey entries`);
-}
 
 const catalogKeys = new Set(
   [...catalog.matchAll(/"toolKey":\s*"([^"]+)"/g)].map(match => match[1])
 );
-const aliases = new Set(["secrets_detection.1", "asset_intelligence.28", "dependencies.12"]);
-const requiredCatalogKeys = expected.map(key => aliases.has(key) ? key : key);
-for (const key of requiredCatalogKeys) {
+if (catalogKeys.size !== expected.length) {
+  failures.push(`catalog must contain exactly ${expected.length} unique toolKey entries`);
+}
+for (const key of catalogKeysExpected) {
   if (!catalogKeys.has(key)) failures.push(`catalog missing ${key}`);
 }
 
-for (const key of expected.filter(key => !aliases.has(key))) {
-  if (!runtime.includes(`toolKey: "${key}"`)) failures.push(`runtime adapter missing ${key}`);
+for (const key of expected) {
+  const runtimeKey =
+    key === "gitleaks"
+      ? "secrets_detection.1"
+      : key === "subfinder"
+        ? "asset_intelligence.28"
+        : key === "trivy"
+          ? "dependencies.12"
+          : key;
+  if (!runtime.includes(`toolKey: "${runtimeKey}"`)) {
+    failures.push(`runtime adapter missing ${key} (${runtimeKey})`);
+  }
 }
 
-for (const binary of ["ffuf", "dalfox", "interactsh-client", "cloudfox", "nuclei", "subfinder", "httpx", "gitleaks", "trivy", "sqlmap", "jwt_tool.py", "ssrfmap", "graphql-cop", "naabu", "katana"]) {
+for (const binary of [
+  "ffuf",
+  "dalfox",
+  "interactsh-client",
+  "cloudfox",
+  "nuclei",
+  "subfinder",
+  "httpx",
+  "gitleaks",
+  "trivy",
+  "sqlmap",
+  "jwt_tool.py",
+  "ssrfmap",
+  "graphql-cop",
+  "naabu",
+  "katana",
+]) {
   if (!smoke.includes(binary)) failures.push(`smoke test missing ${binary}`);
 }
 
@@ -81,4 +122,6 @@ if (failures.length) {
   process.exit(1);
 }
 
-console.log(`Tool runtime contract OK: ${expected.length} canonical tools represented across catalog, runtime, smoke test, image provisioning, and runtime manifest.`);
+console.log(
+  `Tool runtime contract OK: ${expected.length} tools represented across catalog, runtime, smoke test, image provisioning, and runtime manifest.`
+);

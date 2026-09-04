@@ -8,10 +8,30 @@ const requireAtLeast = (actual, expected, label) => {
   if (actual < expected) failures.push(`${label}: expected at least ${expected}, found ${actual}`);
 };
 
-const routes = read("client/src/authenticatedRoutes.ts").match(/path:\s*"[^"]+"/g) ?? [];
+const routeSource = read("client/src/authenticatedRoutes.ts");
+const routes = routeSource.match(/path:\s*"[^"]+"/g) ?? [];
 requireAtLeast(routes.length, 27, "authenticated routes");
-for (const route of ["/assets", "/tools", "/tools/:id", "/ai", "/research", "/research/:id", "/knowledge", "/findings", "/reports", "/audit"]) {
-  if (!routes.some(value => value.includes(`"${route}"`))) failures.push(`missing required route ${route}`);
+const requiredRoutes = [
+  "/dashboard", "/mission-control", "/coverage", "/research", "/research/new", "/research/:id",
+  "/research/:id/objectives", "/research/:id/hypotheses", "/research/:id/tasks", "/research/:id/executions",
+  "/research/:id/observations", "/research/:id/evidence", "/research/:id/findings", "/research/:id/reports",
+  "/research/:id/timeline", "/assets", "/assets/new", "/assets/:id", "/tools", "/tools/capabilities",
+  "/tools/installed", "/tools/health", "/tools/history", "/tools/:id", "/ai", "/ai/providers", "/ai/models",
+  "/ai/connections", "/ai/routing", "/ai/usage", "/knowledge", "/collaboration", "/saved-views",
+  "/tags-notes", "/reports", "/reports/new", "/reports/:id", "/workspaces", "/workspaces/new", "/workspaces/:id",
+  "/organizations", "/organizations/new", "/organizations/:id", "/governance", "/governance/approvals",
+  "/governance/policies", "/findings", "/findings/:id", "/audit", "/operations", "/operations/health",
+  "/operations/queue", "/operations/workers", "/assurance", "/assurance/quality", "/assurance/compliance",
+  "/incidents", "/incidents/new", "/incidents/:id", "/security", "/security/sessions", "/security/mfa",
+  "/security/history", "/security/api-keys", "/notifications", "/notifications/settings", "/settings",
+  "/settings/profile", "/settings/team", "/settings/policies", "/settings/credentials", "/settings/preferences",
+  "/settings/integrations", "/settings/integrations/new", "/settings/developer", "/settings/developer/sdk",
+  "/settings/developer/keys", "/settings/developer/logs", "/settings/billing", "/settings/billing/invoices",
+  "/settings/billing/payment", "/settings/billing/upgrade", "/privacy", "/privacy/export", "/privacy/delete",
+  "/privacy/requests", "/privacy/downloads"
+];
+for (const route of requiredRoutes) {
+  if (!routeSource.includes(`path: "${route}"`)) failures.push(`missing blueprint route ${route}`);
 }
 
 const catalog = read("server/tool-catalog-data.ts");

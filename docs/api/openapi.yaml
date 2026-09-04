@@ -22,6 +22,7 @@ tags:
   - name: Findings
   - name: Reports
   - name: Playbooks
+  - name: Simulation
   - name: Knowledge
   - name: Governance
   - name: Audit
@@ -88,6 +89,41 @@ paths:
     get:
       tags: [Tools]
       responses: {'200': {description: Execution status}}
+  /simulations/run:
+    post:
+      tags: [Simulation]
+      summary: Run a deterministic, non-targeting chain simulation
+      description: >-
+        Requires authentication. Executes only synthetic nodes, validates DAG
+        dependencies and bounded loops, and returns synthetic evidence hashes.
+        No network or target traffic is generated.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [workspaceId, name, nodes]
+              properties:
+                workspaceId: {type: integer, minimum: 1}
+                name: {type: string, minLength: 1}
+                input: {}
+                nodes:
+                  type: array
+                  minItems: 1
+                  items:
+                    type: object
+                    required: [id, kind, capability]
+                    properties:
+                      id: {type: string}
+                      kind: {type: string, enum: [action, condition, foreach, while, parallel, merge, sleep, subchain]}
+                      capability: {type: string}
+                      dependsOn: {type: array, items: {type: string}}
+                      maxIterations: {type: integer, minimum: 1, maximum: 100}
+      responses:
+        '200': {description: Synthetic simulation completed}
+        '400': {description: Invalid graph or request}
+        '401': {description: Authentication required}
   /evidence:
     get:
       tags: [Evidence]

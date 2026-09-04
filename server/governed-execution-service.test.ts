@@ -51,6 +51,7 @@ describe("executeGovernedCapability", () => {
       rawOutputSha256: "a".repeat(64),
       parsedRecords: [{}],
       evidence: null,
+      correlation: null,
       provenance: { toolKey: "burp_suite_pro", requestId: "req-1", acquisition: "passive_readonly", rawOutputSha256: "a".repeat(64), normalizedEvidenceSha256: null },
     });
 

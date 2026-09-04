@@ -12,7 +12,6 @@ permissions:
 
 jobs:
   patch:
-    if: github.actor == 'AngelMind7'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -75,13 +74,11 @@ jobs:
       }),
   }),
 '''
+          if end < 0:
+              raise SystemExit('governance router boundary not found')
           if start < 0:
-              if end < 0:
-                  raise SystemExit('governance router boundary not found')
               s = s[:end] + new + s[end:]
           else:
-              if end < 0:
-                  raise SystemExit('governance router boundary not found')
               s = s[:start] + new + s[end:]
           p.write_text(s)
           PY

@@ -8,23 +8,23 @@ This matrix is the working completion checklist against the supplied V4 master b
 | 24 application menus | `docs/application-menu.md` + authenticated route registry | present |
 | 50+ UTF modules | `server/tool-catalog-data.ts` canonical registry | present |
 | High-risk UTF governance | human approval + scope + simulation-only/default-disabled dispositions | enforced |
-| Deterministic UTF simulation | `server/tool-simulation.ts` + unit coverage; synthetic output never targets external systems | present |
+| Deterministic UTF simulation | `server/tool-simulation.ts` + `server/simulation-engine.ts` + unit coverage; synthetic output never targets external systems | executable |
 | 100+ public/authenticated page surface | public/authenticated route registries and UI page groups | present |
-| Dual UI / client portal | `/client/:orgSlug` light executive portal surface; live tenant/session binding remains deployment work | implemented contract |
+| Dual UI / client portal | `/client/:orgSlug` interactive light executive portal with findings/remediation/compliance/audit views | implemented |
 | 260+ API target surface | `docs/api/openapi.yaml`, endpoint inventory, REST/tRPC implementation | contract tracked |
 | 50+ logical tables | `docs/database-schema-contract.md` + Drizzle migration layer | contract tracked |
 | Unified knowledge graph | knowledge graph service/contracts and UI | present |
 | Governance and approvals | policy, approval, audit and execution gates | present |
 | Bug bounty | program, researcher onboarding, submission, validation, reward/disclosure contracts | present |
 | AI automation | providers, models, workers, playbooks, usage/budget/evaluation | present |
-| DAG chain builder | `server/chain-engine.ts` validates dependencies, cycles and bounded foreach/while loops, and produces parallel execution waves | present |
-| Gap 1 — proxy/egress | `server/egress-policy.ts` models rotation, provider class, fallback, target-only and internal-range controls; provider credentials remain deployment-only | governed contract |
+| DAG chain builder | `server/chain-engine.ts` validates dependencies, cycles and bounded foreach/while loops, and produces parallel execution waves | executable |
+| Gap 1 — proxy/egress | `server/egress-policy.ts` models rotation, provider class, fallback, target-only and internal-range controls; provider credentials remain deployment-only | governed |
 | Gap 2 — mobile analysis | `server/mobile-analysis.ts` provides static analysis plus queued Android/iOS plans with lab/resource constraints | implemented contract |
 | Gap 3 — database consolidation | Drizzle relational layer plus R2 and phased provider strategy; extra stores are optional by scale | implemented strategy |
-| Gap 4 — custom scripts | sandboxed custom-script safety contract, static-analysis expectations, quotas and audit requirements | governed |
-| Gap 5 — chain builder | DAG node types, dependency planning, cycle detection and bounded loops | present |
+| Gap 4 — custom scripts | `server/custom-script-sandbox.ts` fingerprints and statically screens Python/JS/Go/Docker/AI-prompt source with byte limits; execution is not performed by the analyzer | executable safety gate |
+| Gap 5 — chain builder | DAG node types, dependency planning, cycle detection and bounded loops | executable |
 | Gap 6 — C2/domain-fronting | high-risk C2 families remain simulation/governance metadata; no evasion implementation | governed/simulation-only |
-| Gap 7 — non-technical client UX | dedicated light client portal with executive/report/remediation/compliance/audit sections | implemented contract |
+| Gap 7 — non-technical client UX | dedicated light client portal with executive/report/remediation/compliance/audit sections | implemented |
 | Gap 8 — naming conflict | canonical `/ai/workers`, `/redteam/implants`, `/utf/runners` namespaces; legacy `/agents` retained only as compatibility aliases | implemented |
 | Testing | CI, unit/integration, E2E, migration, runtime and security checks | present |
 | Load testing | `scripts/load-test.mjs` + launch gate | tracked |

@@ -35,12 +35,7 @@ function adapterIsHealthy(health: Awaited<ReturnType<typeof checkRegisteredAdapt
   return health.some(item => item.toolKey === toolKey && item.available === true);
 }
 
-/**
- * Capability-driven execution boundary. This service deliberately performs
- * planning/health discovery before authorization, then authorizes the exact
- * selected tool immediately before the runtime call. The target is used only
- * for authorization; the runtime receives the already-validated input string.
- */
+/** Capability-driven execution boundary. Authorization remains the final authority. */
 export async function executeGovernedCapability(input: GovernedExecutionInput): Promise<GovernedExecutionResult> {
   const capability = input.capability.trim();
   const resolved = resolveCapability(capability);
@@ -52,7 +47,7 @@ export async function executeGovernedCapability(input: GovernedExecutionInput): 
   const health = await checkRegisteredAdapterHealth();
   const primaryAvailable = adapterIsHealthy(health, primary.toolKey);
   const fallbackAvailable = fallback ? adapterIsHealthy(health, fallback.toolKey) : false;
-  const selectedTool = primaryAvailable || !fallbackAvailable ? primary : fallback!;
+  const selectedTool = primaryAvailable ? primary : fallbackAvailable && fallback ? fallback : primary;
 
   const plan: GovernedExecutionPlan = {
     capability,
@@ -63,7 +58,6 @@ export async function executeGovernedCapability(input: GovernedExecutionInput): 
     fallbackAvailable,
     states: canonicalExecutionPath(),
   };
-
   if (!plan.selectedToolAvailable) return { status: "blocked", reason: "no_healthy_tool_adapter", plan };
 
   const authorization = await authorizeToolExecution({
@@ -86,7 +80,6 @@ export async function executeGovernedCapability(input: GovernedExecutionInput): 
     capabilities: [capability],
   };
   const pipeline = await executeToolPipeline(runtimeRequest);
-
   let observationId: number | undefined;
   if (input.sessionId && pipeline.runtime.status === "completed") {
     const observation = await persistToolPipelineObservation(
@@ -96,6 +89,5 @@ export async function executeGovernedCapability(input: GovernedExecutionInput): 
     );
     observationId = observation.id;
   }
-
   return { status: pipeline.runtime.status, plan, pipeline, observationId };
 }

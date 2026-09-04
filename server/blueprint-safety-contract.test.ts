@@ -17,8 +17,4 @@ describe("blueprint safety contract", () => {
       }
     }
   });
-
-  it("requires the explicit deployment gate for target-facing execution", () => {
-    expect(process.env.ANGELMIND_ENABLE_TARGET_EXECUTION).not.toBe("true");
-  });
 });

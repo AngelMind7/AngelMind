@@ -19,15 +19,16 @@ A runtime resource policy module defines bounded input, timeout, output, concurr
 
 A deterministic recovery planner defines restart/lease-expiry behavior from durable execution checkpoints. It resumes safe non-terminal checkpoints, finalizes a worker checkpoint when runtime completion is already known, retries failed or expired workers, and holds active workers to avoid duplicate execution. The planner is side-effect free and covered by regression tests. The durable job store already provides lease/heartbeat/claim/retry/dead-letter primitives used by the platform queue.
 
+Execution-ledger transitions now publish idempotent realtime progress events through the existing outbox/event transport. The authenticated realtime hook exposes those events to dashboard consumers, and Mission Control renders the latest governed execution state, capability, tool, revision, and realtime connection status.
+
 ## Current execution chain
 
 `Capability → Adapter Selection → Health → Authorization → Durable Ledger → Runtime Resource Gate → Runtime → Parse → Normalize → Observation → Evidence → Finding → Correlation → Chain Validation → Impact Proof → Report Generation`
 
 `Submission → DONE` remains intentionally outside the automatic execution path. Reports are review-gated and target-facing submission is not an automatic consequence of correlation.
 
-## Remaining repository gates
+## Remaining repository gate
 
-1. Expose persisted execution-ledger state to the dashboard/progress surface using the existing application transport/realtime mechanisms.
-2. Final repository-wide blueprint audit, contract tests, and CI verification before deployment work.
+1. Final repository-wide blueprint audit, contract tests, and CI verification before deployment work.
 
 Deployment and Railway/Supabase/Firebase/Cloudflare configuration remain intentionally out of scope until the GitHub implementation pass is complete.

@@ -24,6 +24,8 @@ export const masterCapabilityRegistry: readonly MasterCapability[] = [
   { capability: "parameter-manipulation", primaryAdapter: "ffuf", fallbackAdapter: "burp_suite_pro" },
   { capability: "template-injection-testing", primaryAdapter: "custom_scripts" },
   { capability: "file-upload-testing", primaryAdapter: "burp_suite_pro", fallbackAdapter: "custom_scripts" },
+  { capability: "port-discovery", primaryAdapter: "naabu" },
+  { capability: "endpoint-mining", primaryAdapter: "katana" },
 ];
 
 export function resolveCapability(capability: string) {

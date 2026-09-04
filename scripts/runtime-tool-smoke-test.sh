@@ -3,7 +3,7 @@ set -eu
 
 # This is an execution smoke test, not catalog metadata: each command must
 # start successfully and emit a version/help response without contacting a target.
-required="ffuf dalfox interactsh-client cloudfox nuclei subfinder httpx gitleaks trivy sqlmap jwt_tool.py ssrfmap graphql-cop"
+required="ffuf dalfox interactsh-client cloudfox nuclei subfinder httpx gitleaks trivy sqlmap jwt_tool.py ssrfmap graphql-cop naabu katana"
 missing=0
 for command in $required; do
   if ! command -v "$command" >/dev/null 2>&1; then

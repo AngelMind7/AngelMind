@@ -15,10 +15,10 @@ for (const route of ["/assets", "/tools", "/tools/:id", "/ai", "/research", "/re
 }
 
 const catalog = read("server/tool-catalog-data.ts");
-const requiredTools = ["burp_suite_pro", "jwt_tool", "dalfox", "ssrfmap", "interactsh", "ffuf", "cloudfox", "graphql_cop", "sqlmap", "nuclei", "subfinder", "httpx", "gitleaks", "trivy", "custom_scripts"];
+const requiredTools = ["burp_suite_pro", "jwt_tool", "dalfox", "ssrfmap", "interactsh", "ffuf", "cloudfox", "graphql_cop", "sqlmap", "nuclei", "subfinder", "httpx", "gitleaks", "trivy", "naabu", "katana", "custom_scripts"];
 const toolAliases = { subfinder: "asset_intelligence.28", gitleaks: "secrets_detection.1", trivy: "dependencies.12" };
 for (const tool of requiredTools) if (!catalog.includes(`"toolKey": "${tool}"`) && !catalog.includes(`"toolKey": "${toolAliases[tool] ?? tool}"`)) failures.push(`missing master tool ${tool}`);
-requireAtLeast((catalog.match(/"toolKey":/g) ?? []).length, 15, "tool catalog entries");
+requireAtLeast((catalog.match(/"toolKey":/g) ?? []).length, 17, "tool catalog entries");
 
 const normalizer = read("server/evidence-normalizer.ts");
 const schemas = ["jwt_token_comparison", "sqli_evidence", "xss_evidence", "ssrf_evidence", "cloud_metadata_evidence", "graphql_introspection_evidence", "graphql_batching_evidence", "idor_evidence", "ssti_evidence", "rce_evidence", "host_header_evidence", "cache_poisoning_evidence", "race_condition_evidence", "file_upload_evidence", "xxe_evidence"];
@@ -46,7 +46,7 @@ requireAtLeast(migrations.length, 64, "migration files");
 if (!read("runtime/custom_script_runner.py").includes("never executes input as code")) failures.push("custom script runner safety contract is missing");
 const toolsDockerfile = read("Dockerfile.tools");
 const smoke = read("scripts/runtime-tool-smoke-test.sh");
-for (const command of ["ffuf", "dalfox", "interactsh-client", "cloudfox", "nuclei", "subfinder", "httpx", "gitleaks", "trivy", "sqlmap", "jwt_tool.py"]) {
+for (const command of ["ffuf", "dalfox", "interactsh-client", "cloudfox", "nuclei", "subfinder", "httpx", "gitleaks", "trivy", "sqlmap", "jwt_tool.py", "naabu", "katana"]) {
   if (!smoke.includes(command)) failures.push(`tools smoke suite omits ${command}`);
   if (!toolsDockerfile.includes(command)) failures.push(`tools image does not provision ${command}`);
 }

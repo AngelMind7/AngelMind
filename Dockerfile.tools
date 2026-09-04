@@ -11,6 +11,8 @@ ARG SUBFINDER_VERSION=v2.6.8
 ARG HTTPX_VERSION=v1.7.1
 ARG GITLEAKS_VERSION=v8.28.0
 ARG TRIVY_VERSION=v0.62.1
+ARG NAABU_VERSION=v2.3.2
+ARG KATANA_VERSION=v1.4.0
 ARG SSRFMAP_COMMIT=290e07d75c52d68e021b6d0b4200c2a41ea20365
 ARG GRAPHQL_COP_COMMIT=2b7e086efae672f28b419c7fcdfe6b48d846c9dc
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates git python3 python3-pip unzip curl && rm -rf /var/lib/apt/lists/*
@@ -23,7 +25,9 @@ RUN set -eux; \
   go install github.com/projectdiscovery/subfinder/v2/cmd/subfinder@${SUBFINDER_VERSION}; \
   go install github.com/projectdiscovery/httpx/cmd/httpx@${HTTPX_VERSION}; \
   go install github.com/zricethezav/gitleaks/v8@${GITLEAKS_VERSION}; \
-  go install github.com/aquasecurity/trivy/cmd/trivy@${TRIVY_VERSION}
+  go install github.com/aquasecurity/trivy/cmd/trivy@${TRIVY_VERSION}; \
+  go install github.com/projectdiscovery/naabu/v2/cmd/naabu@${NAABU_VERSION}; \
+  go install github.com/projectdiscovery/katana/cmd/katana@${KATANA_VERSION}
 FROM node:22-bookworm-slim
 ENV NODE_ENV=production PATH=/usr/local/bin:/opt/go/bin:$PATH
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates git python3 python3-pip jq && rm -rf /var/lib/apt/lists/*

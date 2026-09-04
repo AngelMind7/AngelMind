@@ -142,6 +142,26 @@ export const generatedToolCatalog = [
     "enabledByDefault": true
   },
   {
+    "toolKey": "naabu",
+    "name": "naabu (custom port profile)",
+    "category": "Discovery",
+    "riskClass": "low",
+    "approvalGate": "auto_run",
+    "verificationStatus": "verified",
+    "disposition": "candidate_passive_review",
+    "enabledByDefault": true
+  },
+  {
+    "toolKey": "katana",
+    "name": "katana (custom crawler)",
+    "category": "Discovery",
+    "riskClass": "low",
+    "approvalGate": "auto_run",
+    "verificationStatus": "verified",
+    "disposition": "candidate_passive_review",
+    "enabledByDefault": true
+  },
+  {
     "toolKey": "custom_scripts",
     "name": "Custom Scripts (Python/Node)",
     "category": "Fallback",

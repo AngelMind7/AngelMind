@@ -9,12 +9,12 @@ import {
 const verifiedRuntimeKeys = new Set([
   "burp_suite_pro", "jwt_tool", "dalfox", "ssrfmap", "interactsh",
   "ffuf", "cloudfox", "secrets_detection.1", "graphql_cop", "sqlmap",
-  "nuclei", "asset_intelligence.28", "httpx", "dependencies.12", "custom_scripts",
+  "nuclei", "asset_intelligence.28", "httpx", "dependencies.12", "naabu", "katana", "custom_scripts",
 ]);
 
 describe("tool catalog safety boundary", () => {
-  it("loads the complete 15-tool catalog with all adapters verified and enabled", () => {
-    expect(toolCatalog).toHaveLength(15);
+  it("loads the complete 17-tool catalog with all adapters verified and enabled", () => {
+    expect(toolCatalog).toHaveLength(17);
     expect(
       toolCatalog.filter(tool => tool.enabledByDefault).map(tool => tool.toolKey).sort()
     ).toEqual([...verifiedRuntimeKeys].sort());
@@ -23,8 +23,8 @@ describe("tool catalog safety boundary", () => {
 
   it("matches manifest risk totals", () => {
     const summary = getToolCatalogSummary();
-    expect(summary.total).toBe(15);
-    expect(summary.byRisk).toEqual({ low: 4, medium: 6, high: 4, critical: 1 });
+    expect(summary.total).toBe(17);
+    expect(summary.byRisk).toEqual({ low: 6, medium: 6, high: 4, critical: 1 });
   });
 
   it("exposes actual category totals", () => {
@@ -34,7 +34,7 @@ describe("tool catalog safety boundary", () => {
       "Authentication": 1,
       "Injection": 2,
       "Network": 2,
-      "Discovery": 4,
+      "Discovery": 6,
       "Cloud": 1,
       "Supply Chain": 2,
       "API": 1,
@@ -52,7 +52,7 @@ describe("tool catalog safety boundary", () => {
 
   it("filters candidate classes correctly", () => {
     expect(listToolCatalog({ disposition: "candidate_offline_or_artifact" })).toHaveLength(2);
-    expect(listToolCatalog({ disposition: "candidate_passive_review" })).toHaveLength(13);
+    expect(listToolCatalog({ disposition: "candidate_passive_review" })).toHaveLength(15);
   });
 
   it("allows low-risk offline tools in offline_artifact mode", () => {
@@ -64,7 +64,7 @@ describe("tool catalog safety boundary", () => {
   });
 
   it("allows low-risk passive tools in passive_readonly mode", () => {
-    for (const toolKey of ["asset_intelligence.28", "httpx"]) {
+    for (const toolKey of ["asset_intelligence.28", "httpx", "naabu", "katana"]) {
       expect(
         canExecuteTool({ toolKey, mode: "passive_readonly", scopeValidated: true, humanApproval: false }).allowed
       ).toBe(true);

@@ -145,3 +145,10 @@ Typecheck, archive integrity tests, migration safety, full Vitest suite, product
 ## Latest repository closure — 2026-09-03
 
 The repository completion pass added a fail-closed UUID v3/v5/v6 external-buffer guard to the package scripts and CI, standardized REST v1 request correlation with validated `request_id` responses, and routed queued notification deliveries through the durable worker with idempotent job keys. The governed tool execution pipeline now has a durable `tool_execution` worker handler and tests. Local typecheck, contract checks, full Vitest suite, and production build pass. Live staging verification, provider-backed delivery, WebSocket deployment, and production operations remain environment-dependent.
+
+
+## Latest implementation slice — 2026-09-04
+
+The repository now registers the complete 17-tool catalog required by the master specification, including `naabu` for port discovery and `katana` for endpoint mining. Both tools have canonical capability mappings, passive-readonly runtime adapters, catalog tests, smoke-test requirements, master-contract enforcement, and pinned provisioning in `Dockerfile.tools`. The supported pnpm overrides and patched dependency configuration were moved from the deprecated `package.json.pnpm` field to `pnpm-workspace.yaml`.
+
+This closes the repository contract gap only. Burp/vendor artifacts, tool-image build and runtime verification, owner-approved target execution, staging deployment, and production health evidence remain environment and safety-gated work. The target-facing execution boundary remains fail-closed by design until those controls are explicitly approved and verified.

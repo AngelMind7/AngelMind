@@ -45,9 +45,9 @@ type SupportedToolKey =
   | "email_dns_security.2"
   | "asset_intelligence.28"
   | "asset_intelligence.30"
-  | "asset_intelligence.33"
   | "asset_intelligence.31"
   | "asset_intelligence.32"
+  | "asset_intelligence.33"
   | "configuration.1"
   | "configuration.17"
   | "dependencies.3"
@@ -65,7 +65,9 @@ type SupportedToolKey =
   | "sqlmap"
   | "nuclei"
   | "httpx"
-  | "custom_scripts";
+  | "custom_scripts"
+  | "naabu"
+  | "katana";
 
 export type ToolRuntimeRequest = {
   toolKey: string;
@@ -184,6 +186,20 @@ const adapters: readonly Adapter[] = [
     toolKey: "httpx",
     binary: "httpx",
     args: (inputPath, input) => ["-u", input, "-json", "-silent"],
+    allowedModes: ["passive_readonly"],
+    requiresTarget: true,
+  },
+  {
+    toolKey: "naabu",
+    binary: "naabu",
+    args: (_inputPath, input) => ["-host", input, "-json", "-silent"],
+    allowedModes: ["passive_readonly"],
+    requiresTarget: true,
+  },
+  {
+    toolKey: "katana",
+    binary: "katana",
+    args: (_inputPath, input) => ["-u", input, "-jsonl", "-silent", "-jc"],
     allowedModes: ["passive_readonly"],
     requiresTarget: true,
   },

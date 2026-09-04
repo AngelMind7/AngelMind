@@ -22,6 +22,8 @@ const REQUIRED_CAPABILITIES = [
   "parameter-manipulation",
   "template-injection-testing",
   "file-upload-testing",
+  "port-discovery",
+  "endpoint-mining",
 ];
 
 describe("master capability registry", () => {
@@ -40,6 +42,14 @@ describe("master capability registry", () => {
     });
     expect(resolveCapability("dns-enumeration")?.adapters[0]).toEqual({
       toolKey: "subfinder",
+      available: true,
+    });
+    expect(resolveCapability("port-discovery")?.adapters[0]).toEqual({
+      toolKey: "naabu",
+      available: true,
+    });
+    expect(resolveCapability("endpoint-mining")?.adapters[0]).toEqual({
+      toolKey: "katana",
       available: true,
     });
   });

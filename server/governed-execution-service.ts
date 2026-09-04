@@ -6,6 +6,7 @@ import { executeToolPipeline, persistToolPipelineObservation, type ToolExecution
 import { advanceExecution, canonicalExecutionPath, type ExecutionRisk, type ExecutionState } from "./execution-state-machine";
 import { checkRegisteredAdapterHealth } from "./tool-runtime";
 import { createExecutionLedger, advanceExecutionLedger, getExecutionLedger } from "./execution-ledger";
+import { generateExecutionReport, type ExecutionReport } from "./execution-assurance";
 import * as controlPlane from "./control-plane/service";
 
 export type GovernedExecutionInput = {
@@ -32,7 +33,7 @@ export type GovernedExecutionPlan = {
 
 export type GovernedExecutionResult =
   | { status: "blocked"; reason: string; plan: GovernedExecutionPlan | null; state: ExecutionState }
-  | { status: "completed" | "failed" | "unavailable" | "timed_out"; plan: GovernedExecutionPlan; pipeline: ToolExecutionPipelineResult; observationId?: number; findingId?: number; state: ExecutionState };
+  | { status: "completed" | "failed" | "unavailable" | "timed_out"; plan: GovernedExecutionPlan; pipeline: ToolExecutionPipelineResult; observationId?: number; findingId?: number; report?: ExecutionReport; state: ExecutionState };
 
 function adapterIsHealthy(health: Awaited<ReturnType<typeof checkRegisteredAdapterHealth>>, toolKey: string) {
   return health.some(item => item.toolKey === toolKey && item.available === true);
@@ -117,6 +118,7 @@ export async function executeGovernedCapability(input: GovernedExecutionInput): 
 
   let observationId: number | undefined;
   let findingId: number | undefined;
+  let report: ExecutionReport | undefined;
   if (input.sessionId && pipeline.runtime.status === "completed") {
     const observation = await persistToolPipelineObservation(input.userId, { sessionId: input.sessionId, assetId: input.assetId, request: runtimeRequest }, pipeline);
     observationId = observation.id;
@@ -125,11 +127,37 @@ export async function executeGovernedCapability(input: GovernedExecutionInput): 
     await advanceLedgerTo(input.userId, ledger.jobId, "OBSERVATION");
     await advanceLedgerTo(input.userId, ledger.jobId, "EVIDENCE");
     findingId = await promoteCorrelationFinding(input, pipeline, observationId);
-    if (findingId) {
-      await advanceLedgerTo(input.userId, ledger.jobId, "FINDING");
-      if (pipeline.correlation) await advanceLedgerTo(input.userId, ledger.jobId, "CORRELATION");
+    if (findingId && pipeline.correlation) {
+      const match = pipeline.correlation.matches[0];
+      const evidenceRefs = Array.from(new Set([...match.evidenceRefs, pipeline.provenance.requestId, ...(observationId ? [`observation:${observationId}`] : [])]));
+      report = generateExecutionReport({
+        capability,
+        evidence: {
+          requestId: pipeline.provenance.requestId,
+          toolKey: pipeline.provenance.toolKey,
+          rawOutputSha256: pipeline.provenance.rawOutputSha256,
+          normalizedEvidenceSha256: pipeline.provenance.normalizedEvidenceSha256,
+          evidenceRefs,
+        },
+        finding: {
+          findingId,
+          ruleId: match.ruleId,
+          emittedKey: match.emittedKey,
+          title: match.title,
+          severity: findingSeverity(pipeline),
+          confidence: match.confidence,
+          evidenceRefs,
+        },
+      }) ?? undefined;
+      if (report) {
+        await advanceLedgerTo(input.userId, ledger.jobId, "FINDING");
+        await advanceLedgerTo(input.userId, ledger.jobId, "CORRELATION");
+        await advanceLedgerTo(input.userId, ledger.jobId, "CHAIN_VALIDATION");
+        await advanceLedgerTo(input.userId, ledger.jobId, "IMPACT_PROOF");
+        await advanceLedgerTo(input.userId, ledger.jobId, "REPORT_GENERATION");
+      }
     }
   }
-  const executionState = pipeline.runtime.status === "completed" ? (findingId ? "CORRELATION" : "EVIDENCE") : "WORKER_EXECUTION";
-  return { status: pipeline.runtime.status, plan, pipeline, observationId, findingId, state: executionState };
+  const executionState = report ? "REPORT_GENERATION" : pipeline.runtime.status === "completed" ? (findingId ? "CORRELATION" : "EVIDENCE") : "WORKER_EXECUTION";
+  return { status: pipeline.runtime.status, plan, pipeline, observationId, findingId, report, state: executionState };
 }

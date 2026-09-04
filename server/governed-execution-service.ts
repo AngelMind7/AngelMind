@@ -66,7 +66,8 @@ async function promoteCorrelationFinding(input: GovernedExecutionInput, pipeline
     await controlPlane.createFinding(input.userId, { workspaceId: input.workspaceId, fingerprint, title: match.title, impactSummary: `Correlation ${match.emittedKey} matched by governed capability ${input.capability}. Evidence references: ${evidenceRefs.join(", ")}.`, reportDraft, confidence: match.confidence, severity });
   } catch (error) {
     if (!(error instanceof Error) || !error.message.toLowerCase().includes("fingerprint")) throw error;
-    return undefined;
+    const existing = await controlPlane.listFindings(input.userId, input.workspaceId);
+    return existing.find(item => item.fingerprint === fingerprint)?.id;
   }
   const findings = await controlPlane.listFindings(input.userId, input.workspaceId);
   return findings.find(item => item.fingerprint === fingerprint)?.id;

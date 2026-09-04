@@ -33,5 +33,15 @@ The PDF enumerates 28 API route groups and 260+ target endpoints. The route-grou
 | Purple Team | 6 |
 | Bug Bounty | 8 |
 
+## Concrete V4 additions
+
+| Method | Endpoint | Purpose |
+|---|---|---|
+| POST | `/api/v1/simulations/run` | Authenticated deterministic DAG simulation with synthetic evidence |
+| GET | `/api/v1/tools/catalog` | Authenticated UTF catalog query |
+| GET | `/api/v1/tools/runtime` | Runtime adapter inventory and health |
+| POST | `/api/v1/workspaces/:workspaceId/tools/execute` | Governed tool execution path with scope/approval enforcement |
+| GET | `/api/v1/executions/:jobId` | Execution progress lookup |
+
 ## Execution policy
 All execution-oriented endpoints must enforce authentication, tenant/workspace scope, policy and approval where required, then emit an audit/evidence record. Red-team C2, phishing, persistence, lateral movement and exfiltration concepts are represented as governed simulations rather than unrestricted operational controls.

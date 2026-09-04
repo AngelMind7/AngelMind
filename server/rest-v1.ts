@@ -9,6 +9,10 @@ import { sdk } from "./_core/sdk";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { authenticateApiKeyWithScopes } from "./security-platform";
 import { createResearchAsset, createResearchObservation, createResearchSession, listResearchAssets, promoteObservationToFinding } from "./research-workflow";
+import { executeResearchTask } from "./research-execution-service";
+import { executeGovernedCapability } from "./governed-execution-service";
+import { getToolCatalogSummary, listToolCatalog, searchToolCatalog } from "./tool-catalog";
+import { checkRegisteredAdapterHealth, listRegisteredAdapters } from "./tool-runtime";
 
 export const REST_API_VERSION = "v1" as const;
 type RestAuth = { user: Awaited<ReturnType<typeof sdk.authenticateRequest>> extends infer User ? NonNullable<User> : never; workspaceId?: number | null };
@@ -73,6 +77,65 @@ function sendError(res: Response, error: unknown) {
 export function registerRestV1Routes(app: Express) {
   app.use("/api/v1", (req, res, next) => { const supplied = req.header("x-request-id")?.trim() ?? ""; res.locals.requestId = /^[A-Za-z0-9._:-]{1,128}$/.test(supplied) ? supplied : randomUUID(); res.setHeader("X-Request-ID", res.locals.requestId); withVersion(res); next(); });
   app.get("/api/v1/health", (_req, res) => res.json({ data: { ok: true }, request_id: requestId(res), apiVersion: REST_API_VERSION }));
+
+  app.get("/api/v1/tools/catalog", async (req, res) => {
+    try {
+      await requireUser(req, "tools:read");
+      const category = typeof req.query.category === "string" ? req.query.category : undefined;
+      const riskClass = typeof req.query.riskClass === "string" ? req.query.riskClass : undefined;
+      const disposition = typeof req.query.disposition === "string" ? req.query.disposition : undefined;
+      res.json({ data: listToolCatalog({ category, riskClass, disposition } as Parameters<typeof listToolCatalog>[0]), request_id: requestId(res), apiVersion: REST_API_VERSION });
+    } catch (error) { sendError(res, error); }
+  });
+  app.get("/api/v1/tools/summary", async (req, res) => {
+    try { await requireUser(req, "tools:read"); res.json({ data: getToolCatalogSummary(), request_id: requestId(res), apiVersion: REST_API_VERSION }); }
+    catch (error) { sendError(res, error); }
+  });
+  app.get("/api/v1/tools/search", async (req, res) => {
+    try {
+      await requireUser(req, "tools:read");
+      const query = String(req.query.q ?? "").trim();
+      if (!query) throw new Error("Tool search query is required.");
+      res.json({ data: searchToolCatalog(query), request_id: requestId(res), apiVersion: REST_API_VERSION });
+    } catch (error) { sendError(res, error); }
+  });
+  app.get("/api/v1/tools/runtime", async (req, res) => {
+    try { await requireUser(req, "tools:read"); res.json({ data: { adapters: listRegisteredAdapters(), health: checkRegisteredAdapterHealth() }, request_id: requestId(res), apiVersion: REST_API_VERSION }); }
+    catch (error) { sendError(res, error); }
+  });
+  app.post("/api/v1/workspaces/:workspaceId/tools/execute", async (req, res) => {
+    try {
+      const auth = await requireUser(req, "tools:execute");
+      const workspaceId = parsePositiveInteger(req.params.workspaceId, "workspaceId");
+      requireBoundWorkspace(auth, workspaceId);
+      const body = req.body ?? {};
+      const capability = typeof body.capability === "string" ? body.capability.trim() : "";
+      const mode = typeof body.mode === "string" ? body.mode : "";
+      if (!capability) throw new Error("capability wajib diisi.");
+      if (!["offline_artifact", "passive_readonly", "active_nondestructive", "privileged_or_destructive"].includes(mode)) throw new Error("mode execution tidak valid.");
+      const result = await executeGovernedCapability({
+        userId: auth.user.id,
+        workspaceId,
+        capability,
+        target: typeof body.target === "string" ? body.target.trim() : undefined,
+        mode: mode as "offline_artifact" | "passive_readonly" | "active_nondestructive" | "privileged_or_destructive",
+        approvalId: body.approvalId === undefined ? undefined : parsePositiveInteger(String(body.approvalId), "approvalId"),
+        input: typeof body.input === "string" ? body.input : JSON.stringify(body.input ?? {}),
+        sessionId: body.sessionId === undefined ? undefined : parsePositiveInteger(String(body.sessionId), "sessionId"),
+        assetId: body.assetId === undefined ? undefined : parsePositiveInteger(String(body.assetId), "assetId"),
+      });
+      res.status(result.status === "completed" ? 200 : 202).json({ data: result, request_id: requestId(res), apiVersion: REST_API_VERSION });
+    } catch (error) { sendError(res, error); }
+  });
+  app.post("/api/v1/research-tasks/:taskId/execute", async (req, res) => {
+    try {
+      const auth = await requireUser(req, "research:execute");
+      const taskId = parsePositiveInteger(req.params.taskId, "taskId");
+      const result = await executeResearchTask(auth.user.id, taskId);
+      res.status(result.status === "completed" ? 200 : 202).json({ data: result, request_id: requestId(res), apiVersion: REST_API_VERSION });
+    } catch (error) { sendError(res, error); }
+  });
+
   app.get("/api/v1/workspaces/:workspaceId/search", async (req, res) => {
     try {
       const auth = await requireUser(req, "search:read");

@@ -17,8 +17,8 @@ const uniqueSchemaTables = [...new Set(schemaTables)];
 const uniqueMigratedTables = new Set(migratedTables);
 const failures = [];
 
-if (uniqueSchemaTables.length < 50) failures.push(`schema tables: expected at least 50, found ${uniqueSchemaTables.length}`);
-if (uniqueMigratedTables.size < 50) failures.push(`migrated tables: expected at least 50, found ${uniqueMigratedTables.size}`);
+if (uniqueSchemaTables.length < 74) failures.push(`schema tables: expected at least 74, found ${uniqueSchemaTables.length}`);
+if (uniqueMigratedTables.size < 74) failures.push(`migrated tables: expected at least 74, found ${uniqueMigratedTables.size}`);
 if (migrations.length < 64) failures.push(`migration files: expected at least 64, found ${migrations.length}`);
 if (new Set(schemaTables).size !== schemaTables.length) failures.push("schema contains duplicate physical table declarations");
 
@@ -29,9 +29,9 @@ const requiredTables = [
   "users", "userProfiles", "authDevices", "apiKeys", "accountSecurityEvents", "mfaFactors", "mfaRecoveryCodes", "mfaChallenges",
   "organizations", "organizationMembers", "organizationInvitations", "programs", "organizationEntitlements", "workspaces", "workspaceMemberships",
   "researchSessions", "researchAssets", "researchObservations", "researchHypotheses", "researchTasks", "researchTaskDependencies", "failureObservations",
-  "findings", "findingRelations", "findingRetests", "findingComments", "evidenceArtifacts", "evidenceProvenance", "researchEvidenceLinks",
+  "evolutionSnapshots", "intelligenceFeedItems", "findings", "findingRelations", "findingRetests", "findingComments", "evidenceArtifacts", "evidenceProvenance", "researchEvidenceLinks",
   "aiModels", "aiRuns", "aiRunOutputs", "aiRunEvaluations", "aiMemories", "promptVersions", "jobs", "idempotencyRecords", "outboxEvents", "outboxConsumerReceipts",
-  "searchDocuments", "workspaceTags", "tagAssignments", "workspaceNotes", "savedViews", "playbooks", "playbookRuns",
+  "searchDocuments", "workspaceTags", "tagAssignments", "workspaceNotes", "savedViews", "runs", "playbooks", "playbookRuns",
   "approvals", "auditEvents", "auditArchives", "restoreDrillRuns", "policyVersions", "incidents", "incidentReviews", "notifications", "notificationPreferences",
   "notificationDeliveries", "webhookConfigurations", "webhookActivationRequests", "incidentEvidenceLinks", "submissions", "submissionEvents", "reportVersions", "reportDrafts",
   "knowledgeNodes", "knowledgeEdges", "passiveAssets", "credentialReferences", "workspaceChangeSnapshots", "emailDeliveries", "privacyRequests"

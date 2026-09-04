@@ -3,7 +3,7 @@ import { getToolCatalogEntry } from "./tool-catalog";
 import { resolveCapability } from "./master-capability-registry";
 import { authorizeToolExecution } from "./tool-execution-policy";
 import { executeToolPipeline, persistToolPipelineObservation, type ToolExecutionPipelineResult } from "./tool-execution-pipeline";
-import { canonicalExecutionPath, type ExecutionRisk, type ExecutionState } from "./execution-state-machine";
+import { advanceExecution, canonicalExecutionPath, type ExecutionRisk, type ExecutionState } from "./execution-state-machine";
 import { checkRegisteredAdapterHealth } from "./tool-runtime";
 import { createExecutionLedger, advanceExecutionLedger, getExecutionLedger, persistExecutionReport } from "./execution-ledger";
 import { generateExecutionReport, type ExecutionReport } from "./execution-assurance";
@@ -43,8 +43,7 @@ function stateBeforeExecution(risk: ExecutionRisk, scopeValidated: boolean, huma
   let context = { state: "INIT" as ExecutionState, risk, scopeValidated, approval: humanApproval ? "approved" as const : "not_required" as const };
   for (const _ of ["RECON", "FINGERPRINT", "VECTOR_SELECTION", "POLICY_CHECK", "APPROVAL_GATE", "QUEUE"] as const) {
     const previous = context.state;
-    const next = require("./execution-state-machine") as typeof import("./execution-state-machine");
-    context = next.advanceExecution(context);
+    context = advanceExecution(context);
     if (context.state === previous) return context.state;
     if (context.state === "APPROVAL_GATE" && !humanApproval && (risk === "high" || risk === "critical")) return context.state;
   }

@@ -24,7 +24,7 @@ export type GovernedToolExecutionResult =
       pipeline: null;
     }
   | {
-      status: "completed" | "failed" | "unavailable" | "timed_out";
+      status: "completed" | "failed" | "unavailable" | "timed_out" | "blocked";
       reason?: string;
       toolKey: string;
       pipeline: ToolExecutionPipelineResult;

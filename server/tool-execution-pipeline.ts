@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { normalizeEvidence, type CanonicalEvidence } from "./evidence-normalizer";
-import { runRegisteredTool, type ToolRuntimeRequest, type ToolRuntimeResult } from "./tool-runtime";
+import { runGovernedTool } from "./governed-tool-runner";
+import type { ToolRuntimeRequest, ToolRuntimeResult } from "./tool-runtime";
 import { createResearchObservation } from "./research-workflow";
 import { evaluateMasterCorrelation, type MasterCorrelationResult } from "./master-correlation-service";
 
@@ -56,7 +57,7 @@ function recordsToCorrelationFacts(records: Record<string, unknown>[]) {
 
 export async function executeToolPipeline(request: ToolRuntimeRequest & { capabilities?: string[] }): Promise<ToolExecutionPipelineResult> {
   const phases: AdapterLifecyclePhase[] = ["validate", "prepare", "execute", "collect"];
-  const runtime = await runRegisteredTool(request);
+  const runtime = await runGovernedTool(request);
   const raw = `${runtime.stdout}\n${runtime.stderr}`;
   const rawOutputSha256 = runtime.status === "completed" || runtime.stdout || runtime.stderr
     ? createHash("sha256").update(raw).digest("hex")

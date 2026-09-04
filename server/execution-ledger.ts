@@ -19,6 +19,7 @@ type LedgerPayload = ExecutionLedgerInput & {
   state: ExecutionState;
   revision: number;
   path: readonly ExecutionState[];
+  assuranceReport?: Record<string, unknown>;
 };
 
 function readPayload(payload: string): LedgerPayload {
@@ -69,4 +70,21 @@ export async function advanceExecutionLedger(userId: number, jobId: number) {
   const updated = await db.update(jobs).set({ payload: JSON.stringify(nextPayload), updatedAt: new Date() }).where(and(eq(jobs.id, jobId), eq(jobs.status, current.status)));
   if (updated[0].affectedRows !== 1) throw new Error("Execution ledger changed concurrently; retry with a fresh state.");
   return { from: payload.state, to: result.state, revision: nextPayload.revision };
+}
+
+export async function persistExecutionReport(userId: number, jobId: number, report: Record<string, unknown>) {
+  const current = await getExecutionLedger(userId, jobId);
+  if (current.payload.state !== "REPORT_GENERATION") throw new Error("Execution report can only be persisted at REPORT_GENERATION.");
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const nextPayload: LedgerPayload = {
+    ...current.payload,
+    assuranceReport: report,
+    revision: current.payload.revision + 1,
+  };
+  const updated = await db.update(jobs)
+    .set({ payload: JSON.stringify(nextPayload), status: "succeeded", lockedAt: null, leaseExpiresAt: null, heartbeatAt: null, workerId: null, completedAt: new Date(), updatedAt: new Date() })
+    .where(and(eq(jobs.id, jobId), eq(jobs.status, current.status)));
+  if (updated[0].affectedRows !== 1) throw new Error("Execution ledger changed concurrently; report persistence was not committed.");
+  return { jobId, state: nextPayload.state, revision: nextPayload.revision, status: "succeeded" as const };
 }

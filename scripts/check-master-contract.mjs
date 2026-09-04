@@ -32,7 +32,7 @@ for (const route of ["/","/product","/features","/how-it-works","/bug-bounty","/
 
 const domainDocs = ["01-identity","02-organization","03-asset-intel","04-threat-surface","05-vuln-research","06-offensive-engine","07-red-team","08-purple-team","09-bug-bounty","10-findings","11-reporting","12-threat-intel","13-ai-automation","14-governance"];
 for (const doc of domainDocs) requireFile(`docs/domain/${doc}.md`);
-for (const file of ["docs/application-menu.md","docs/database-schema-contract.md","docs/api/openapi.yaml","docs/api/endpoint-inventory.md","docs/blueprint-conformance.md","docs/launch-gate.md","docs/architecture/system-architecture.md","docs/architecture/data-flow.md","docs/architecture/security-model.md","railway.json","infrastructure/cloudflare/wrangler.toml","infrastructure/supabase/config.toml","infrastructure/firebase/firebase.json","infrastructure/firebase/.firebaserc","infrastructure/firebase/firestore.rules","infrastructure/firebase/firestore.indexes.json","infrastructure/cloudflare/src/index.ts","infrastructure/firebase/functions/index.js","infrastructure/firebase/public/index.html"]) requireFile(file);
+for (const file of ["docs/application-menu.md","docs/database-schema-contract.md","docs/api/openapi.yaml","docs/api/endpoint-inventory.md","docs/blueprint-conformance.md","docs/launch-gate.md","docs/architecture/system-architecture.md","docs/architecture/data-flow.md","docs/architecture/security-model.md","railway.json","infrastructure/cloudflare/wrangler.toml","infrastructure/supabase/config.toml","infrastructure/firebase/firebase.json","infrastructure/firebase/.firebaserc","infrastructure/firebase/firestore.rules","infrastructure/firebase/firestore.indexes.json","infrastructure/cloudflare/src/index.ts","infrastructure/firebase/functions/index.js","infrastructure/firebase/public/index.html","server/tool-simulation.ts","server/chain-engine.ts","server/egress-policy.ts","server/mobile-analysis.ts","client/src/pages/ClientPortal.tsx"]) requireFile(file);
 
 const catalog = read("server/tool-catalog-data.ts");
 const requiredTools = ["burp_suite_pro","jwt_tool","dalfox","ssrfmap","interactsh","ffuf","cloudfox","graphql_cop","sqlmap","nuclei","subfinder","httpx","gitleaks","trivy","naabu","katana","custom_scripts"];
@@ -59,6 +59,13 @@ const progressEvents = read("server/execution-progress-events.ts");
 for (const marker of ["execution.queued","execution.started","execution.progress","execution.completed","execution.failed"]) if (!progressEvents.includes(`"${marker}"`)) failures.push(`missing execution progress event ${marker}`);
 if (!read("server/rest-v1.ts").includes("/api/v1/executions/:jobId")) failures.push("missing authenticated execution progress endpoint");
 if (!read("client/src/pages/MissionControl.tsx").includes("/api/v1/executions/")) failures.push("Mission Control is not bound to persisted execution progress");
+
+const simulation = read("server/tool-simulation.ts");
+for (const marker of ["simulateRegisteredTool","synthetic","inputSha256","mode: \"simulation\""]) if (!simulation.includes(marker)) failures.push(`simulation engine missing ${marker}`);
+const egress = read("server/egress-policy.ts");
+for (const marker of ["allowedTargetsOnly","blockInternalRanges","validateEgressPolicy"]) if (!egress.includes(marker)) failures.push(`egress governance missing ${marker}`);
+const mobile = read("server/mobile-analysis.ts");
+for (const marker of ["static","android_dynamic_queue","ios_self_hosted","authorized-lab-only"]) if (!mobile.includes(marker)) failures.push(`mobile analysis contract missing ${marker}`);
 
 const chainEngine = read("server/chain-engine.ts");
 for (const nodeType of ["module","action","condition","foreach","while","parallel","merge","sleep","subchain"]) if (!chainEngine.includes(`"${nodeType}"`)) failures.push(`missing DAG chain node type ${nodeType}`);

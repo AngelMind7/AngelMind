@@ -1,6 +1,7 @@
 import type { Express, Request, Response } from "express";
 import { randomUUID } from "node:crypto";
 import { sdk } from "./_core/sdk";
+import { canAccessWorkspace } from "./control-plane/operations";
 import { simulateGovernedChain, type SimulationRequest } from "./simulation-engine";
 
 export function registerSimulationRoutes(app: Express) {
@@ -9,9 +10,12 @@ export function registerSimulationRoutes(app: Express) {
     try {
       const user = await sdk.authenticateRequest(req);
       if (!user) return res.status(401).json({ error: true, code: "UNAUTHENTICATED", message: "Authentication required.", request_id: requestId });
+      const workspaceId = Number(req.body?.workspaceId);
+      if (!Number.isSafeInteger(workspaceId) || workspaceId < 1) return res.status(400).json({ error: true, code: "INVALID_WORKSPACE", message: "workspaceId must be a positive integer.", request_id: requestId });
+      if (!(await canAccessWorkspace(user.id, workspaceId, "read"))) return res.status(403).json({ error: true, code: "FORBIDDEN", message: "Workspace tidak dapat diakses.", request_id: requestId });
       const body = req.body ?? {};
       const request: SimulationRequest = {
-        workspaceId: Number(body.workspaceId),
+        workspaceId,
         actorId: Number(user.id),
         name: typeof body.name === "string" ? body.name : "",
         input: body.input ?? {},

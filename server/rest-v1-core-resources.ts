@@ -1,0 +1,60 @@
+import type { Express, Request, Response } from "express";
+import { and, desc, eq } from "drizzle-orm";
+import { organizations, organizationMembers, workspaces } from "../drizzle/schema";
+import { getDb } from "./db";
+import * as organization from "./organization";
+import * as controlPlane from "./control-plane/service";
+import * as operations from "./control-plane/operations";
+import { sdk } from "./_core/sdk";
+import { authenticateApiKeyWithScopes } from "./security-platform";
+
+function id(value: string, field: string) {
+  if (!/^[1-9]\d*$/.test(value)) throw new Error(`${field} harus berupa bilangan bulat positif.`);
+  const n = Number(value);
+  if (!Number.isSafeInteger(n)) throw new Error(`${field} di luar batas aman.`);
+  return n;
+}
+
+async function user(req: Request, scope: string) {
+  const bearer = req.header("authorization")?.match(/^Bearer\s+(.+)$/i)?.[1]?.trim();
+  if (bearer?.startsWith("am_")) {
+    const result = await authenticateApiKeyWithScopes(bearer);
+    if (!result || (!result.scopes.includes(scope) && !result.scopes.includes("*"))) throw new Error("Authentication required.");
+    return result.user;
+  }
+  const value = await sdk.authenticateRequest(req);
+  if (!value) throw new Error("Authentication required.");
+  return value;
+}
+
+function send(res: Response, data: unknown, status = 200) {
+  res.status(status).json({ data, request_id: res.locals.requestId });
+}
+
+function fail(res: Response, error: unknown) {
+  const message = error instanceof Error ? error.message : "Request failed.";
+  const status = message.includes("Authentication required") ? 401 : message.includes("tidak ditemukan") || message.includes("not found") ? 404 : message.includes("permission") || message.includes("tidak dapat") ? 403 : message.includes("Database") ? 503 : 400;
+  res.status(status).json({ error: true, code: status === 401 ? "UNAUTHENTICATED" : status === 403 ? "FORBIDDEN" : status === 404 ? "NOT_FOUND" : status === 503 ? "DEPENDENCY_UNAVAILABLE" : "BAD_REQUEST", message, details: {}, request_id: res.locals.requestId });
+}
+
+export function registerRestV1CoreResourceRoutes(app: Express) {
+  app.get("/api/v1/organizations", async (req, res) => { try { send(res, await organization.listOrganizations((await user(req, "organization:read")).id)); } catch (e) { fail(res, e); } });
+  app.post("/api/v1/organizations", async (req, res) => { try { send(res, await organization.createOrganization((await user(req, "organization:write")).id, { name: String(req.body?.name ?? "") }), 201); } catch (e) { fail(res, e); } });
+  app.get("/api/v1/organizations/:id", async (req, res) => { try { const u = await user(req, "organization:read"); const db = await getDb(); if (!db) throw new Error("Database tidak tersedia."); const orgId = id(req.params.id, "id"); const [membership] = await db.select().from(organizationMembers).where(and(eq(organizationMembers.organizationId, orgId), eq(organizationMembers.userId, u.id))).limit(1); if (!membership) throw new Error("Organization tidak ditemukan."); const [org] = await db.select().from(organizations).where(eq(organizations.id, orgId)).limit(1); if (!org) throw new Error("Organization tidak ditemukan."); send(res, { ...org, role: membership.role }); } catch (e) { fail(res, e); } });
+  app.patch("/api/v1/organizations/:id", async (req, res) => { try { const u = await user(req, "organization:write"); const db = await getDb(); if (!db) throw new Error("Database tidak tersedia."); const orgId = id(req.params.id, "id"); const [membership] = await db.select().from(organizationMembers).where(and(eq(organizationMembers.organizationId, orgId), eq(organizationMembers.userId, u.id))).limit(1); if (!membership || !["owner", "admin"].includes(membership.role)) throw new Error("Organization admin permission is required."); const name = typeof req.body?.name === "string" ? req.body.name.trim() : ""; if (name.length < 2 || name.length > 160) throw new Error("Organization name is required."); await db.update(organizations).set({ name, updatedAt: new Date() }).where(eq(organizations.id, orgId)); const [org] = await db.select().from(organizations).where(eq(organizations.id, orgId)).limit(1); send(res, org); } catch (e) { fail(res, e); } });
+  app.delete("/api/v1/organizations/:id", async (req, res) => { try { const u = await user(req, "organization:write"); const db = await getDb(); if (!db) throw new Error("Database tidak tersedia."); const orgId = id(req.params.id, "id"); const [membership] = await db.select().from(organizationMembers).where(and(eq(organizationMembers.organizationId, orgId), eq(organizationMembers.userId, u.id))).limit(1); if (!membership || membership.role !== "owner") throw new Error("Organization owner permission is required."); await db.update(organizations).set({ status: "archived", updatedAt: new Date() }).where(eq(organizations.id, orgId)); send(res, { success: true, organizationId: orgId }); } catch (e) { fail(res, e); } });
+  app.get("/api/v1/organizations/:id/members", async (req, res) => { try { send(res, await organization.listOrganizationMembers((await user(req, "organization:read")).id, id(req.params.id, "id"))); } catch (e) { fail(res, e); } });
+  app.post("/api/v1/organizations/:id/members", async (req, res) => { try { const u = await user(req, "organization:write"); send(res, await organization.addOrganizationMember(u.id, { organizationId: id(req.params.id, "id"), email: String(req.body?.email ?? ""), role: req.body?.role }), 201); } catch (e) { fail(res, e); } });
+  app.delete("/api/v1/organizations/:id/members/:userId", async (req, res) => { try { const u = await user(req, "organization:write"); const db = await getDb(); if (!db) throw new Error("Database tidak tersedia."); const orgId = id(req.params.id, "id"); const memberUserId = id(req.params.userId, "userId"); const [membership] = await db.select().from(organizationMembers).where(and(eq(organizationMembers.organizationId, orgId), eq(organizationMembers.userId, u.id))).limit(1); if (!membership || !["owner", "admin"].includes(membership.role)) throw new Error("Organization admin permission is required."); await db.delete(organizationMembers).where(and(eq(organizationMembers.organizationId, orgId), eq(organizationMembers.userId, memberUserId))); send(res, { success: true }); } catch (e) { fail(res, e); } });
+  app.post("/api/v1/organizations/:id/leave", async (req, res) => { try { const u = await user(req, "organization:write"); const db = await getDb(); if (!db) throw new Error("Database tidak tersedia."); const orgId = id(req.params.id, "id"); const [membership] = await db.select().from(organizationMembers).where(and(eq(organizationMembers.organizationId, orgId), eq(organizationMembers.userId, u.id))).limit(1); if (!membership) throw new Error("Organization tidak ditemukan."); if (membership.role === "owner") throw new Error("Owner cannot leave without an explicit transfer workflow."); await db.delete(organizationMembers).where(eq(organizationMembers.id, membership.id)); send(res, { success: true }); } catch (e) { fail(res, e); } });
+
+  app.get("/api/v1/workspaces", async (req, res) => { try { send(res, await controlPlane.listWorkspaces((await user(req, "workspace:read")).id)); } catch (e) { fail(res, e); } });
+  app.post("/api/v1/workspaces", async (req, res) => { try { const u = await user(req, "workspace:write"); const b = req.body ?? {}; const result = await controlPlane.createWorkspace(u.id, { name: String(b.name ?? ""), programName: String(b.programName ?? ""), safeHarbor: String(b.safeHarbor ?? ""), codeOfConduct: String(b.codeOfConduct ?? ""), allowlist: Array.isArray(b.allowlist) ? b.allowlist.map(String) : [], exclusions: Array.isArray(b.exclusions) ? b.exclusions.map(String) : [], budgetCents: Number(b.budgetCents), sessionLimitMinutes: Number(b.sessionLimitMinutes), cooldownMinutes: Number(b.cooldownMinutes), retentionDays: Number(b.retentionDays) }); send(res, result, 201); } catch (e) { fail(res, e); } });
+  app.get("/api/v1/workspaces/:id", async (req, res) => { try { const u = await user(req, "workspace:read"); const db = await getDb(); if (!db) throw new Error("Database tidak tersedia."); const workspaceId = id(req.params.id, "id"); if (!(await operations.canAccessWorkspace(u.id, workspaceId, "read"))) throw new Error("Workspace tidak dapat diakses."); const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1); if (!workspace) throw new Error("Workspace tidak ditemukan."); send(res, workspace); } catch (e) { fail(res, e); } });
+  app.patch("/api/v1/workspaces/:id", async (req, res) => { try { const u = await user(req, "workspace:write"); const workspaceId = id(req.params.id, "id"); const db = await getDb(); if (!db) throw new Error("Database tidak tersedia."); const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1); if (!workspace || workspace.ownerUserId !== u.id) throw new Error("Workspace tidak ditemukan atau tidak dapat dikelola."); const b = req.body ?? {}; const patch: Record<string, unknown> = {}; for (const key of ["name", "programName", "safeHarbor", "codeOfConduct"]) if (typeof b[key] === "string") patch[key] = b[key].trim(); for (const key of ["budgetCents", "sessionLimitMinutes", "cooldownMinutes", "retentionDays"]) if (b[key] !== undefined && Number.isFinite(Number(b[key]))) patch[key] = Number(b[key]); if (Array.isArray(b.allowlist)) patch.allowlist = JSON.stringify(b.allowlist.map(String).filter(Boolean)); if (Array.isArray(b.exclusions)) patch.exclusions = JSON.stringify(b.exclusions.map(String).filter(Boolean)); await db.update(workspaces).set({ ...patch, updatedAt: new Date() }).where(eq(workspaces.id, workspaceId)); const [updated] = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1); send(res, updated); } catch (e) { fail(res, e); } });
+  app.delete("/api/v1/workspaces/:id", async (req, res) => { try { const u = await user(req, "workspace:write"); send(res, await controlPlane.setWorkspaceStatus(u.id, id(req.params.id, "id"), "archived")); } catch (e) { fail(res, e); } });
+  app.get("/api/v1/workspaces/:id/members", async (req, res) => { try { send(res, await operations.listMembers((await user(req, "workspace:read")).id, id(req.params.id, "id"))); } catch (e) { fail(res, e); } });
+  app.post("/api/v1/workspaces/:id/members", async (req, res) => { try { const u = await user(req, "workspace:write"); send(res, await operations.addMember(u.id, { workspaceId: id(req.params.id, "id"), email: String(req.body?.email ?? ""), role: req.body?.role }), 201); } catch (e) { fail(res, e); } });
+  app.delete("/api/v1/workspaces/:id/members/:userId", async (req, res) => { try { const u = await user(req, "workspace:write"); const db = await getDb(); if (!db) throw new Error("Database tidak tersedia."); const workspaceId = id(req.params.id, "id"); const memberUserId = id(req.params.userId, "userId"); const [member] = await db.select().from((await import("../drizzle/schema")).workspaceMemberships).where(and(eq((await import("../drizzle/schema")).workspaceMemberships.workspaceId, workspaceId), eq((await import("../drizzle/schema")).workspaceMemberships.userId, memberUserId))).limit(1); if (!member) throw new Error("Keanggotaan tidak ditemukan."); send(res, await operations.removeMember(u.id, workspaceId, member.id)); } catch (e) { fail(res, e); } });
+  app.post("/api/v1/workspaces/:id/switch", async (req, res) => { try { const u = await user(req, "workspace:read"); const workspaceId = id(req.params.id, "id"); if (!(await operations.canAccessWorkspace(u.id, workspaceId, "read"))) throw new Error("Workspace tidak dapat diakses."); send(res, { success: true, workspaceId }); } catch (e) { fail(res, e); } });
+}

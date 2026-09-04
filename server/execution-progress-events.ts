@@ -17,9 +17,9 @@ export async function publishExecutionProgress(input: {
     ? "execution.queued"
     : input.state === "WORKER_EXECUTION"
       ? "execution.started"
-      : input.state === "DONE"
-        ? (input.terminalReason?.includes("failed") ? "execution.failed" : "execution.completed")
-        : "execution.started";
+      : input.terminalReason
+        ? (input.terminalReason.toLowerCase().includes("fail") ? "execution.failed" : "execution.completed")
+        : "execution.progress";
 
   const event = prepareEvent({
     eventType,
@@ -42,7 +42,7 @@ export async function publishExecutionProgress(input: {
 
   const idempotencyKey = `execution-progress:${input.jobId}:${input.revision}`;
   const [existing] = await db.select({ id: outboxEvents.id }).from(outboxEvents)
-    .where(and(eq(outboxEvents.idempotencyKey, idempotencyKey)))
+    .where(eq(outboxEvents.idempotencyKey, idempotencyKey))
     .limit(1);
   if (existing) return { published: false, duplicate: true, eventId: existing.id } as const;
 

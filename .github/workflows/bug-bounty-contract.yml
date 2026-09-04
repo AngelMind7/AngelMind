@@ -1,0 +1,26 @@
+name: Bug Bounty Contract
+on:
+  push:
+    branches: [main]
+  pull_request:
+    paths:
+      - 'server/bug-bounty.ts'
+      - 'server/bug-bounty.test.ts'
+      - 'server/rest-v1-bug-bounty.ts'
+      - 'scripts/check-bug-bounty-contract.mjs'
+      - 'docs/domain/09-bug-bounty.md'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check:bugbounty-contract
+      - run: pnpm exec vitest run server/bug-bounty.test.ts

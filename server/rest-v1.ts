@@ -14,6 +14,7 @@ import { executeGovernedCapability } from "./governed-execution-service";
 import { getToolCatalogSummary, listToolCatalog, searchToolCatalog } from "./tool-catalog";
 import { checkRegisteredAdapterHealth, listRegisteredAdapters } from "./tool-runtime";
 import { getExecutionProgress } from "./execution-ledger";
+import { API_V1_BLUEPRINT_GROUPS, API_V1_BLUEPRINT_TARGET, API_V1_CONTRACT, API_V1_NAMED_ENDPOINTS } from "./api-v1-contract";
 
 export const REST_API_VERSION = "v1" as const;
 type RestAuth = { user: Awaited<ReturnType<typeof sdk.authenticateRequest>> extends infer User ? NonNullable<User> : never; workspaceId?: number | null };
@@ -78,6 +79,12 @@ function sendError(res: Response, error: unknown) {
 export function registerRestV1Routes(app: Express) {
   app.use("/api/v1", (req, res, next) => { const supplied = req.header("x-request-id")?.trim() ?? ""; res.locals.requestId = /^[A-Za-z0-9._:-]{1,128}$/.test(supplied) ? supplied : randomUUID(); res.setHeader("X-Request-ID", res.locals.requestId); withVersion(res); next(); });
   app.get("/api/v1/health", (_req, res) => res.json({ data: { ok: true }, request_id: requestId(res), apiVersion: REST_API_VERSION }));
+  app.get("/api/v1/meta/api-contract", async (req, res) => {
+    try {
+      await requireUser(req, "api:read");
+      res.json({ data: { apiVersion: REST_API_VERSION, blueprintGroups: API_V1_BLUEPRINT_GROUPS, blueprintTarget: API_V1_BLUEPRINT_TARGET, namedEndpoints: API_V1_NAMED_ENDPOINTS, endpoints: API_V1_CONTRACT }, request_id: requestId(res), apiVersion: REST_API_VERSION });
+    } catch (error) { sendError(res, error); }
+  });
 
   app.get("/api/v1/tools/catalog", async (req, res) => {
     try {
@@ -114,110 +121,48 @@ export function registerRestV1Routes(app: Express) {
       const mode = typeof body.mode === "string" ? body.mode : "";
       if (!capability) throw new Error("capability wajib diisi.");
       if (!["offline_artifact", "passive_readonly", "active_nondestructive", "privileged_or_destructive"].includes(mode)) throw new Error("mode execution tidak valid.");
-      const result = await executeGovernedCapability({
-        userId: auth.user.id,
-        workspaceId,
-        capability,
-        target: typeof body.target === "string" ? body.target.trim() : undefined,
-        mode: mode as "offline_artifact" | "passive_readonly" | "active_nondestructive" | "privileged_or_destructive",
-        approvalId: body.approvalId === undefined ? undefined : parsePositiveInteger(String(body.approvalId), "approvalId"),
-        input: typeof body.input === "string" ? body.input : JSON.stringify(body.input ?? {}),
-        sessionId: body.sessionId === undefined ? undefined : parsePositiveInteger(String(body.sessionId), "sessionId"),
-        assetId: body.assetId === undefined ? undefined : parsePositiveInteger(String(body.assetId), "assetId"),
-      });
+      const result = await executeGovernedCapability({ userId: auth.user.id, workspaceId, capability, target: typeof body.target === "string" ? body.target.trim() : undefined, mode: mode as "offline_artifact" | "passive_readonly" | "active_nondestructive" | "privileged_or_destructive", approvalId: body.approvalId === undefined ? undefined : parsePositiveInteger(String(body.approvalId), "approvalId"), input: typeof body.input === "string" ? body.input : JSON.stringify(body.input ?? {}), sessionId: body.sessionId === undefined ? undefined : parsePositiveInteger(String(body.sessionId), "sessionId"), assetId: body.assetId === undefined ? undefined : parsePositiveInteger(String(body.assetId), "assetId") });
       res.status(result.status === "completed" ? 200 : 202).json({ data: result, request_id: requestId(res), apiVersion: REST_API_VERSION });
     } catch (error) { sendError(res, error); }
   });
   app.get("/api/v1/executions/:jobId", async (req, res) => {
-    try {
-      const auth = await requireUser(req, "tools:read");
-      const jobId = parsePositiveInteger(req.params.jobId, "jobId");
-      const progress = await getExecutionProgress(auth.user.id, jobId);
-      const workspaceId = progress.workspaceId;
-      requireBoundWorkspace(auth, workspaceId);
-      res.json({ data: progress, request_id: requestId(res), apiVersion: REST_API_VERSION });
-    } catch (error) { sendError(res, error); }
+    try { const auth = await requireUser(req, "tools:read"); const jobId = parsePositiveInteger(req.params.jobId, "jobId"); const progress = await getExecutionProgress(auth.user.id, jobId); requireBoundWorkspace(auth, progress.workspaceId); res.json({ data: progress, request_id: requestId(res), apiVersion: REST_API_VERSION }); }
+    catch (error) { sendError(res, error); }
   });
   app.post("/api/v1/research-tasks/:taskId/execute", async (req, res) => {
-    try {
-      const auth = await requireUser(req, "research:execute");
-      const taskId = parsePositiveInteger(req.params.taskId, "taskId");
-      const result = await executeResearchTask(auth.user.id, taskId);
-      res.status(result.status === "completed" ? 200 : 202).json({ data: result, request_id: requestId(res), apiVersion: REST_API_VERSION });
-    } catch (error) { sendError(res, error); }
+    try { const auth = await requireUser(req, "research:execute"); const taskId = parsePositiveInteger(req.params.taskId, "taskId"); const result = await executeResearchTask(auth.user.id, taskId); res.status(result.status === "completed" ? 200 : 202).json({ data: result, request_id: requestId(res), apiVersion: REST_API_VERSION }); }
+    catch (error) { sendError(res, error); }
   });
-
   app.get("/api/v1/workspaces/:workspaceId/search", async (req, res) => {
-    try {
-      const auth = await requireUser(req, "search:read");
-      const workspaceId = parsePositiveInteger(req.params.workspaceId, "workspaceId");
-      requireBoundWorkspace(auth, workspaceId);
-      const limit = optionalPositiveInteger(req.query.limit, "limit", 100) ?? 20;
-      const freshnessDays = optionalPositiveInteger(req.query.freshnessDays, "freshnessDays", 3_650);
-      const cursor = req.query.cursor === undefined ? undefined : String(req.query.cursor).trim();
-      if (cursor && cursor.length > 512) throw new Error("cursor terlalu panjang.");
-      const result = await searchWorkspace(auth.user.id, { workspaceId, query: String(req.query.q ?? ""), limit, cursor: cursor || undefined, entityTypes: parseEntityTypes(req.query.entityTypes), freshnessDays });
-      res.json({ data: result, request_id: requestId(res), apiVersion: REST_API_VERSION });
-    } catch (error) { sendError(res, error); }
+    try { const auth = await requireUser(req, "search:read"); const workspaceId = parsePositiveInteger(req.params.workspaceId, "workspaceId"); requireBoundWorkspace(auth, workspaceId); const limit = optionalPositiveInteger(req.query.limit, "limit", 100) ?? 20; const freshnessDays = optionalPositiveInteger(req.query.freshnessDays, "freshnessDays", 3_650); const cursor = req.query.cursor === undefined ? undefined : String(req.query.cursor).trim(); if (cursor && cursor.length > 512) throw new Error("cursor terlalu panjang."); const result = await searchWorkspace(auth.user.id, { workspaceId, query: String(req.query.q ?? ""), limit, cursor: cursor || undefined, entityTypes: parseEntityTypes(req.query.entityTypes), freshnessDays }); res.json({ data: result, request_id: requestId(res), apiVersion: REST_API_VERSION }); }
+    catch (error) { sendError(res, error); }
   });
   app.get("/api/v1/workspaces/:workspaceId/ai-runs", async (req, res) => {
-    try {
-      const auth = await requireUser(req, "ai-runs:read");
-      const workspaceId = parsePositiveInteger(req.params.workspaceId, "workspaceId");
-      requireBoundWorkspace(auth, workspaceId);
-      res.json({ data: await listAiRuns(auth.user.id, workspaceId), request_id: requestId(res), apiVersion: REST_API_VERSION });
-    } catch (error) { sendError(res, error); }
+    try { const auth = await requireUser(req, "ai-runs:read"); const workspaceId = parsePositiveInteger(req.params.workspaceId, "workspaceId"); requireBoundWorkspace(auth, workspaceId); res.json({ data: await listAiRuns(auth.user.id, workspaceId), request_id: requestId(res), apiVersion: REST_API_VERSION }); }
+    catch (error) { sendError(res, error); }
   });
   app.get("/api/v1/ai-runs/:runId", async (req, res) => {
-    try {
-      const auth = await requireUser(req, "ai-runs:read");
-      const runId = parsePositiveInteger(req.params.runId, "runId");
-      const db = await getDb();
-      if (!db) throw new Error("Database tidak tersedia.");
-      const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, runId)).limit(1);
-      if (!run || run.workspaceId === null || (auth.workspaceId !== undefined && auth.workspaceId !== null && auth.workspaceId !== run.workspaceId) || !(await canAccessWorkspace(auth.user.id, run.workspaceId, "read"))) return res.status(404).json({ error: true, code: "NOT_FOUND", message: "AI run tidak ditemukan.", details: {}, request_id: requestId(res), apiVersion: REST_API_VERSION });
-      const output = await getAiRunOutput(auth.user.id, runId);
-      res.json({ data: { ...run, output }, request_id: requestId(res), apiVersion: REST_API_VERSION });
-    } catch (error) { sendError(res, error); }
+    try { const auth = await requireUser(req, "ai-runs:read"); const runId = parsePositiveInteger(req.params.runId, "runId"); const db = await getDb(); if (!db) throw new Error("Database tidak tersedia."); const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, runId)).limit(1); if (!run || run.workspaceId === null || (auth.workspaceId !== undefined && auth.workspaceId !== null && auth.workspaceId !== run.workspaceId) || !(await canAccessWorkspace(auth.user.id, run.workspaceId, "read"))) return res.status(404).json({ error: true, code: "NOT_FOUND", message: "AI run tidak ditemukan.", details: {}, request_id: requestId(res), apiVersion: REST_API_VERSION }); const output = await getAiRunOutput(auth.user.id, runId); res.json({ data: { ...run, output }, request_id: requestId(res), apiVersion: REST_API_VERSION }); }
+    catch (error) { sendError(res, error); }
   });
   app.post("/api/v1/workspaces/:workspaceId/research-sessions", async (req, res) => {
-    try {
-      const auth = await requireUser(req, "research:write");
-      const workspaceId = parsePositiveInteger(req.params.workspaceId, "workspaceId");
-      requireBoundWorkspace(auth, workspaceId);
-      const session = await createResearchSession(auth.user.id, { workspaceId, title: typeof req.body?.title === "string" ? req.body.title : "" });
-      res.status(201).json({ data: session, request_id: requestId(res), apiVersion: REST_API_VERSION });
-    } catch (error) { sendError(res, error); }
+    try { const auth = await requireUser(req, "research:write"); const workspaceId = parsePositiveInteger(req.params.workspaceId, "workspaceId"); requireBoundWorkspace(auth, workspaceId); const session = await createResearchSession(auth.user.id, { workspaceId, title: typeof req.body?.title === "string" ? req.body.title : "" }); res.status(201).json({ data: session, request_id: requestId(res), apiVersion: REST_API_VERSION }); }
+    catch (error) { sendError(res, error); }
   });
   app.get("/api/v1/research-sessions/:sessionId/assets", async (req, res) => {
-    try {
-      const auth = await requireUser(req, "research:read");
-      const assets = await listResearchAssets(auth.user.id, parsePositiveInteger(req.params.sessionId, "sessionId"));
-      res.json({ data: assets, request_id: requestId(res), apiVersion: REST_API_VERSION });
-    } catch (error) { sendError(res, error); }
+    try { const auth = await requireUser(req, "research:read"); const assets = await listResearchAssets(auth.user.id, parsePositiveInteger(req.params.sessionId, "sessionId")); res.json({ data: assets, request_id: requestId(res), apiVersion: REST_API_VERSION }); }
+    catch (error) { sendError(res, error); }
   });
   app.post("/api/v1/research-sessions/:sessionId/assets", async (req, res) => {
-    try {
-      const auth = await requireUser(req, "research:write");
-      const body = req.body ?? {};
-      const asset = await createResearchAsset(auth.user.id, { sessionId: parsePositiveInteger(req.params.sessionId, "sessionId"), assetType: body.assetType, value: typeof body.value === "string" ? body.value : "", hostname: typeof body.hostname === "string" ? body.hostname : undefined, metadata: body.metadata && typeof body.metadata === "object" ? body.metadata : undefined });
-      res.status(201).json({ data: asset, request_id: requestId(res), apiVersion: REST_API_VERSION });
-    } catch (error) { sendError(res, error); }
+    try { const auth = await requireUser(req, "research:write"); const body = req.body ?? {}; const asset = await createResearchAsset(auth.user.id, { sessionId: parsePositiveInteger(req.params.sessionId, "sessionId"), assetType: body.assetType, value: typeof body.value === "string" ? body.value : "", hostname: typeof body.hostname === "string" ? body.hostname : undefined, metadata: body.metadata && typeof body.metadata === "object" ? body.metadata : undefined }); res.status(201).json({ data: asset, request_id: requestId(res), apiVersion: REST_API_VERSION }); }
+    catch (error) { sendError(res, error); }
   });
   app.post("/api/v1/research-sessions/:sessionId/observations", async (req, res) => {
-    try {
-      const auth = await requireUser(req, "research:write");
-      const body = req.body ?? {};
-      const observation = await createResearchObservation(auth.user.id, { sessionId: parsePositiveInteger(req.params.sessionId, "sessionId"), assetId: body.assetId === undefined ? undefined : parsePositiveInteger(String(body.assetId), "assetId"), title: typeof body.title === "string" ? body.title : "", content: typeof body.content === "string" ? body.content : "", sourceType: typeof body.sourceType === "string" ? body.sourceType : undefined, sourceReference: typeof body.sourceReference === "string" ? body.sourceReference : undefined, rawOutputSha256: typeof body.rawOutputSha256 === "string" ? body.rawOutputSha256 : undefined, normalizedEvidenceSha256: typeof body.normalizedEvidenceSha256 === "string" ? body.normalizedEvidenceSha256 : undefined });
-      res.status(201).json({ data: observation, request_id: requestId(res), apiVersion: REST_API_VERSION });
-    } catch (error) { sendError(res, error); }
+    try { const auth = await requireUser(req, "research:write"); const body = req.body ?? {}; const observation = await createResearchObservation(auth.user.id, { sessionId: parsePositiveInteger(req.params.sessionId, "sessionId"), assetId: body.assetId === undefined ? undefined : parsePositiveInteger(String(body.assetId), "assetId"), title: typeof body.title === "string" ? body.title : "", content: typeof body.content === "string" ? body.content : "", sourceType: typeof body.sourceType === "string" ? body.sourceType : undefined, sourceReference: typeof body.sourceReference === "string" ? body.sourceReference : undefined, rawOutputSha256: typeof body.rawOutputSha256 === "string" ? body.rawOutputSha256 : undefined, normalizedEvidenceSha256: typeof body.normalizedEvidenceSha256 === "string" ? body.normalizedEvidenceSha256 : undefined }); res.status(201).json({ data: observation, request_id: requestId(res), apiVersion: REST_API_VERSION }); }
+    catch (error) { sendError(res, error); }
   });
   app.post("/api/v1/research-sessions/:sessionId/findings", async (req, res) => {
-    try {
-      const auth = await requireUser(req, "research:write");
-      const body = req.body ?? {};
-      const finding = await promoteObservationToFinding(auth.user.id, { sessionId: parsePositiveInteger(req.params.sessionId, "sessionId"), observationId: parsePositiveInteger(String(body.observationId ?? ""), "observationId"), confidence: body.confidence === undefined ? undefined : Number(body.confidence), impactSummary: typeof body.impactSummary === "string" ? body.impactSummary : "" });
-      res.status(201).json({ data: finding, request_id: requestId(res), apiVersion: REST_API_VERSION });
-    } catch (error) { sendError(res, error); }
+    try { const auth = await requireUser(req, "research:write"); const body = req.body ?? {}; const finding = await promoteObservationToFinding(auth.user.id, { sessionId: parsePositiveInteger(req.params.sessionId, "sessionId"), observationId: parsePositiveInteger(String(body.observationId ?? ""), "observationId"), confidence: body.confidence === undefined ? undefined : Number(body.confidence), impactSummary: typeof body.impactSummary === "string" ? body.impactSummary : "" }); res.status(201).json({ data: finding, request_id: requestId(res), apiVersion: REST_API_VERSION }); }
+    catch (error) { sendError(res, error); }
   });
 }

@@ -32,7 +32,7 @@ export type GovernedExecutionResult =
   | { status: "completed" | "failed" | "unavailable" | "timed_out"; plan: GovernedExecutionPlan; pipeline: ToolExecutionPipelineResult };
 
 function adapterIsHealthy(health: Awaited<ReturnType<typeof checkRegisteredAdapterHealth>>, toolKey: string) {
-  return health.some(item => item.toolKey === toolKey && item.available === true && item.healthy === true);
+  return health.some(item => item.toolKey === toolKey && item.available === true);
 }
 
 /**
@@ -49,16 +49,16 @@ export async function executeGovernedCapability(input: GovernedExecutionInput): 
   if (!primary) return { status: "blocked", reason: "primary_tool_not_registered", plan: null };
   const fallback = resolved.fallbackAdapter ? getToolCatalogEntry(resolved.fallbackAdapter) : undefined;
   const health = await checkRegisteredAdapterHealth();
-  const selectedToolAvailable = adapterIsHealthy(health, primary.toolKey);
+  const primaryAvailable = adapterIsHealthy(health, primary.toolKey);
   const fallbackAvailable = fallback ? adapterIsHealthy(health, fallback.toolKey) : false;
+  const selectedTool = primaryAvailable || !fallbackAvailable ? primary : fallback!;
 
-  const selectedTool = selectedToolAvailable || !fallbackAvailable ? primary : fallback!;
   const plan: GovernedExecutionPlan = {
     capability,
     toolKey: selectedTool.toolKey,
     fallbackToolKey: selectedTool.toolKey === primary.toolKey ? fallback?.toolKey : primary.toolKey,
     riskClass: selectedTool.riskClass,
-    selectedToolAvailable: selectedToolAvailable || fallbackAvailable,
+    selectedToolAvailable: primaryAvailable || fallbackAvailable,
     fallbackAvailable,
     states: canonicalExecutionPath(),
   };

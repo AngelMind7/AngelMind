@@ -4,6 +4,7 @@ import { trpc } from "@/lib/trpc";
 
 type RealtimeStatus = "disabled" | "connecting" | "connected" | "reconnecting";
 type ParsedSseEvent = { id?: number; event?: string; data?: string };
+export type RealtimeEvent = { id?: number; eventType?: string; aggregateType?: string; aggregateId?: number; schemaVersion?: number; payload?: Record<string, unknown> };
 
 export function parseSseBlock(block: string): ParsedSseEvent {
   const result: ParsedSseEvent = {};
@@ -17,10 +18,12 @@ export function parseSseBlock(block: string): ParsedSseEvent {
   return result;
 }
 
-export function useRealtimeEvents(enabled: boolean) {
+export function useRealtimeEvents(enabled: boolean, onEvent?: (event: RealtimeEvent) => void) {
   const utils = trpc.useUtils();
   const lastEventId = useRef<number>(0);
+  const callbackRef = useRef(onEvent);
   const [status, setStatus] = useState<RealtimeStatus>(enabled ? "connecting" : "disabled");
+  useEffect(() => { callbackRef.current = onEvent; }, [onEvent]);
 
   useEffect(() => {
     if (!enabled || typeof window === "undefined" || typeof fetch === "undefined") { setStatus("disabled"); return; }
@@ -32,7 +35,11 @@ export function useRealtimeEvents(enabled: boolean) {
 
     const scheduleReconnect = () => { if (!disposed) reconnectTimer = setTimeout(() => void connect(), 5_000); };
     const handleEvent = (payload: string) => {
-      try { const event = JSON.parse(payload) as { id?: number }; if (typeof event.id === "number" && Number.isSafeInteger(event.id)) lastEventId.current = event.id; } catch { /* invalid event is ignored */ }
+      try {
+        const event = JSON.parse(payload) as RealtimeEvent;
+        if (typeof event.id === "number" && Number.isSafeInteger(event.id)) lastEventId.current = event.id;
+        callbackRef.current?.(event);
+      } catch { /* invalid event is ignored */ }
       void utils.invalidate();
     };
     const connectSse = async (token: string) => {

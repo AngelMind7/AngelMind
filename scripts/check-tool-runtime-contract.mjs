@@ -9,6 +9,7 @@ const files = Object.fromEntries(
       "config/tool-runtime-packs.yaml",
       "server/tool-catalog-data.ts",
       "server/tool-runtime.ts",
+      "server/tool-runtime-policy.ts",
       "scripts/runtime-tool-smoke-test.sh",
       "Dockerfile.tools",
     ].map(async path => [path, await readFile(resolve(root, path), "utf8")])
@@ -58,6 +59,7 @@ const catalogKeysExpected = new Set([
 const catalog = files["server/tool-catalog-data.ts"];
 const config = files["config/tool-runtime-packs.yaml"];
 const runtime = files["server/tool-runtime.ts"];
+const policy = files["server/tool-runtime-policy.ts"];
 const smoke = files["scripts/runtime-tool-smoke-test.sh"];
 const docker = files["Dockerfile.tools"];
 const failures = [];
@@ -116,6 +118,23 @@ for (const key of ["naabu", "katana"]) {
   if (!config.includes(`id: ${key}`)) failures.push(`runtime pack manifest missing ${key}`);
 }
 
+for (const required of [
+  "review-required-pack",
+  "target_execution_disabled",
+  "scope_not_validated",
+  "human_approval_required",
+  "privileged_mode_blocked",
+]) {
+  if (!policy.includes(required)) failures.push(`runtime policy missing ${required}`);
+}
+
+if (!runtime.includes("ANGELMIND_ENABLE_TARGET_EXECUTION")) {
+  failures.push("runtime missing target execution deployment gate");
+}
+if (!runtime.includes("canExecuteTool")) {
+  failures.push("runtime missing catalog execution policy check");
+}
+
 if (failures.length) {
   console.error("Tool runtime contract FAILED:");
   for (const failure of failures) console.error(`- ${failure}`);
@@ -123,5 +142,5 @@ if (failures.length) {
 }
 
 console.log(
-  `Tool runtime contract OK: ${expected.length} tools represented across catalog, runtime, smoke test, image provisioning, and runtime manifest.`
+  `Tool runtime contract OK: ${expected.length} tools represented across catalog, runtime, smoke test, image provisioning, manifest, and governed policy.`
 );

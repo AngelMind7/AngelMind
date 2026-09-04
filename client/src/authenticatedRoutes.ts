@@ -34,6 +34,7 @@ export const authenticatedRoutes = [
   { path: "/mission-control", component: mission },
   { path: "/coverage", component: coverage },
   { path: "/researcher", component: researcher },
+
   { path: "/ai-center", component: ai },
   { path: "/ai", component: ai },
   { path: "/ai/providers", component: ai },
@@ -41,9 +42,9 @@ export const authenticatedRoutes = [
   { path: "/ai/connections", component: ai },
   { path: "/ai/routing", component: ai },
   { path: "/ai/usage", component: ai },
+
   { path: "/research", component: research },
   { path: "/research/new", component: research },
-  { path: "/research/:id", component: research },
   { path: "/research/:id/objectives", component: research },
   { path: "/research/:id/hypotheses", component: research },
   { path: "/research/:id/tasks", component: research },
@@ -53,36 +54,44 @@ export const authenticatedRoutes = [
   { path: "/research/:id/findings", component: research },
   { path: "/research/:id/reports", component: research },
   { path: "/research/:id/timeline", component: research },
+  { path: "/research/:id", component: research },
+
   { path: "/knowledge", component: knowledge },
   { path: "/search", component: search },
   { path: "/collaboration", component: collaboration },
   { path: "/saved-views", component: savedViews },
   { path: "/tags-notes", component: tagsNotes },
+
   { path: "/assets", component: assets },
   { path: "/assets/new", component: assets },
   { path: "/assets/:id", component: assets },
   { path: "/inventory", component: assets },
+
   { path: "/tools", component: tools },
-  { path: "/tools/:id", component: tools },
   { path: "/tools/capabilities", component: tools },
   { path: "/tools/installed", component: tools },
   { path: "/tools/health", component: tools },
   { path: "/tools/history", component: tools },
+  { path: "/tools/:id", component: tools },
+
   { path: "/reports", component: reports },
   { path: "/reports/new", component: reports },
   { path: "/reports/:id", component: reports },
+
   { path: "/workspaces", component: workspaces },
   { path: "/workspaces/new", component: workspaces },
   { path: "/workspaces/:id", component: workspaces },
   { path: "/organizations", component: organizations },
   { path: "/organizations/new", component: organizations },
   { path: "/organizations/:id", component: organizations },
+
   { path: "/governance", component: governance },
   { path: "/governance/approvals", component: governance },
   { path: "/governance/policies", component: governance },
   { path: "/findings", component: findings },
   { path: "/findings/:id", component: findings },
   { path: "/audit", component: audit },
+
   { path: "/operations", component: operations },
   { path: "/operations/health", component: operations },
   { path: "/operations/queue", component: operations },
@@ -91,9 +100,11 @@ export const authenticatedRoutes = [
   { path: "/assurance", component: assurance },
   { path: "/assurance/quality", component: assurance },
   { path: "/assurance/compliance", component: assurance },
+
   { path: "/incidents", component: incidents },
   { path: "/incidents/new", component: incidents },
   { path: "/incidents/:id", component: incidents },
+
   { path: "/app/security", component: security },
   { path: "/security", component: security },
   { path: "/security/sessions", component: security },
@@ -102,6 +113,7 @@ export const authenticatedRoutes = [
   { path: "/security/api-keys", component: security },
   { path: "/notifications", component: notifications },
   { path: "/notifications/settings", component: notifications },
+
   { path: "/profile", component: profile },
   { path: "/settings", component: profile },
   { path: "/settings/profile", component: profile },

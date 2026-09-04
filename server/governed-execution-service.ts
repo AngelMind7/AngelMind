@@ -5,7 +5,7 @@ import { authorizeToolExecution } from "./tool-execution-policy";
 import { executeToolPipeline, persistToolPipelineObservation, type ToolExecutionPipelineResult } from "./tool-execution-pipeline";
 import { advanceExecution, canonicalExecutionPath, type ExecutionRisk, type ExecutionState } from "./execution-state-machine";
 import { checkRegisteredAdapterHealth } from "./tool-runtime";
-import { createExecutionLedger, advanceExecutionLedger, getExecutionLedger, persistExecutionReport } from "./execution-ledger";
+import { createExecutionLedger, advanceExecutionLedger, getExecutionLedger, persistExecutionReport, completeExecutionLedger, failExecutionLedger } from "./execution-ledger";
 import { generateExecutionReport, type ExecutionReport } from "./execution-assurance";
 import * as controlPlane from "./control-plane/service";
 
@@ -111,56 +111,50 @@ export async function executeGovernedCapability(input: GovernedExecutionInput): 
 
   const ledgerRequestId = createHash("sha256").update(JSON.stringify({ userId: input.userId, workspaceId: input.workspaceId, capability, toolKey: plan.toolKey, mode: input.mode, input: input.input, target: input.target ?? null, sessionId: input.sessionId ?? null, assetId: input.assetId ?? null, createdAt: new Date().toISOString() })).digest("hex");
   const ledger = await createExecutionLedger(input.userId, { workspaceId: input.workspaceId, capability, toolKey: plan.toolKey, risk: plan.riskClass, scopeValidated: true, approval: authorization.humanApproval ? "approved" : "not_required", requestId: ledgerRequestId });
-  await advanceLedgerTo(input.userId, ledger.jobId, "QUEUE");
-  const runtimeRequest = { toolKey: plan.toolKey, mode: input.mode, input: input.input, scopeValidated: true, humanApproval: authorization.humanApproval, capabilities: [capability] };
-  await advanceLedgerTo(input.userId, ledger.jobId, "WORKER_EXECUTION");
-  const pipeline = await executeToolPipeline(runtimeRequest);
-  await advanceLedgerTo(input.userId, ledger.jobId, "PARSER");
-  await advanceLedgerTo(input.userId, ledger.jobId, "NORMALIZER");
+  try {
+    await advanceLedgerTo(input.userId, ledger.jobId, "QUEUE");
+    const runtimeRequest = { toolKey: plan.toolKey, mode: input.mode, input: input.input, scopeValidated: true, humanApproval: authorization.humanApproval, capabilities: [capability] };
+    await advanceLedgerTo(input.userId, ledger.jobId, "WORKER_EXECUTION");
+    const pipeline = await executeToolPipeline(runtimeRequest);
+    await advanceLedgerTo(input.userId, ledger.jobId, "PARSER");
+    await advanceLedgerTo(input.userId, ledger.jobId, "NORMALIZER");
 
-  let observationId: number | undefined;
-  let findingId: number | undefined;
-  let report: ExecutionReport | undefined;
-  if (input.sessionId && pipeline.runtime.status === "completed") {
-    const observation = await persistToolPipelineObservation(input.userId, { sessionId: input.sessionId, assetId: input.assetId, request: runtimeRequest }, pipeline);
-    observationId = observation.id;
-  }
-  if (pipeline.runtime.status === "completed") {
-    await advanceLedgerTo(input.userId, ledger.jobId, "OBSERVATION");
-    await advanceLedgerTo(input.userId, ledger.jobId, "EVIDENCE");
-    findingId = await promoteCorrelationFinding(input, pipeline, observationId);
-    if (findingId && pipeline.correlation) {
-      const match = pipeline.correlation.matches[0];
-      const evidenceRefs = Array.from(new Set([...match.evidenceRefs, pipeline.provenance.requestId, ...(observationId ? [`observation:${observationId}`] : [])]));
-      report = generateExecutionReport({
-        capability,
-        evidence: {
-          requestId: pipeline.provenance.requestId,
-          toolKey: pipeline.provenance.toolKey,
-          rawOutputSha256: pipeline.provenance.rawOutputSha256,
-          normalizedEvidenceSha256: pipeline.provenance.normalizedEvidenceSha256,
-          evidenceRefs,
-        },
-        finding: {
-          findingId,
-          ruleId: match.ruleId,
-          emittedKey: match.emittedKey,
-          title: match.title,
-          severity: findingSeverity(pipeline),
-          confidence: match.confidence,
-          evidenceRefs,
-        },
-      }) ?? undefined;
-      if (report) {
-        await advanceLedgerTo(input.userId, ledger.jobId, "FINDING");
-        await advanceLedgerTo(input.userId, ledger.jobId, "CORRELATION");
-        await advanceLedgerTo(input.userId, ledger.jobId, "CHAIN_VALIDATION");
-        await advanceLedgerTo(input.userId, ledger.jobId, "IMPACT_PROOF");
-        await advanceLedgerTo(input.userId, ledger.jobId, "REPORT_GENERATION");
-        await persistExecutionReport(input.userId, ledger.jobId, report as unknown as Record<string, unknown>);
-      }
+    let observationId: number | undefined;
+    let findingId: number | undefined;
+    let report: ExecutionReport | undefined;
+    if (input.sessionId && pipeline.runtime.status === "completed") {
+      const observation = await persistToolPipelineObservation(input.userId, { sessionId: input.sessionId, assetId: input.assetId, request: runtimeRequest }, pipeline);
+      observationId = observation.id;
     }
+    if (pipeline.runtime.status === "completed") {
+      await advanceLedgerTo(input.userId, ledger.jobId, "OBSERVATION");
+      await advanceLedgerTo(input.userId, ledger.jobId, "EVIDENCE");
+      findingId = await promoteCorrelationFinding(input, pipeline, observationId);
+      if (findingId && pipeline.correlation) {
+        const match = pipeline.correlation.matches[0];
+        const evidenceRefs = Array.from(new Set([...match.evidenceRefs, pipeline.provenance.requestId, ...(observationId ? [`observation:${observationId}`] : [])]));
+        report = generateExecutionReport({
+          capability,
+          evidence: { requestId: pipeline.provenance.requestId, toolKey: pipeline.provenance.toolKey, rawOutputSha256: pipeline.provenance.rawOutputSha256, normalizedEvidenceSha256: pipeline.provenance.normalizedEvidenceSha256, evidenceRefs },
+          finding: { findingId, ruleId: match.ruleId, emittedKey: match.emittedKey, title: match.title, severity: findingSeverity(pipeline), confidence: match.confidence, evidenceRefs },
+        }) ?? undefined;
+        if (report) {
+          await advanceLedgerTo(input.userId, ledger.jobId, "FINDING");
+          await advanceLedgerTo(input.userId, ledger.jobId, "CORRELATION");
+          await advanceLedgerTo(input.userId, ledger.jobId, "CHAIN_VALIDATION");
+          await advanceLedgerTo(input.userId, ledger.jobId, "IMPACT_PROOF");
+          await advanceLedgerTo(input.userId, ledger.jobId, "REPORT_GENERATION");
+          await persistExecutionReport(input.userId, ledger.jobId, report as unknown as Record<string, unknown>);
+        }
+      }
+      if (!report) await completeExecutionLedger(input.userId, ledger.jobId, findingId ? "correlation_completed_without_report" : "execution_completed_without_finding");
+    } else {
+      await failExecutionLedger(input.userId, ledger.jobId, pipeline.runtime.reason ?? `runtime_${pipeline.runtime.status}`);
+    }
+    const executionState = report ? "REPORT_GENERATION" : pipeline.runtime.status === "completed" ? (findingId ? "CORRELATION" : "EVIDENCE") : "WORKER_EXECUTION";
+    return { status: pipeline.runtime.status, plan, pipeline, observationId, findingId, report, state: executionState };
+  } catch (error) {
+    try { await failExecutionLedger(input.userId, ledger.jobId, error instanceof Error ? error.message : "governed_execution_failed"); } catch { /* preserve original execution error */ }
+    throw error;
   }
-  const executionState = report ? "REPORT_GENERATION" : pipeline.runtime.status === "completed" ? (findingId ? "CORRELATION" : "EVIDENCE") : "WORKER_EXECUTION";
-  return { status: pipeline.runtime.status, plan, pipeline, observationId, findingId, report, state: executionState };
 }

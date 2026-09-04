@@ -12,7 +12,7 @@
     "check:migration-rollback": "node scripts/check-migration-rollback.mjs",
     "check:master-contract": "node scripts/check-master-contract.mjs",
     "check:api-v1-contract": "node scripts/check-api-v1-contract.mjs && node scripts/check-api-surface.mjs",
-    "check:tool-runtime-contract": "pnpm exec vitest run server/tool-execution-pipeline.test.ts server/tool-runtime.test.ts",
+    "check:tool-runtime-contract": "pnpm exec vitest run server/tool-execution-pipeline.test.ts server/tool-runtime.test.ts server/simulation-engine.test.ts server/simulation-rest.test.ts",
     "check:provider-neutral": "node scripts/check-provider-neutral.mjs",
     "check:uuid-buffer-usage": "node scripts/check-uuid-buffer-usage.mjs",
     "test:load": "node scripts/load-test.mjs",
@@ -92,7 +92,7 @@
     "tailwind-merge": "^3.3.1",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^1.1.2",
-    "wouter": "^3.3.5",
+    "wouter": "^3.3.1",
     "ws": "^8.21.3",
     "zod": "^4.1.12"
   },

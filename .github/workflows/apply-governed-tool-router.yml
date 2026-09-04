@@ -22,12 +22,12 @@ jobs:
           from pathlib import Path
           p = Path('server/routers.ts')
           s = p.read_text()
-          old_import = 'import * as toolRuntime from "./tool-runtime";\n'
-          new_import = old_import + 'import { authorizeToolExecution } from "./tool-execution-policy";\n'
-          if 'import { authorizeToolExecution } from "./tool-execution-policy";' not in s:
-              if old_import not in s:
+          import_line = 'import * as toolRuntime from "./tool-runtime";\n'
+          policy_import = 'import { authorizeToolExecution } from "./tool-execution-policy";\n'
+          if policy_import not in s:
+              if import_line not in s:
                   raise SystemExit('tool-runtime import anchor not found')
-              s = s.replace(old_import, new_import, 1)
+              s = s.replace(import_line, import_line + policy_import, 1)
           start = s.index('  tools: router({')
           end = s.index('  control: router({', start)
           new = '''  tools: router({
@@ -111,23 +111,19 @@ jobs:
       }),
   }),
 '''
-          if s.count('  tools: router({') != 1 or s.count('  control: router({') < 1:
-              raise SystemExit('router anchors not found')
           s = s[:start] + new + s[end:]
           p.write_text(s)
           PY
-      - name: Commit router integration and remove one-shot workflow
+      - name: Commit router integration
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add server/routers.ts
-          git rm .github/workflows/apply-governed-tool-router.yml
           git diff --cached --check
           if git diff --cached --quiet; then
-            echo 'router already integrated; removing temporary workflow only'
-            git commit -m 'chore: remove governed router integration workflow'
-          else
-            git commit -m 'feat: enforce governed tool execution at router boundary'
+            echo 'router already integrated; nothing to commit'
+            exit 0
           fi
+          git commit -m 'feat: enforce governed tool execution at router boundary'
           git push

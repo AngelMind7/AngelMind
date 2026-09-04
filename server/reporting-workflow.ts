@@ -16,14 +16,15 @@ export function createReport(input: ReportInput): Report {
   const report: Report = { ...input, id, version: 1, status: "draft", privateByDefault: true, contentHash: hashReport(input), createdAt: new Date().toISOString() };
   reports.set(id, report); return report;
 }
+export function getReport(id: string): Report { const report = reports.get(id); if (!report) throw new Error("Report not found."); return report; }
 export function updateReportStatus(id: string, status: ReportStatus): Report {
-  const report = reports.get(id); if (!report) throw new Error("Report not found.");
+  const report = getReport(id);
   if (!["draft", "ready", "approved", "published"].includes(status)) throw new Error("Invalid report status.");
   if (status === "published" && report.status !== "approved") throw new Error("Report must be approved before publication.");
   const next = { ...report, status, version: report.version + 1 }; reports.set(id, next); return next;
 }
 export function exportReport(id: string) {
-  const report = reports.get(id); if (!report) throw new Error("Report not found.");
+  const report = getReport(id);
   if (report.status !== "approved" && report.status !== "published") throw new Error("Report is not ready for export.");
   return { reportId: report.id, version: report.version, format: "json", privateByDefault: true, sanitized: true, contentHash: report.contentHash };
 }

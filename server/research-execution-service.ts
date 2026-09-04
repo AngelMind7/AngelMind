@@ -50,11 +50,13 @@ export async function executeResearchTask(userId: number, taskId: number): Promi
   const highRisk = task.riskClass === "high" || task.riskClass === "critical";
   const mode = highRisk ? "active_nondestructive" : "passive_readonly";
   const capability = capabilities[0];
+  const inputApprovalId = typeof inputs.approvalId === "number" && Number.isInteger(inputs.approvalId) && inputs.approvalId > 0 ? inputs.approvalId : undefined;
+  const approvalId = task.approvalId ?? inputApprovalId;
 
   // Approval of the persisted task is not itself the execution authorization.
   // The governed policy requires the concrete, server-recorded approvalId/context.
   // Never convert an incomplete approval record into an executable request.
-  if (highRisk && !task.approvalId) {
+  if (highRisk && !approvalId) {
     return { taskId, status: "blocked", reason: "approval_record_required" };
   }
 
@@ -66,7 +68,7 @@ export async function executeResearchTask(userId: number, taskId: number): Promi
     mode,
     input: task.inputs,
     target,
-    approvalId: task.approvalId ?? undefined,
+    approvalId,
     sessionId: task.sessionId,
     assetId,
   });

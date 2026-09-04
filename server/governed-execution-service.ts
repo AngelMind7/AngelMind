@@ -5,6 +5,7 @@ import { authorizeToolExecution } from "./tool-execution-policy";
 import { executeToolPipeline, persistToolPipelineObservation, type ToolExecutionPipelineResult } from "./tool-execution-pipeline";
 import { advanceExecution, canonicalExecutionPath, type ExecutionRisk, type ExecutionState } from "./execution-state-machine";
 import { checkRegisteredAdapterHealth } from "./tool-runtime";
+import { createExecutionLedger, advanceExecutionLedger } from "./execution-ledger";
 import * as controlPlane from "./control-plane/service";
 
 export type GovernedExecutionInput = {
@@ -44,6 +45,17 @@ function stateBeforeExecution(risk: ExecutionRisk, scopeValidated: boolean, huma
     if (context.state === "APPROVAL_GATE" && !humanApproval && (risk === "high" || risk === "critical")) return context.state;
   }
   return context.state;
+}
+
+async function advanceLedgerTo(userId: number, jobId: number, target: ExecutionState) {
+  let guard = 0;
+  while (guard++ < canonicalExecutionPath().length) {
+    const ledger = await import("./execution-ledger").then(module => module.getExecutionLedger(userId, jobId));
+    if (ledger.payload.state === target) return ledger.payload.state;
+    if (ledger.payload.state === "DONE") throw new Error(`Execution ledger cannot advance past DONE to ${target}.`);
+    await advanceExecutionLedger(userId, jobId);
+  }
+  throw new Error(`Execution ledger could not reach ${target}.`);
 }
 
 function findingSeverity(result: ToolExecutionPipelineResult): "informational" | "low" | "medium" | "high" | "critical" {
@@ -87,17 +99,35 @@ export async function executeGovernedCapability(input: GovernedExecutionInput): 
   const selectedTool = primaryAvailable ? primary : fallbackAvailable && fallback ? fallback : primary;
   const plan: GovernedExecutionPlan = { capability, toolKey: selectedTool.toolKey, fallbackToolKey: selectedTool.toolKey === primary.toolKey ? fallback?.toolKey : primary.toolKey, riskClass: selectedTool.riskClass as ExecutionRisk, selectedToolAvailable: primaryAvailable || fallbackAvailable, fallbackAvailable, states: canonicalExecutionPath() };
   if (!plan.selectedToolAvailable) return { status: "blocked", reason: "no_healthy_tool_adapter", plan, state: "FINGERPRINT" };
+
+  const ledgerRequestId = createHash("sha256").update(JSON.stringify({ userId: input.userId, workspaceId: input.workspaceId, capability, toolKey: plan.toolKey, mode: input.mode, input: input.input, target: input.target ?? null, sessionId: input.sessionId ?? null, assetId: input.assetId ?? null, createdAt: new Date().toISOString() })).digest("hex");
+  const ledger = await createExecutionLedger(input.userId, { workspaceId: input.workspaceId, capability, toolKey: plan.toolKey, risk: plan.riskClass, scopeValidated: false, approval: plan.riskClass === "high" || plan.riskClass === "critical" ? "pending" : "not_required", requestId: ledgerRequestId });
+  await advanceLedgerTo(input.userId, ledger.jobId, "POLICY_CHECK");
+
   const authorization = await authorizeToolExecution({ userId: input.userId, workspaceId: input.workspaceId, toolKey: plan.toolKey, mode: input.mode, target: input.target, input: input.input, approvalId: input.approvalId });
   if (!authorization.allowed) return { status: "blocked", reason: authorization.reason, plan, state: stateBeforeExecution(plan.riskClass, false, false) };
+  await advanceLedgerTo(input.userId, ledger.jobId, "QUEUE");
   const runtimeRequest = { toolKey: plan.toolKey, mode: input.mode, input: input.input, scopeValidated: true, humanApproval: authorization.humanApproval, capabilities: [capability] };
+  await advanceLedgerTo(input.userId, ledger.jobId, "WORKER_EXECUTION");
   const pipeline = await executeToolPipeline(runtimeRequest);
+  await advanceLedgerTo(input.userId, ledger.jobId, "PARSER");
+  await advanceLedgerTo(input.userId, ledger.jobId, "NORMALIZER");
+
   let observationId: number | undefined;
   let findingId: number | undefined;
   if (input.sessionId && pipeline.runtime.status === "completed") {
     const observation = await persistToolPipelineObservation(input.userId, { sessionId: input.sessionId, assetId: input.assetId, request: runtimeRequest }, pipeline);
     observationId = observation.id;
   }
-  if (pipeline.runtime.status === "completed") findingId = await promoteCorrelationFinding(input, pipeline, observationId);
-  const executionState = pipeline.runtime.status === "completed" ? (findingId ? "FINDING" : "OBSERVATION") : "WORKER_EXECUTION";
+  if (pipeline.runtime.status === "completed") {
+    await advanceLedgerTo(input.userId, ledger.jobId, "OBSERVATION");
+    await advanceLedgerTo(input.userId, ledger.jobId, "EVIDENCE");
+    findingId = await promoteCorrelationFinding(input, pipeline, observationId);
+    if (findingId) {
+      await advanceLedgerTo(input.userId, ledger.jobId, "FINDING");
+      if (pipeline.correlation) await advanceLedgerTo(input.userId, ledger.jobId, "CORRELATION");
+    }
+  }
+  const executionState = pipeline.runtime.status === "completed" ? (findingId ? "CORRELATION" : "EVIDENCE") : "WORKER_EXECUTION";
   return { status: pipeline.runtime.status, plan, pipeline, observationId, findingId, state: executionState };
 }

@@ -1,12 +1,21 @@
-# Domain 07 — Red Team
+# Domain 07 — Red Team Operations
 
-Blueprint-aligned scope: operation planning, emulation, controlled payload research, campaign metadata and activity tracking.
+Blueprint V4 covers operation planning, C2 infrastructure, implant/beacon concepts, phishing/social-engineering exercises, physical-security exercises, lateral movement, exfiltration, persistence, evasion and OPSEC. fileciteturn136file7L485-L496
 
 ## Implemented contract
-- Operations require an explicit scope and authorization record.
-- Campaigns are represented as auditable exercises.
-- Beacon/command concepts from the blueprint are modeled as simulation/test fixtures rather than live persistence or command-and-control.
-- Results flow into evidence, findings and reports.
+- Operation planning requires explicit scope, exclusions and rules of engagement.
+- Approval workflow is explicit: draft → pending approval → approved → simulation.
+- Nine capability classes are modeled: C2, phishing, social engineering, physical, lateral movement, exfiltration, persistence, evasion and OPSEC.
+- Results are synthetic simulation evidence with a chain-of-custody reference.
 
 ## Safety boundary
-No credential harvesting, persistence, covert C2, evasion, lateral-movement automation, destructive action or exfiltration is enabled by default.
+Shared runtime execution is simulation-only. Target-facing C2, payload delivery, credential harvesting, persistence/evasion, lateral movement and exfiltration are not enabled as unrestricted operations. Every simulated capability requires an approved operation, validated allowlist and explicit approval.
+
+## API surface
+- `GET/POST /api/v1/workspaces/:workspaceId/redteam/operations`
+- `GET /api/v1/redteam/operations/:id`
+- `POST /api/v1/redteam/operations/:id/request-approval`
+- `POST /api/v1/redteam/operations/:id/approve`
+- `POST /api/v1/redteam/operations/:id/status`
+- `POST /api/v1/redteam/operations/:id/simulate`
+- `GET /api/v1/redteam/c2/policy`

@@ -1,6 +1,7 @@
 import MarketingHome from "./marketing/MarketingHome";
 import TrustCenter from "./marketing/TrustCenter";
 import PublicInfoPage from "./marketing/PublicInfoPage";
+import ClientPortal from "./pages/ClientPortal";
 
 export const publicRoutes = [
   { path: "/", component: MarketingHome, boundary: "reviewed-static-copy" },
@@ -35,4 +36,5 @@ export const publicRoutes = [
   { path: "/legal/acceptable-use", component: PublicInfoPage, boundary: "deployment-reviewed-legal-copy" },
   { path: "/legal/responsible-disclosure", component: PublicInfoPage, boundary: "deployment-reviewed-legal-copy" },
   { path: "/legal/data-processing", component: PublicInfoPage, boundary: "deployment-reviewed-legal-copy" },
+  { path: "/client/:orgSlug", component: ClientPortal, boundary: "authenticated-organization-summary-only" },
 ] as const;

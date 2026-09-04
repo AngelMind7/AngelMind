@@ -1,6 +1,6 @@
 import { test, expect, type APIRequestContext } from "@playwright/test";
 
-const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
+const baseURL = process.env.E2E_BASE_URL ?? process.env.PLAYWRIGHT_BASE_URL ?? "http://127.0.0.1:4173";
 const token = process.env.ANGELMIND_E2E_TOKEN;
 
 type TrpcResult<T> = { result?: { data?: { json?: T } }; error?: { json?: { message?: string } } }[];

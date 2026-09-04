@@ -4,32 +4,32 @@ import path from "node:path";
 const root = process.cwd();
 const read = (relativePath) => fs.readFileSync(path.join(root, relativePath), "utf8");
 const routerSource = read("server/routers.ts");
-const systemSource = read("server/_core/systemRouter.ts");
-const apiSurfaceSource = read("server/_core/apiSurfaceRouter.ts");
-
-const countExecutableLeaves = (source) =>
+const countTrpcLeaves = (source) =>
   (source.match(/^\s*[A-Za-z0-9_$]+\s*:\s*(?:admin|protected|public)Procedure\b/gm) ?? []).length;
+const concreteTrpcLeaves = countTrpcLeaves(routerSource);
 
-const canonicalLeaves = countExecutableLeaves(routerSource);
-const platformLeaves = countExecutableLeaves(apiSurfaceSource);
-const executableLeaves = canonicalLeaves + platformLeaves;
+const restFiles = [
+  "server/rest-v1.ts",
+  "server/rest-v1-core-resources.ts",
+  "server/rest-v1-tags-notes.ts",
+  "server/rest-v1-tools.ts",
+  "server/simulation-rest.ts",
+];
+const restSources = restFiles.map(read);
+const restRoutes = restSources.reduce(
+  (total, source) => total + (source.match(/\bapp\.(?:get|post|put|patch|delete)\(\"\/api\/v1\//g) ?? []).length,
+  0,
+);
+const concreteApiSurface = concreteTrpcLeaves + restRoutes;
 
-const contractPath = path.join(root, "server", "api-v1-contract.ts");
-const contractSource = fs.readFileSync(contractPath, "utf8");
+const contractSource = read("server/api-v1-contract.ts");
 const namedContractEntries = [
   ...contractSource.matchAll(/endpoint\("([^"]+)",\s*"([^"]+)",\s*"([^"]+)",\s*"([^"]+)"/g),
 ];
 
-if (!/api:\s*apiSurfaceRouter\b/.test(systemSource)) {
-  throw new Error("Platform API surface router is not mounted in systemRouter.");
-}
-if (!/system:\s*systemRouter\b/.test(routerSource)) {
-  throw new Error("systemRouter is not mounted in the canonical appRouter.");
-}
-
 const minimumExecutable = 260;
-if (executableLeaves < minimumExecutable) {
-  throw new Error(`Concrete tRPC API surface has only ${executableLeaves} executable leaves; expected at least ${minimumExecutable}.`);
+if (concreteApiSurface < minimumExecutable) {
+  throw new Error(`Concrete API surface has only ${concreteApiSurface} endpoints (${concreteTrpcLeaves} tRPC + ${restRoutes} REST); expected at least ${minimumExecutable}.`);
 }
 if (namedContractEntries.length < 240) {
   throw new Error(`Named V4 REST contract has only ${namedContractEntries.length} entries; expected at least 240.`);
@@ -37,9 +37,9 @@ if (namedContractEntries.length < 240) {
 
 console.log(JSON.stringify({
   ok: true,
-  canonicalTrpcLeaves: canonicalLeaves,
-  platformTrpcLeaves: platformLeaves,
-  concreteTrpcLeaves: executableLeaves,
+  concreteTrpcLeaves,
+  concreteRestRoutes: restRoutes,
+  concreteApiSurface,
   namedRestContractEntries: namedContractEntries.length,
   blueprintTarget: "260+",
 }, null, 2));

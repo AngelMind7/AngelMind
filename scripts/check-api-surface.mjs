@@ -12,8 +12,16 @@ const restFiles = [
   "server/rest-v1.ts",
   "server/rest-v1-core-resources.ts",
   "server/rest-v1-tags-notes.ts",
+  "server/rest-v1-evidence-resources.ts",
   "server/rest-v1-evidence-findings.ts",
   "server/rest-v1-tools.ts",
+  "server/rest-v1-redteam.ts",
+  "server/rest-v1-purple-team.ts",
+  "server/rest-v1-bug-bounty.ts",
+  "server/rest-v1-reporting.ts",
+  "server/rest-v1-threat-intelligence.ts",
+  "server/rest-v1-ai-automation.ts",
+  "server/rest-v1-governance.ts",
   "server/simulation-rest.ts",
 ];
 const restEndpointPattern = /\bapp\.(get|post|put|patch|delete)\(\"(\/api\/v1\/[^\"]+)\"/g;

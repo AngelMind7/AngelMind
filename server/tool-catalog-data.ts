@@ -1,5 +1,5 @@
-// 15-tool catalog — pengganti manifest PDF 556 tools lama.
-// Sesuai ANGELMIND-PRO-MASTER-FINAL.md Section 6.2.
+// Canonical 17-tool catalog for the current AngelMind master contract.
+// Historical 556-tool manifests are intentionally not used as the runtime contract.
 export const generatedToolCatalog = [
   {
     "toolKey": "burp_suite_pro",

@@ -16,11 +16,13 @@ const restFiles = [
   "server/simulation-rest.ts",
 ];
 const restSources = restFiles.map(read);
-const restRoutes = restSources.reduce(
-  (total, source) => total + (source.match(/\bapp\.(?:get|post|put|patch|delete)\(\"\/api\/v1\//g) ?? []).length,
-  0,
-);
-const concreteApiSurface = concreteTrpcLeaves + restRoutes;
+const restEndpointPattern = /\bapp\.(get|post|put|patch|delete)\(\"(\/api\/v1\/[^\"]+)\"/g;
+const concreteRestKeys = new Set();
+for (const source of restSources) {
+  for (const match of source.matchAll(restEndpointPattern)) concreteRestKeys.add(`${match[1].toUpperCase()} ${match[2]}`);
+}
+const concreteRestRoutes = concreteRestKeys.size;
+const concreteApiSurface = concreteTrpcLeaves + concreteRestRoutes;
 
 const contractSource = read("server/api-v1-contract.ts");
 const namedContractEntries = [
@@ -29,7 +31,7 @@ const namedContractEntries = [
 
 const minimumExecutable = 260;
 if (concreteApiSurface < minimumExecutable) {
-  throw new Error(`Concrete API surface has only ${concreteApiSurface} endpoints (${concreteTrpcLeaves} tRPC + ${restRoutes} REST); expected at least ${minimumExecutable}.`);
+  throw new Error(`Concrete API surface has only ${concreteApiSurface} unique endpoints (${concreteTrpcLeaves} tRPC + ${concreteRestRoutes} REST); expected at least ${minimumExecutable}.`);
 }
 if (namedContractEntries.length < 240) {
   throw new Error(`Named V4 REST contract has only ${namedContractEntries.length} entries; expected at least 240.`);
@@ -38,7 +40,7 @@ if (namedContractEntries.length < 240) {
 console.log(JSON.stringify({
   ok: true,
   concreteTrpcLeaves,
-  concreteRestRoutes: restRoutes,
+  concreteRestRoutes,
   concreteApiSurface,
   namedRestContractEntries: namedContractEntries.length,
   blueprintTarget: "260+",

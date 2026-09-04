@@ -1,10 +1,13 @@
 import type { CorrelationRule } from "./correlation-engine";
 
 type MasterSeverity = "CRITICAL" | "HIGH" | "MEDIUM";
+type SequentialRuleTuple = readonly [id: string, title: string, trigger: string, target: string, severity: MasterSeverity];
+type CompoundRuleTuple = readonly [id: string, title: string, requires: readonly string[], emits: string, confidence: number];
+
 const priority = (severity: MasterSeverity) =>
   severity === "CRITICAL" ? 100 : severity === "HIGH" ? 75 : 50;
 
-export const masterSequentialCorrelationRules: readonly CorrelationRule[] = [
+const sequentialRuleTuples: readonly SequentialRuleTuple[] = [
   ["SEQ-001", "SSRF → Cloud Metadata", "ssrf-internal", "cloud-metadata-exposure", "CRITICAL"],
   ["SEQ-002", "Cloud Metadata → IAM", "cloud-metadata-exposure", "cloud-iam-overpermission", "CRITICAL"],
   ["SEQ-003", "Cloud Metadata → S3", "cloud-metadata-exposure", "cloud-s3-public", "HIGH"],
@@ -42,16 +45,18 @@ export const masterSequentialCorrelationRules: readonly CorrelationRule[] = [
   ["SEQ-035", "SSTI → Full Compromise", "ssti-server-side", "rce-command-injection", "CRITICAL"],
   ["SEQ-036", "Race Condition → Privilege Escalation", "race-condition", "idor-vertical", "HIGH"],
   ["SEQ-037", "GraphQL Batching → Mass Data Exfil", "graphql-batching", "idor-horizontal", "CRITICAL"],
-].map(([id, title, trigger, target, severity]) => ({
+];
+
+export const masterSequentialCorrelationRules: readonly CorrelationRule[] = sequentialRuleTuples.map(([id, title, trigger, target, severity]) => ({
   id,
   category: "sequential" as const,
   requires: [trigger],
   emits: target,
   title,
-  priority: priority(severity as MasterSeverity),
+  priority: priority(severity),
 }));
 
-export const masterCompoundCorrelationRules: readonly CorrelationRule[] = [
+const compoundRuleTuples: readonly CompoundRuleTuple[] = [
   ["COMP-001", "IDOR + Mass Assignment → Vertical IDOR", ["idor-horizontal", "api-mass-assignment"], "idor-vertical", 0.92],
   ["COMP-002", "JWT Bypass + IDOR → Account Takeover", ["jwt-none", "idor-horizontal"], "idor-vertical", 0.95],
   ["COMP-003", "SSRF + Metadata + IAM → Cloud Compromise", ["ssrf", "metadata", "iam"], "cloud-s3-public", 0.98],
@@ -62,10 +67,12 @@ export const masterCompoundCorrelationRules: readonly CorrelationRule[] = [
   ["COMP-008", "Source Map + CVE → Known Exploit", ["sourcemap", "cve"], "sqli-classic", 0.85],
   ["COMP-009", "Mobile Secrets + OAuth → Account Takeover", ["mobile-secrets", "oauth"], "password-reset", 0.85],
   ["COMP-010", "Race Condition + Mass Assignment → Privilege", ["race-condition", "mass-assignment"], "idor-vertical", 0.88],
-].map(([id, title, requires, emits, confidence]) => ({
+];
+
+export const masterCompoundCorrelationRules: readonly CorrelationRule[] = compoundRuleTuples.map(([id, title, requires, emits, confidence]) => ({
   id,
   category: "compound" as const,
-  requires,
+  requires: [...requires],
   emits,
   title,
   priority: Math.round(confidence * 100),

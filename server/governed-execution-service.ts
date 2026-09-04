@@ -3,7 +3,7 @@ import { getToolCatalogEntry } from "./tool-catalog";
 import { resolveCapability } from "./master-capability-registry";
 import { authorizeToolExecution } from "./tool-execution-policy";
 import { executeToolPipeline, persistToolPipelineObservation, type ToolExecutionPipelineResult } from "./tool-execution-pipeline";
-import { advanceExecution, canonicalExecutionPath, type ExecutionRisk, type ExecutionState } from "./execution-state-machine";
+import { advanceExecution, canonicalExecutionPath, type ExecutionContext, type ExecutionRisk, type ExecutionState } from "./execution-state-machine";
 import { checkRegisteredAdapterHealth } from "./tool-runtime";
 import { createExecutionLedger, advanceExecutionLedger, getExecutionLedger, persistExecutionReport, completeExecutionLedger, failExecutionLedger } from "./execution-ledger";
 import { generateExecutionReport, type ExecutionReport } from "./execution-assurance";
@@ -33,14 +33,14 @@ export type GovernedExecutionPlan = {
 
 export type GovernedExecutionResult =
   | { status: "blocked"; reason: string; plan: GovernedExecutionPlan | null; state: ExecutionState }
-  | { status: "completed" | "failed" | "unavailable" | "timed_out" | "blocked"; plan: GovernedExecutionPlan; pipeline: ToolExecutionPipelineResult; observationId?: number; findingId?: number; report?: ExecutionReport; state: ExecutionState };
+  | { status: "completed" | "failed" | "unavailable" | "timed_out" | "blocked"; reason?: string; plan: GovernedExecutionPlan; pipeline: ToolExecutionPipelineResult; observationId?: number; findingId?: number; report?: ExecutionReport; state: ExecutionState };
 
 function adapterIsHealthy(health: Awaited<ReturnType<typeof checkRegisteredAdapterHealth>>, toolKey: string) {
   return health.some(item => item.toolKey === toolKey && item.available === true);
 }
 
 function stateBeforeExecution(risk: ExecutionRisk, scopeValidated: boolean, humanApproval: boolean): ExecutionState {
-  let context = { state: "INIT" as ExecutionState, risk, scopeValidated, approval: humanApproval ? "approved" as const : "not_required" as const };
+  let context: ExecutionContext = { state: "INIT", risk, scopeValidated, approval: humanApproval ? "approved" : "not_required" };
   for (const _ of ["RECON", "FINGERPRINT", "VECTOR_SELECTION", "POLICY_CHECK", "APPROVAL_GATE", "QUEUE"] as const) {
     const previous = context.state;
     context = advanceExecution(context);
@@ -133,11 +133,7 @@ export async function executeGovernedCapability(input: GovernedExecutionInput): 
       if (findingId && pipeline.correlation) {
         const match = pipeline.correlation.matches[0];
         const evidenceRefs = Array.from(new Set([...match.evidenceRefs, pipeline.provenance.requestId, ...(observationId ? [`observation:${observationId}`] : [])]));
-        report = generateExecutionReport({
-          capability,
-          evidence: { requestId: pipeline.provenance.requestId, toolKey: pipeline.provenance.toolKey, rawOutputSha256: pipeline.provenance.rawOutputSha256, normalizedEvidenceSha256: pipeline.provenance.normalizedEvidenceSha256, evidenceRefs },
-          finding: { findingId, ruleId: match.ruleId, emittedKey: match.emittedKey, title: match.title, severity: findingSeverity(pipeline), confidence: match.confidence, evidenceRefs },
-        }) ?? undefined;
+        report = generateExecutionReport({ capability, evidence: { requestId: pipeline.provenance.requestId, toolKey: pipeline.provenance.toolKey, rawOutputSha256: pipeline.provenance.rawOutputSha256, normalizedEvidenceSha256: pipeline.provenance.normalizedEvidenceSha256, evidenceRefs }, finding: { findingId, ruleId: match.ruleId, emittedKey: match.emittedKey, title: match.title, severity: findingSeverity(pipeline), confidence: match.confidence, evidenceRefs } }) ?? undefined;
         if (report) {
           await advanceLedgerTo(input.userId, ledger.jobId, "FINDING");
           await advanceLedgerTo(input.userId, ledger.jobId, "CORRELATION");

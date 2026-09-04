@@ -28,9 +28,12 @@ export default function BlueprintModule() {
   const config = configFor(location);
   const [name, setName] = useState("");
   const [input, setInput] = useState("sample://angelmind-lab");
+  const [workspaceId, setWorkspaceId] = useState("");
+  const [notes, setNotes] = useState("");
   const [events, setEvents] = useState<string[]>([]);
   const [catalog, setCatalog] = useState<Array<{ toolKey?: string; name?: string; riskClass?: string; disposition?: string }>>([]);
   const [loading, setLoading] = useState(false);
+  const [simulationBusy, setSimulationBusy] = useState(false);
 
   useEffect(() => {
     if (!location.startsWith("/utf/runners") && !location.startsWith("/tools")) return;
@@ -58,36 +61,53 @@ export default function BlueprintModule() {
     setName("");
   }
 
+  async function runSimulation() {
+    const parsedWorkspace = Number(workspaceId);
+    if (!Number.isSafeInteger(parsedWorkspace) || parsedWorkspace < 1) {
+      setEvents(previous => ["simulation: enter a positive workspace ID", ...previous]);
+      return;
+    }
+    setSimulationBusy(true);
+    try {
+      const response = await fetch("/api/v1/simulations/run", {
+        method: "POST",
+        credentials: "include",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ workspaceId: parsedWorkspace, name: name.trim() || config.title, input: { fixture: input, notes }, nodes: [
+          { id: "observe", kind: "action", capability: "observe.passive" },
+          { id: "analyze", kind: "parallel", capability: "analyze.synthetic", dependsOn: ["observe"] },
+          { id: "evidence", kind: "merge", capability: "evidence.synthetic", dependsOn: ["analyze"] },
+        ] }),
+      });
+      const body = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(body?.message || `Simulation HTTP ${response.status}`);
+      setEvents(previous => [`${new Date().toISOString()} · simulation completed · ${body.data?.simulationId ?? "unknown"} · synthetic evidence ${body.data?.evidence?.length ?? 0}`, ...previous].slice(0, 12));
+    } catch (error) {
+      setEvents(previous => [`simulation: ${error instanceof Error ? error.message : "failed"}`, ...previous].slice(0, 12));
+    } finally {
+      setSimulationBusy(false);
+    }
+  }
+
   return (
     <main className="space-y-6 p-6" aria-labelledby="blueprint-module-title">
       <header className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <div className="mb-2 flex flex-wrap gap-2"><Badge variant="outline">AngelMind V4</Badge><Badge variant="secondary">Governed</Badge><Badge variant="outline">Operational UI</Badge></div>
-          <h1 id="blueprint-module-title" className="text-2xl font-semibold">{config.title}</h1>
-          <p className="mt-2 max-w-3xl text-muted-foreground">{config.description}</p>
-        </div>
+        <div><div className="mb-2 flex flex-wrap gap-2"><Badge variant="outline">AngelMind V4</Badge><Badge variant="secondary">Governed</Badge><Badge variant="outline">Operational UI</Badge></div><h1 id="blueprint-module-title" className="text-2xl font-semibold">{config.title}</h1><p className="mt-2 max-w-3xl text-muted-foreground">{config.description}</p></div>
         <Button onClick={() => record("workspace action")}>New</Button>
       </header>
-
-      <section className="grid gap-4 md:grid-cols-3">
-        {config.actions.map((action, index) => <Card key={action}><CardHeader><CardTitle className="text-base">{action}</CardTitle></CardHeader><CardContent><Button variant={index === 0 ? "default" : "outline"} className="w-full" onClick={() => record(action)}>Open</Button></CardContent></Card>)}
-      </section>
+      <section className="grid gap-4 md:grid-cols-3">{config.actions.map((action, index) => <Card key={action}><CardHeader><CardTitle className="text-base">{action}</CardTitle></CardHeader><CardContent><Button variant={index === 0 ? "default" : "outline"} className="w-full" onClick={() => record(action)}>Open</Button></CardContent></Card>)}</section>
 
       {(location.startsWith("/playbooks") || location.startsWith("/redteam") || location.startsWith("/purpleteam")) && <Card>
         <CardHeader><CardTitle>Safe simulation console</CardTitle></CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid gap-3 md:grid-cols-2"><Input aria-label="Name" placeholder="Operation / exercise name" value={name} onChange={event => setName(event.target.value)} /><Input aria-label="Simulation input" value={input} onChange={event => setInput(event.target.value)} /></div>
-          <Textarea aria-label="Simulation notes" placeholder="Scenario notes, expected result, approval reference…" value={input} onChange={event => setInput(event.target.value)} />
-          <div className="flex flex-wrap items-center gap-3"><Button onClick={() => record(`simulation ${simulationResult}`)}>Run deterministic simulation</Button><Badge variant="outline">No target traffic</Badge><span className="text-xs text-muted-foreground">Evidence ID: {simulationResult ?? "—"}</span></div>
+          <div className="grid gap-3 md:grid-cols-3"><Input aria-label="Workspace ID" inputMode="numeric" placeholder="Workspace ID" value={workspaceId} onChange={event => setWorkspaceId(event.target.value)} /><Input aria-label="Simulation name" placeholder="Operation / exercise name" value={name} onChange={event => setName(event.target.value)} /><Input aria-label="Simulation fixture" value={input} onChange={event => setInput(event.target.value)} /></div>
+          <Textarea aria-label="Simulation notes" placeholder="Scenario notes, expected result, approval reference…" value={notes} onChange={event => setNotes(event.target.value)} />
+          <div className="flex flex-wrap items-center gap-3"><Button onClick={runSimulation} disabled={simulationBusy}>{simulationBusy ? "Running…" : "Run authenticated simulation"}</Button><Badge variant="outline">No target traffic</Badge><span className="text-xs text-muted-foreground">Preview: {simulationResult ?? "—"}</span></div>
         </CardContent>
       </Card>}
 
-      {(location.startsWith("/utf/runners") || location.startsWith("/tools")) && <Card>
-        <CardHeader><CardTitle>UTF catalog</CardTitle></CardHeader>
-        <CardContent>{loading ? <p className="text-sm text-muted-foreground">Loading catalog…</p> : catalog.length ? <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">{catalog.map((tool, index) => <div key={`${tool.toolKey ?? tool.name}-${index}`} className="rounded-md border p-3"><div className="font-mono text-sm">{tool.toolKey ?? tool.name}</div><div className="mt-1 text-xs text-muted-foreground">{tool.riskClass ?? "unknown"} · {tool.disposition ?? "unclassified"}</div></div>)}</div> : <p className="text-sm text-muted-foreground">No catalog records available for this authenticated workspace.</p>}</CardContent>
-      </Card>}
-
-      <Card><CardHeader><CardTitle>Activity</CardTitle></CardHeader><CardContent>{events.length ? <ol className="space-y-2 font-mono text-xs">{events.map((event, index) => <li key={`${event}-${index}`} className="rounded border p-2">{event}</li>)}</ol> : <p className="text-sm text-muted-foreground">No activity yet. Actions on this page create local session activity immediately.</p>}</CardContent></Card>
+      {(location.startsWith("/utf/runners") || location.startsWith("/tools")) && <Card><CardHeader><CardTitle>UTF catalog</CardTitle></CardHeader><CardContent>{loading ? <p className="text-sm text-muted-foreground">Loading catalog…</p> : catalog.length ? <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">{catalog.map((tool, index) => <div key={`${tool.toolKey ?? tool.name}-${index}`} className="rounded-md border p-3"><div className="font-mono text-sm">{tool.toolKey ?? tool.name}</div><div className="mt-1 text-xs text-muted-foreground">{tool.riskClass ?? "unknown"} · {tool.disposition ?? "unclassified"}</div></div>)}</div> : <p className="text-sm text-muted-foreground">No catalog records available for this authenticated workspace.</p>}</CardContent></Card>}
+      <Card><CardHeader><CardTitle>Activity</CardTitle></CardHeader><CardContent>{events.length ? <ol className="space-y-2 font-mono text-xs">{events.map((event, index) => <li key={`${event}-${index}`} className="rounded border p-2">{event}</li>)}</ol> : <p className="text-sm text-muted-foreground">No activity yet.</p>}</CardContent></Card>
     </main>
   );
 }

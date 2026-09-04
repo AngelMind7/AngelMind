@@ -54,10 +54,17 @@ export async function authorizeToolExecution(
   const target = input.target?.trim();
   if (targetRequired) {
     if (!target) return blocked("target_required");
-    if (!isTargetInScope(target, context.allowlist, context.exclusions)) {
+    const authorizedTarget = target;
+    if (
+      !isTargetInScope(
+        authorizedTarget,
+        context.allowlist,
+        context.exclusions
+      )
+    ) {
       return blocked("target_out_of_scope");
     }
-    if (input.input.trim().toLowerCase() !== target.toLowerCase()) {
+    if (input.input.trim().toLowerCase() !== authorizedTarget.toLowerCase()) {
       return blocked("target_input_mismatch");
     }
   }
@@ -73,7 +80,7 @@ export async function authorizeToolExecution(
   if (tool.riskClass === "high" || tool.riskClass === "critical") {
     if (!input.approvalId) return blocked("human_approval_required");
     const approvals = await controlPlane.listApprovals(input.userId, "user");
-    const approval = approvals.find(item => item.id === input.approvalId);
+    const approval = approvals.find((item) => item.id === input.approvalId);
     if (!approval || approval.status !== "approved") {
       return blocked("approval_not_approved");
     }
@@ -108,7 +115,7 @@ export async function authorizeToolExecution(
       if (typeof approvalContext.target !== "string") {
         return blocked("approval_target_missing");
       }
-      if (approvalContext.target.toLowerCase() !== target.toLowerCase()) {
+      if (approvalContext.target.toLowerCase() !== target!.toLowerCase()) {
         return blocked("approval_target_mismatch");
       }
     }

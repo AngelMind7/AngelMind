@@ -60,58 +60,21 @@ describe("registered tool runtime", () => {
   });
 
   it("blocks empty input before spawning a process", async () => {
-    await expect(
-      runRegisteredTool({
-        toolKey: "httpx",
-        mode: "passive_readonly",
-        scopeValidated: true,
-        humanApproval: false,
-        input: "",
-      })
-    ).resolves.toMatchObject({
-      status: "blocked",
-      reason: "input_limit_exceeded",
-    });
+    await expect(runRegisteredTool({ toolKey: "httpx", mode: "passive_readonly", scopeValidated: true, humanApproval: false, input: "" })).resolves.toMatchObject({ status: "blocked", reason: "input_limit_exceeded" });
+  });
+
+  it("blocks invalid direct resource limits before spawning a process", async () => {
+    await expect(runRegisteredTool({ toolKey: "httpx", mode: "passive_readonly", scopeValidated: true, humanApproval: false, input: "data", timeoutMs: Number.NaN })).resolves.toMatchObject({ status: "blocked", reason: "invalid_timeout" });
+    await expect(runRegisteredTool({ toolKey: "httpx", mode: "passive_readonly", scopeValidated: true, humanApproval: false, input: "data", maxOutputBytes: Number.POSITIVE_INFINITY })).resolves.toMatchObject({ status: "blocked", reason: "invalid_output_limit" });
   });
 
   it("blocks removed legacy catalog entries before spawning a process", async () => {
-    await expect(
-      runRegisteredTool({
-        toolKey: "ai_llm_security.1",
-        mode: "offline_artifact",
-        scopeValidated: true,
-        humanApproval: false,
-        input: "not an executable",
-      })
-    ).resolves.toMatchObject({
-      status: "blocked",
-      reason: "tool_not_found",
-    });
+    await expect(runRegisteredTool({ toolKey: "ai_llm_security.1", mode: "offline_artifact", scopeValidated: true, humanApproval: false, input: "not an executable" })).resolves.toMatchObject({ status: "blocked", reason: "tool_not_found" });
   });
 
   it("blocks unknown tool keys and unsupported modes", async () => {
-    await expect(
-      runRegisteredTool({
-        toolKey: "missing.1",
-        mode: "offline_artifact",
-        scopeValidated: true,
-        humanApproval: false,
-        input: "data",
-      })
-    ).resolves.toMatchObject({ status: "blocked", reason: "tool_not_found" });
-
-    await expect(
-      runRegisteredTool({
-        toolKey: "httpx",
-        mode: "offline_artifact",
-        scopeValidated: true,
-        humanApproval: false,
-        input: "data",
-      })
-    ).resolves.toMatchObject({
-      status: "blocked",
-      reason: "mode_not_supported",
-    });
+    await expect(runRegisteredTool({ toolKey: "missing.1", mode: "offline_artifact", scopeValidated: true, humanApproval: false, input: "data" })).resolves.toMatchObject({ status: "blocked", reason: "tool_not_found" });
+    await expect(runRegisteredTool({ toolKey: "httpx", mode: "offline_artifact", scopeValidated: true, humanApproval: false, input: "data" })).resolves.toMatchObject({ status: "blocked", reason: "mode_not_supported" });
   });
 
   it("fails closed when scope is not validated or input exceeds the cap", async () => {

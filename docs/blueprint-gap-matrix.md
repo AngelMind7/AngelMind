@@ -8,7 +8,7 @@ This matrix is the working completion checklist against the supplied V4 master b
 | 24 application menus | `docs/application-menu.md` + authenticated route registry | present |
 | 50+ UTF modules | `server/tool-catalog-data.ts` canonical registry | present |
 | High-risk UTF governance | human approval + scope + simulation-only/default-disabled dispositions | enforced |
-| Deterministic UTF simulation | `server/tool-simulation.ts` + `server/simulation-engine.ts` + unit coverage; synthetic output never targets external systems | executable |
+| Deterministic UTF simulation | `server/tool-simulation.ts` + `server/simulation-engine.ts` + REST boundary validation + unit coverage; synthetic output never targets external systems | executable |
 | 100+ public/authenticated page surface | public/authenticated route registries and UI page groups | present |
 | Dual UI / client portal | `/client/:orgSlug` interactive light executive portal with findings/remediation/compliance/audit views | implemented |
 | 260+ API target surface | `docs/api/openapi.yaml`, endpoint inventory, REST/tRPC implementation | contract tracked |
@@ -35,6 +35,8 @@ This matrix is the working completion checklist against the supplied V4 master b
 ## Important interpretation
 
 The PDF's numeric API/table totals are architectural targets. This repository must not claim that every one of those endpoints or tables is implemented when only a contract exists. `contract tracked` therefore means the surface is explicitly modeled and validated, with concrete implementation work still measurable rather than hidden behind a false completion flag.
+
+The simulation API is authenticated and workspace-scoped before graph execution. Requests are bounded by node count and body size, graph dependencies are validated, capabilities use a restricted identifier grammar, and results are explicitly marked `targetTraffic: false` with synthetic evidence provenance.
 
 Production provider configuration is intentionally separated from source control. Launch is not declared until actual provider health, migrations, authentication, storage, worker execution, smoke tests and release gates pass.
 

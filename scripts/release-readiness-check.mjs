@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 
 const requiredFiles = [
   "config/tool-runtime-packs.yaml",
@@ -63,6 +63,17 @@ for (const token of ["decideRuntimeResources", "runtimeConcurrencyLimit", "runRe
 }
 if (!readFileSync("server/rest-v1.ts", "utf8").includes("/api/v1/executions/:jobId")) failures.push("execution-api:missing-progress-route");
 if (!readFileSync("client/src/pages/MissionControl.tsx", "utf8").includes("/api/v1/executions/")) failures.push("execution-ui:missing-persisted-ledger-binding");
+
+const workflowDirectory = ".github/workflows";
+if (existsSync(workflowDirectory)) {
+  for (const name of readdirSync(workflowDirectory)) {
+    if (!name.endsWith(".yml") && !name.endsWith(".yaml")) continue;
+    const path = `${workflowDirectory}/${name}`;
+    const workflow = readFileSync(path, "utf8");
+    if (/contents:\s*write/i.test(workflow)) failures.push(`workflow-write-permission:${name}`);
+    if (/git\s+(commit|push)\b/i.test(workflow)) failures.push(`workflow-repository-mutation:${name}`);
+  }
+}
 
 if (failures.length) {
   console.error("Release readiness contract failed:");

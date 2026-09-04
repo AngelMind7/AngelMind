@@ -18,7 +18,7 @@ if (apiKeys.size !== apiEntries.length) failures.push("V4 API contract contains 
 
 const router = read("server/routers.ts");
 const executableApiLeaves = (router.match(/^\s*[A-Za-z0-9_$]+\s*:\s*(?:admin|protected|public)Procedure\b/gm) ?? []).length;
-const restFiles = ["server/rest-v1.ts", "server/rest-v1-core-resources.ts", "server/rest-v1-tags-notes.ts", "server/rest-v1-tools.ts", "server/simulation-rest.ts"];
+const restFiles = ["server/rest-v1.ts", "server/rest-v1-core-resources.ts", "server/rest-v1-tags-notes.ts", "server/rest-v1-evidence-findings.ts", "server/rest-v1-tools.ts", "server/simulation-rest.ts"];
 const restEndpointPattern = /\bapp\.(get|post|put|patch|delete)\(\"(\/api\/v1\/[^\"]+)\"/g;
 const concreteRestKeys = new Set();
 for (const file of restFiles) for (const match of read(file).matchAll(restEndpointPattern)) concreteRestKeys.add(`${match[1].toUpperCase()} ${match[2]}`);

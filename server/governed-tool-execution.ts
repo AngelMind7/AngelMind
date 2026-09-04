@@ -9,6 +9,7 @@ import type { ToolRuntimeRequest } from "./tool-runtime";
 export type GovernedToolExecutionRequest = ToolRuntimeRequest & {
   userId: number;
   workspaceId: number;
+  target?: string;
   capabilities?: string[];
   sessionId?: number;
   assetId?: number;
@@ -23,7 +24,7 @@ export type GovernedToolExecutionResult =
       pipeline: null;
     }
   | {
-      status: "completed" | "failed" | "timed_out";
+      status: "completed" | "failed" | "unavailable" | "timed_out";
       reason?: string;
       toolKey: string;
       pipeline: ToolExecutionPipelineResult;
@@ -66,11 +67,15 @@ export async function executeGovernedTool(
 
   let observationId: number | undefined;
   if (request.sessionId && pipeline.runtime.status === "completed") {
-    const observation = await persistToolPipelineObservation(request.userId, {
-      sessionId: request.sessionId,
-      assetId: request.assetId,
-      request,
-    }, pipeline);
+    const observation = await persistToolPipelineObservation(
+      request.userId,
+      {
+        sessionId: request.sessionId,
+        assetId: request.assetId,
+        request,
+      },
+      pipeline
+    );
     observationId = observation.id;
   }
 

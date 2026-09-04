@@ -2,6 +2,8 @@
 FROM node:22-bookworm-slim AS build
 WORKDIR /app
 ENV COREPACK_DEFAULT_TO_LATEST=0
+# Keep the container toolchain identical to package.json/package-lock metadata.
+ARG PNPM_VERSION=10.15.1
 # Railway exposes service variables during the build, but Docker requires
 # explicit ARG declarations before Vite can embed public VITE_* values.
 ARG VITE_FIREBASE_API_KEY
@@ -25,6 +27,8 @@ ENV VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY \
 COPY package.json pnpm-lock.yaml ./
 COPY patches ./patches
 RUN corepack enable \
+    && corepack prepare pnpm@${PNPM_VERSION} --activate \
+    && pnpm --version \
     && pnpm install --frozen-lockfile --prefer-offline --store-dir=/root/.local/share/pnpm/store
 COPY . .
 RUN pnpm check && pnpm build
@@ -32,6 +36,7 @@ RUN pnpm check && pnpm build
 FROM node:22-bookworm-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production COREPACK_DEFAULT_TO_LATEST=0
+ARG PNPM_VERSION=10.15.1
 # Safe offline/passive utilities only. Active scanners, exploit frameworks,
 # credential tooling, phishing tooling, and remote execution tools are excluded.
 RUN DEBIAN_FRONTEND=noninteractive apt-get update \
@@ -85,6 +90,8 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && rm -f /tmp/trufflehog.tar.gz /tmp/trufflehog \
     && chmod 0755 /usr/local/bin/grype /usr/local/bin/syft /usr/local/bin/osv-scanner /usr/local/bin/trivy /usr/local/bin/tfsec /usr/local/bin/subfinder /usr/local/bin/dnsx /usr/local/bin/gosec /usr/local/bin/chainsaw /usr/local/bin/trufflehog \
     && corepack enable \
+    && corepack prepare pnpm@${PNPM_VERSION} --activate \
+    && pnpm --version \
     && useradd --create-home --shell /usr/sbin/nologin angelmind
 COPY --from=build --chown=angelmind:angelmind /app/dist ./dist
 COPY --from=build --chown=angelmind:angelmind /app/package.json /app/pnpm-lock.yaml ./

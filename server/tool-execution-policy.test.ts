@@ -11,10 +11,14 @@ vi.mock("./control-plane/service", () => ({
   listApprovals,
 }));
 
-vi.mock("./tool-catalog", () => ({
-  getToolCatalogEntry,
-  canExecuteTool,
-}));
+vi.mock("./tool-catalog", async importOriginal => {
+  const actual = await importOriginal<typeof import("./tool-catalog")>();
+  return {
+    ...actual,
+    getToolCatalogEntry,
+    canExecuteTool,
+  };
+});
 
 vi.mock("./tool-runtime", () => ({
   adapterRequiresTargetScope,
@@ -124,7 +128,7 @@ describe("governed tool execution policy", () => {
     });
   });
 
-  it("rejects an expired or non-approved approval record", async () => {
+  it("rejects a non-approved approval record", async () => {
     process.env.ANGELMIND_ENABLE_TARGET_EXECUTION = "true";
     listApprovals.mockResolvedValue([
       {

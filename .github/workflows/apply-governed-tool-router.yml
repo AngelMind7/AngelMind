@@ -16,8 +16,9 @@ jobs:
         with:
           fetch-depth: 1
       - name: Integrate server-side execution authorization
-        shell: python
+        shell: bash
         run: |
+          python3 - <<'PY'
           from pathlib import Path
           p = Path('server/routers.ts')
           s = p.read_text()
@@ -114,6 +115,7 @@ jobs:
               raise SystemExit('router anchors not found')
           s = s[:start] + new + s[end:]
           p.write_text(s)
+          PY
       - name: Commit router integration and remove one-shot workflow
         shell: bash
         run: |
@@ -122,5 +124,10 @@ jobs:
           git add server/routers.ts
           git rm .github/workflows/apply-governed-tool-router.yml
           git diff --cached --check
-          git commit -m 'feat: enforce governed tool execution at router boundary'
+          if git diff --cached --quiet; then
+            echo 'router already integrated; removing temporary workflow only'
+            git commit -m 'chore: remove governed router integration workflow'
+          else
+            git commit -m 'feat: enforce governed tool execution at router boundary'
+          fi
           git push

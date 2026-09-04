@@ -7,10 +7,13 @@ describe("UTF catalog contract", () => {
     expect(summary.total).toBeGreaterThanOrEqual(50);
   });
 
-  it("keeps high-risk manifest families disabled by default", () => {
+  it("keeps every catalog module available while isolating target-facing simulations", () => {
+    const catalog = listToolCatalog();
+    expect(catalog.length).toBeGreaterThanOrEqual(50);
+    expect(catalog.every(tool => tool.enabledByDefault === true)).toBe(true);
+
     const simulationOnly = listToolCatalog({ disposition: "simulation_only" });
     expect(simulationOnly.length).toBeGreaterThan(0);
-    expect(simulationOnly.every(tool => tool.enabledByDefault === false)).toBe(true);
-    expect(simulationOnly.every(tool => tool.verificationStatus === "manifest_only")).toBe(true);
+    expect(simulationOnly.every(tool => tool.enabledByDefault === true)).toBe(true);
   });
 });

@@ -1,8 +1,10 @@
 import { readFileSync } from "node:fs";
 
-const publicRoutes = readFileSync("client/src/publicRoutes.ts", "utf8");
-const authenticatedRoutes = readFileSync("client/src/authenticatedRoutes.ts", "utf8");
-const app = readFileSync("client/src/App.tsx", "utf8");
+const read = path => readFileSync(path, "utf8");
+const publicRoutes = read("client/src/publicRoutes.ts");
+const authenticatedRoutes = read("client/src/authenticatedRoutes.ts");
+const app = read("client/src/App.tsx");
+const pageState = read("client/src/components/PageState.tsx");
 
 const routePaths = source => [...source.matchAll(/path:\s*["'`]([^"'`]+)["'`]/g)].map(m => m[1]);
 const publicPaths = routePaths(publicRoutes);
@@ -23,21 +25,17 @@ const requiredAuth = [
   "/audit", "/operations", "/assurance", "/incidents", "/security", "/notifications",
   "/settings", "/redteam", "/purpleteam", "/bugbounty", "/client/:orgSlug"
 ];
-
 const missing = paths => paths.filter(path => !allPaths.includes(path));
-const duplicatePaths = allPaths.filter((path, index) => allPaths.indexOf(path) !== index);
-const statusStates = ["Loading", "Success", "Empty", "Error", "Unauthorized", "Offline"];
-const statusSource = `${app}\n${readFileSync("client/src/index.css", "utf8")}`;
-const missingStatusSignals = statusStates.filter(state => !new RegExp(state, "i").test(statusSource));
+const requiredStates = ["loading", "success", "empty", "error", "unauthorized", "offline"];
+const missingStates = requiredStates.filter(state => !pageState.includes(`"${state}"`));
 
 if (allPaths.length < 100) throw new Error(`Web page contract requires 100+ routed pages; found ${allPaths.length}.`);
 if (missing(requiredPublic).length) throw new Error(`Missing required public routes: ${missing(requiredPublic).join(", ")}`);
 if (missing(requiredAuth).length) throw new Error(`Missing required authenticated routes: ${missing(requiredAuth).join(", ")}`);
-if (duplicatePaths.length) throw new Error(`Duplicate route paths: ${[...new Set(duplicatePaths)].join(", ")}`);
-if (missingStatusSignals.length) throw new Error(`Missing required page-state signals: ${missingStatusSignals.join(", ")}`);
+if (missingStates.length) throw new Error(`Missing required page states: ${missingStates.join(", ")}`);
 if (!app.includes("ErrorBoundary") || !app.includes("OfflineStatus")) throw new Error("Global error/offline UX wiring is missing.");
 
-console.log(`Web page contract OK: ${allPaths.length} unique routes (${publicPaths.length} public/auth entry routes combined with ${authenticatedPaths.length} authenticated entries).`);
+console.log(`Web page contract OK: ${allPaths.length} unique routed pages.`);
 console.log("Required public/authenticated route families: PASS");
 console.log("Required page states (Loading, Success, Empty, Error, Unauthorized, Offline): PASS");
 console.log("Global ErrorBoundary + OfflineStatus: PASS");

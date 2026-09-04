@@ -56,6 +56,6 @@ export function assertRuntimeTool(toolId: string): RegisteredTool {
 
 export function assertAuthorizedTool(toolId: string): RegisteredTool {
   const tool = assertRuntimeTool(toolId);
-  if (tool.execution !== "authorized-only") throw new Error(`Tool ${toolId} is not authorized for execution.`);
+  if (tool.executionMode !== "authorized-only") throw new Error(`Tool ${toolId} is not authorized for execution.`);
   return tool;
 }

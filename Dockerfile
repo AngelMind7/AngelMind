@@ -24,7 +24,7 @@ ENV VITE_FIREBASE_API_KEY=$VITE_FIREBASE_API_KEY \
     VITE_FIREBASE_APPCHECK_SITE_KEY=$VITE_FIREBASE_APPCHECK_SITE_KEY \
     VITE_ANALYTICS_ENDPOINT=$VITE_ANALYTICS_ENDPOINT \
     VITE_ANALYTICS_WEBSITE_ID=$VITE_ANALYTICS_WEBSITE_ID
-COPY package.json pnpm-lock.yaml ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY patches ./patches
 RUN corepack enable \
     && corepack prepare pnpm@${PNPM_VERSION} --activate \
@@ -52,7 +52,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
        ripgrep \
        unzip \
     && for package in bandit binwalk cppcheck dc3dd flawfinder foremost gdb gitleaks dnsrecon dnstwist python3-capstone python3-unicorn tcpdump tshark snort suricata python3-plaso scalpel shellcheck sleuthkit yara whois; do \
-         if apt-cache show \"$package\" >/dev/null 2>&1; then apt-get install --no-install-recommends -y \"$package\"; else echo \"optional package unavailable in Bookworm repositories: $package\"; fi; \
+         if apt-cache show "$package" >/dev/null 2>&1; then apt-get install --no-install-recommends -y "$package"; else echo "optional package unavailable in Bookworm repositories: $package"; fi; \
        done \
     && rm -rf /var/lib/apt/lists/* \
     && curl -fsSL https://github.com/anchore/grype/releases/download/v0.118.0/grype_0.118.0_linux_amd64.tar.gz | tar -xz -C /usr/local/bin grype \
@@ -94,7 +94,7 @@ RUN DEBIAN_FRONTEND=noninteractive apt-get update \
     && pnpm --version \
     && useradd --create-home --shell /usr/sbin/nologin angelmind
 COPY --from=build --chown=angelmind:angelmind /app/dist ./dist
-COPY --from=build --chown=angelmind:angelmind /app/package.json /app/pnpm-lock.yaml ./
+COPY --from=build --chown=angelmind:angelmind /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
 COPY --chown=angelmind:angelmind patches ./patches
 COPY --chown=angelmind:angelmind config/tool-runtime-packs.yaml ./config/tool-runtime-packs.yaml
 COPY --chown=angelmind:angelmind runtime/rules.yar /etc/angelmind/rules.yar

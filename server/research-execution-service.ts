@@ -47,8 +47,16 @@ export async function executeResearchTask(userId: number, taskId: number): Promi
   const inputs = parseInputs(task.inputs);
   const target = typeof inputs.target === "string" ? inputs.target : typeof inputs.hostname === "string" ? inputs.hostname : undefined;
   const assetId = typeof inputs.assetId === "number" ? inputs.assetId : undefined;
-  const mode = task.riskClass === "high" || task.riskClass === "critical" ? "active_nondestructive" : "passive_readonly";
+  const highRisk = task.riskClass === "high" || task.riskClass === "critical";
+  const mode = highRisk ? "active_nondestructive" : "passive_readonly";
   const capability = capabilities[0];
+
+  // Approval of the persisted task is not itself the execution authorization.
+  // The governed policy requires the concrete, server-recorded approvalId/context.
+  // Never convert an incomplete approval record into an executable request.
+  if (highRisk && !task.approvalId) {
+    return { taskId, status: "blocked", reason: "approval_record_required" };
+  }
 
   await transitionResearchTask(userId, task.id, "running", { startedCapability: capability }, task.revision);
   const execution = await executeGovernedCapability({
@@ -75,10 +83,17 @@ export async function executeResearchTask(userId: number, taskId: number): Promi
         normalizedEvidenceSha256: execution.pipeline.provenance.normalizedEvidenceSha256,
         correlation: execution.pipeline.correlation,
       }, latest.revision);
+    } else if (execution.status === "blocked") {
+      // A policy/scope block is not an execution failure. Pause the task so it
+      // cannot be retried blindly and preserve the authoritative denial reason.
+      await transitionResearchTask(userId, task.id, "paused", {
+        executionState: execution.state,
+        reason: execution.reason,
+      }, latest.revision);
     } else {
       await transitionResearchTask(userId, task.id, "failed", {
         executionState: execution.state,
-        reason: execution.status === "blocked" ? execution.reason : execution.status,
+        reason: execution.status,
       }, latest.revision);
     }
   }

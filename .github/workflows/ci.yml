@@ -41,6 +41,8 @@ jobs:
         run: pnpm check:migration-rollback
       - name: Master specification contract
         run: node scripts/check-master-contract.mjs
+      - name: Tool runtime cross-layer contract
+        run: pnpm check:tool-runtime-contract
       - name: Typecheck
         run: pnpm check
       - name: Test

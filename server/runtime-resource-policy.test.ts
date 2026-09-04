@@ -23,6 +23,15 @@ describe("runtime resource policy", () => {
     });
   });
 
+  it("rejects non-finite or otherwise invalid caller-supplied resource values", () => {
+    expect(decideRuntimeResources({ mode: "offline_artifact", inputBytes: Number.NaN })).toEqual({ allowed: false, reason: "input_limit_exceeded" });
+    expect(decideRuntimeResources({ mode: "offline_artifact", inputBytes: 1.5 })).toEqual({ allowed: false, reason: "input_limit_exceeded" });
+    expect(decideRuntimeResources({ mode: "offline_artifact", inputBytes: 10, timeoutMs: Number.NaN })).toEqual({ allowed: false, reason: "invalid_timeout" });
+    expect(decideRuntimeResources({ mode: "offline_artifact", inputBytes: 10, timeoutMs: Number.POSITIVE_INFINITY })).toEqual({ allowed: false, reason: "invalid_timeout" });
+    expect(decideRuntimeResources({ mode: "offline_artifact", inputBytes: 10, maxOutputBytes: Number.NaN })).toEqual({ allowed: false, reason: "invalid_output_limit" });
+    expect(decideRuntimeResources({ mode: "offline_artifact", inputBytes: 10, maxOutputBytes: -1 })).toEqual({ allowed: false, reason: "invalid_output_limit" });
+  });
+
   it("keeps concurrency bounded even when misconfigured", () => {
     const previous = process.env.ANGELMIND_RUNTIME_CONCURRENCY;
     process.env.ANGELMIND_RUNTIME_CONCURRENCY = "999";

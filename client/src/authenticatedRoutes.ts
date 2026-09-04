@@ -38,7 +38,7 @@ export const authenticatedRoutes = [
   { path: "/assets", component: assets }, { path: "/assets/new", component: assets }, { path: "/assets/:id", component: assets }, { path: "/inventory", component: assets },
   { path: "/tools", component: tools }, { path: "/tools/capabilities", component: tools }, { path: "/tools/installed", component: tools }, { path: "/tools/health", component: tools }, { path: "/tools/history", component: tools }, { path: "/tools/:id", component: tools },
   { path: "/ai/workers", component: blueprintModule }, { path: "/ai/workers/new", component: blueprintModule }, { path: "/ai/workers/:id", component: blueprintModule },
-  { path: "/utf/runners", component: blueprintModule }, { path: "/utf/runners/new", component: blueprintModule }, { path: "/utf/runners/:id", component: blueprintModule }, { path: "/utf/runners/:id/execute", component: blueprintModule },
+  { path: "/utf/runners", component: blueprintModule }, { path: "/utf/runners/new", component: blueprintModule }, { path: "/utf/runners/:id/execute", component: blueprintModule }, { path: "/utf/runners/:id", component: blueprintModule },
   { path: "/redteam/implants/:id/beacon", component: blueprintModule }, { path: "/redteam/implants/:id/status", component: blueprintModule },
   { path: "/playbooks", component: blueprintModule }, { path: "/playbooks/new", component: blueprintModule }, { path: "/playbooks/:id/edit", component: blueprintModule }, { path: "/playbooks/:id/run", component: blueprintModule }, { path: "/playbooks/:id", component: blueprintModule },
   { path: "/evidence", component: blueprintModule }, { path: "/evidence/:id", component: blueprintModule },

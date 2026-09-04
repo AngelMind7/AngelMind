@@ -11,7 +11,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return !!value && typeof value === "object" && !Array.isArray(value);
 }
 
-function parseNodes(value: unknown): SimulationNode[] {
+export function parseNodes(value: unknown): SimulationNode[] {
   if (!Array.isArray(value) || value.length < 1 || value.length > MAX_NODES) throw new Error(`nodes must contain 1-${MAX_NODES} entries.`);
   return value.map((raw, index) => {
     if (!isRecord(raw)) throw new Error(`nodes[${index}] must be an object.`);

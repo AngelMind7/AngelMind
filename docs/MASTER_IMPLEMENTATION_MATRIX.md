@@ -101,3 +101,7 @@ Displayed values must originate from real persisted/runtime state. No fake count
 - `DEPLOYED`: observed in the intended runtime environment.
 
 Repository work must not claim deployment evidence that does not exist.
+
+## Implementation progress
+
+The repository now treats the tool execution policy as a server-side authorization boundary. The remaining work is to connect the governed execution decision to the research/task execution path and then persist normalized observations, evidence, findings, correlation, and report state as one traceable transaction chain.

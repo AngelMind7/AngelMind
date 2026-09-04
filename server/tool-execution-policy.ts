@@ -104,12 +104,13 @@ export async function authorizeToolExecution(
     if (approvalContext.scopeDigest !== context.scopeDigest) {
       return blocked("approval_scope_mismatch");
     }
-    if (
-      target &&
-      typeof approvalContext.target === "string" &&
-      approvalContext.target.toLowerCase() !== target.toLowerCase()
-    ) {
-      return blocked("approval_target_mismatch");
+    if (targetRequired) {
+      if (typeof approvalContext.target !== "string") {
+        return blocked("approval_target_missing");
+      }
+      if (approvalContext.target.toLowerCase() !== target!.toLowerCase()) {
+        return blocked("approval_target_mismatch");
+      }
     }
     humanApproval = true;
   }

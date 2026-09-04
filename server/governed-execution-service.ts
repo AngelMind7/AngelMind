@@ -38,7 +38,7 @@ function adapterIsHealthy(health: Awaited<ReturnType<typeof checkRegisteredAdapt
 /**
  * Capability-driven execution boundary. This service deliberately performs
  * planning/health discovery before authorization, then authorizes the exact
- * selected tool immediately before execution. The router must not bypass it.
+ * selected tool immediately before the runtime call. The router must not bypass it.
  */
 export async function executeGovernedCapability(input: GovernedExecutionInput): Promise<GovernedExecutionResult> {
   const capability = input.capability.trim();
@@ -76,9 +76,7 @@ export async function executeGovernedCapability(input: GovernedExecutionInput): 
   });
   if (!authorization.allowed) return { status: "blocked", reason: authorization.reason, plan };
 
-  const pipeline = await executeToolPipeline({
-    userId: input.userId,
-    workspaceId: input.workspaceId,
+  const runtimeRequest = {
     toolKey: plan.toolKey,
     mode: input.mode,
     target: input.target,
@@ -86,23 +84,14 @@ export async function executeGovernedCapability(input: GovernedExecutionInput): 
     scopeValidated: true,
     humanApproval: authorization.humanApproval,
     capabilities: [capability],
-  });
+  };
+  const pipeline = await executeToolPipeline(runtimeRequest);
 
   let observationId: number | undefined;
   if (input.sessionId && pipeline.runtime.status === "completed") {
     const observation = await persistToolPipelineObservation(
       input.userId,
-      { sessionId: input.sessionId, assetId: input.assetId, request: {
-        userId: input.userId,
-        workspaceId: input.workspaceId,
-        toolKey: plan.toolKey,
-        mode: input.mode,
-        target: input.target,
-        input: input.input,
-        scopeValidated: true,
-        humanApproval: authorization.humanApproval,
-        capabilities: [capability],
-      } },
+      { sessionId: input.sessionId, assetId: input.assetId, request: runtimeRequest },
       pipeline
     );
     observationId = observation.id;

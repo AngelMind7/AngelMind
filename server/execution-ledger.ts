@@ -2,7 +2,7 @@ import { and, eq } from "drizzle-orm";
 import { jobs } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
-import { advanceExecution, canonicalExecutionPath, type ExecutionContext, type ExecutionState, type ExecutionRisk } from "./execution-state-machine";
+import { advanceExecution, canonicalExecutionPath, transitionExecution, type ExecutionContext, type ExecutionState, type ExecutionRisk } from "./execution-state-machine";
 import { enqueueJob } from "./ai-platform";
 import { publishExecutionProgress } from "./execution-progress-events";
 
@@ -78,7 +78,7 @@ export async function getExecutionProgress(userId: number, jobId: number) {
   const reportId = report && typeof report.reportId === "string" ? report.reportId : null;
   return {
     jobId: execution.id,
-    workspaceId: execution.workspaceId,
+    workspaceId: execution.workspaceId as number,
     requestId: payload.requestId,
     capability: payload.capability,
     toolKey: payload.toolKey,
@@ -98,9 +98,9 @@ export async function getExecutionProgress(userId: number, jobId: number) {
 export async function advanceExecutionLedger(userId: number, jobId: number) {
   const current = await getExecutionLedger(userId, jobId);
   const payload = current.payload;
-  const result = advanceExecution({ state: payload.state, risk: payload.risk, scopeValidated: payload.scopeValidated, approval: payload.approval });
-  if (result.state === payload.state) throw new Error(result.reason ?? "Execution state cannot advance.");
-  const nextPayload: LedgerPayload = { ...payload, state: result.state, revision: payload.revision + 1 };
+  const result = transitionExecution({ state: payload.state, risk: payload.risk, scopeValidated: payload.scopeValidated, approval: payload.approval });
+  if (!result.allowed) throw new Error(result.reason);
+  const nextPayload: LedgerPayload = { ...payload, state: result.to, revision: payload.revision + 1 };
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const updated = await db.update(jobs).set({ payload: JSON.stringify(nextPayload), updatedAt: new Date() }).where(and(eq(jobs.id, jobId), eq(jobs.status, current.status)));

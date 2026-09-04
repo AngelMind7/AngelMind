@@ -1,22 +1,28 @@
 # AngelMind V4 — Database Contract
 
-The blueprint describes a primary relational model of 50+ tables. The repository uses Drizzle migrations as the executable database layer; this document preserves the blueprint's logical model without forcing a destructive ORM replacement.
+The V4 blueprint calls for a primary relational model of 50+ tables. The repository now has a concrete **74-table Drizzle schema** with an append-only migration history of **64 migration files**. The executable database layer remains Drizzle/MySQL-compatible rather than introducing a destructive ORM replacement.
 
-## Logical domains
+## Concrete coverage
 
-- Identity: User, Session, MFADevice, ApiKey, SecurityEvent, TrustedDevice, Credential.
-- Organization: Organization, OrganizationMember, Workspace, WorkspaceMember, Tag, Note, SavedView, Plan, Entitlement, Subscription, Invoice, UsageRecord, QuotaLimit, QuotaUsage.
-- Asset intelligence: Asset, AssetRelation, Technology, DiscoveryJob, DiscoveryResult, ShadowAsset, ShadowAlert, AssetSnapshot, AssetChange.
-- Evidence/findings: Research, Task, Hypothesis, Observation, Evidence, EvidenceOrigin, Finding, FindingEvidence, FindingRelation, Retest, Comment, DeduplicationRecord.
-- AI: AIModel, AIRun, AIResult, AIEvaluation, AIMemory, PromptRegistry, PromptVersion, AIWorker, WorkerMemory, WorkerAction, Playbook, PlaybookRun, PlaybookStep, AIBudget, AIUsage, AIAlert, ModelEval, EvalMetric.
-- Tools/execution: ToolCatalog, ToolVersion, ToolExecution, ToolOutput, JobQueue, Approval.
-- Knowledge: KnowledgeNode, KnowledgeEdge.
-- Reporting: Report, ReportVersion.
-- Governance: Policy, AuditLog, AuditChain, Control, ControlEvidence, RetentionPolicy, RetentionAction, Risk, RiskTreatment, Vendor, VendorAssessment.
-- Incidents/notifications: Incident, IncidentEvidence, PostIncidentReview, Notification, NotificationPreference, EmailLog, WebhookConfig, WebhookDelivery.
-- Bug bounty: Program, ProgramScope, ResearcherProfile, Submission, SubmissionEvidence, Reward, LeaderboardEntry, DisclosureRequest.
+- Identity & security: users, profiles, devices, API keys, security events, MFA factors/recovery/challenges, onboarding.
+- Organization & workspace: organizations, members, invitations, programs, entitlements, workspaces, workspace memberships, tags, tag assignments, notes, saved views, credentials, change snapshots.
+- Research & intelligence: research sessions, assets, observations, hypotheses, tasks, task dependencies, failure observations, evolution snapshots, intelligence feed items, passive assets.
+- Findings & evidence: findings, relations, retests, comments, evidence artifacts, provenance, research evidence links.
+- AI & execution: AI models/runs/outputs/evaluations/memory, prompt versions, jobs, idempotency, outbox events/consumer receipts, playbooks/runs, execution runs.
+- Governance & resilience: approvals, audit events/archives, restore drills, policy versions, incidents/reviews/evidence links, webhook activation.
+- Notifications & delivery: notifications, preferences, notification deliveries, email deliveries, webhook configurations.
+- Reporting & submissions: report versions/drafts, submissions, submission events.
+- Knowledge graph: knowledge nodes and knowledge edges.
 
-## Invariants
+## Migration contract
+
+1. `drizzle/schema.ts` is the source-of-truth table declaration.
+2. Every declared table must have a corresponding `CREATE TABLE` in the append-only migration history.
+3. The database contract gate requires at least 74 declared tables, at least 74 migrated tables, and at least 64 numbered migrations.
+4. Migration safety, journal, and rollback checks remain mandatory in CI.
+5. No destructive migration is accepted without explicit review evidence.
+
+## Security invariants
 
 1. Tenant/workspace boundaries are enforced before reads and writes.
 2. Evidence preserves provenance and integrity metadata.

@@ -38,7 +38,8 @@ function adapterIsHealthy(health: Awaited<ReturnType<typeof checkRegisteredAdapt
 /**
  * Capability-driven execution boundary. This service deliberately performs
  * planning/health discovery before authorization, then authorizes the exact
- * selected tool immediately before the runtime call. The router must not bypass it.
+ * selected tool immediately before the runtime call. The target is used only
+ * for authorization; the runtime receives the already-validated input string.
  */
 export async function executeGovernedCapability(input: GovernedExecutionInput): Promise<GovernedExecutionResult> {
   const capability = input.capability.trim();
@@ -79,7 +80,6 @@ export async function executeGovernedCapability(input: GovernedExecutionInput): 
   const runtimeRequest = {
     toolKey: plan.toolKey,
     mode: input.mode,
-    target: input.target,
     input: input.input,
     scopeValidated: true,
     humanApproval: authorization.humanApproval,

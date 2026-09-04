@@ -25,7 +25,18 @@ const schemas = ["jwt_token_comparison", "sqli_evidence", "xss_evidence", "ssrf_
 for (const schema of schemas) if (!normalizer.includes(`${schema}:`)) failures.push(`missing evidence schema ${schema}`);
 const pipeline = read("server/tool-execution-pipeline.ts");
 for (const phase of ["validate", "prepare", "execute", "collect", "parse", "normalize", "cleanup"]) if (!pipeline.includes(`"${phase}"`)) failures.push(`missing adapter lifecycle phase ${phase}`);
-if (!read("server/tool-runtime.ts").includes("target_execution_disabled")) failures.push("target-facing execution must fail closed without explicit deployment opt-in");
+const runtime = read("server/tool-runtime.ts");
+if (!runtime.includes("target_execution_disabled")) failures.push("target-facing execution must fail closed without explicit deployment opt-in");
+if (!runtime.includes("canExecuteTool")) failures.push("tool runtime must enforce catalog authorization before spawn");
+const governedRunner = read("server/governed-tool-runner.ts");
+if (!governedRunner.includes("decideRuntimeResources") || !governedRunner.includes("runtimeConcurrencyLimit")) failures.push("governed runtime resource gate is missing");
+const ledger = read("server/execution-ledger.ts");
+for (const marker of ["createExecutionLedger", "getExecutionProgress", "advanceExecutionLedger", "persistExecutionReport", "completeExecutionLedger", "failExecutionLedger"]) if (!ledger.includes(`export async function ${marker}`)) failures.push(`missing execution ledger contract ${marker}`);
+const progressEvents = read("server/execution-progress-events.ts");
+for (const marker of ["execution.queued", "execution.started", "execution.progress", "execution.completed", "execution.failed"]) if (!progressEvents.includes(`"${marker}"`)) failures.push(`missing execution progress event ${marker}`);
+if (!read("server/rest-v1.ts").includes("/api/v1/executions/:jobId")) failures.push("missing authenticated execution progress endpoint");
+const missionControl = read("client/src/pages/MissionControl.tsx");
+if (!missionControl.includes("/api/v1/executions/")) failures.push("Mission Control is not bound to persisted execution progress");
 
 const rules = read("server/engine/correlation-rules.ts");
 for (const prefix of ["SEQ", "COMP"]) {

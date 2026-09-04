@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
 const { getToolExecutionContext, listApprovals, getToolCatalogEntry, canExecuteTool, adapterRequiresTargetScope } = vi.hoisted(() => ({
   getToolExecutionContext: vi.fn(),
@@ -16,9 +16,15 @@ vi.mock("./tool-catalog", async importOriginal => {
 vi.mock("./tool-runtime", () => ({ adapterRequiresTargetScope }));
 
 import { authorizeToolExecution } from "./tool-execution-policy";
-import { canExecuteTool as realCanExecuteTool } from "./tool-catalog";
 
 describe("governed tool execution policy", () => {
+  let realCanExecuteTool: (input: { toolKey: string; mode: "offline_artifact" | "passive_readonly" | "active_nondestructive" | "privileged_or_destructive"; scopeValidated: boolean; humanApproval: boolean }) => { allowed: boolean; reason?: string };
+
+  beforeAll(async () => {
+    const actual = await vi.importActual<typeof import("./tool-catalog")>("./tool-catalog");
+    realCanExecuteTool = actual.canExecuteTool;
+  });
+
   beforeEach(() => {
     vi.clearAllMocks();
     delete process.env.ANGELMIND_ENABLE_TARGET_EXECUTION;

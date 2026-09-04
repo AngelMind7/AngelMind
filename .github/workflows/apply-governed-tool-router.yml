@@ -1,17 +1,16 @@
 name: Apply governed tool router integration
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
 
 permissions:
   contents: write
 
-# One-time source migration. The resulting router code is committed to main;
-# this workflow can then be deleted without changing runtime behavior.
-
 jobs:
   patch:
+    if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -24,14 +23,14 @@ jobs:
           from pathlib import Path
           p = Path('server/routers.ts')
           s = p.read_text()
-          tool_runtime_import = 'import * as toolRuntime from "./tool-runtime";\n'
           governed_import = 'import { executeGovernedCapability } from "./governed-execution-service";\n'
+          anchor = 'import * as toolRuntime from "./tool-runtime";\n'
           if governed_import not in s:
-              if tool_runtime_import not in s:
+              if anchor not in s:
                   raise SystemExit('tool-runtime import anchor not found')
-              s = s.replace(tool_runtime_import, tool_runtime_import + governed_import, 1)
+              s = s.replace(anchor, anchor + governed_import, 1)
           start = s.find('  tools: router({')
-          end = s.find('  governance: router({', start if start >= 0 else 0)
+          end = s.find('  governance: router({')
           new = '''  tools: router({
     catalog: protectedProcedure
       .input(z.object({
@@ -57,19 +56,17 @@ jobs:
         sessionId: z.number().int().positive().optional(),
         assetId: z.number().int().positive().optional(),
       }))
-      .mutation(({ ctx, input }) =>
-        executeGovernedCapability({
-          userId: ctx.user.id,
-          workspaceId: input.workspaceId,
-          capability: input.capability,
-          target: input.target,
-          mode: input.mode,
-          approvalId: input.approvalId,
-          input: input.input,
-          sessionId: input.sessionId,
-          assetId: input.assetId,
-        })
-      ),
+      .mutation(({ ctx, input }) => executeGovernedCapability({
+        userId: ctx.user.id,
+        workspaceId: input.workspaceId,
+        capability: input.capability,
+        target: input.target,
+        mode: input.mode,
+        approvalId: input.approvalId,
+        input: input.input,
+        sessionId: input.sessionId,
+        assetId: input.assetId,
+      })),
   }),
 '''
           if end < 0:

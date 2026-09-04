@@ -13,6 +13,7 @@ import { validateRuntimeConfig } from "./env";
 import { registerRestV1Routes } from "../rest-v1";
 import { registerRestV1CoreResourceRoutes } from "../rest-v1-core-resources";
 import { registerRestV1TagsNotesRoutes } from "../rest-v1-tags-notes";
+import { registerRestV1EvidenceFindingRoutes } from "../rest-v1-evidence-findings";
 import { registerToolRestV1Routes } from "../rest-v1-tools";
 import { registerRealtimeRoutes } from "../realtime";
 import { registerRealtimeWebSocket } from "../realtime-websocket";
@@ -44,6 +45,7 @@ async function startServer() {
   registerRestV1Routes(app);
   registerRestV1CoreResourceRoutes(app);
   registerRestV1TagsNotesRoutes(app);
+  registerRestV1EvidenceFindingRoutes(app);
   registerToolRestV1Routes(app);
   registerSimulationRoutes(app);
   registerRealtimeRoutes(app);

@@ -27,6 +27,7 @@ jobs:
       - run: pnpm check:master-contract
       - run: node scripts/check-v4-route-contract.mjs
       - run: node scripts/check-application-menu.mjs
+      - run: pnpm check:api-v1-contract
       - run: pnpm check:tool-runtime-contract
       - run: pnpm check:execution-contract
       - run: pnpm check:provider-neutral

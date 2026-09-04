@@ -10,8 +10,25 @@ const requireFile = file => { if (!existsSync(resolve(root, file))) failures.pus
 const routeSource = read("client/src/authenticatedRoutes.ts");
 const routes = routeSource.match(/path:\s*"[^"]+"/g) ?? [];
 requireAtLeast(routes.length, 27, "authenticated routes");
-const requiredRoutes = ["/dashboard","/mission-control","/coverage","/research","/research/new","/research/:id","/research/:id/objectives","/research/:id/hypotheses","/research/:id/tasks","/research/:id/executions","/research/:id/observations","/research/:id/evidence","/research/:id/findings","/research/:id/reports","/research/:id/timeline","/assets","/assets/new","/assets/:id","/tools","/tools/capabilities","/tools/installed","/tools/health","/tools/history","/tools/:id","/agents","/agents/new","/agents/:id","/playbooks","/playbooks/new","/playbooks/:id","/evidence","/evidence/:id","/ai","/ai/providers","/ai/models","/ai/connections","/ai/routing","/ai/usage","/knowledge","/search","/collaboration","/saved-views","/tags-notes","/reports","/reports/new","/reports/:id","/workspaces","/workspaces/new","/workspaces/:id","/organizations","/organizations/new","/organizations/:id","/governance","/governance/approvals","/governance/policies","/findings","/findings/:id","/audit","/operations","/operations/health","/operations/queue","/operations/workers","/assurance","/assurance/quality","/assurance/compliance","/incidents","/incidents/new","/incidents/:id","/security","/security/sessions","/security/mfa","/security/history","/security/api-keys","/notifications","/notifications/settings","/settings","/settings/profile","/settings/team","/settings/policies","/settings/credentials","/settings/preferences","/settings/integrations","/settings/integrations/new","/settings/developer","/settings/developer/sdk","/settings/developer/keys","/settings/developer/logs","/settings/billing","/settings/billing/invoices","/settings/billing/payment","/settings/billing/upgrade","/privacy","/privacy/export","/privacy/delete","/privacy/requests","/privacy/downloads"];
+const requiredRoutes = [
+  "/dashboard","/mission-control","/coverage","/research","/research/new","/research/:id","/research/:id/objectives","/research/:id/hypotheses","/research/:id/tasks","/research/:id/executions","/research/:id/observations","/research/:id/evidence","/research/:id/findings","/research/:id/reports","/research/:id/timeline",
+  "/assets","/assets/new","/assets/:id","/tools","/tools/capabilities","/tools/installed","/tools/health","/tools/history","/tools/:id",
+  "/agents","/agents/new","/agents/:id","/playbooks","/playbooks/new","/playbooks/:id","/evidence","/evidence/:id",
+  "/ai","/ai/providers","/ai/models","/ai/connections","/ai/routing","/ai/usage","/knowledge","/search","/collaboration","/saved-views","/tags-notes",
+  "/reports","/reports/new","/reports/:id","/workspaces","/workspaces/new","/workspaces/:id","/organizations","/organizations/new","/organizations/:id",
+  "/governance","/governance/approvals","/governance/policies","/findings","/findings/:id","/audit","/operations","/operations/health","/operations/queue","/operations/workers",
+  "/assurance","/assurance/quality","/assurance/compliance","/incidents","/incidents/new","/incidents/:id",
+  "/redteam","/redteam/operations","/redteam/operations/new","/redteam/implants","/redteam/phishing",
+  "/purpleteam","/purpleteam/exercises","/purpleteam/exercises/new",
+  "/bugbounty","/bugbounty/programs","/bugbounty/programs/new","/bugbounty/submissions",
+  "/security","/security/sessions","/security/mfa","/security/history","/security/api-keys","/notifications","/notifications/settings",
+  "/settings","/settings/profile","/settings/team","/settings/policies","/settings/credentials","/settings/preferences","/settings/integrations","/settings/integrations/new","/settings/developer","/settings/developer/sdk","/settings/developer/keys","/settings/developer/logs","/settings/billing","/settings/billing/invoices","/settings/billing/payment","/settings/billing/upgrade",
+  "/privacy","/privacy/export","/privacy/delete","/privacy/requests","/privacy/downloads"
+];
 for (const route of requiredRoutes) if (!routeSource.includes(`path: "${route}"`)) failures.push(`missing blueprint route ${route}`);
+
+const publicSource = read("client/src/publicRoutes.ts");
+for (const route of ["/","/product","/features","/how-it-works","/bug-bounty","/for-researchers","/trust-center","/docs","/blog","/api-playground","/security","/pricing","/changelog","/roadmap","/status","/contact","/academy","/legal/privacy","/legal/terms","/legal/cookies","/legal/acceptable-use","/legal/responsible-disclosure","/legal/data-processing"]) if (!publicSource.includes(`path: "${route}"`)) failures.push(`missing public blueprint route ${route}`);
 
 const domainDocs = ["01-identity","02-organization","03-asset-intel","04-threat-surface","05-vuln-research","06-offensive-engine","07-red-team","08-purple-team","09-bug-bounty","10-findings","11-reporting","12-threat-intel","13-ai-automation","14-governance"];
 for (const doc of domainDocs) requireFile(`docs/domain/${doc}.md`);
@@ -24,6 +41,7 @@ for (const tool of requiredTools) if (!catalog.includes(`"toolKey":"${tool}"`) &
 const literalModules = (catalog.match(/"toolKey"\s*:/g) ?? []).length;
 const generatedModules = new Set(catalog.match(/"(?:recon_|scan_|research_|fuzz_|c2_|phish_|intel_|osint_|post_|custom_)[^"]+"/g) ?? []).size;
 requireAtLeast(literalModules + generatedModules, 50, "UTF catalog modules");
+if (!catalog.includes("enabledByDefault:true") && !catalog.includes("enabledByDefault: true")) failures.push("UTF catalog must expose enabled modules by default");
 
 const normalizer = read("server/evidence-normalizer.ts");
 const schemas = ["jwt_token_comparison","sqli_evidence","xss_evidence","ssrf_evidence","cloud_metadata_evidence","graphql_introspection_evidence","graphql_batching_evidence","idor_evidence","ssti_evidence","rce_evidence","host_header_evidence","cache_poisoning_evidence","race_condition_evidence","file_upload_evidence","xxe_evidence"];

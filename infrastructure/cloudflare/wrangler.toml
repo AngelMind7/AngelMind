@@ -1,0 +1,37 @@
+name = "angelmind-edge"
+main = "src/index.ts"
+compatibility_date = "2026-09-04"
+
+[vars]
+ENVIRONMENT = "staging"
+
+# Production values must be configured in the Cloudflare dashboard or CI secrets.
+# Never commit API tokens, service keys, or private credentials.
+
+[[kv_namespaces]]
+binding = "RATE_LIMIT_KV"
+id = "REPLACE_WITH_STAGING_KV_ID"
+
+[[kv_namespaces]]
+binding = "SESSION_KV"
+id = "REPLACE_WITH_STAGING_SESSION_KV_ID"
+
+[[kv_namespaces]]
+binding = "CACHE_KV"
+id = "REPLACE_WITH_STAGING_CACHE_KV_ID"
+
+[[r2_buckets]]
+binding = "EVIDENCE_BUCKET"
+bucket_name = "angelmind-evidence"
+
+[[r2_buckets]]
+binding = "REPORTS_BUCKET"
+bucket_name = "angelmind-reports"
+
+[[d1_databases]]
+binding = "EDGE_DB"
+database_name = "angelmind-edge"
+database_id = "REPLACE_WITH_STAGING_D1_ID"
+
+[observability]
+enabled = true

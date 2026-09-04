@@ -1,0 +1,31 @@
+name: Threat Intelligence Contract
+on:
+  push:
+    paths:
+      - 'server/threat-intelligence.ts'
+      - 'server/threat-intelligence.test.ts'
+      - 'server/rest-v1-threat-intelligence.ts'
+      - 'docs/domain/12-threat-intel.md'
+      - 'scripts/check-threat-intel-contract.mjs'
+  pull_request:
+    paths:
+      - 'server/threat-intelligence.ts'
+      - 'server/threat-intelligence.test.ts'
+      - 'server/rest-v1-threat-intelligence.ts'
+      - 'docs/domain/12-threat-intel.md'
+      - 'scripts/check-threat-intel-contract.mjs'
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node scripts/check-threat-intel-contract.mjs
+      - run: pnpm exec vitest run server/threat-intelligence.test.ts

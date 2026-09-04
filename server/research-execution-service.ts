@@ -59,6 +59,7 @@ export async function executeResearchTask(userId: number, taskId: number): Promi
 
   await transitionResearchTask(userId, task.id, "running", { startedCapability: capability }, task.revision);
   const execution = await executeGovernedCapability({ userId, workspaceId: task.workspaceId, capability, mode, input: task.inputs, target, approvalId, sessionId: task.sessionId, assetId });
+  const executionReason = "reason" in execution ? execution.reason : execution.status;
 
   const latest = (await db.select().from(researchTasks).where(and(eq(researchTasks.id, task.id), eq(researchTasks.workspaceId, task.workspaceId))).limit(1))[0];
   if (latest?.status === "running") {
@@ -74,10 +75,10 @@ export async function executeResearchTask(userId: number, taskId: number): Promi
         correlation: execution.pipeline.correlation,
       }, latest.revision);
     } else if (execution.status === "blocked") {
-      await transitionResearchTask(userId, task.id, "paused", { executionState: execution.state, reason: execution.reason }, latest.revision);
+      await transitionResearchTask(userId, task.id, "paused", { executionState: execution.state, reason: executionReason }, latest.revision);
     } else {
-      await transitionResearchTask(userId, task.id, "failed", { executionState: execution.state, reason: execution.status }, latest.revision);
+      await transitionResearchTask(userId, task.id, "failed", { executionState: execution.state, reason: executionReason }, latest.revision);
     }
   }
-  return { taskId, status: execution.status, findingId: execution.status === "completed" ? execution.findingId : undefined, execution };
+  return { taskId, status: execution.status, reason: executionReason, findingId: execution.status === "completed" ? execution.findingId : undefined, execution };
 }

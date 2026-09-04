@@ -1,0 +1,22 @@
+project_id = "angelmind"
+
+[api]
+enabled = true
+
+[db]
+major_version = 17
+
+[realtime]
+enabled = true
+
+[auth]
+enabled = true
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+secure_password_change = true
+
+# OAuth providers and secrets are configured in the Supabase dashboard/secret store.
+# No production credentials belong in this file.

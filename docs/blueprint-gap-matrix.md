@@ -1,25 +1,31 @@
-# AngelMind V4 — Blueprint Gap Matrix
+# AngelMind V4.0 — Blueprint Gap Matrix
 
-This matrix is the working completion checklist against the supplied V4 master blueprint.
+This matrix is the working completion checklist against the supplied V4 master blueprint. The PDF explicitly requires 14 domains, 24 menus, 50+ UTF modules, 100+ pages, 260+ API endpoints, 50+ tables, eight V2.1 gap fixes, five infrastructure platforms, and a 24-week delivery/verification path.
 
-| Blueprint requirement | Repository contract | State |
+| Blueprint requirement | Repository implementation/contract | State |
 |---|---|---|
-| 14 domains | `docs/domain/01-*` … `14-*` | present |
-| 24 application menus | `docs/application-menu.md` + authenticated roots | present |
-| 50+ UTF modules | canonical registry in `server/tool-catalog-data.ts` | present |
-| 100+ public/authenticated page surface | public route registry + authenticated route registry | present |
-| 260+ API target surface | endpoint inventory + OpenAPI contract + existing REST/tRPC implementation | contract tracked |
-| 50+ logical tables | database contract + Drizzle migration layer | contract tracked |
-| Unified knowledge graph | KnowledgeNode/KnowledgeEdge contract and graph UI | present |
+| 14 domains | `docs/domain/01-*` … `14-*` plus control-plane services | present |
+| 24 application menus | `docs/application-menu.md` + authenticated route registry | present |
+| 50+ UTF modules | `server/tool-catalog-data.ts` canonical registry | present |
+| High-risk UTF governance | human approval + scope + simulation-only/default-disabled dispositions | enforced |
+| 100+ public/authenticated page surface | public/authenticated route registries and UI page groups | present |
+| 260+ API target surface | `docs/api/openapi.yaml`, endpoint inventory, REST/tRPC implementation | contract tracked |
+| 50+ logical tables | `docs/database-schema-contract.md` + Drizzle migration layer | contract tracked |
+| Unified knowledge graph | knowledge graph service/contracts and UI | present |
 | Governance and approvals | policy, approval, audit and execution gates | present |
-| Bug bounty | program, submission, validation, reward/disclosure contracts | present |
+| Bug bounty | program, researcher onboarding, submission, validation, reward/disclosure contracts | present |
 | AI automation | providers, models, workers, playbooks, usage/budget/evaluation | present |
-| Testing | unit, integration, E2E, migration, runtime and security workflows | present |
-| Load testing | load-test script and launch gate | tracked |
+| Testing | CI, unit/integration, E2E, migration, runtime and security checks | present |
+| Load testing | `scripts/load-test.mjs` + launch gate | tracked |
 | Accessibility | axe-core dependency/workflow contract | tracked |
-| Disaster recovery | backup/restore documentation and migration rollback checks | tracked |
-| Production deployment | Railway/Cloudflare/Supabase/Firebase manifests | provider configuration pending |
+| Disaster recovery | backup/restore and migration rollback contracts | tracked |
+| Proxy/mobile/custom-script/chain-builder gaps | documented as governed capability contracts; unsafe target-facing execution remains gated | governed |
+| C2 domain-fronting gap | represented only as simulation/governance metadata; no evasion implementation | governed |
+| Naming conflict gap | AI workers, C2 implants/beacons, UTF runners/workers are distinct namespaces in contracts | present |
+| Production deployment | Railway, Cloudflare, Supabase and Firebase manifests | provider verification pending |
 
-## Interpretation
+## Important interpretation
 
-"Present" means the repository contains the corresponding implementation or enforceable contract. "Contract tracked" means the blueprint surface is explicitly represented, while remaining endpoint/table implementation work is tracked rather than falsely represented as complete. Provider configuration is intentionally separated from source control and must be verified in the actual provider accounts before launch.
+The PDF's numeric API/table totals are architectural targets. This repository must not claim that every one of those endpoints or tables is implemented when only a contract exists. `contract tracked` therefore means the surface is explicitly modeled and validated, with concrete implementation work still measurable rather than hidden behind a false completion flag.
+
+Production provider configuration is intentionally separated from source control. Launch is not declared until actual provider health, migrations, authentication, storage, worker execution, smoke tests and release gates pass.

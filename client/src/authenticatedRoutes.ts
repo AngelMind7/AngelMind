@@ -23,6 +23,7 @@ const playbooks = lazy(() => import("@/pages/Playbooks"));
 const aiWorkers = lazy(() => import("@/pages/AIWorkers"));
 const agents = lazy(() => import("@/pages/Agents"));
 const utfRunners = lazy(() => import("@/pages/UFTRunners"));
+const purpleTeam = lazy(() => import("@/pages/PurpleTeam"));
 const audit = lazy(() => import("@/pages/Audit"));
 const operations = lazy(() => import("@/pages/Operations"));
 const assurance = lazy(() => import("@/pages/Assurance"));
@@ -53,7 +54,7 @@ export const authenticatedRoutes = [
   { path: "/operations", component: operations }, { path: "/operations/health", component: operations }, { path: "/operations/queue", component: operations }, { path: "/operations/workers", component: operations }, { path: "/operations-console", component: operationsAdmin }, { path: "/assurance", component: assurance }, { path: "/assurance/quality", component: assurance }, { path: "/assurance/compliance", component: assurance },
   { path: "/incidents", component: incidents }, { path: "/incidents/new", component: incidents }, { path: "/incidents/:id", component: incidents },
   { path: "/redteam", component: blueprintModule }, { path: "/redteam/operations", component: blueprintModule }, { path: "/redteam/operations/new", component: blueprintModule }, { path: "/redteam/implants", component: blueprintModule }, { path: "/redteam/phishing", component: blueprintModule },
-  { path: "/purpleteam", component: blueprintModule }, { path: "/purpleteam/exercises", component: blueprintModule }, { path: "/purpleteam/exercises/new", component: blueprintModule },
+  { path: "/purpleteam", component: purpleTeam }, { path: "/purpleteam/exercises", component: purpleTeam }, { path: "/purpleteam/exercises/new", component: purpleTeam },
   { path: "/bugbounty", component: blueprintModule }, { path: "/bugbounty/programs", component: blueprintModule }, { path: "/bugbounty/programs/new", component: blueprintModule }, { path: "/bugbounty/submissions", component: blueprintModule },
   { path: "/client/:orgSlug", component: clientPortal }, { path: "/client", component: clientPortal },
   { path: "/app/security", component: security }, { path: "/security", component: security }, { path: "/security/sessions", component: security }, { path: "/security/mfa", component: security }, { path: "/security/history", component: security }, { path: "/security/api-keys", component: security }, { path: "/notifications", component: notifications }, { path: "/notifications/settings", component: notifications },

@@ -6,6 +6,7 @@ import { renderPurgeMetrics } from "./purge-metrics";
 import { randomUUID } from "node:crypto";
 import { withTraceContext } from "./_core/trace-context";
 import { checkProviderProbes, sloConfig } from "./observability";
+import { evaluateRequiredProductionCapabilities } from "./production-readiness";
 
 const securityHeaders = {
   "X-Content-Type-Options": "nosniff",
@@ -74,8 +75,9 @@ export function registerHealthRoutes(app: Express) {
     }
     const runtime = await checkRuntimeReadiness();
     const providers = await checkProviderProbes();
-    const ready = process.env.NODE_ENV !== "production" ? true : databaseConfigured && databaseReachable && runtime.ready && providers.ready;
-    res.status(ready ? 200 : 503).json({ status: ready ? "ready" : "not-ready", databaseConfigured, databaseReachable, runtime, providers });
+    const requiredCapabilities = evaluateRequiredProductionCapabilities({ databaseConfigured, databaseReachable, runtime, providers });
+    const ready = process.env.NODE_ENV !== "production" ? true : databaseConfigured && databaseReachable && runtime.ready && providers.ready && requiredCapabilities.ready;
+    res.status(ready ? 200 : 503).json({ status: ready ? "ready" : "not-ready", databaseConfigured, databaseReachable, runtime, providers, requiredCapabilities });
   });
 }
 

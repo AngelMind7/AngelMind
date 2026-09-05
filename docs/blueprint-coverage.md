@@ -120,7 +120,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 84 | Admin console | **Partial** | Operations admin/assurance tersedia; admin users/orgs/abuse/AI/billing/flags/infrastructure penuh belum. |
 | 85 | Admin privilege separation | **Partial** | Owner/reviewer/operator/auditor tersedia; granular admin privilege families belum. |
 | 86 | Feature flags | **Implemented (repository)** | Fail-closed `FEATURE_FLAGS` parsing mendukung environment, organization, user, entitlement, deterministic rollout, dan kill-switch evaluation dengan unit tests. |
-| 87 | Configuration management | **Implemented (repository)** | Typed runtime environment groups, validation, bounded defaults, audit-state encryption key validation, required-binary readiness configuration, dan feature-flag separation tersedia; secret provisioning/rotation tetap environment-dependent. |
+| 87 | Configuration management | **Implemented (repository)** | Typed runtime environment groups, validation, bounded defaults, audit-state encryption key validation, required-binary readiness configuration, explicit `PRODUCTION_REQUIRED_CAPABILITIES` fail-closed gate, dan feature-flag separation tersedia; secret provisioning/rotation tetap environment-dependent. |
 | 88 | Billing | **Deferred** | Pricing bersifat informational; payment/invoice/credit flow sengaja belum aktif. |
 | 89 | Entitlement engine | **Deferred** | Belum ada plan entitlement karena billing belum diaktifkan. |
 

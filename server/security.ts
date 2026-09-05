@@ -59,6 +59,23 @@ export function registerSecurityMiddleware(app: Express) {
 
 export function registerHealthRoutes(app: Express) {
   app.get("/healthz", (_req, res) => res.status(200).json({ status: "ok" }));
+  app.get("/statusz", async (_req, res) => {
+    const runtime = await checkRuntimeReadiness();
+    const providers = await checkProviderProbes();
+    const production = process.env.NODE_ENV === "production";
+    const components = {
+      api: { status: "operational" as const },
+      runtime: { status: runtime.ready ? "operational" : "degraded" as const },
+      providers: { status: !providers.configured || providers.ready ? "operational" : "degraded" as const },
+    };
+    const degraded = Object.values(components).some(component => component.status !== "operational");
+    res.status(degraded && production ? 503 : 200).json({
+      status: degraded ? "degraded" : "operational",
+      updatedAt: new Date().toISOString(),
+      components,
+      publicPosture: "target_interaction_disabled",
+    });
+  });
   app.get("/readyz", async (_req, res) => {
     const databaseConfigured = Boolean(process.env.DATABASE_URL);
     let databaseReachable = false;

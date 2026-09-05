@@ -3,6 +3,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { translateStatic, useLocale } from "@/contexts/LocaleContext";
 import { useSeoMetadata } from "@/seo";
+import LiveStatus from "./LiveStatus";
 import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
@@ -205,6 +206,7 @@ export default function PublicInfoPage() {
           <div className="border border-cyan-300/20 bg-[#0b1020]/80 p-6 shadow-[0_0_60px_rgba(34,211,238,.08)]"><ShieldCheck className="h-6 w-6 text-fuchsia-300" /><p className="mt-5 font-display text-xl font-bold text-white">{text("Safety stays visible at every boundary.")}</p><p className="mt-3 text-sm leading-6 text-slate-400">{text("No target contact. No autonomous submission. No hidden bypass.")}</p></div>
         </div>
         <section className="mt-16 grid gap-4 md:grid-cols-3">{page.sections.map(section => <article key={section.title} className="border border-cyan-300/15 bg-white/[.025] p-6"><CheckCircle2 className="h-5 w-5 text-cyan-300" /><h2 className="mt-7 font-display text-xl font-bold text-white">{text(section.title)}</h2><p className="mt-3 text-sm leading-6 text-slate-400">{text(section.body)}</p></article>)}</section>
+        {location === "/status" ? <LiveStatus /> : null}
       </main>
       <footer className="border-t border-cyan-300/15 px-5 py-8 text-center text-xs text-slate-500">{text("Public information surface · governed by deployment policy")}</footer>
     </div>

@@ -104,3 +104,4 @@
 
 - [x] Add signed webhook request preparation with HMAC-SHA256 timestamp signatures, HTTPS-only enforcement, credential-in-URL rejection, and private/local hostname blocking.
 - [x] Add deterministic notification webhook safety tests while keeping the webhook provider disabled until explicit activation approval and secret configuration.
+- [x] Add a public `/statusz` readiness-derived status snapshot with redacted component health, operational posture, live status-page loading/error/retry UI, and regression coverage without exposing database/provider internals.

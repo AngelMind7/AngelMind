@@ -112,4 +112,16 @@ describe("security and health contracts", () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toMatchObject({ status: "ready" });
   });
+
+  it("serves a public status snapshot without exposing readiness internals", async () => {
+    const app = express();
+    registerHealthRoutes(app);
+    const response = await request(app, "/statusz");
+    const body = await response.json();
+    expect(response.status).toBe(200);
+    expect(body).toMatchObject({ status: "operational", publicPosture: "target_interaction_disabled" });
+    expect(body.components).toMatchObject({ api: { status: "operational" } });
+    expect(body.databaseConfigured).toBeUndefined();
+    expect(body.providers).toBeUndefined();
+  });
 });

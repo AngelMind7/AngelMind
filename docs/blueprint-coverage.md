@@ -116,7 +116,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 80 | Audit log | **Implemented** | Append-oriented audit records, hash references, signed archive/verification planning tersedia. |
 | 81 | Security headers | **Implemented** | HSTS production, CSP, frame/content/referrer/permissions policies, secure cookies tersedia. |
 | 82 | Threat modeling | **Implemented (repository)** | `docs/threat-model-register.md` memetakan aset, trust boundary, threat scenario, severity, kontrol repository, evidence, residual risk, owner, status, dan review triggers; live deployment evidence tetap dipisahkan. |
-| 83 | Break-glass access | **Planned** | Belum ada temporary emergency privilege dengan expiry/audit. |
+| 83 | Break-glass access | **Implemented (repository)** | Admin-only temporary access request, second-admin approval, bounded 5–1440 minute expiry, explicit revoke, active-access lookup, workspace scope, migration, and audit-chain events are implemented; live policy review and deployment verification remain environment-dependent. |
 | 84 | Admin console | **Partial** | Operations admin/assurance tersedia; admin users/orgs/abuse/AI/billing/flags/infrastructure penuh belum. |
 | 85 | Admin privilege separation | **Partial** | Owner/reviewer/operator/auditor tersedia; granular admin privilege families belum. |
 | 86 | Feature flags | **Implemented (repository)** | Fail-closed `FEATURE_FLAGS` parsing mendukung environment, organization, user, entitlement, deterministic rollout, dan kill-switch evaluation dengan unit tests. |

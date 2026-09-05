@@ -907,6 +907,25 @@ export const workspaceMemberships = mysqlTable("workspaceMemberships", {
   index("workspace_member_user_role_idx").on(table.userId, table.role),
 ]);
 
+export const breakGlassRequestStatus = ["requested", "approved", "revoked", "expired"] as const;
+export const breakGlassRequests = mysqlTable("breakGlassRequests", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  requestedByUserId: int("requestedByUserId").notNull(),
+  approvedByUserId: int("approvedByUserId"),
+  revokedByUserId: int("revokedByUserId"),
+  reason: text("reason").notNull(),
+  durationMinutes: int("durationMinutes").notNull(),
+  status: mysqlEnum("status", breakGlassRequestStatus).default("requested").notNull(),
+  expiresAt: timestamp("expiresAt").notNull(),
+  approvedAt: timestamp("approvedAt"),
+  revokedAt: timestamp("revokedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [
+  index("break_glass_workspace_status_idx").on(table.workspaceId, table.status, table.expiresAt),
+  index("break_glass_requester_status_idx").on(table.requestedByUserId, table.status, table.expiresAt),
+]);
+
 export const webhookConfigurations = mysqlTable("webhookConfigurations", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),

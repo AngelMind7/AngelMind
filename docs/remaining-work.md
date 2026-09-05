@@ -36,7 +36,7 @@ Blueprint coverage kini disinkronkan dengan implementasi yang sudah ada: parser 
 
 Repository kini memiliki [`docs/threat-model-register.md`](./threat-model-register.md) sebagai register canonical untuk 12 threat scenarios lintas workspace authorization, passive-only boundary, audit crypto, concurrency, evidence, jobs, identity, secrets, AI retention, notifications, disaster recovery, dan supply chain. Setiap row memiliki severity, controls, verification evidence, residual risk, owner, dan status. `incident-response.md` dan `production-runbook.md` sekarang mewajibkan threat-model review, evidence preservation, containment melalui feature/capability controls, post-incident review, dan rollback evidence.
 
-Break-glass access, SSO/SCIM, live provider verification, multi-process lock, WORM/object-lock, DAST, dan production DR exercise tetap sengaja berstatus open/deferred sampai owner menyediakan policy, provider, atau environment evidence.
+SSO/SCIM, live provider verification, multi-process lock, WORM/object-lock, DAST, dan production DR exercise tetap sengaja berstatus open/deferred sampai owner menyediakan policy, provider, atau environment evidence. Break-glass access sekarang memiliki repository-backed request, second-admin approval, bounded expiry, revoke, active lookup, dan audit-chain implementation; policy review serta live deployment evidence tetap terbuka.
 
 ## C — Pekerjaan live environment
 

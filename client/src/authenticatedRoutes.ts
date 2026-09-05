@@ -22,6 +22,7 @@ const evidenceVault = lazy(() => import("@/pages/EvidenceVault"));
 const playbooks = lazy(() => import("@/pages/Playbooks"));
 const aiWorkers = lazy(() => import("@/pages/AIWorkers"));
 const agents = lazy(() => import("@/pages/Agents"));
+const utfRunners = lazy(() => import("@/pages/UFTRunners"));
 const audit = lazy(() => import("@/pages/Audit"));
 const operations = lazy(() => import("@/pages/Operations"));
 const assurance = lazy(() => import("@/pages/Assurance"));
@@ -42,7 +43,7 @@ export const authenticatedRoutes = [
   { path: "/assets", component: assets }, { path: "/assets/new", component: assets }, { path: "/assets/:id", component: assets }, { path: "/inventory", component: assets },
   { path: "/tools", component: tools }, { path: "/tools/capabilities", component: tools }, { path: "/tools/installed", component: tools }, { path: "/tools/health", component: tools }, { path: "/tools/history", component: tools }, { path: "/tools/:id", component: tools },
   { path: "/ai/workers", component: aiWorkers }, { path: "/ai/workers/new", component: aiWorkers }, { path: "/ai/workers/:id", component: aiWorkers },
-  { path: "/utf/runners", component: blueprintModule }, { path: "/utf/runners/new", component: blueprintModule }, { path: "/utf/runners/:id/execute", component: blueprintModule }, { path: "/utf/runners/:id", component: blueprintModule },
+  { path: "/utf/runners", component: utfRunners }, { path: "/utf/runners/new", component: utfRunners }, { path: "/utf/runners/:id/execute", component: utfRunners }, { path: "/utf/runners/:id", component: utfRunners },
   { path: "/redteam/implants/:id/beacon", component: blueprintModule }, { path: "/redteam/implants/:id/status", component: blueprintModule },
   { path: "/playbooks", component: playbooks }, { path: "/playbooks/new", component: playbooks }, { path: "/playbooks/:id/edit", component: playbooks }, { path: "/playbooks/:id/run", component: playbooks }, { path: "/playbooks/:id", component: playbooks },
   { path: "/evidence", component: evidenceVault }, { path: "/evidence/:id", component: evidenceVault },

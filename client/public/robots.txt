@@ -15,6 +15,7 @@ Disallow: /operations
 Disallow: /operations-console
 Disallow: /notifications
 Disallow: /assurance
-Disallow: /security
 Disallow: /profile
+Disallow: /client
+Disallow: /login
 Sitemap: https://angelmind.app/sitemap.xml

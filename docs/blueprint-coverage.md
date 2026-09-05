@@ -144,7 +144,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 103 | Responsive | **Implemented** | Desktop/mobile layouts dan PWA shell tersedia; route-specific data-card optimization dapat diperluas. |
 | 104 | Accessibility | **Partial** | Keyboard navigation, labels, focus-aware components, serta automated axe smoke tests untuk public routes pada desktop/mobile tersedia; authenticated WCAG coverage dan full remediation register masih terbuka. |
 | 105 | Internationalization | **Implemented** | 20 locale, timezone, RTL, locale fallback dan tests tersedia. |
-| 106 | SEO | **Partial** | Title/manifest/public content ada; complete metadata/robots/sitemap/structured data belum. |
+| 106 | SEO | **Implemented (repository)** | Static index metadata and JSON-LD, route-aware title/description/canonical/Open Graph/Twitter metadata, complete public sitemap, authenticated-route robots exclusions, and an SEO contract checker are implemented; search-engine crawl/render verification remains deployment-dependent. |
 | 107 | Performance | **Partial** | Lazy routes/PWA/cache ada; bundle masih memberi warning chunk besar dan performance budget belum. |
 | 108 | Database performance | **Partial** | Index dasar dan bounded queries ada; query profiling/load benchmark belum. |
 | 109 | Email system | **Partial** | Generic SMTP adapter, typed environment configuration, invitation/reset/verification templates, Indonesian/English locale fallback, durable `emailDeliveries` ledger, idempotent enqueueing, retry-compatible worker status, and organization invitation queue wiring are implemented; password/reset/verification flow wiring, unsubscribe, and provider-level verification remain open. |

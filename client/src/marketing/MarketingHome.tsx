@@ -7,6 +7,7 @@ import { signInWithGoogle } from "@/firebase";
 import { ArrowRight, BookOpen, FileCheck2, ShieldCheck, Waypoints } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useState } from "react";
+import { useSeoMetadata } from "@/seo";
 
 const pages = {
   "/product": { eyebrow: "marketing.product.eyebrow", title: "marketing.product.title", description: "marketing.product.description" },
@@ -19,6 +20,7 @@ const pillars = [{ icon: ShieldCheck, title: "marketing.pillar.guard.title", bod
 
 export default function MarketingHome() {
   const [location] = useLocation(); const { locale, copy } = useLocale(); const page = pages[location as keyof typeof pages] ?? pages["/product"];
+  useSeoMetadata({ path: location, title: `${copy(page.title)} | AngelMind`, description: copy(page.description) });
   const [authError, setAuthError] = useState<string | null>(null);
   const [isSigningIn, setIsSigningIn] = useState(false);
   const [emailAuthOpen, setEmailAuthOpen] = useState(false);

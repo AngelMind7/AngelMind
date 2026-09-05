@@ -2,6 +2,7 @@ import { LanguageSelector } from "@/components/LanguageSelector";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { translateStatic, useLocale } from "@/contexts/LocaleContext";
+import { useSeoMetadata } from "@/seo";
 import { ArrowRight, CheckCircle2, ShieldCheck } from "lucide-react";
 import { Link, useLocation } from "wouter";
 
@@ -190,6 +191,7 @@ export default function PublicInfoPage() {
   const { locale } = useLocale();
   const page = pages[location] ?? pages["/roadmap"];
   const text = (value: string) => translateStatic(locale, value);
+  useSeoMetadata({ path: location, title: `${text(page.title)} | AngelMind`, description: text(page.description) });
   return (
     <div className="min-h-screen overflow-hidden bg-[#05060b] text-slate-100">
       <header className="mx-auto flex max-w-7xl items-center justify-between px-5 py-5 sm:px-8">

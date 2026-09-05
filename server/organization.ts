@@ -129,6 +129,19 @@ export async function linkWorkspaceToProgram(userId: number, input: { workspaceI
   return { success: true as const, workspaceId: input.workspaceId, organizationId: input.organizationId, programId: input.programId };
 }
 
+export const organizationPrivilegeMatrix = {
+  owner: ["organization.manage", "members.manage", "programs.manage", "scope.manage", "abuse.review", "infrastructure.view"],
+  admin: ["members.manage", "programs.manage", "scope.manage", "abuse.review", "infrastructure.view"],
+  researcher: ["programs.read", "scope.read", "research.execute"],
+  reviewer: ["programs.read", "scope.read", "findings.review", "evidence.review", "reports.review"],
+  auditor: ["organization.read", "audit.read", "evidence.read", "infrastructure.view"],
+} as const;
+
+export async function listOrganizationPrivileges(userId: number, organizationId: number) {
+  const { membership } = await requireMembership(userId, organizationId);
+  return { organizationId, role: membership.role, privileges: [...organizationPrivilegeMatrix[membership.role]] };
+}
+
 const invitationHash = (token: string) => createHash("sha256").update(token).digest("hex");
 export async function listOrganizationInvitations(userId: number, organizationId: number) {
   const { db } = await requireMembership(userId, organizationId);

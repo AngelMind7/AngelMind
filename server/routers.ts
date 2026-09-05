@@ -815,6 +815,11 @@ export const appRouter = router({
     ),
   }),
   operations: router({
+    privileges: protectedProcedure
+      .input(z.object({ organizationId: z.number().int().positive() }))
+      .query(({ ctx, input }) =>
+        organization.listOrganizationPrivileges(ctx.user.id, input.organizationId)
+      ),
     members: protectedProcedure
       .input(z.object({ workspaceId: z.number().int().positive() }))
       .query(({ ctx, input }) =>

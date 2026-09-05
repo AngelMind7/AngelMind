@@ -32,6 +32,21 @@ jobs:
           output-file: sbom-cyclonedx.json
           artifact-name: angelmind-sbom-${{ github.sha }}
           upload-artifact: true
+      - name: Scan runtime image for vulnerabilities
+        uses: aquasecurity/trivy-action@ed142fd0673e97e23eac54620cfb913e5ce36c25 # v0.36.0
+        with:
+          image-ref: angelmind:${{ github.sha }}
+          format: sarif
+          output: trivy-results.sarif
+          severity: HIGH,CRITICAL
+          ignore-unfixed: true
+          exit-code: 0
+      - name: Upload vulnerability scan evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: angelmind-trivy-${{ github.sha }}
+          path: trivy-results.sarif
+          if-no-files-found: error
 
   tools-smoke:
     name: Build and execute tools adapter smoke suite

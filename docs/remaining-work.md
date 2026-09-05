@@ -165,3 +165,6 @@ Targeted public-route tests, SEO contract, web-page contract, master/API contrac
 
 ## Latest implementation slice — 2026-09-05 (Supply chain)
 The container workflow now generates and uploads a CycloneDX JSON SBOM for every runtime image build using a pinned `anchore/sbom-action` commit. This closes the repository-side SBOM evidence gap while image signing/verification and full DAST remain separate release-gated work.
+
+## Latest implementation slice — 2026-09-05 (Container vulnerability evidence)
+Runtime container CI now runs a pinned Trivy scan for HIGH and CRITICAL vulnerabilities, keeps unfixed findings explicit without failing unrelated builds, and uploads the SARIF result alongside the runtime SBOM. The dependency SBOM action in the security workflow is pinned as well. Image signing/verification and full DAST remain open release-gated items.

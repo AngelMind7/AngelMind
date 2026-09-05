@@ -30,7 +30,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Generate CycloneDX SBOM
-        uses: anchore/sbom-action@v0.20.5
+        uses: anchore/sbom-action@da167eac915b4e86f08b264dbdbc867b61be6f0c # v0.20.5
         with:
           path: .
           format: cyclonedx-json
@@ -44,7 +44,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
       - name: Install safety reference package
         working-directory: research-service
         run: python -m pip install -e '.[dev]'

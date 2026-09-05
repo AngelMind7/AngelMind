@@ -25,6 +25,7 @@ import * as evidenceWorkflow from "./evidence-workflow";
 import * as aiPlatform from "./ai-platform";
 import * as aiMemory from "./ai-memory";
 import * as aiOrchestration from "./ai-orchestration";
+import * as aiAutomation from "./ai-automation";
 import * as securityPlatform from "./security-platform";
 import * as submissionWorkflow from "./submission-workflow";
 import * as globalSearch from "./global-search";
@@ -2344,6 +2345,36 @@ export const appRouter = router({
       .mutation(({ ctx, input }) =>
         researchIntelligence.createPlaybook(ctx.user.id, input)
       ),
+  }),
+  aiAutomation: router({
+    workers: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive() }))
+      .query(async ({ ctx, input }) => {
+        if (!(await operations.canAccessWorkspace(ctx.user.id, input.workspaceId, "read"))) throw new Error("Workspace access denied.");
+        return aiAutomation.listAiWorkers(input.workspaceId);
+      }),
+    createWorker: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), name: z.string().trim().min(2).max(160), role: z.enum(["research", "analysis", "triage", "report"]), modelKey: z.string().trim().min(2).max(160), budgetCents: z.number().int().min(0).max(100_000_000), timeoutSeconds: z.number().int().min(1).max(3_600), mode: z.enum(["simulation", "governed"]).optional() }))
+      .mutation(async ({ ctx, input }) => {
+        if (!(await operations.canAccessWorkspace(ctx.user.id, input.workspaceId, "respond"))) throw new Error("Workspace response access denied.");
+        return aiAutomation.createAiWorker(input);
+      }),
+    setEnabled: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), workerId: z.string().trim().min(4).max(160), enabled: z.boolean() }))
+      .mutation(async ({ ctx, input }) => {
+        if (!(await operations.canAccessWorkspace(ctx.user.id, input.workspaceId, "respond"))) throw new Error("Workspace response access denied.");
+        const worker = aiAutomation.getAiWorker(input.workerId);
+        if (worker.workspaceId !== input.workspaceId) throw new Error("Worker does not belong to this workspace.");
+        return aiAutomation.setAiWorkerEnabled(input.workerId, input.enabled);
+      }),
+    run: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), workerId: z.string().trim().min(4).max(160), purpose: z.string().trim().min(2).max(120), inputReference: z.string().trim().min(1).max(512), estimatedCostCents: z.number().int().min(0).max(100_000_000).optional() }))
+      .mutation(async ({ ctx, input }) => {
+        if (!(await operations.canAccessWorkspace(ctx.user.id, input.workspaceId, "respond"))) throw new Error("Workspace response access denied.");
+        const worker = aiAutomation.getAiWorker(input.workerId);
+        if (worker.workspaceId !== input.workspaceId) throw new Error("Worker does not belong to this workspace.");
+        return aiAutomation.runAiWorker({ userId: ctx.user.id, ...input });
+      }),
   }),
   rehearsal: router({
     run: protectedProcedure

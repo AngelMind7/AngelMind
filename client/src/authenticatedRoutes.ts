@@ -20,6 +20,7 @@ const governance = lazy(() => import("@/pages/Governance"));
 const findings = lazy(() => import("@/pages/Findings"));
 const evidenceVault = lazy(() => import("@/pages/EvidenceVault"));
 const playbooks = lazy(() => import("@/pages/Playbooks"));
+const aiWorkers = lazy(() => import("@/pages/AIWorkers"));
 const audit = lazy(() => import("@/pages/Audit"));
 const operations = lazy(() => import("@/pages/Operations"));
 const assurance = lazy(() => import("@/pages/Assurance"));
@@ -39,7 +40,7 @@ export const authenticatedRoutes = [
   { path: "/knowledge", component: knowledge }, { path: "/search", component: search }, { path: "/collaboration", component: collaboration }, { path: "/collaboration/review/:id", component: collaboration }, { path: "/collaboration/invites", component: collaboration }, { path: "/saved-views", component: savedViews }, { path: "/tags-notes", component: tagsNotes }, { path: "/tags", component: tagsNotes }, { path: "/notes", component: tagsNotes },
   { path: "/assets", component: assets }, { path: "/assets/new", component: assets }, { path: "/assets/:id", component: assets }, { path: "/inventory", component: assets },
   { path: "/tools", component: tools }, { path: "/tools/capabilities", component: tools }, { path: "/tools/installed", component: tools }, { path: "/tools/health", component: tools }, { path: "/tools/history", component: tools }, { path: "/tools/:id", component: tools },
-  { path: "/ai/workers", component: blueprintModule }, { path: "/ai/workers/new", component: blueprintModule }, { path: "/ai/workers/:id", component: blueprintModule },
+  { path: "/ai/workers", component: aiWorkers }, { path: "/ai/workers/new", component: aiWorkers }, { path: "/ai/workers/:id", component: aiWorkers },
   { path: "/utf/runners", component: blueprintModule }, { path: "/utf/runners/new", component: blueprintModule }, { path: "/utf/runners/:id/execute", component: blueprintModule }, { path: "/utf/runners/:id", component: blueprintModule },
   { path: "/redteam/implants/:id/beacon", component: blueprintModule }, { path: "/redteam/implants/:id/status", component: blueprintModule },
   { path: "/playbooks", component: playbooks }, { path: "/playbooks/new", component: playbooks }, { path: "/playbooks/:id/edit", component: playbooks }, { path: "/playbooks/:id/run", component: playbooks }, { path: "/playbooks/:id", component: playbooks },

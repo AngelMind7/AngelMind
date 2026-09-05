@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import { PageState } from "@/components/PageState";
 
 const routes: Record<string, { title: string; description: string; actions: string[] }> = {
   "/agents": { title: "Autonomous Workers", description: "AI workers with explicit budgets, timeouts, workspace scope and auditability.", actions: ["Create worker", "Test worker", "View runs"] },
@@ -32,6 +33,8 @@ export default function BlueprintModule() {
   const [notes, setNotes] = useState("");
   const [events, setEvents] = useState<string[]>([]);
   const [catalog, setCatalog] = useState<Array<{ toolKey?: string; name?: string; riskClass?: string; disposition?: string }>>([]);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
+  const [catalogReload, setCatalogReload] = useState(0);
   const [loading, setLoading] = useState(false);
   const [simulationBusy, setSimulationBusy] = useState(false);
 
@@ -39,13 +42,14 @@ export default function BlueprintModule() {
     if (!location.startsWith("/utf/runners") && !location.startsWith("/tools")) return;
     let cancelled = false;
     setLoading(true);
+    setCatalogError(null);
     fetch("/api/v1/tools/catalog", { credentials: "include" })
       .then(response => response.ok ? response.json() : Promise.reject(new Error(`Catalog HTTP ${response.status}`)))
       .then(body => { if (!cancelled) setCatalog(Array.isArray(body?.data) ? body.data.slice(0, 24) : []); })
-      .catch(error => { if (!cancelled) setEvents(previous => [`catalog: ${error instanceof Error ? error.message : "unavailable"}`, ...previous]); })
+      .catch(error => { if (!cancelled) { const message = error instanceof Error ? error.message : "Catalog unavailable"; setCatalogError(message); setEvents(previous => [`catalog: ${message}`, ...previous]); } })
       .finally(() => { if (!cancelled) setLoading(false); });
     return () => { cancelled = true; };
-  }, [location]);
+  }, [location, catalogReload]);
 
   const simulationResult = useMemo(() => {
     if (!input.trim()) return null;
@@ -106,7 +110,20 @@ export default function BlueprintModule() {
         </CardContent>
       </Card>}
 
-      {(location.startsWith("/utf/runners") || location.startsWith("/tools")) && <Card><CardHeader><CardTitle>UTF catalog</CardTitle></CardHeader><CardContent>{loading ? <p className="text-sm text-muted-foreground">Loading catalog…</p> : catalog.length ? <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">{catalog.map((tool, index) => <div key={`${tool.toolKey ?? tool.name}-${index}`} className="rounded-md border p-3"><div className="font-mono text-sm">{tool.toolKey ?? tool.name}</div><div className="mt-1 text-xs text-muted-foreground">{tool.riskClass ?? "unknown"} · {tool.disposition ?? "unclassified"}</div></div>)}</div> : <p className="text-sm text-muted-foreground">No catalog records available for this authenticated workspace.</p>}</CardContent></Card>}
+      {(location.startsWith("/utf/runners") || location.startsWith("/tools")) && (
+        <Card>
+          <CardHeader><CardTitle>UTF catalog</CardTitle></CardHeader>
+          <CardContent>
+            {loading ? <PageState state="loading" message="Loading authenticated tool catalog…" /> : catalogError ? <PageState state="error" message={catalogError} onRetry={() => setCatalogReload(value => value + 1)} /> : catalog.length ? (
+              <PageState state="success">
+                <div className="grid gap-2 md:grid-cols-2 lg:grid-cols-3">
+                  {catalog.map((tool, index) => <div key={`${tool.toolKey ?? tool.name}-${index}`} className="rounded-md border p-3"><div className="font-mono text-sm">{tool.toolKey ?? tool.name}</div><div className="mt-1 text-xs text-muted-foreground">{tool.riskClass ?? "unknown"} · {tool.disposition ?? "unclassified"}</div></div>)}
+                </div>
+              </PageState>
+            ) : <PageState state="empty" message="No catalog records available for this authenticated workspace." />}
+          </CardContent>
+        </Card>
+      )}
       <Card><CardHeader><CardTitle>Activity</CardTitle></CardHeader><CardContent>{events.length ? <ol className="space-y-2 font-mono text-xs">{events.map((event, index) => <li key={`${event}-${index}`} className="rounded border p-2">{event}</li>)}</ol> : <p className="text-sm text-muted-foreground">No activity yet.</p>}</CardContent></Card>
     </main>
   );

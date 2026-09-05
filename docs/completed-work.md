@@ -76,3 +76,9 @@
 - [x] Add a public-route inventory regression that verifies each public route’s intended component ownership and safety boundary.
 - [x] Add focused MarketingHome route coverage for public navigation, localized copy, and absence of authenticated workspace access on product, features, documentation, and security routes.
 - [x] Assert the exact public route-to-component-to-safety-boundary mapping for every public page in the centralized inventory.
+
+- [x] Correct the TOTP six-digit validation regex and add RFC 6238, clock-drift, and recovery-code unit coverage.
+- [x] Add bounded research task and hypothesis validation, same-session in-scope hypothesis asset checks, and persisted dependency-cycle validation.
+- [x] Require scanned or promoted evidence for a passed finding retest before resolving the finding, with bounded outcome tests.
+- [x] Add explicit loading, error, empty, success, and retry states to the authenticated UTF/tool catalog surface.
+- [x] Add staging-only authenticated axe coverage for core application routes and ignore local Playwright artifacts.

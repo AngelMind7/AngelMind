@@ -20,6 +20,7 @@ import { encryptAuditState } from "./control-plane/audit-state-crypto";
 import { assertExpectedRevision, decodePageCursor, nextRevision, pageResult } from "./_core/query-safety";
 import { upsertSearchDocument } from "./global-search";
 import { parseAssetMetadata, selectVectorsForAsset } from "./research-vector-selection";
+import { assertDependencyGraphAcyclic, validateResearchHypothesisInput, validateResearchTaskDefinition } from "./research-validation";
 
 const sessionTransitions: Record<string, string[]> = {
   draft: ["ready", "archived"],
@@ -204,13 +205,18 @@ export async function listResearchHypotheses(userId: number, sessionId: number) 
 }
 
 export async function createResearchHypothesis(userId: number, input: { sessionId: number; assetId?: number; observationId?: number; description: string; reason: string; priority: number }) {
+  const normalized = validateResearchHypothesisInput(input);
   const { db, session } = await requireSession(userId, input.sessionId, "respond");
+  if (input.assetId) {
+    const [asset] = await db.select().from(researchAssets).where(and(eq(researchAssets.id, input.assetId), eq(researchAssets.sessionId, session.id), eq(researchAssets.inScope, 1))).limit(1);
+    if (!asset) throw new Error("Hypothesis must reference an in-scope asset from the same session.");
+  }
   if (input.observationId) {
     const [observation] = await db.select().from(researchObservations).where(and(eq(researchObservations.id, input.observationId), eq(researchObservations.sessionId, session.id))).limit(1);
     if (!observation) throw new Error("Hypothesis must reference an observation from the same session.");
   }
-  await db.insert(researchHypotheses).values({ workspaceId: session.workspaceId, sessionId: session.id, assetId: input.assetId ?? null, observationId: input.observationId ?? null, description: input.description.trim(), reason: input.reason.trim(), priority: input.priority, status: "proposed", evidence: "[]", aiAnalysis: null, outcome: null, createdByUserId: userId, traceId: currentTraceContext()?.traceId ?? session.traceId ?? null });
-  const [hypothesis] = await db.select().from(researchHypotheses).where(and(eq(researchHypotheses.sessionId, session.id), eq(researchHypotheses.description, input.description.trim()))).orderBy(desc(researchHypotheses.createdAt)).limit(1);
+  await db.insert(researchHypotheses).values({ workspaceId: session.workspaceId, sessionId: session.id, assetId: input.assetId ?? null, observationId: input.observationId ?? null, description: normalized.description, reason: normalized.reason, priority: normalized.priority, status: "proposed", evidence: "[]", aiAnalysis: null, outcome: null, createdByUserId: userId, traceId: currentTraceContext()?.traceId ?? session.traceId ?? null });
+  const [hypothesis] = await db.select().from(researchHypotheses).where(and(eq(researchHypotheses.sessionId, session.id), eq(researchHypotheses.description, normalized.description))).orderBy(desc(researchHypotheses.createdAt)).limit(1);
   if (!hypothesis) throw new Error("Hypothesis could not be created.");
   await addResearchAudit(db, session.workspaceId, userId, "research-hypothesis-created", { sessionId: session.id, hypothesisId: hypothesis.id });
   await upsertSearchDocument({ workspaceId: session.workspaceId, entityType: "hypothesis", entityId: hypothesis.id, title: hypothesis.description, body: hypothesis.reason });
@@ -245,6 +251,7 @@ export async function listResearchTasksPage(userId: number, input: { sessionId: 
 }
 
 export async function createResearchTask(userId: number, input: { sessionId: number; type: string; title: string; priority: number; dependencies: number[]; ownerUserId?: number; inputs?: Record<string, unknown>; assetId?: number; vectorKey?: string; requiredCapabilities?: string[]; suggestedAdapters?: string[]; riskClass?: "low" | "medium" | "high" | "critical" }) {
+  const normalized = validateResearchTaskDefinition(input);
   const { db, session } = await requireSession(userId, input.sessionId, "respond");
   const asset = input.assetId ? (await db.select().from(researchAssets).where(and(eq(researchAssets.id, input.assetId), eq(researchAssets.sessionId, session.id))).limit(1))[0] : undefined;
   if (input.assetId && !asset) throw new Error("Asset harus berada pada research session yang sama.");
@@ -254,13 +261,14 @@ export async function createResearchTask(userId: number, input: { sessionId: num
   const requiredCapabilities = Array.from(new Set(input.requiredCapabilities ?? (selectedVector ? [selectedVector.capability] : [])));
   const suggestedAdapters = Array.from(new Set(input.suggestedAdapters ?? selectedVector?.suggestedAdapters ?? []));
   const approvalRequired = riskClass === "high" || riskClass === "critical";
-  const dependencies = Array.from(new Set(input.dependencies));
-  if (dependencies.includes(0) || dependencies.some(id => id < 1)) throw new Error("Task dependencies must use positive IDs.");
+  const dependencies = normalized.dependencies;
   if (dependencies.length) {
     const rows = await db.select({ id: researchTasks.id }).from(researchTasks).where(and(eq(researchTasks.sessionId, session.id), inArray(researchTasks.id, dependencies)));
     if (rows.length !== dependencies.length) throw new Error("Task dependency must belong to the same research session.");
   }
-  await db.insert(researchTasks).values({ workspaceId: session.workspaceId, sessionId: session.id, type: input.type.trim(), title: input.title.trim(), priority: input.priority, status: approvalRequired ? "blocked" : "queued", riskClass, approvalStatus: approvalRequired ? "pending" : "approved", vectorKey: selectedVector?.vectorKey ?? input.vectorKey ?? null, requiredCapabilities: JSON.stringify(requiredCapabilities), suggestedAdapters: JSON.stringify(suggestedAdapters), approvalId: null, ownerUserId: input.ownerUserId ?? null, dependencies: JSON.stringify(dependencies), inputs: JSON.stringify({ ...(input.inputs ?? {}), assetId: input.assetId ?? null, vectorSelection: selectedVector ? "fingerprint" : "manual" }), outputs: "{}", retryCount: 0, traceId: currentTraceContext()?.traceId ?? session.traceId ?? null, createdByUserId: userId });
+  const existingDependencyRows = await db.select({ taskId: researchTaskDependencies.taskId, dependsOnTaskId: researchTaskDependencies.dependsOnTaskId }).from(researchTaskDependencies).where(eq(researchTaskDependencies.workspaceId, session.workspaceId));
+  assertDependencyGraphAcyclic(existingDependencyRows);
+  await db.insert(researchTasks).values({ workspaceId: session.workspaceId, sessionId: session.id, type: normalized.type, title: normalized.title, priority: normalized.priority, status: approvalRequired ? "blocked" : "queued", riskClass, approvalStatus: approvalRequired ? "pending" : "approved", vectorKey: selectedVector?.vectorKey ?? input.vectorKey ?? null, requiredCapabilities: JSON.stringify(requiredCapabilities), suggestedAdapters: JSON.stringify(suggestedAdapters), approvalId: null, ownerUserId: input.ownerUserId ?? null, dependencies: JSON.stringify(dependencies), inputs: JSON.stringify({ ...(input.inputs ?? {}), assetId: input.assetId ?? null, vectorSelection: selectedVector ? "fingerprint" : "manual" }), outputs: "{}", retryCount: 0, traceId: currentTraceContext()?.traceId ?? session.traceId ?? null, createdByUserId: userId });
   const [task] = await db.select().from(researchTasks).where(and(eq(researchTasks.sessionId, session.id), eq(researchTasks.title, input.title.trim()))).orderBy(desc(researchTasks.createdAt)).limit(1);
   if (!task) throw new Error("Task could not be created.");
   if (dependencies.length) {

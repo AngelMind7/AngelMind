@@ -5,6 +5,7 @@ import { upsertSearchDocument } from "./global-search";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { assertExpectedRevision, nextRevision } from "./_core/query-safety";
+import { assertRetestOutcome } from "./retest-validation";
 
 function digest(value: unknown) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -141,11 +142,12 @@ export async function completeFindingRetest(userId: number, input: { retestId: n
     if (!artifact) throw new Error("Retest evidence must belong to the same workspace.");
     if (!["scanned", "promoted"].includes(artifact.status)) throw new Error("Retest evidence must pass the security scan before it can be attached.");
   }
-  const resultSummary = input.resultSummary.trim();
-  if (resultSummary.length < 3) throw new Error("Retest result summary is required.");
+  const outcome = assertRetestOutcome({ status: input.status, resultSummary: input.resultSummary, evidenceArtifactId: input.evidenceArtifactId, existingEvidenceArtifactId: retest.evidenceArtifactId });
+  const resultSummary = outcome.resultSummary;
+  const evidenceArtifactId = outcome.evidenceArtifactId;
   const terminal = ["passed", "failed", "inconclusive", "cancelled"].includes(input.status);
   const now = new Date();
-  const retestUpdate = await db.update(findingRetests).set({ status: input.status, resultSummary, evidenceArtifactId: input.evidenceArtifactId ?? retest.evidenceArtifactId, reviewedByUserId: userId, startedAt: input.status === "in_progress" ? (retest.startedAt ?? now) : retest.startedAt, completedAt: terminal ? now : null }).where(and(eq(findingRetests.id, retest.id), or(eq(findingRetests.status, "requested"), eq(findingRetests.status, "in_progress"))));
+  const retestUpdate = await db.update(findingRetests).set({ status: input.status, resultSummary, evidenceArtifactId, reviewedByUserId: userId, startedAt: input.status === "in_progress" ? (retest.startedAt ?? now) : retest.startedAt, completedAt: terminal ? now : null }).where(and(eq(findingRetests.id, retest.id), or(eq(findingRetests.status, "requested"), eq(findingRetests.status, "in_progress"))));
   if (retestUpdate[0].affectedRows !== 1) throw new Error("Concurrent update detected; this retest was already updated by another reviewer.");
   const [finding] = await db.select().from(findings).where(eq(findings.id, retest.findingId)).limit(1);
   if (!finding) throw new Error("Finding retest parent tidak ditemukan.");
@@ -158,7 +160,7 @@ export async function completeFindingRetest(userId: number, input: { retestId: n
     previousFindingStatus: finding.status,
     findingStatus: nextStatus,
     retestStatus: input.status,
-    evidenceArtifactId: input.evidenceArtifactId ?? retest.evidenceArtifactId ?? null,
+    evidenceArtifactId,
     reviewedByUserId: userId,
   });
   await upsertSearchDocument({ workspaceId: finding.workspaceId, entityType: "finding", entityId: finding.id, title: finding.title, body: [finding.impactSummary, finding.remediationNotes ?? "", `status:${nextStatus}`, `retest:${input.status}`, resultSummary].filter(Boolean).join("\\n") });

@@ -74,7 +74,7 @@ export function generateTotpCode(secret: string, timestampMs = Date.now()) {
 }
 
 export function verifyTotpCode(secret: string, code: string, timestampMs = Date.now()) {
-  if (!/^\\d{6}$/.test(code)) return false;
+  if (!/^\d{6}$/.test(code)) return false;
   for (const drift of [-1, 0, 1]) {
     const expected = generateTotpCode(secret, timestampMs + drift * TOTP_STEP_SECONDS * 1000);
     if (timingSafeEqual(Buffer.from(expected), Buffer.from(code))) return true;

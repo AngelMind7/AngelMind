@@ -38,7 +38,8 @@ jobs:
       - name: Run axe accessibility suite
         env:
           E2E_BASE_URL: ${{ inputs.base_url }}
-        run: pnpm test:e2e -- e2e/accessibility.spec.ts
+          ANGELMIND_E2E_TOKEN: ${{ secrets.ANGELMIND_E2E_TOKEN }}
+        run: pnpm test:e2e -- e2e/accessibility.spec.ts e2e/authenticated-accessibility.contract.spec.ts
       - if: always()
         uses: actions/upload-artifact@v4
         with:

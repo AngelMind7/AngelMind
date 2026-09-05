@@ -48,6 +48,8 @@ pids
 
 # Coverage directory used by tools like istanbul
 coverage/
+playwright-report/
+test-results/
 *.lcov
 
 # nyc test coverage

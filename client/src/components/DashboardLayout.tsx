@@ -180,7 +180,7 @@ function DashboardLayoutContent({
   const activeMenuItem = menuItems.find(item => item.path === location);
   const isMobile = useIsMobile();
   const { t, isRTL } = useLocale();
-  useRealtimeEvents(Boolean(user));
+  const realtimeStatus = useRealtimeEvents(Boolean(user));
 
   useEffect(() => {
     if (isCollapsed) {
@@ -269,6 +269,11 @@ function DashboardLayoutContent({
           </SidebarContent>
 
           <SidebarFooter className="p-3">
+            <div className="mb-3 flex items-center gap-2 rounded-md border border-cyan-300/15 px-2 py-1.5 text-[10px] uppercase tracking-[.12em] text-muted-foreground group-data-[collapsible=icon]:justify-center" title={`Realtime status: ${realtimeStatus}`}>
+              <span className={`h-2 w-2 rounded-full ${realtimeStatus === "connected" ? "bg-emerald-400" : realtimeStatus === "reconnecting" ? "bg-amber-400" : realtimeStatus === "connecting" ? "animate-pulse bg-cyan-400" : "bg-slate-500"}`} aria-hidden="true" />
+              <span className="group-data-[collapsible=icon]:hidden">Live {realtimeStatus}</span>
+              <span className="sr-only">Realtime connection: {realtimeStatus}</span>
+            </div>
             <div className="mb-3 group-data-[collapsible=icon]:hidden"><LanguageSelector /></div>
             <div className="mb-3 group-data-[collapsible=icon]:hidden"><TimezoneSelector /></div>
             <div className="mb-3 group-data-[collapsible=icon]:hidden"><ThemeSwitcher /></div>

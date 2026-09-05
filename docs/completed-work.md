@@ -118,3 +118,6 @@
 - [x] Replace generic Red Team, implant, and phishing routes with a Red Team Control Console backed by the existing protected REST lifecycle; expose draft → approval → synthetic rehearsal controls while keeping target traffic, credential collection, C2, persistence, and autonomous delivery disabled.
 - [x] Replace generic Bug Bounty routes with a governed program and submission triage console covering scope/safe-harbor authoring, validation, reward calculation, and disclosure boundaries; no automatic payout or public disclosure is triggered.
 - [x] Add persisted per-event email opt-in preferences for notifications with migration `0073_notification_email_preference`, server-side router/service contract, and authenticated settings toggles; provider delivery remains fail-closed until SMTP/provider configuration is available.
+
+- [x] Integrate direct evidence upload into the finding retest workflow. Uploaded files are workspace- and finding-validated, security-scanned asynchronously, refreshed in the artifact picker, and remain subject to server-side scanned/promoted attachment rules.
+- [x] Thread bounded trace IDs through durable job enqueueing, AI execution jobs, and execution progress outbox events, with generated fallbacks and preservation of existing request/job correlation.

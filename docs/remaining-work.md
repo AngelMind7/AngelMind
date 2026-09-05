@@ -186,3 +186,7 @@ Database management now has a protected automatic migration workflow for staging
 
 ## Latest implementation slice — 2026-09-05 (Backup and disaster recovery)
 A scheduled backup workflow now requests encrypted database-and-object checkpoints with a 35-day retention contract, validates returned checksums, and retains evidence. Manual isolated non-production restore drills validate matching database/object checksums, pass/fail decision, records checked, RTO, and RPO. Production restore is intentionally impossible through this workflow; provider PITR, immutable retention, and recovery credentials remain environment-gated.
+
+## Latest implementation slice — 2026-09-06 (Retest evidence and traceability)
+
+Retest operators can now upload a new evidence artifact inline instead of first leaving the workflow to create an artifact. The server still enforces workspace/finding ownership, file validation, quarantine, asynchronous scanning, and scanned/promoted attachment requirements. Durable jobs now receive explicit or generated trace IDs, AI execution jobs inherit their AI run trace, and execution progress outbox events persist the same correlation field. External provider distributed tracing and full browser-level trace assertions remain deployment/test-gated.

@@ -8,6 +8,8 @@ on:
 
 permissions:
   contents: read
+  id-token: write
+  packages: write
 
 concurrency:
   group: container-${{ github.workflow }}-${{ github.ref }}
@@ -46,6 +48,35 @@ jobs:
         with:
           name: angelmind-trivy-${{ github.sha }}
           path: trivy-results.sarif
+          if-no-files-found: error
+      - name: Login to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io --username "${{ github.actor }}" --password-stdin
+      - name: Tag runtime image for GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: docker tag angelmind:${{ github.sha }} ghcr.io/${{ github.repository }}:${{ github.sha }}
+      - name: Push runtime image to GHCR
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: docker push ghcr.io/${{ github.repository }}:${{ github.sha }}
+      - name: Install Cosign
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: sigstore/cosign-installer@1aa8e0f2454b781fbf0fbf306a4c9533a0c57409 # v3.7.0
+      - name: Sign runtime image keylessly
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: cosign sign --yes ghcr.io/${{ github.repository }}:${{ github.sha }}
+      - name: Verify runtime image signature
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: >-
+          cosign verify
+          --certificate-identity-regexp '^https://github.com/${{ github.repository }}/.github/workflows/container.yml@refs/heads/main$'
+          --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
+          ghcr.io/${{ github.repository }}:${{ github.sha }} | tee cosign-verification.json
+      - name: Upload signing verification evidence
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        uses: actions/upload-artifact@v4
+        with:
+          name: angelmind-cosign-${{ github.sha }}
+          path: cosign-verification.json
           if-no-files-found: error
 
   tools-smoke:

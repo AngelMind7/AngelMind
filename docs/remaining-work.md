@@ -168,3 +168,6 @@ The container workflow now generates and uploads a CycloneDX JSON SBOM for every
 
 ## Latest implementation slice — 2026-09-05 (Container vulnerability evidence)
 Runtime container CI now runs a pinned Trivy scan for HIGH and CRITICAL vulnerabilities, keeps unfixed findings explicit without failing unrelated builds, and uploads the SARIF result alongside the runtime SBOM. The dependency SBOM action in the security workflow is pinned as well. Image signing/verification and full DAST remain open release-gated items.
+
+## Latest implementation slice — 2026-09-05 (Image signing)
+Main-branch runtime image publishing now uses GHCR with GitHub OIDC permissions, keyless Cosign signing, certificate identity and issuer verification, and uploaded verification evidence. Pull requests still build and scan locally without publishing or signing. Full DAST and production registry retention policy remain open.

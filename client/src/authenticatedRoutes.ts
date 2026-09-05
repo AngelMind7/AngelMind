@@ -19,6 +19,7 @@ const organizations = lazy(() => import("@/pages/Organizations"));
 const governance = lazy(() => import("@/pages/Governance"));
 const findings = lazy(() => import("@/pages/Findings"));
 const evidenceVault = lazy(() => import("@/pages/EvidenceVault"));
+const playbooks = lazy(() => import("@/pages/Playbooks"));
 const audit = lazy(() => import("@/pages/Audit"));
 const operations = lazy(() => import("@/pages/Operations"));
 const assurance = lazy(() => import("@/pages/Assurance"));
@@ -41,7 +42,7 @@ export const authenticatedRoutes = [
   { path: "/ai/workers", component: blueprintModule }, { path: "/ai/workers/new", component: blueprintModule }, { path: "/ai/workers/:id", component: blueprintModule },
   { path: "/utf/runners", component: blueprintModule }, { path: "/utf/runners/new", component: blueprintModule }, { path: "/utf/runners/:id/execute", component: blueprintModule }, { path: "/utf/runners/:id", component: blueprintModule },
   { path: "/redteam/implants/:id/beacon", component: blueprintModule }, { path: "/redteam/implants/:id/status", component: blueprintModule },
-  { path: "/playbooks", component: blueprintModule }, { path: "/playbooks/new", component: blueprintModule }, { path: "/playbooks/:id/edit", component: blueprintModule }, { path: "/playbooks/:id/run", component: blueprintModule }, { path: "/playbooks/:id", component: blueprintModule },
+  { path: "/playbooks", component: playbooks }, { path: "/playbooks/new", component: playbooks }, { path: "/playbooks/:id/edit", component: playbooks }, { path: "/playbooks/:id/run", component: playbooks }, { path: "/playbooks/:id", component: playbooks },
   { path: "/evidence", component: evidenceVault }, { path: "/evidence/:id", component: evidenceVault },
   { path: "/reports", component: reports }, { path: "/reports/new", component: reports }, { path: "/reports/:id", component: reports },
   { path: "/workspaces", component: workspaces }, { path: "/workspaces/new", component: workspaces }, { path: "/workspaces/:id", component: workspaces }, { path: "/organizations", component: organizations }, { path: "/organizations/new", component: organizations }, { path: "/organizations/:id", component: organizations },

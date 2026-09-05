@@ -1,0 +1,70 @@
+groups:
+  - name: angelmind-availability
+    interval: 30s
+    rules:
+      - alert: AngelMindReadinessDown
+        expr: up{job="angelmind"} == 0 or angelmind_provider_probe_ready == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: angelmind
+        annotations:
+          summary: AngelMind readiness is unavailable
+          description: The AngelMind service or a configured provider probe has been unavailable for at least two minutes.
+      - alert: AngelMindRuntimeNotReady
+        expr: angelmind_runtime_ready == 0
+        for: 5m
+        labels:
+          severity: high
+          service: angelmind
+        annotations:
+          summary: AngelMind runtime is not ready
+          description: A required runtime capability is not healthy or available.
+      - alert: AngelMindDatabaseNotReady
+        expr: angelmind_database_configured == 0
+        for: 5m
+        labels:
+          severity: critical
+          service: angelmind
+        annotations:
+          summary: AngelMind database is not configured
+          description: The production process is running without a configured database connection.
+  - name: angelmind-slo
+    interval: 30s
+    rules:
+      - alert: AngelMindErrorBudgetExceeded
+        expr: angelmind_slo_error_budget_ok == 0 or angelmind_http_error_rate > 0.05
+        for: 5m
+        labels:
+          severity: high
+          service: angelmind
+        annotations:
+          summary: AngelMind HTTP error budget exceeded
+          description: The observed 5xx ratio is above the configured SLO budget.
+      - alert: AngelMindSlowRequestBudgetExceeded
+        expr: angelmind_slo_slow_budget_ok == 0 or angelmind_http_slow_rate > 0.10
+        for: 10m
+        labels:
+          severity: warning
+          service: angelmind
+        annotations:
+          summary: AngelMind slow-request budget exceeded
+          description: The observed slow-request ratio has remained above the configured budget.
+      - alert: AngelMindPurgeFailures
+        expr: increase(angelmind_purge_failures_total[15m]) > 0
+        for: 5m
+        labels:
+          severity: high
+          service: angelmind
+        annotations:
+          summary: AngelMind purge worker failures detected
+          description: The retention purge worker reported one or more failures during the last fifteen minutes.
+      - alert: AngelMindPurgeDurationHigh
+        expr: angelmind_purge_duration_alert == 1
+        for: 10m
+        labels:
+          severity: warning
+          service: angelmind
+        annotations:
+          summary: AngelMind purge duration is high
+          description: The latest purge batch exceeded the configured duration threshold.

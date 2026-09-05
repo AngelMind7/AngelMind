@@ -177,3 +177,6 @@ The manual staging DAST workflow now supports both pinned OWASP ZAP baseline and
 
 ## Latest implementation slice — 2026-09-05 (Release promotion)
 A manual promotion workflow now accepts only an immutable AngelMind GHCR digest, verifies an authorized non-production staging URL and expected deployed commit, verifies the keyless Cosign provenance, and creates a release tag only after explicit `PROMOTE-STAGING-IMAGE` confirmation. Health, readiness, signature, and promotion evidence are retained as artifacts. Provider-specific production deployment remains environment-gated.
+
+## Latest implementation slice — 2026-09-05 (Monitoring and alerting)
+Prometheus alert rules now cover readiness/provider failures, runtime and database readiness, HTTP error and latency budgets, and purge worker health. An Alertmanager template adds warning/critical routing, resolved notifications, and critical-alert inhibition. Release readiness runs a monitoring contract checker that prevents metric/rule drift. Webhook credentials and hosted dashboard provisioning remain deployment-level configuration.

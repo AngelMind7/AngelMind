@@ -26,3 +26,6 @@ jobs:
 
       - name: Release readiness check
         run: node scripts/release-readiness-check.mjs
+
+      - name: Monitoring and alerting contract
+        run: node scripts/check-monitoring-contract.mjs

@@ -121,9 +121,12 @@ export async function registerWithEmail(email: string, password: string): Promis
   const client = getFirebaseClient();
   if (!client) throw new Error("Firebase authentication is not configured.");
   const credential = await createUserWithEmailAndPassword(client.auth, email.trim(), password);
-  await sendEmailVerification(credential.user);
-  await signOut(client.auth);
-  return { verificationRequired: true, email: credential.user.email ?? email.trim() };
+  try {
+    await sendEmailVerification(credential.user);
+    return { verificationRequired: true, email: credential.user.email ?? email.trim() };
+  } finally {
+    await signOut(client.auth).catch(() => undefined);
+  }
 }
 
 export async function resetPassword(email: string): Promise<void> {

@@ -4,6 +4,14 @@ import { getDb } from "./db";
 import { enqueueJob } from "./ai-platform";
 import { sendEmail } from "./_core/email";
 
+function affectedRowCount(result: unknown): number | undefined {
+  if (!result || typeof result !== "object") return undefined;
+  const value = result as { affectedRows?: unknown; rowsAffected?: unknown };
+  if (typeof value.affectedRows === "number") return value.affectedRows;
+  if (typeof value.rowsAffected === "number") return value.rowsAffected;
+  return undefined;
+}
+
 function normalizeRecipient(value: string): string {
   if (typeof value !== "string") throw new Error("Email recipient is invalid.");
   const recipient = value.trim().toLowerCase();
@@ -46,7 +54,9 @@ export async function executeEmailDeliveryJob(payload: Record<string, unknown>) 
   if (delivery.status === "sending") throw new Error("Email delivery is already being processed.");
   let message: { text: string; html?: string; replyTo?: string };
   try { message = JSON.parse(delivery.payload) as typeof message; } catch { throw new Error("Email delivery payload is invalid."); }
-  await db.update(emailDeliveries).set({ status: "sending", attempts: delivery.attempts + 1, updatedAt: new Date() }).where(and(eq(emailDeliveries.id, delivery.id), eq(emailDeliveries.status, delivery.status)));
+  const claim = await db.update(emailDeliveries).set({ status: "sending", attempts: delivery.attempts + 1, updatedAt: new Date() }).where(and(eq(emailDeliveries.id, delivery.id), eq(emailDeliveries.status, delivery.status)));
+  const claimedRows = affectedRowCount(claim);
+  if (claimedRows !== 1) throw new Error(claimedRows === 0 ? "Email delivery is already being processed." : "Email delivery claim could not be verified safely.");
   const result = await sendEmail({ to: delivery.recipient, subject: delivery.subject, text: message.text, html: message.html, replyTo: message.replyTo });
   if (result.delivered) {
     await db.update(emailDeliveries).set({ status: "sent", providerMessageId: result.messageId ?? null, lastError: null, updatedAt: new Date() }).where(eq(emailDeliveries.id, delivery.id));

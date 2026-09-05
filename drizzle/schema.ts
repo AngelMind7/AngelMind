@@ -198,6 +198,19 @@ export const programs = mysqlTable("programs", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => [index("program_organization_status_idx").on(table.organizationId, table.status), uniqueIndex("program_organization_name_uq").on(table.organizationId, table.name)]);
 
+export const programScopeVersions = mysqlTable("programScopeVersions", {
+  id: int("id").autoincrement().primaryKey(),
+  programId: int("programId").notNull(),
+  organizationId: int("organizationId").notNull(),
+  version: int("version").notNull(),
+  includedAssets: text("includedAssets").notNull(),
+  excludedAssets: text("excludedAssets").notNull(),
+  rules: text("rules").notNull(),
+  safeHarbor: text("safeHarbor").notNull(),
+  changedByUserId: int("changedByUserId").notNull(),
+  changeSummary: text("changeSummary").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("program_scope_version_uq").on(table.programId, table.version), index("program_scope_version_org_idx").on(table.organizationId, table.createdAt)]);
 export const organizationEntitlements = mysqlTable("organizationEntitlements", {
   id: int("id").autoincrement().primaryKey(),
   organizationId: int("organizationId").notNull(),
@@ -291,6 +304,8 @@ export const researchHypothesisStatus = ["proposed", "investigating", "supported
 export const researchSessions = mysqlTable("researchSessions", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  programId: int("programId"),
+  programVersion: int("programVersion"),
   ownerUserId: int("ownerUserId").notNull(),
   title: varchar("title", { length: 200 }).notNull(),
   state: mysqlEnum("state", researchSessionState).default("draft").notNull(),
@@ -300,7 +315,7 @@ export const researchSessions = mysqlTable("researchSessions", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   completedAt: timestamp("completedAt"),
-}, table => [index("research_session_id_workspace_idx").on(table.id, table.workspaceId), index("research_session_workspace_state_idx").on(table.workspaceId, table.state), index("research_session_owner_updated_idx").on(table.ownerUserId, table.updatedAt)]);
+}, table => [index("research_session_id_workspace_idx").on(table.id, table.workspaceId), index("research_session_workspace_state_idx").on(table.workspaceId, table.state), index("research_session_owner_updated_idx").on(table.ownerUserId, table.updatedAt), index("research_session_program_idx").on(table.programId, table.programVersion)]);
 
 export const researchAssets = mysqlTable("researchAssets", {
   id: int("id").autoincrement().primaryKey(),

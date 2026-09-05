@@ -484,6 +484,13 @@
       "when": 1788440000009,
       "tag": "0068_passive_asset_delta_tracking",
       "breakpoints": true
+    },
+    {
+      "idx": 69,
+      "version": "7",
+      "when": 1788440000010,
+      "tag": "0069_program_scope_versions_research_context",
+      "breakpoints": true
     }
   ]
 }

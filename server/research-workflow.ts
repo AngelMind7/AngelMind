@@ -7,6 +7,7 @@ import {
   researchHypotheses,
   researchObservations,
   researchSessions,
+  programs,
   researchTasks,
   researchTaskDependencies,
   workspaces,
@@ -115,10 +116,11 @@ export async function createResearchSession(userId: number, input: { workspaceId
   const { db, workspace } = await requireWorkspace(userId, input.workspaceId, "respond");
   const scopeDigest = digest(JSON.stringify({ allowlist: workspace.allowlist, exclusions: workspace.exclusions, safeHarbor: workspace.safeHarbor, codeOfConduct: workspace.codeOfConduct }));
   const traceId = currentTraceContext()?.traceId ?? null;
-  await db.insert(researchSessions).values({ workspaceId: workspace.id, ownerUserId: userId, title: input.title.trim(), state: "draft", scopeDigest, traceId });
+  const linkedProgram = workspace.programId ? (await db.select({ id: programs.id, currentVersion: programs.currentVersion }).from(programs).where(eq(programs.id, workspace.programId)).limit(1))[0] : undefined;
+  await db.insert(researchSessions).values({ workspaceId: workspace.id, programId: linkedProgram?.id ?? null, programVersion: linkedProgram?.currentVersion ?? null, ownerUserId: userId, title: input.title.trim(), state: "draft", scopeDigest, traceId });
   const [session] = await db.select().from(researchSessions).where(and(eq(researchSessions.workspaceId, workspace.id), eq(researchSessions.ownerUserId, userId), eq(researchSessions.title, input.title.trim()))).orderBy(desc(researchSessions.createdAt)).limit(1);
   if (!session) throw new Error("Research session could not be created.");
-  await addResearchAudit(db, workspace.id, userId, "research-session-created", { sessionId: session.id, scopeDigest });
+  await addResearchAudit(db, workspace.id, userId, "research-session-created", { sessionId: session.id, scopeDigest, programId: session.programId, programVersion: session.programVersion });
   await upsertSearchDocument({ workspaceId: workspace.id, entityType: "session", entityId: session.id, title: session.title, body: session.scopeDigest });
   return session;
 }

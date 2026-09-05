@@ -89,3 +89,7 @@
 - [x] Add authenticated Research Workspace verification panel with challenge instructions, proof submission, reviewer controls, and explicit protected/empty/error/success states.
 - [x] Add passive asset discovery delta tracking with deterministic hostname deduplication, active/stale lifecycle, first/last-seen timestamps, content SHA-256 run summaries, authenticated Coverage metrics, and unit coverage.
 - [x] Register migrations `0067_asset_verification` and `0068_passive_asset_delta_tracking`; migration journal and database contracts remain green.
+
+- [x] Add durable `programScopeVersions` history with authorized Program scope updates, versioned diffs, change summaries, and organization-scoped revision listing.
+- [x] Snapshot linked `programId` and `programVersion` into new ResearchSession records and include the context in research audit events.
+- [x] Register migration `0069_program_scope_versions_research_context`; migration journal, schema, TypeScript, and focused lifecycle contracts pass.

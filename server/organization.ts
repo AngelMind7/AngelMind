@@ -1,8 +1,8 @@
 import { createHash, randomBytes } from "node:crypto";
 import { and, asc, desc, eq, lt } from "drizzle-orm";
 import { getDb, getUserByEmail } from "./db";
-import { organizationInvitations, programs, organizationMembers, organizations, workspaces } from "../drizzle/schema";
-import { diffProgramScope, normalizeProgramScope, parseStoredProgramScope } from "./control-plane/program-scope";
+import { organizationInvitations, programScopeVersions, programs, organizationMembers, organizations, workspaces } from "../drizzle/schema";
+import { diffProgramScope, nextProgramScopeVersion, normalizeProgramScope, parseStoredProgramScope } from "./control-plane/program-scope";
 import { buildOrganizationInvitationEmail } from "./_core/email-templates";
 import { enqueueEmailDelivery } from "./email-delivery";
 
@@ -72,10 +72,32 @@ export async function createProgram(userId: number, input: { organizationId: num
   const scope = normalizeProgramScope({ includedAssets: input.includedAssets, excludedAssets: input.excludedAssets, rules: input.rules, safeHarbor: input.safeHarbor });
   await db.insert(programs).values({ organizationId: input.organizationId, createdByUserId: userId, name, description: input.description.trim(), status: "draft", includedAssets: JSON.stringify(scope.includedAssets), excludedAssets: JSON.stringify(scope.excludedAssets), rules: JSON.stringify(scope.rules), safeHarbor: scope.safeHarbor, currentVersion: scope.version });
   const [program] = await db.select().from(programs).where(and(eq(programs.organizationId, input.organizationId), eq(programs.name, name))).limit(1);
-  if (!program) throw new Error("Program could not be created.");
+    if (!program) throw new Error("Program could not be created.");
+  await db.insert(programScopeVersions).values({ programId: program.id, organizationId: program.organizationId, version: program.currentVersion, includedAssets: program.includedAssets, excludedAssets: program.excludedAssets, rules: program.rules, safeHarbor: program.safeHarbor, changedByUserId: userId, changeSummary: "Initial program scope" });
   return program;
 }
-
+export async function listProgramScopeVersions(userId: number, programId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [program] = await db.select({ id: programs.id, organizationId: programs.organizationId }).from(programs).where(eq(programs.id, programId)).limit(1);
+  if (!program) throw new Error("Program tidak ditemukan.");
+  await requireMembership(userId, program.organizationId);
+  return db.select().from(programScopeVersions).where(eq(programScopeVersions.programId, programId)).orderBy(desc(programScopeVersions.version));
+}
+export async function updateProgramScope(userId: number, input: { programId: number; includedAssets: string[]; excludedAssets: string[]; rules: string[]; safeHarbor: string; changeSummary?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [program] = await db.select().from(programs).where(eq(programs.id, input.programId)).limit(1);
+  if (!program) throw new Error("Program tidak ditemukan.");
+  await requireMembership(userId, program.organizationId, "manage");
+  const previous = parseStoredProgramScope(program);
+  const { version, diff } = nextProgramScopeVersion(previous, input);
+  if (!diff.changed) return { changed: false as const, programId: program.id, version: previous.version, diff };
+  const current = normalizeProgramScope({ ...input, version });
+  await db.update(programs).set({ includedAssets: JSON.stringify(current.includedAssets), excludedAssets: JSON.stringify(current.excludedAssets), rules: JSON.stringify(current.rules), safeHarbor: current.safeHarbor, currentVersion: current.version, updatedAt: new Date() }).where(eq(programs.id, program.id));
+  await db.insert(programScopeVersions).values({ programId: program.id, organizationId: program.organizationId, version: current.version, includedAssets: JSON.stringify(current.includedAssets), excludedAssets: JSON.stringify(current.excludedAssets), rules: JSON.stringify(current.rules), safeHarbor: current.safeHarbor, changedByUserId: userId, changeSummary: input.changeSummary?.trim() || `Program scope version ${current.version}` });
+  return { changed: true as const, programId: program.id, version: current.version, diff };
+}
 export async function previewProgramScopeChange(userId: number, input: { programId: number; includedAssets: string[]; excludedAssets: string[]; rules: string[]; safeHarbor: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");

@@ -1739,6 +1739,19 @@ export const appRouter = router({
       .mutation(({ ctx, input }) =>
         organization.createProgram(ctx.user.id, input)
       ),
+    programScopeVersions: protectedProcedure
+      .input(z.object({ programId: z.number().int().positive() }))
+      .query(({ ctx, input }) => organization.listProgramScopeVersions(ctx.user.id, input.programId)),
+    updateProgramScope: protectedProcedure
+      .input(z.object({
+        programId: z.number().int().positive(),
+        includedAssets: z.array(z.string().min(1).max(512)).min(1).max(500),
+        excludedAssets: z.array(z.string().min(1).max(512)).max(500),
+        rules: z.array(z.string().min(1).max(4_000)).max(100),
+        safeHarbor: z.string().min(10).max(20_000),
+        changeSummary: z.string().trim().max(5_000).optional(),
+      }))
+      .mutation(({ ctx, input }) => organization.updateProgramScope(ctx.user.id, input)),
     previewProgramScope: protectedProcedure
       .input(
         z.object({

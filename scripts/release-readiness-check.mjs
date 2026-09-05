@@ -11,6 +11,7 @@ const requiredFiles = [
   ".github/workflows/promote-staging.yml",
   ".github/workflows/deploy-production.yml",
   ".github/workflows/migrate-database.yml",
+  ".github/workflows/backup-and-restore.yml",
   "config/monitoring/angelmind-alerts.yml",
   "config/monitoring/alertmanager.yml",
   "scripts/check-monitoring-contract.mjs",

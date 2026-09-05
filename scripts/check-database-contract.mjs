@@ -14,6 +14,10 @@ const migrationWorkflow = readFileSync(
   resolve(root, ".github/workflows/migrate-database.yml"),
   "utf8"
 );
+const disasterRecoveryWorkflow = readFileSync(
+  resolve(root, ".github/workflows/backup-and-restore.yml"),
+  "utf8"
+);
 
 const schemaTables = [
   ...schema.matchAll(/\bmysqlTable\(\s*["']([^"']+)["']/g),
@@ -37,6 +41,18 @@ for (const token of [
 ]) {
   if (!migrationWorkflow.includes(token))
     failures.push(`migration workflow missing safety gate: ${token}`);
+}
+for (const token of [
+  "schedule:",
+  "BACKUP_EXPORT_HOOK_URL",
+  "BACKUP_EXPORT_HOOK_TOKEN",
+  "retentionDays:35",
+  "RESTORE_DRILL_HOOK_URL",
+  "RESTORE-DRILL",
+  "isolated-non-production-drill",
+]) {
+  if (!disasterRecoveryWorkflow.includes(token))
+    failures.push(`disaster recovery workflow missing control: ${token}`);
 }
 
 if (uniqueSchemaTables.length < 74)

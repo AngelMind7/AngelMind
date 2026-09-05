@@ -17,6 +17,7 @@ This checklist is the final gate between repository completion and external infr
 - [ ] accessibility workflow green
 - [ ] security/code scanning green
 - [ ] staging verification green
+- [ ] scheduled backup checkpoint and isolated restore-drill evidence green
 - [ ] verified immutable image promotion workflow green (staging health/readiness, expected commit, SBOM/scan/signature evidence)
 - [ ] no secrets committed
 - [ ] production configuration documented with secret placeholders only

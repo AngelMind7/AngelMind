@@ -77,3 +77,9 @@ Prometheus alert rules are versioned in `config/monitoring/angelmind-alerts.yml`
 `.github/workflows/migrate-database.yml` is the only supported automatic migration path for protected staging or production environments. It requires the GitHub environment approval, `BACKUP-COMPLETED`, and `APPLY-MIGRATIONS` confirmations; serializes migrations per target environment; installs the locked dependency tree; runs database schema, journal, safety, and rollback contracts; requests a provider backup checkpoint; applies forward-only Drizzle migrations; and uploads migration evidence.
 
 Configure `DATABASE_URL`, `DATABASE_BACKUP_HOOK_URL`, and `DATABASE_BACKUP_HOOK_TOKEN` as secrets on each protected environment. The backup hook must return a successful checkpoint response before `drizzle-kit migrate` is invoked. Rollback remains an owner-approved restore/forward-fix operation; the workflow intentionally never runs destructive rollback SQL automatically.
+
+## Automatic backup and disaster recovery
+
+`.github/workflows/backup-and-restore.yml` runs a scheduled encrypted database-and-object backup request and can be started manually for a protected environment. The provider hook must return a backup identifier plus database/object SHA-256 checksums; the request carries a 35-day retention policy. Manual runs require `BACKUP-AND-DR-APPROVED`. An isolated non-production restore drill is available only with `RESTORE-DRILL` and requires matching checksums, a passing decision, record count, RTO, and RPO evidence.
+
+Configure `BACKUP_EXPORT_HOOK_URL`, `BACKUP_EXPORT_HOOK_TOKEN`, `RESTORE_DRILL_HOOK_URL`, and `RESTORE_DRILL_HOOK_TOKEN` in the relevant protected GitHub environments. The workflow never restores into production and never deletes backups automatically. Provider-specific encryption, immutable retention, PITR, and recovery credentials remain deployment-owner responsibilities.

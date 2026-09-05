@@ -1,0 +1,115 @@
+name: Backup and disaster recovery
+
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: "Protected environment containing backup provider secrets"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      run_restore_drill:
+        description: "Run a non-production restore drill after backup"
+        required: true
+        default: false
+        type: boolean
+      confirm_operation:
+        description: "Type BACKUP-AND-DR-APPROVED for manual runs"
+        required: false
+        default: ""
+        type: string
+      confirm_restore_drill:
+        description: "Type RESTORE-DRILL for the isolated restore drill"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: backup-and-restore-${{ inputs.target_environment || 'production' }}
+  cancel-in-progress: false
+
+jobs:
+  backup:
+    if: ${{ github.event_name == 'schedule' || inputs.confirm_operation == 'BACKUP-AND-DR-APPROVED' }}
+    runs-on: ubuntu-latest
+    environment: backup-${{ inputs.target_environment || 'production' }}
+    timeout-minutes: 30
+    outputs:
+      backup_id: ${{ steps.request-backup.outputs.backup_id }}
+      database_checksum: ${{ steps.request-backup.outputs.database_checksum }}
+      object_checksum: ${{ steps.request-backup.outputs.object_checksum }}
+    steps:
+      - name: Request encrypted backup checkpoint
+        id: request-backup
+        env:
+          BACKUP_HOOK_URL: ${{ secrets.BACKUP_EXPORT_HOOK_URL }}
+          BACKUP_HOOK_TOKEN: ${{ secrets.BACKUP_EXPORT_HOOK_TOKEN }}
+          TARGET_ENVIRONMENT: ${{ inputs.target_environment || 'production' }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test -n "$BACKUP_HOOK_URL" || { echo "BACKUP_EXPORT_HOOK_URL is not configured" >&2; exit 1; }
+          test -n "$BACKUP_HOOK_TOKEN" || { echo "BACKUP_EXPORT_HOOK_TOKEN is not configured" >&2; exit 1; }
+          jq -n --arg environment "$TARGET_ENVIRONMENT" --arg commit "$COMMIT_SHA" '{environment:$environment,commit:$commit,kind:"database-and-object-backup",retentionDays:35}' > backup-request.json
+          curl --fail --silent --show-error --max-time 120 \
+            -X POST "$BACKUP_HOOK_URL" \
+            -H "Authorization: Bearer $BACKUP_HOOK_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data @backup-request.json \
+            -o backup-response.json
+          jq -e '.backupId and .databaseChecksum and .objectChecksum' backup-response.json >/dev/null
+          echo "backup_id=$(jq -er '.backupId | tostring' backup-response.json)" >> "$GITHUB_OUTPUT"
+          echo "database_checksum=$(jq -er '.databaseChecksum' backup-response.json)" >> "$GITHUB_OUTPUT"
+          echo "object_checksum=$(jq -er '.objectChecksum' backup-response.json)" >> "$GITHUB_OUTPUT"
+      - name: Upload backup evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: backup-${{ github.run_id }}
+          path: |
+            backup-request.json
+            backup-response.json
+          if-no-files-found: ignore
+
+  restore-drill:
+    needs: backup
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.run_restore_drill && inputs.confirm_restore_drill == 'RESTORE-DRILL' }}
+    runs-on: ubuntu-latest
+    environment: restore-drill
+    timeout-minutes: 45
+    steps:
+      - name: Execute isolated restore drill
+        env:
+          RESTORE_HOOK_URL: ${{ secrets.RESTORE_DRILL_HOOK_URL }}
+          RESTORE_HOOK_TOKEN: ${{ secrets.RESTORE_DRILL_HOOK_TOKEN }}
+          BACKUP_ID: ${{ needs.backup.outputs.backup_id }}
+          EXPECTED_DATABASE_CHECKSUM: ${{ needs.backup.outputs.database_checksum }}
+          EXPECTED_OBJECT_CHECKSUM: ${{ needs.backup.outputs.object_checksum }}
+        run: |
+          set -euo pipefail
+          test -n "$RESTORE_HOOK_URL" || { echo "RESTORE_DRILL_HOOK_URL is not configured" >&2; exit 1; }
+          test -n "$RESTORE_HOOK_TOKEN" || { echo "RESTORE_DRILL_HOOK_TOKEN is not configured" >&2; exit 1; }
+          jq -n --arg backupId "$BACKUP_ID" --arg db "$EXPECTED_DATABASE_CHECKSUM" --arg objects "$EXPECTED_OBJECT_CHECKSUM" '{backupId:$backupId,expectedDatabaseChecksum:$db,expectedObjectChecksum:$objects,mode:"isolated-non-production-drill"}' > restore-request.json
+          curl --fail --silent --show-error --max-time 300 \
+            -X POST "$RESTORE_HOOK_URL" \
+            -H "Authorization: Bearer $RESTORE_HOOK_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data @restore-request.json \
+            -o restore-response.json
+          jq -e '.decision == "pass" and (.databaseChecksum == $db) and (.objectChecksum == $objects) and (.recordsChecked >= 0) and (.rtoSeconds >= 0) and (.rpoSeconds >= 0)' --arg db "$EXPECTED_DATABASE_CHECKSUM" --arg objects "$EXPECTED_OBJECT_CHECKSUM" restore-response.json >/dev/null
+      - name: Upload restore drill evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: restore-drill-${{ github.run_id }}
+          path: |
+            restore-request.json
+            restore-response.json
+          if-no-files-found: ignore

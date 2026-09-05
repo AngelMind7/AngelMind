@@ -183,3 +183,6 @@ Prometheus alert rules now cover readiness/provider failures, runtime and databa
 
 ## Latest implementation slice — 2026-09-05 (Database management)
 Database management now has a protected automatic migration workflow for staging and production. It serializes runs per environment, requires backup and apply confirmations, validates journal/safety/rollback contracts, calls a provider backup checkpoint hook before applying forward migrations, and retains migration evidence. Provider-specific backup/PITR execution and live database verification remain environment-gated.
+
+## Latest implementation slice — 2026-09-05 (Backup and disaster recovery)
+A scheduled backup workflow now requests encrypted database-and-object checkpoints with a 35-day retention contract, validates returned checksums, and retains evidence. Manual isolated non-production restore drills validate matching database/object checksums, pass/fail decision, records checked, RTO, and RPO. Production restore is intentionally impossible through this workflow; provider PITR, immutable retention, and recovery credentials remain environment-gated.

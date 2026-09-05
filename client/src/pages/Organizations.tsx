@@ -18,6 +18,9 @@ export default function Organizations() {
   const members = trpc.organization.members.useQuery({ organizationId: selectedOrganizationId! }, { enabled: Boolean(selectedOrganizationId) });
   const programs = trpc.organization.programs.useQuery({ organizationId: selectedOrganizationId! }, { enabled: Boolean(selectedOrganizationId) });
   const roleAudit = trpc.organization.roleAudit.useQuery({ organizationId: selectedOrganizationId!, limit: 50 }, { enabled: Boolean(selectedOrganizationId) });
+  const privileges = trpc.organization.privileges.useQuery({ organizationId: selectedOrganizationId! }, { enabled: Boolean(selectedOrganizationId) });
+  const [roleDrafts, setRoleDrafts] = useState<Record<number, "admin" | "researcher" | "reviewer" | "auditor">>({});
+  const updateMemberRole = trpc.organization.updateMemberRole.useMutation({ onSuccess: () => { utils.organization.members.invalidate({ organizationId: selectedOrganizationId! }); utils.organization.roleAudit.invalidate({ organizationId: selectedOrganizationId!, limit: 50 }); toast.success("Member role updated and audited."); }, onError: error => toast.error(error.message) });
   const utils = trpc.useUtils();
   const [organizationName, setOrganizationName] = useState("");
   const [memberEmail, setMemberEmail] = useState("");

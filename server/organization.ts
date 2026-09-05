@@ -137,6 +137,17 @@ export const organizationPrivilegeMatrix = {
   auditor: ["organization.read", "audit.read", "evidence.read", "infrastructure.view"],
 } as const;
 
+export async function updateOrganizationMemberRole(userId: number, input: { organizationId: number; memberId: number; role: Exclude<OrganizationRole, "owner"> }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  await requireMembership(userId, input.organizationId, "manage");
+  const [member] = await db.select().from(organizationMembers).where(and(eq(organizationMembers.id, input.memberId), eq(organizationMembers.organizationId, input.organizationId))).limit(1);
+  if (!member) throw new Error("Organization member tidak ditemukan.");
+  if (member.role === "owner") throw new Error("Owner role requires the protected ownership transfer workflow.");
+  await db.update(organizationMembers).set({ role: input.role }).where(and(eq(organizationMembers.id, input.memberId), eq(organizationMembers.organizationId, input.organizationId)));
+  return { success: true as const, memberId: member.id, role: input.role };
+}
+
 export async function listOrganizationPrivileges(userId: number, organizationId: number) {
   const { membership } = await requireMembership(userId, organizationId);
   return { organizationId, role: membership.role, privileges: [...organizationPrivilegeMatrix[membership.role]] };

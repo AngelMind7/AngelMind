@@ -815,6 +815,9 @@ export const appRouter = router({
     ),
   }),
   operations: router({
+    updateMemberRole: protectedProcedure
+      .input(z.object({ organizationId: z.number().int().positive(), memberId: z.number().int().positive(), role: z.enum(["admin", "researcher", "reviewer", "auditor"]) }))
+      .mutation(({ ctx, input }) => organization.updateOrganizationMemberRole(ctx.user.id, input)),
     privileges: protectedProcedure
       .input(z.object({ organizationId: z.number().int().positive() }))
       .query(({ ctx, input }) =>

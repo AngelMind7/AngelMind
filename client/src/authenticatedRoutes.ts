@@ -21,6 +21,7 @@ const findings = lazy(() => import("@/pages/Findings"));
 const evidenceVault = lazy(() => import("@/pages/EvidenceVault"));
 const playbooks = lazy(() => import("@/pages/Playbooks"));
 const aiWorkers = lazy(() => import("@/pages/AIWorkers"));
+const agents = lazy(() => import("@/pages/Agents"));
 const audit = lazy(() => import("@/pages/Audit"));
 const operations = lazy(() => import("@/pages/Operations"));
 const assurance = lazy(() => import("@/pages/Assurance"));
@@ -57,5 +58,5 @@ export const authenticatedRoutes = [
   { path: "/app/security", component: security }, { path: "/security", component: security }, { path: "/security/sessions", component: security }, { path: "/security/mfa", component: security }, { path: "/security/history", component: security }, { path: "/security/api-keys", component: security }, { path: "/notifications", component: notifications }, { path: "/notifications/settings", component: notifications },
   { path: "/profile", component: profile }, { path: "/settings", component: profile }, { path: "/settings/profile", component: profile }, { path: "/settings/team", component: profile }, { path: "/settings/policies", component: profile }, { path: "/settings/credentials", component: profile }, { path: "/settings/preferences", component: profile }, { path: "/settings/integrations", component: profile }, { path: "/settings/integrations/new", component: profile }, { path: "/settings/developer", component: profile }, { path: "/settings/developer/sdk", component: profile }, { path: "/settings/developer/keys", component: profile }, { path: "/settings/developer/logs", component: profile }, { path: "/settings/billing", component: profile }, { path: "/settings/billing/invoices", component: profile }, { path: "/settings/billing/payment", component: profile }, { path: "/settings/billing/upgrade", component: profile },
   { path: "/privacy", component: profile }, { path: "/privacy/export", component: profile }, { path: "/privacy/delete", component: profile }, { path: "/privacy/requests", component: profile }, { path: "/privacy/downloads", component: profile },
-  { path: "/agents", component: blueprintModule }, { path: "/agents/new", component: blueprintModule }, { path: "/agents/:id", component: blueprintModule },
+  { path: "/agents", component: agents }, { path: "/agents/new", component: agents }, { path: "/agents/:id", component: agents },
 ] as const;

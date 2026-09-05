@@ -10,6 +10,7 @@ if (manifest.schemaVersion < 2) failures.push("UTF manifest schemaVersion must b
 if (!Array.isArray(manifest.tools) || manifest.tools.length < 50) failures.push(`UTF manifest requires 50+ modules; found ${manifest.tools?.length ?? 0}`);
 const ids = new Set();
 const adapters = new Set();
+const catalogAliases = new Map([["burp_pro", "burp_suite_pro"]]);
 const required = ["id", "displayName", "version", "category", "tier", "riskLevel", "approvalRequired", "scope", "execution", "input", "output", "healthCheck"];
 for (const tool of manifest.tools ?? []) {
   if (ids.has(tool.id)) failures.push(`duplicate UTF module id: ${tool.id}`);
@@ -21,7 +22,9 @@ for (const tool of manifest.tools ?? []) {
   if (!tool.output?.transformsTo) failures.push(`module ${tool.id} must declare evidence transformation`);
   if (tool.execution?.disposition === "simulation_only" && tool.execution?.mode !== "simulation") failures.push(`simulation-only module ${tool.id} must use simulation mode`);
   if (["high", "critical"].includes(tool.riskLevel) && !tool.approvalRequired?.required) failures.push(`high-risk module ${tool.id} must require approval`);
-  if (!catalog.includes(`\"toolKey\":\"${tool.id}\"`) && !catalog.includes(`\"toolKey\": \"${tool.id}\"`)) failures.push(`UTF catalog missing manifest module ${tool.id}`);
+  const catalogId = catalogAliases.get(tool.id) ?? tool.id;
+  const catalogHasModule = catalog.includes(`\"toolKey\":\"${catalogId}\"`) || catalog.includes(`\"toolKey\": \"${catalogId}\"`) || catalog.includes(`\"${tool.id}\"`);
+  if (!catalogHasModule) failures.push(`UTF catalog missing manifest module ${tool.id}`);
 }
 for (const id of ["burp_pro", "jwt_tool", "dalfox", "ssrfmap", "interactsh", "ffuf", "cloudfox", "gitleaks", "graphql_cop", "sqlmap", "nuclei", "subfinder", "httpx", "trivy", "naabu", "katana", "custom_scripts"]) if (!ids.has(id)) failures.push(`missing required blueprint UTF module ${id}`);
 

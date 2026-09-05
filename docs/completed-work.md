@@ -82,3 +82,4 @@
 - [x] Require scanned or promoted evidence for a passed finding retest before resolving the finding, with bounded outcome tests.
 - [x] Add explicit loading, error, empty, success, and retry states to the authenticated UTF/tool catalog surface.
 - [x] Add staging-only authenticated axe coverage for core application routes and ignore local Playwright artifacts.
+- [x] Treat completed, partial, failed, and cancelled AI runs as terminal so a finalized run cannot be reopened or billed twice; add direct state coverage.

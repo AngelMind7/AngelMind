@@ -88,14 +88,18 @@ export async function startAiRun(userId: number, input: { workspaceId: number; s
   return run;
 }
 
+export function isAiRunTerminal(status: string) {
+  return ["completed", "partial", "failed", "cancelled"].includes(status);
+}
+
 export async function updateAiRun(userId: number, input: { runId: number; status: "running" | "completed" | "failed" | "partial" | "cancelled"; outputReference?: string; inputTokens?: number; outputTokens?: number; costCents?: number; errorCode?: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, input.runId)).limit(1);
   if (!run || !(await canAccessWorkspace(userId, run.workspaceId, "respond"))) throw new Error("AI run tidak ditemukan atau tidak dapat diakses.");
   const costCents = Math.max(0, input.costCents ?? run.costCents);
-  const terminalBeforeUpdate = run.status === "completed" || run.status === "partial";
-  if (terminalBeforeUpdate && ["completed", "partial"].includes(input.status)) throw new Error("AI run is already terminal and cannot be billed again.");
+  const terminalBeforeUpdate = isAiRunTerminal(run.status);
+  if (terminalBeforeUpdate) throw new Error("AI run is already terminal and cannot be billed or reopened.");
   await db.update(aiRuns).set({ status: input.status, outputReference: input.outputReference?.trim() || run.outputReference, inputTokens: input.inputTokens ?? run.inputTokens, outputTokens: input.outputTokens ?? run.outputTokens, costCents, errorCode: input.errorCode?.trim() || null, startedAt: run.startedAt ?? new Date(), completedAt: ["completed", "failed", "partial", "cancelled"].includes(input.status) ? new Date() : null }).where(eq(aiRuns.id, run.id));
   if ((input.status === "completed" || input.status === "partial") && !terminalBeforeUpdate) await db.update(workspaces).set({ spentCents: sql`${workspaces.spentCents} + ${costCents}` }).where(eq(workspaces.id, run.workspaceId));
   const [updated] = await db.select().from(aiRuns).where(eq(aiRuns.id, run.id)).limit(1);

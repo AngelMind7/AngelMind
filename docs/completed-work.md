@@ -101,3 +101,6 @@
 - [x] Add normalized `evidenceLineage` edges for external source → artifact, artifact → research node, and artifact → finding/retest provenance.
 - [x] Automatically persist lineage when provenance is recorded, research evidence is linked, or a retest result consumes scanned/promoted evidence.
 - [x] Expose workspace-authorized evidence lineage query and register migration `0072_evidence_lineage`.
+
+- [x] Add signed webhook request preparation with HMAC-SHA256 timestamp signatures, HTTPS-only enforcement, credential-in-URL rejection, and private/local hostname blocking.
+- [x] Add deterministic notification webhook safety tests while keeping the webhook provider disabled until explicit activation approval and secret configuration.

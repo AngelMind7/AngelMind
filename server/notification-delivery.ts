@@ -1,4 +1,5 @@
 import { and, eq } from "drizzle-orm";
+import { createHmac } from "node:crypto";
 import { notificationDeliveries, notifications, type notificationDeliveryChannel } from "../drizzle/schema";
 import { getDb } from "./db";
 import { enqueueJob } from "./ai-platform";
@@ -17,6 +18,24 @@ export type NotificationProvider = {
   isEnabled: () => boolean;
   deliver: (notification: NotificationRecord, payload: Record<string, unknown>) => Promise<DeliveryResult>;
 };
+
+function isPrivateOrLocalHostname(hostname: string) {
+  const normalized = hostname.trim().toLowerCase().replace(/[\[\]]/g, "");
+  if (normalized === "localhost" || normalized.endsWith(".localhost") || normalized === "127.0.0.1" || normalized === "::1" || normalized.startsWith("10.") || normalized.startsWith("192.168.") || normalized.startsWith("169.254.")) return true;
+  const octets = normalized.split(".").map(Number);
+  if (octets.length === 4 && octets.every(Number.isInteger)) return octets[0] === 127 || octets[0] === 10 || (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) || (octets[0] === 192 && octets[1] === 168) || (octets[0] === 169 && octets[1] === 254);
+  return normalized.endsWith(".internal") || normalized.endsWith(".local") || normalized.endsWith(".home.arpa");
+}
+
+export function prepareSignedWebhookRequest(endpoint: string, secret: string, payload: Record<string, unknown>, timestamp = Math.floor(Date.now() / 1000)) {
+  if (!secret.trim()) throw new Error("Webhook signing secret is required.");
+  const parsed = new URL(endpoint);
+  if (parsed.protocol !== "https:") throw new Error("Webhook endpoint must use HTTPS.");
+  if (parsed.username || parsed.password || isPrivateOrLocalHostname(parsed.hostname)) throw new Error("Webhook endpoint is not allowed by the outbound safety policy.");
+  const body = JSON.stringify(payload);
+  const signature = createHmac("sha256", secret).update(`${timestamp}.${body}`).digest("hex");
+  return { url: parsed.toString(), body, headers: { "content-type": "application/json", "x-angelmind-timestamp": String(timestamp), "x-angelmind-signature": `sha256=${signature}` } };
+}
 
 function redactText(value: string) {
   return value.replace(/(authorization|cookie|token|secret|password)\s*[:=]\s*[^\s,;]+/gi, "$1=[REDACTED]").slice(0, 8_000);

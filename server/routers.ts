@@ -37,6 +37,7 @@ import * as toolCatalog from "./tool-catalog";
 import * as toolRuntime from "./tool-runtime";
 import * as knowledgeGraph from "./knowledge-graph";
 import * as mfa from "./mfa";
+import * as findingSimilarity from "./finding-similarity";
 import { executeIdempotent } from "./idempotency";
 
 const workspaceInput = z.object({
@@ -2439,6 +2440,9 @@ export const appRouter = router({
       ),
   }),
   finding: router({
+    duplicateCandidates: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), title: z.string().trim().min(3).max(240), impactSummary: z.string().trim().min(10).max(12_000), reportDraft: z.string().trim().max(20_000).optional(), excludeFindingId: z.number().int().positive().optional(), limit: z.number().int().min(1).max(25).optional() }))
+      .query(({ ctx, input }) => findingSimilarity.findDuplicateCandidates(ctx.user.id, input)),
     list: protectedProcedure
       .input(
         z

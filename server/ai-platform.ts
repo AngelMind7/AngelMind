@@ -168,7 +168,7 @@ export async function purgeExpiredAiRunMemory(limit = 100) {
   }
 }
 
-export async function enqueueJob(userId: number, input: { workspaceId?: number; kind: string; idempotencyKey: string; payload: Record<string, unknown>; maxAttempts?: number }) {
+export async function enqueueJob(userId: number, input: { workspaceId?: number; kind: string; idempotencyKey: string; payload: Record<string, unknown>; maxAttempts?: number; traceId?: string | null }) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   if (input.workspaceId) await requireWorkspace(userId, input.workspaceId, "respond");
@@ -177,7 +177,7 @@ export async function enqueueJob(userId: number, input: { workspaceId?: number; 
   const payload = JSON.stringify(input.payload);
   if (idempotencyKey.length < 8 || idempotencyKey.length > 180) throw new Error("Idempotency key must contain 8-180 characters.");
   if (kind.length < 2 || kind.length > 80) throw new Error("Job kind must contain 2-80 characters.");
-  const traceId = currentTraceContext()?.traceId ?? null;
+  const traceId = input.traceId?.trim() || currentTraceContext()?.traceId || randomUUID();
   const [existing] = await db.select().from(jobs).where(eq(jobs.idempotencyKey, idempotencyKey)).limit(1);
   if (existing) {
     if (existing.kind !== kind || existing.workspaceId !== (input.workspaceId ?? null) || existing.payload !== payload) throw new Error("Idempotency key is already used for a different job payload.");
@@ -395,7 +395,7 @@ export async function startDurableAiRun(userId: number, input: { workspaceId: nu
   const model = input.modelKey?.trim() ? (await db.select().from(aiModels).where(eq(aiModels.modelKey, input.modelKey.trim())).limit(1))[0] : (await selectRegisteredModel({ capabilities: input.capabilities, minimumContextWindow: input.minimumContextWindow, maxCostCentsPerMillionTokens: input.maxCostCentsPerMillionTokens, allowDegraded: input.allowDegraded })).model;
   if (!model || model.status !== "active") throw new Error("AI model tidak terdaftar atau tidak aktif.");
   const run = await startAiRun(userId, { ...input, modelKey: model.modelKey, gateway: model.gateway });
-  const job = await enqueueJob(userId, { workspaceId: input.workspaceId, kind: "ai.run.execute", idempotencyKey: input.idempotencyKey, payload: { type: "ai_run_execute", runId: run.id, userId, workspaceId: input.workspaceId, modelKey: model.modelKey, messages: input.messages } });
+  const job = await enqueueJob(userId, { workspaceId: input.workspaceId, kind: "ai.run.execute", idempotencyKey: input.idempotencyKey, traceId: run.traceId, payload: { type: "ai_run_execute", runId: run.id, userId, workspaceId: input.workspaceId, modelKey: model.modelKey, messages: input.messages } });
   return { run, job };
 }
 

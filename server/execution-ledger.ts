@@ -22,6 +22,7 @@ type LedgerPayload = ExecutionLedgerInput & {
   path: readonly ExecutionState[];
   assuranceReport?: Record<string, unknown>;
   terminalReason?: string;
+  traceId?: string | null;
 };
 
 function readPayload(payload: string): LedgerPayload {
@@ -41,6 +42,7 @@ async function publishProgress(payload: LedgerPayload, jobId: number) {
       state: payload.state,
       revision: payload.revision,
       terminalReason: payload.terminalReason,
+      traceId: payload.traceId ?? null,
     });
   } catch (error) {
     console.error("[ExecutionLedger] realtime progress publish failed", error);

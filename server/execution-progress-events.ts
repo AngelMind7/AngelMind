@@ -12,6 +12,7 @@ export async function publishExecutionProgress(input: {
   state: string;
   revision: number;
   terminalReason?: string;
+  traceId?: string | null;
 }) {
   const eventType: EventPublishInput["eventType"] = input.state === "QUEUE"
     ? "execution.queued"
@@ -34,6 +35,7 @@ export async function publishExecutionProgress(input: {
       state: input.state,
       revision: input.revision,
       terminalReason: input.terminalReason ?? null,
+      traceId: input.traceId ?? null,
     },
   });
 
@@ -55,6 +57,7 @@ export async function publishExecutionProgress(input: {
     payload: JSON.stringify(event.payload),
     status: "published",
     idempotencyKey,
+    traceId: input.traceId ?? null,
   });
 
   const eventId = Number(result[0]?.insertId ?? 0);

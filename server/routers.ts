@@ -1317,6 +1317,7 @@ export const appRouter = router({
           idempotencyKey: z.string().min(8).max(180),
           payload: z.record(z.string(), z.unknown()),
           maxAttempts: z.number().int().min(1).max(10).optional(),
+          traceId: z.string().max(256).nullable().optional(),
         })
       )
       .mutation(({ ctx, input }) => aiPlatform.enqueueJob(ctx.user.id, input)),

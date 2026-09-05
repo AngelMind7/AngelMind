@@ -25,6 +25,7 @@ const agents = lazy(() => import("@/pages/Agents"));
 const utfRunners = lazy(() => import("@/pages/UFTRunners"));
 const purpleTeam = lazy(() => import("@/pages/PurpleTeam"));
 const redTeam = lazy(() => import("@/pages/RedTeam"));
+const bugBounty = lazy(() => import("@/pages/BugBounty"));
 const audit = lazy(() => import("@/pages/Audit"));
 const operations = lazy(() => import("@/pages/Operations"));
 const assurance = lazy(() => import("@/pages/Assurance"));
@@ -56,7 +57,7 @@ export const authenticatedRoutes = [
   { path: "/incidents", component: incidents }, { path: "/incidents/new", component: incidents }, { path: "/incidents/:id", component: incidents },
   { path: "/redteam", component: redTeam }, { path: "/redteam/operations", component: redTeam }, { path: "/redteam/operations/new", component: redTeam }, { path: "/redteam/implants", component: redTeam }, { path: "/redteam/phishing", component: redTeam },
   { path: "/purpleteam", component: purpleTeam }, { path: "/purpleteam/exercises", component: purpleTeam }, { path: "/purpleteam/exercises/new", component: purpleTeam },
-  { path: "/bugbounty", component: blueprintModule }, { path: "/bugbounty/programs", component: blueprintModule }, { path: "/bugbounty/programs/new", component: blueprintModule }, { path: "/bugbounty/submissions", component: blueprintModule },
+  { path: "/bugbounty", component: bugBounty }, { path: "/bugbounty/programs", component: bugBounty }, { path: "/bugbounty/programs/new", component: bugBounty }, { path: "/bugbounty/submissions", component: bugBounty },
   { path: "/client/:orgSlug", component: clientPortal }, { path: "/client", component: clientPortal },
   { path: "/app/security", component: security }, { path: "/security", component: security }, { path: "/security/sessions", component: security }, { path: "/security/mfa", component: security }, { path: "/security/history", component: security }, { path: "/security/api-keys", component: security }, { path: "/notifications", component: notifications }, { path: "/notifications/settings", component: notifications },
   { path: "/profile", component: profile }, { path: "/settings", component: profile }, { path: "/settings/profile", component: profile }, { path: "/settings/team", component: profile }, { path: "/settings/policies", component: profile }, { path: "/settings/credentials", component: profile }, { path: "/settings/preferences", component: profile }, { path: "/settings/integrations", component: profile }, { path: "/settings/integrations/new", component: profile }, { path: "/settings/developer", component: profile }, { path: "/settings/developer/sdk", component: profile }, { path: "/settings/developer/keys", component: profile }, { path: "/settings/developer/logs", component: profile }, { path: "/settings/billing", component: profile }, { path: "/settings/billing/invoices", component: profile }, { path: "/settings/billing/payment", component: profile }, { path: "/settings/billing/upgrade", component: profile },

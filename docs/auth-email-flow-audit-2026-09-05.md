@@ -10,6 +10,8 @@ The authentication boundary is **fail-closed and mostly implemented**, but passw
 
 This means the product can send reset/verification messages when Firebase is configured, but AngelMind does not persist those messages in its own delivery ledger, cannot expose their provider delivery state, does not retry them through its worker, and does not record a dedicated account-security event for a reset request or verification send.
 
+The follow-up implementation added session-only pending-verification email state, a bounded 60-second resend/reset cooldown, password clearing after verification resend, and the same safeguards to the fallback dashboard authentication form. It also made the email worker retry ceiling explicit at five delivery attempts and marks terminal rows as failed so the worker does not send them again.
+
 ## Flow-by-flow findings
 
 | Flow | Current implementation | Result |
@@ -56,15 +58,15 @@ The consequence is that the server-side email ledger and templates do not govern
 
 ### AUTH-EMAIL-004 — Verification resend requires the password again
 
-The resend path signs in with `email + password` solely to obtain the Firebase user and send verification. This is provider-valid but creates friction and increases the chance of exposing credentials to a retry flow. The current UX offers resend only after a failed sign-in, so the password remains in component state.
+The resend path signs in with `email + password` solely to obtain the Firebase user and send verification. This is provider-valid but creates friction and increases the chance of exposing credentials to a retry flow. The current UX offers resend only after a failed sign-in, so the password remains in component state. The follow-up now clears that password after every resend attempt and applies a bounded cooldown.
 
-**Recommended fix:** prefer a provider-supported signed-in verification continuation or a dedicated verification-pending state that safely retains only the short-lived Firebase session needed for the resend. If password re-entry remains required, clear the password immediately after the resend attempt and add rate limiting/backoff for repeated requests.
+**Follow-up:** prefer a provider-supported signed-in verification continuation in a future identity-provider design. The current password re-entry path now clears the password immediately and has client-side cooldown/backoff.
 
 ### AUTH-EMAIL-005 — No explicit client-side verification-pending session state
 
-Registration signs the user out and shows a notice, but there is no durable pending-verification state containing email, expiry, resend cooldown, or last-send timestamp. A page reload loses the context and the user must start over.
+Registration signs the user out and shows a notice. A session-only normalized email and bounded cooldown are now retained across reloads; passwords and tokens are never stored.
 
-**Recommended fix:** store only a normalized email and bounded cooldown timestamp in session storage, never a password or token. Add resend cooldown and a clear “I verified my email, try sign in again” action.
+**Follow-up:** add a provider callback/deep-link state if the product later supports a dedicated verification landing page.
 
 ### AUTH-EMAIL-006 — Email delivery retry state is not guarded by a claim result
 
@@ -72,11 +74,11 @@ Registration signs the user out and shows a notice, but there is no durable pend
 
 **Follow-up:** add a concurrent-claim regression test. If the database adapter cannot report affected rows safely, the new guard fails closed rather than sending.
 
-### AUTH-EMAIL-007 — Retry scheduling is not visibly bounded by maximum attempts in the email service
+### AUTH-EMAIL-007 — Retry scheduling was not visibly bounded by maximum attempts in the email service (fixed in this follow-up)
 
-The queue job has a worker-level max-attempt configuration in some callers, but `executeEmailDeliveryJob` itself updates failed rows and computes a next-attempt timestamp without marking a terminal state after a bounded delivery-attempt limit. The effective behavior should be verified against the durable job retry policy and documented.
+The email delivery path now uses an explicit five-attempt ceiling, passes that ceiling to the durable job, and marks the row terminally failed when the ceiling is reached. The existing schema keeps `nextAttemptAt` non-nullable, so terminal status—not a nullable timestamp—is the no-more-send signal.
 
-**Recommended fix:** make terminal email failure explicit after a bounded number of attempts, retain the final provider-safe reason, and ensure scheduled retries do not re-enqueue terminal rows.
+**Follow-up:** add a persistence-level regression test proving that a terminal row cannot be sent again.
 
 ## Positive controls verified
 
@@ -88,7 +90,7 @@ The queue job has a worker-level max-attempt configuration in some callers, but 
 - HTML email templates escape untrusted names and URLs.
 - SMTP secrets are loaded from typed environment configuration and redacted in verification logs.
 - Email queue rows have idempotency keys and persisted provider message IDs.
-- Account security includes login, logout, MFA, token rejection, and device events; the reset-request event type exists but is currently unused.
+- Account security includes login, logout, MFA, token rejection, and device events; the reset-request event type still exists but is currently unused.
 - MFA includes TOTP, recovery code, and WebAuthn/passkey paths with server-side verification.
 
 ## Validation performed
@@ -104,4 +106,4 @@ The following checks were used as the audit baseline:
 
 ## Final classification
 
-Authentication itself is **implemented and fail-closed**. Firebase-managed reset and verification delivery is **provider-functional but not integrated with AngelMind’s durable email/audit workflow**. This audit fixed registration session cleanup and the email delivery claim race. Remaining priorities are the reset-request audit event, concurrent-claim regression coverage, bounded terminal retry behavior, and an explicit architectural decision about whether reset/verification mail should remain Firebase-owned or move into the AngelMind delivery ledger.
+Authentication itself is **implemented and fail-closed**. Firebase-managed reset and verification delivery is **provider-functional but not integrated with AngelMind’s durable email/audit workflow**. The audits fixed registration session cleanup, pending verification UX, resend/reset cooldown, email claim race protection, and bounded terminal retry behavior. Remaining priorities are the reset-request audit event, persistence-level concurrency/terminal tests, and an explicit architectural decision about whether reset/verification mail should remain Firebase-owned or move into the AngelMind delivery ledger.

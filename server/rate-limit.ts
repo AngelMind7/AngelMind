@@ -95,6 +95,7 @@ export function registerApiRateLimit(app: { use: (path: string, handler: Request
   const max = boundedNumber(configuredMax, 120, 1, 100_000);
   const maxEntries = options?.maxEntries ?? 20_000;
   app.use("/api/auth/firebase", createRateLimiter({ windowMs, max: Math.min(max, 10), maxEntries, abuseStrikeThreshold: 3 }));
+  app.use("/api/auth/password-reset-requested", createRateLimiter({ windowMs, max: Math.min(max, 5), maxEntries, abuseStrikeThreshold: 3 }));
   app.use("/api/scheduled", createRateLimiter({ windowMs, max: Math.min(max, 30), maxEntries, abuseStrikeThreshold: 3 }));
   app.use("/api/v1", createRateLimiter({ windowMs, max, maxEntries }));
   app.use("/api/trpc", createRateLimiter({ windowMs, max: Math.max(30, Math.floor(max / 2)), maxEntries }));

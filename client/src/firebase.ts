@@ -32,7 +32,37 @@ const requiredAuthConfig = [
   config.appId,
 ];
 const appCheckSiteKey = import.meta.env.VITE_FIREBASE_APPCHECK_SITE_KEY?.trim();
+const PENDING_VERIFICATION_KEY = "angelmind.pendingVerificationEmail";
+const AUTH_COOLDOWN_PREFIX = "angelmind.authCooldown.";
+const AUTH_COOLDOWN_MS = 60_000;
 let appCheck: AppCheck | null = null;
+
+function browserStorage(): Storage | null {
+  if (typeof window === "undefined") return null;
+  try { return window.sessionStorage; } catch { return null; }
+}
+
+function normalizeAuthEmail(email: string) {
+  return email.trim().toLowerCase().slice(0, 320);
+}
+
+export function getPendingVerificationEmail() {
+  const value = browserStorage()?.getItem(PENDING_VERIFICATION_KEY)?.trim() ?? "";
+  return value.length <= 320 ? value : "";
+}
+
+export function clearPendingVerificationEmail() {
+  browserStorage()?.removeItem(PENDING_VERIFICATION_KEY);
+}
+
+export function getAuthCooldownRemaining(action: "verification" | "reset") {
+  const until = Number(browserStorage()?.getItem(`${AUTH_COOLDOWN_PREFIX}${action}`) ?? 0);
+  return Number.isFinite(until) ? Math.max(0, until - Date.now()) : 0;
+}
+
+export function markAuthCooldown(action: "verification" | "reset") {
+  browserStorage()?.setItem(`${AUTH_COOLDOWN_PREFIX}${action}`, String(Date.now() + AUTH_COOLDOWN_MS));
+}
 
 export function isFirebaseClientConfigured() {
   return requiredAuthConfig.every(value => typeof value === "string" && value.trim().length > 0);
@@ -112,6 +142,7 @@ export async function resendEmailVerification(email: string, password: string): 
   const credential = await signInWithEmailAndPassword(client.auth, email.trim(), password);
   try {
     await sendEmailVerification(credential.user);
+    browserStorage()?.setItem(PENDING_VERIFICATION_KEY, normalizeAuthEmail(credential.user.email ?? email));
   } finally {
     await signOut(client.auth).catch(() => undefined);
   }
@@ -123,6 +154,7 @@ export async function registerWithEmail(email: string, password: string): Promis
   const credential = await createUserWithEmailAndPassword(client.auth, email.trim(), password);
   try {
     await sendEmailVerification(credential.user);
+    browserStorage()?.setItem(PENDING_VERIFICATION_KEY, normalizeAuthEmail(credential.user.email ?? email));
     return { verificationRequired: true, email: credential.user.email ?? email.trim() };
   } finally {
     await signOut(client.auth).catch(() => undefined);
@@ -132,7 +164,13 @@ export async function registerWithEmail(email: string, password: string): Promis
 export async function resetPassword(email: string): Promise<void> {
   const client = getFirebaseClient();
   if (!client) throw new Error("Firebase authentication is not configured.");
-  await sendPasswordResetEmail(client.auth, email.trim());
+  const normalizedEmail = normalizeAuthEmail(email);
+  await sendPasswordResetEmail(client.auth, normalizedEmail);
+  await fetch("/api/auth/password-reset-requested", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify({ email: normalizedEmail }),
+  }).catch(() => undefined);
 }
 
 export async function signInWithGoogle(): Promise<User | null> {

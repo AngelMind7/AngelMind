@@ -46,4 +46,17 @@ export function registerFirebaseAuthRoutes(app: Express) {
       res.status(401).json({ error: "Firebase authentication failed." });
     }
   });
+
+  app.post("/api/auth/password-reset-requested", async (req: Request, res: Response) => {
+    const email = typeof req.body?.email === "string" ? req.body.email.trim().toLowerCase() : "";
+    if (email && email.length <= 320 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      try {
+        const user = await db.getUserByEmail(email);
+        if (user) await accountSecurity.recordAuthEvent(user.id, "password_reset_requested", { channel: "firebase" });
+      } catch (error) {
+        console.warn("[Firebase Auth] Password reset telemetry failed", { error: String(error) });
+      }
+    }
+    res.status(204).end();
+  });
 }

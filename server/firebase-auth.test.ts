@@ -27,4 +27,14 @@ describe("Firebase Google auth route", () => {
     expect(response.status).toBe(503);
     await expect(response.json()).resolves.toEqual({ error: "Firebase Authentication is not configured." });
   });
+
+  it("returns the same empty response for valid and invalid reset telemetry input", async () => {
+    const app = express();
+    app.use(express.json());
+    registerFirebaseAuthRoutes(app);
+    const valid = await request(app, "/api/auth/password-reset-requested", { email: "user@example.com" });
+    const invalid = await request(app, "/api/auth/password-reset-requested", { email: "not-an-email" });
+    expect(valid.status).toBe(204);
+    expect(invalid.status).toBe(204);
+  });
 });

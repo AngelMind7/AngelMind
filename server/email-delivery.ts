@@ -4,6 +4,8 @@ import { getDb } from "./db";
 import { enqueueJob } from "./ai-platform";
 import { sendEmail } from "./_core/email";
 
+const MAX_EMAIL_DELIVERY_ATTEMPTS = 5;
+
 function affectedRowCount(result: unknown): number | undefined {
   if (!result || typeof result !== "object") return undefined;
   const value = result as { affectedRows?: unknown; rowsAffected?: unknown };
@@ -39,7 +41,7 @@ export async function enqueueEmailDelivery(userId: number, input: { recipient: s
   }
   const [delivery] = await db.select().from(emailDeliveries).where(eq(emailDeliveries.idempotencyKey, idempotencyKey)).limit(1);
   if (!delivery) throw new Error("Email delivery could not be persisted.");
-  await enqueueJob(userId, { workspaceId: input.workspaceId, kind: "email.deliver", idempotencyKey: `email-deliver:${delivery.id}`, payload: { type: "email_delivery", deliveryId: delivery.id } });
+  await enqueueJob(userId, { workspaceId: input.workspaceId, kind: "email.deliver", idempotencyKey: `email-deliver:${delivery.id}`, payload: { type: "email_delivery", deliveryId: delivery.id }, maxAttempts: MAX_EMAIL_DELIVERY_ATTEMPTS });
   return delivery;
 }
 
@@ -52,6 +54,10 @@ export async function executeEmailDeliveryJob(payload: Record<string, unknown>) 
   if (!delivery) throw new Error("Email delivery tidak ditemukan.");
   if (delivery.status === "sent") return delivery;
   if (delivery.status === "sending") throw new Error("Email delivery is already being processed.");
+  if (delivery.attempts >= MAX_EMAIL_DELIVERY_ATTEMPTS) {
+    await db.update(emailDeliveries).set({ status: "failed", lastError: "Email delivery reached the maximum retry limit.", updatedAt: new Date() }).where(eq(emailDeliveries.id, delivery.id));
+    return { ...delivery, status: "failed" as const, lastError: "Email delivery reached the maximum retry limit." };
+  }
   let message: { text: string; html?: string; replyTo?: string };
   try { message = JSON.parse(delivery.payload) as typeof message; } catch { throw new Error("Email delivery payload is invalid."); }
   const claim = await db.update(emailDeliveries).set({ status: "sending", attempts: delivery.attempts + 1, updatedAt: new Date() }).where(and(eq(emailDeliveries.id, delivery.id), eq(emailDeliveries.status, delivery.status)));

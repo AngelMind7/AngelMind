@@ -19,7 +19,7 @@ import {
   SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
-import { registerWithEmail, resetPassword, signInWithEmail, signInWithGoogle } from "@/firebase";
+import { getAuthCooldownRemaining, getPendingVerificationEmail, markAuthCooldown, registerWithEmail, resetPassword, signInWithEmail, signInWithGoogle } from "@/firebase";
 import { useIsMobile } from "@/hooks/useMobile";
 import { Activity, BarChart3, BrainCircuit, Boxes, Building2, FileSearch, FileText, KeyRound, LayoutDashboard, LogOut, MessageSquare, Network, PanelLeft, Radar, ScrollText, Search, Settings2, ShieldCheck, ShieldEllipsis, UserRound } from "lucide-react";
 import { CSSProperties, useEffect, useRef, useState } from "react";
@@ -76,7 +76,7 @@ export default function DashboardLayout({
   const { t } = useLocale();
   const [authError, setAuthError] = useState<string | null>(null);
   const [authNotice, setAuthNotice] = useState<string | null>(null);
-  const [authEmail, setAuthEmail] = useState("");
+  const [authEmail, setAuthEmail] = useState(() => getPendingVerificationEmail());
   const [authPassword, setAuthPassword] = useState("");
   const [authMode, setAuthMode] = useState<"sign-in" | "register">("sign-in");
   const [authBusy, setAuthBusy] = useState(false);
@@ -91,7 +91,7 @@ export default function DashboardLayout({
     setAuthNotice(null);
     setAuthBusy(true);
     const operation = authMode === "register"
-      ? registerWithEmail(authEmail, authPassword).then(result => setAuthNotice(`Verification email sent to ${result.email}. Verify it, then sign in.`))
+      ? registerWithEmail(authEmail, authPassword).then(result => { markAuthCooldown("verification"); setAuthPassword(""); setAuthNotice(`Verification email sent to ${result.email}. Verify it, then sign in.`); })
       : signInWithEmail(authEmail, authPassword).then(() => window.location.reload());
     void operation.catch(error => setAuthError(error instanceof Error ? error.message : "Email authentication failed.")).finally(() => setAuthBusy(false));
   };
@@ -99,8 +99,9 @@ export default function DashboardLayout({
     setAuthError(null);
     setAuthNotice(null);
     if (!authEmail.trim()) { setAuthError("Enter your email address first."); return; }
+    if (getAuthCooldownRemaining("reset") > 0) { setAuthError("Please wait before requesting another reset email."); return; }
     setAuthBusy(true);
-    void resetPassword(authEmail).then(() => setAuthNotice("If that address exists, a password reset email has been sent.")).catch(error => setAuthError(error instanceof Error ? error.message : "Password reset failed.")).finally(() => setAuthBusy(false));
+    void resetPassword(authEmail).then(() => { markAuthCooldown("reset"); setAuthNotice("If that address exists, a password reset email has been sent."); }).catch(error => setAuthError(error instanceof Error ? error.message : "Password reset failed.")).finally(() => setAuthBusy(false));
   };
 
   useEffect(() => {

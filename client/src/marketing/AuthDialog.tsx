@@ -8,8 +8,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { registerWithEmail, resetPassword, resendEmailVerification, signInWithEmail, signInWithGoogle } from "@/firebase";
-import { useState } from "react";
+import { getAuthCooldownRemaining, getPendingVerificationEmail, markAuthCooldown, registerWithEmail, resetPassword, resendEmailVerification, signInWithEmail, signInWithGoogle } from "@/firebase";
+import { useEffect, useState } from "react";
 
 type AuthMode = "signin" | "register" | "reset";
 
@@ -46,12 +46,21 @@ function readableAuthError(error: unknown) {
 
 export function AuthDialog({ open, onOpenChange, onAuthenticated }: Props) {
   const [mode, setMode] = useState<AuthMode>("signin");
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(() => getPendingVerificationEmail());
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [, setCooldownTick] = useState(0);
   const canResendVerification = mode === "signin" && error === "A verified email is required.";
+  const verificationCooldown = getAuthCooldownRemaining("verification");
+  const resetCooldown = getAuthCooldownRemaining("reset");
+
+  useEffect(() => {
+    if (!open) return;
+    const timer = window.setInterval(() => setCooldownTick(value => value + 1), 1_000);
+    return () => window.clearInterval(timer);
+  }, [open]);
 
   const submit = async () => {
     if (busy) return;
@@ -60,12 +69,15 @@ export function AuthDialog({ open, onOpenChange, onAuthenticated }: Props) {
     setNotice(null);
     try {
       if (mode === "reset") {
+        if (resetCooldown > 0) throw new Error("Please wait before requesting another reset email.");
         await resetPassword(email);
+        markAuthCooldown("reset");
         setNotice(
           "Link reset password sudah dikirim jika email tersebut terdaftar."
         );
       } else if (mode === "register") {
         await registerWithEmail(email, password);
+        markAuthCooldown("verification");
         setNotice(
           "Akun dibuat. Cek inbox untuk verifikasi email sebelum masuk."
         );
@@ -188,20 +200,23 @@ export function AuthDialog({ open, onOpenChange, onAuthenticated }: Props) {
               disabled={busy || !email.trim() || password.length < 6}
               onClick={async () => {
                 if (busy) return;
+                if (verificationCooldown > 0) return;
                 setBusy(true);
                 setError(null);
                 setNotice(null);
                 try {
                   await resendEmailVerification(email, password);
+                  markAuthCooldown("verification");
                   setNotice("Email verifikasi dikirim ulang. Cek inbox sebelum masuk.");
                 } catch (verificationError) {
                   setError(readableAuthError(verificationError));
                 } finally {
+                  setPassword("");
                   setBusy(false);
                 }
               }}
             >
-              Resend verification email
+              {verificationCooldown > 0 ? `Resend available in ${Math.ceil(verificationCooldown / 1000)}s` : "Resend verification email"}
             </button>
           )}
           {notice && (
@@ -216,10 +231,10 @@ export function AuthDialog({ open, onOpenChange, onAuthenticated }: Props) {
               <button
                 type="button"
                 className="underline-offset-4 hover:underline"
-                onClick={() => {
-                  setMode("signin");
-                  setError(null);
-                  setNotice(null);
+                  onClick={() => {
+                    setMode("signin");
+                    setError(null);
+                    setNotice(null);
                 }}
               >
                 Sign in

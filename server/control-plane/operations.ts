@@ -1,8 +1,9 @@
-import { and, desc, eq, inArray, isNull, lt } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull, lt } from "drizzle-orm";
 import {
   approvals,
   auditArchives,
   auditEvents,
+  breakGlassRequests,
   evidenceArtifacts,
   notifications,
   restoreDrillRuns,
@@ -300,9 +301,22 @@ export async function canAccessWorkspace(
       )
     )
     .limit(1);
-  return Boolean(
-    membership && roleAllowsWorkspaceAccess(membership.role, intent)
-  );
+  if (membership && roleAllowsWorkspaceAccess(membership.role, intent)) return true;
+  if (intent !== "read") return false;
+  const [breakGlass] = await db
+    .select({ id: breakGlassRequests.id })
+    .from(breakGlassRequests)
+    .where(
+      and(
+        eq(breakGlassRequests.workspaceId, workspaceId),
+        eq(breakGlassRequests.requestedByUserId, userId),
+        eq(breakGlassRequests.status, "approved"),
+        gt(breakGlassRequests.expiresAt, new Date()),
+        isNull(breakGlassRequests.revokedAt)
+      )
+    )
+    .limit(1);
+  return Boolean(breakGlass);
 }
 
 export async function hasReviewerMembership(

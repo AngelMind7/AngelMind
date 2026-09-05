@@ -1555,6 +1555,9 @@ export const appRouter = router({
       .mutation(({ ctx, input }) =>
         evidenceWorkflow.recordEvidenceProvenance(ctx.user.id, input)
       ),
+    lineage: protectedProcedure
+      .input(z.object({ evidenceArtifactId: z.number().int().positive() }))
+      .query(({ ctx, input }) => evidenceWorkflow.listEvidenceLineage(ctx.user.id, input.evidenceArtifactId)),
     linkResearchNode: protectedProcedure
       .input(
         z.object({

@@ -832,7 +832,8 @@ export const auditEvents = mysqlTable("auditEvents", {
 }, table => [index("audit_workspace_created_idx").on(table.workspaceId, table.createdAt)]);
 
 export const evidenceArtifactStatus = ["quarantined", "scanned", "promoted", "rejected"] as const;
-
+export const evidenceLineageNodeType = ["external_source", "evidence_artifact", "observation", "hypothesis", "finding", "finding_retest", "report_version"] as const;
+export const evidenceLineageRelationType = ["captured_from", "supports", "derived_from", "retested_by", "reported_in"] as const;
 export const evidenceArtifacts = mysqlTable("evidenceArtifacts", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
@@ -865,6 +866,19 @@ export const evidenceProvenance = mysqlTable("evidenceProvenance", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [index("evidence_provenance_workspace_idx").on(table.workspaceId, table.createdAt), index("evidence_provenance_artifact_created_idx").on(table.evidenceArtifactId, table.createdAt)]);
 
+export const evidenceLineage = mysqlTable("evidenceLineage", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  evidenceArtifactId: int("evidenceArtifactId").notNull().references(() => evidenceArtifacts.id, { onDelete: "cascade" }),
+  sourceNodeType: mysqlEnum("sourceNodeType", evidenceLineageNodeType).notNull(),
+  sourceNodeId: int("sourceNodeId").notNull(),
+  targetNodeType: mysqlEnum("targetNodeType", evidenceLineageNodeType).notNull(),
+  targetNodeId: int("targetNodeId").notNull(),
+  relationType: mysqlEnum("relationType", evidenceLineageRelationType).notNull(),
+  metadata: text("metadata").notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("evidence_lineage_edge_uq").on(table.workspaceId, table.evidenceArtifactId, table.sourceNodeType, table.sourceNodeId, table.targetNodeType, table.targetNodeId, table.relationType), index("evidence_lineage_workspace_created_idx").on(table.workspaceId, table.createdAt), index("evidence_lineage_target_idx").on(table.targetNodeType, table.targetNodeId)]);
 export const researchEvidenceLinks = mysqlTable("researchEvidenceLinks", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),

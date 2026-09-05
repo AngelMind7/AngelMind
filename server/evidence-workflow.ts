@@ -1,6 +1,6 @@
 import { createHash } from "node:crypto";
 import { and, desc, eq, like, ne, or } from "drizzle-orm";
-import { auditEvents, evidenceArtifacts, evidenceProvenance, findingRelations, findingRetests, findings, researchEvidenceLinks, researchHypotheses, researchObservations, reportVersions, workspaces } from "../drizzle/schema";
+import { auditEvents, evidenceArtifacts, evidenceLineage, evidenceProvenance, findingRelations, findingRetests, findings, researchEvidenceLinks, researchHypotheses, researchObservations, reportVersions, workspaces } from "../drizzle/schema";
 import { upsertSearchDocument } from "./global-search";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
@@ -24,6 +24,10 @@ async function recordEvidenceWorkflowAudit(
     evidenceHash,
     details: JSON.stringify(details),
   });
+}
+
+async function persistEvidenceLineage(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, input: { workspaceId: number; evidenceArtifactId: number; sourceNodeType: "external_source" | "evidence_artifact" | "observation" | "hypothesis" | "finding" | "finding_retest" | "report_version"; sourceNodeId: number; targetNodeType: "external_source" | "evidence_artifact" | "observation" | "hypothesis" | "finding" | "finding_retest" | "report_version"; targetNodeId: number; relationType: "captured_from" | "supports" | "derived_from" | "retested_by" | "reported_in"; metadata?: Record<string, unknown>; createdByUserId: number }) {
+  await db.insert(evidenceLineage).values({ ...input, metadata: JSON.stringify(input.metadata ?? {}) }).onDuplicateKeyUpdate({ set: { metadata: JSON.stringify(input.metadata ?? {}) } });
 }
 
 async function loadArtifact(userId: number, evidenceArtifactId: number, intent: "read" | "respond" = "read") {
@@ -56,6 +60,7 @@ export async function linkEvidenceToResearchNode(userId: number, input: { eviden
     if (!hypothesis) throw new Error("Hypothesis tidak ditemukan pada workspace evidence.");
   }
   await db.insert(researchEvidenceLinks).values({ workspaceId: artifact.workspaceId, evidenceArtifactId: artifact.id, observationId: input.observationId ?? null, hypothesisId: input.hypothesisId ?? null, linkType: input.linkType.trim(), createdByUserId: userId });
+  await persistEvidenceLineage(db, { workspaceId: artifact.workspaceId, evidenceArtifactId: artifact.id, sourceNodeType: "evidence_artifact", sourceNodeId: artifact.id, targetNodeType: input.observationId ? "observation" : "hypothesis", targetNodeId: input.observationId ?? input.hypothesisId!, relationType: "supports", metadata: { linkType: input.linkType.trim() }, createdByUserId: userId });
   await recordEvidenceWorkflowAudit(db, artifact.workspaceId, { evidenceArtifactId: artifact.id, observationId: input.observationId ?? null, hypothesisId: input.hypothesisId ?? null, linkType: input.linkType.trim(), linkedByUserId: userId, lineage: "research-node" });
   return { success: true as const, evidenceArtifactId: artifact.id, observationId: input.observationId ?? null, hypothesisId: input.hypothesisId ?? null };
 }
@@ -73,9 +78,15 @@ export async function recordEvidenceProvenance(userId: number, input: { evidence
   const sourceReference = input.sourceReference.trim().slice(0, 512);
   if (!sourceType || !sourceReference) throw new Error("Evidence provenance source is required.");
   await db.insert(evidenceProvenance).values({ evidenceArtifactId: artifact.id, workspaceId: artifact.workspaceId, sourceType, sourceReference, capturedAt: input.capturedAt, capturedByUserId: userId, metadata: JSON.stringify(input.metadata ?? {}) }).onDuplicateKeyUpdate({ set: { sourceType, sourceReference, capturedAt: input.capturedAt, capturedByUserId: userId, metadata: JSON.stringify(input.metadata ?? {}) } });
+  await persistEvidenceLineage(db, { workspaceId: artifact.workspaceId, evidenceArtifactId: artifact.id, sourceNodeType: "external_source", sourceNodeId: 0, targetNodeType: "evidence_artifact", targetNodeId: artifact.id, relationType: "captured_from", metadata: { sourceType, sourceReference, ...input.metadata }, createdByUserId: userId });
   const [provenance] = await db.select().from(evidenceProvenance).where(eq(evidenceProvenance.evidenceArtifactId, artifact.id)).limit(1);
   await upsertSearchDocument({ workspaceId: artifact.workspaceId, entityType: "evidence", entityId: artifact.id, title: artifact.artifactType, body: [artifact.artifactType, `status:${artifact.status}`, artifact.sha256, `source:${sourceType}`, `reference:${sourceReference}`, `capturedAt:${input.capturedAt.toISOString()}`].join("\\n") });
   return provenance;
+}
+
+export async function listEvidenceLineage(userId: number, evidenceArtifactId: number) {
+  const { db, artifact } = await loadArtifact(userId, evidenceArtifactId);
+  return db.select().from(evidenceLineage).where(and(eq(evidenceLineage.workspaceId, artifact.workspaceId), eq(evidenceLineage.evidenceArtifactId, artifact.id))).orderBy(desc(evidenceLineage.createdAt));
 }
 
 export async function listFindingRelations(userId: number, findingId: number) {
@@ -151,6 +162,10 @@ export async function completeFindingRetest(userId: number, input: { retestId: n
   if (retestUpdate[0].affectedRows !== 1) throw new Error("Concurrent update detected; this retest was already updated by another reviewer.");
   const [finding] = await db.select().from(findings).where(eq(findings.id, retest.findingId)).limit(1);
   if (!finding) throw new Error("Finding retest parent tidak ditemukan.");
+  if (evidenceArtifactId) {
+    await persistEvidenceLineage(db, { workspaceId: finding.workspaceId, evidenceArtifactId, sourceNodeType: "evidence_artifact", sourceNodeId: evidenceArtifactId, targetNodeType: "finding_retest", targetNodeId: retest.id, relationType: "retested_by", metadata: { status: input.status, resultSummary }, createdByUserId: userId });
+    await persistEvidenceLineage(db, { workspaceId: finding.workspaceId, evidenceArtifactId, sourceNodeType: "evidence_artifact", sourceNodeId: evidenceArtifactId, targetNodeType: "finding", targetNodeId: finding.id, relationType: "supports", metadata: { status: input.status }, createdByUserId: userId });
+  }
   const nextStatus = input.status === "passed" ? "resolved" : input.status === "failed" ? "remediation" : input.status === "inconclusive" ? "inconclusive" : input.status === "cancelled" ? "remediation" : "retest";
   const findingUpdate = await db.update(findings).set({ status: nextStatus, revision: nextRevision(finding.revision), resolvedAt: nextStatus === "resolved" ? now : null, humanReviewStatus: nextStatus === "resolved" ? "pending" : finding.humanReviewStatus, updatedAt: now }).where(and(eq(findings.id, finding.id), eq(findings.revision, finding.revision)));
   if (findingUpdate[0].affectedRows !== 1) throw new Error("Concurrent update detected; reload the finding before recording the retest result.");

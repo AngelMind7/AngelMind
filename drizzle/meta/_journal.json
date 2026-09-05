@@ -505,6 +505,13 @@
       "when": 1788440000012,
       "tag": "0071_passive_asset_signals",
       "breakpoints": true
+    },
+    {
+      "idx": 72,
+      "version": "7",
+      "when": 1788440000013,
+      "tag": "0072_evidence_lineage",
+      "breakpoints": true
     }
   ]
 }

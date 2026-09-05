@@ -97,3 +97,7 @@
 - [x] Add session-scoped `researchAssetRelations` with same-session authorization, deterministic duplicate prevention, relation-type validation, and Research Workspace controls.
 - [x] Add technology/service inventory query and passive threat-signal ledger for certificate expiry, service exposure, cloud exposure, code leak, subdomain history, and brand mention observations.
 - [x] Add migration `0070_research_asset_relations` and `0071_passive_asset_signals`; all schema, migration, API, page, and master contracts pass. Active probing remains disabled.
+
+- [x] Add normalized `evidenceLineage` edges for external source → artifact, artifact → research node, and artifact → finding/retest provenance.
+- [x] Automatically persist lineage when provenance is recorded, research evidence is linked, or a retest result consumes scanned/promoted evidence.
+- [x] Expose workspace-authorized evidence lineage query and register migration `0072_evidence_lineage`.

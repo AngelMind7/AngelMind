@@ -150,6 +150,12 @@ export async function updateOrganizationMemberRole(userId: number, input: { orga
   return { success: true as const, memberId: member.id, role: input.role };
 }
 
+export async function listOrganizationRoleAudit(userId: number, organizationId: number, limit = 50) {
+  const { db } = await requireMembership(userId, organizationId);
+  const rows = await db.select().from(organizationAuditEvents).where(eq(organizationAuditEvents.organizationId, organizationId)).orderBy(desc(organizationAuditEvents.createdAt)).limit(Math.min(100, Math.max(1, Math.trunc(limit))));
+  return rows.filter(row => row.subject === "member-role-changed").map(row => ({ ...row, details: JSON.parse(row.details) as { memberId: number; memberUserId: number; previousRole: string; nextRole: string } }));
+}
+
 export async function listOrganizationPrivileges(userId: number, organizationId: number) {
   const { membership } = await requireMembership(userId, organizationId);
   return { organizationId, role: membership.role, privileges: [...organizationPrivilegeMatrix[membership.role]] };

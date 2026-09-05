@@ -815,14 +815,6 @@ export const appRouter = router({
     ),
   }),
   operations: router({
-    updateMemberRole: protectedProcedure
-      .input(z.object({ organizationId: z.number().int().positive(), memberId: z.number().int().positive(), role: z.enum(["admin", "researcher", "reviewer", "auditor"]) }))
-      .mutation(({ ctx, input }) => organization.updateOrganizationMemberRole(ctx.user.id, input)),
-    privileges: protectedProcedure
-      .input(z.object({ organizationId: z.number().int().positive() }))
-      .query(({ ctx, input }) =>
-        organization.listOrganizationPrivileges(ctx.user.id, input.organizationId)
-      ),
     members: protectedProcedure
       .input(z.object({ workspaceId: z.number().int().positive() }))
       .query(({ ctx, input }) =>
@@ -1678,6 +1670,15 @@ export const appRouter = router({
       .mutation(({ ctx, input }) =>
         organization.createOrganization(ctx.user.id, input)
       ),
+    updateMemberRole: protectedProcedure
+      .input(z.object({ organizationId: z.number().int().positive(), memberId: z.number().int().positive(), role: z.enum(["admin", "researcher", "reviewer", "auditor"]) }))
+      .mutation(({ ctx, input }) => organization.updateOrganizationMemberRole(ctx.user.id, input)),
+    roleAudit: protectedProcedure
+      .input(z.object({ organizationId: z.number().int().positive(), limit: z.number().int().min(1).max(100).optional() }))
+      .query(({ ctx, input }) => organization.listOrganizationRoleAudit(ctx.user.id, input.organizationId, input.limit)),
+    privileges: protectedProcedure
+      .input(z.object({ organizationId: z.number().int().positive() }))
+      .query(({ ctx, input }) => organization.listOrganizationPrivileges(ctx.user.id, input.organizationId)),
     members: protectedProcedure
       .input(z.object({ organizationId: z.number().int().positive() }))
       .query(({ ctx, input }) =>

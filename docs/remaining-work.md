@@ -174,3 +174,6 @@ Main-branch runtime image publishing now uses GHCR with GitHub OIDC permissions,
 
 ## Latest implementation slice — 2026-09-05 (DAST)
 The manual staging DAST workflow now supports both pinned OWASP ZAP baseline and active full scans. Full scans require two explicit confirmations (`STAGING` and `FULL-STAGING`), reject production-looking or non-HTTPS targets, disable issue-writing, and retain scan artifacts. Actual execution still requires an authorized non-production staging URL and operator confirmation.
+
+## Latest implementation slice — 2026-09-05 (Release promotion)
+A manual promotion workflow now accepts only an immutable AngelMind GHCR digest, verifies an authorized non-production staging URL and expected deployed commit, verifies the keyless Cosign provenance, and creates a release tag only after explicit `PROMOTE-STAGING-IMAGE` confirmation. Health, readiness, signature, and promotion evidence are retained as artifacts. Provider-specific production deployment remains environment-gated.

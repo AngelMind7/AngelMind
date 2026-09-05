@@ -1,0 +1,102 @@
+name: Promote verified staging image
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_ref:
+        description: "Signed GHCR image digest, for example ghcr.io/angelmind7/angelmind@sha256:..."
+        required: true
+        type: string
+      staging_url:
+        description: "Authorized non-production HTTPS staging URL"
+        required: true
+        type: string
+      expected_commit:
+        description: "Commit SHA expected from staging /healthz"
+        required: true
+        type: string
+      confirm_promotion:
+        description: "Type PROMOTE-STAGING-IMAGE to authorize release tagging"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+  packages: write
+
+jobs:
+  promote:
+    if: ${{ inputs.confirm_promotion == 'PROMOTE-STAGING-IMAGE' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Validate promotion inputs
+        env:
+          IMAGE_REF: ${{ inputs.image_ref }}
+          STAGING_URL: ${{ inputs.staging_url }}
+          EXPECTED_COMMIT: ${{ inputs.expected_commit }}
+        run: |
+          set -euo pipefail
+          case "$IMAGE_REF" in
+            ghcr.io/angelmind7/angelmind@sha256:[a-f0-9]*) ;;
+            *) echo "Promotion requires an immutable AngelMind GHCR digest" >&2; exit 1 ;;
+          esac
+          case "$STAGING_URL" in
+            https://*) ;;
+            *) echo "Promotion target must use HTTPS" >&2; exit 1 ;;
+          esac
+          case "$STAGING_URL" in
+            *localhost*|*127.0.0.1*|*production*|*prod.*)
+              echo "Refusing local or production-looking staging target" >&2
+              exit 1
+              ;;
+          esac
+          test "${#EXPECTED_COMMIT}" -ge 7
+      - name: Verify staging health and readiness
+        env:
+          STAGING_URL: ${{ inputs.staging_url }}
+          EXPECTED_COMMIT: ${{ inputs.expected_commit }}
+        run: |
+          set -euo pipefail
+          curl --fail --silent --show-error --max-time 15 "$STAGING_URL/healthz" | tee healthz.json
+          curl --fail --silent --show-error --max-time 15 "$STAGING_URL/readyz" | tee readyz.json
+          curl --fail --silent --show-error --max-time 15 "$STAGING_URL/metrics" >/dev/null
+          actual=$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("commit", ""))' < healthz.json)
+          case "$actual" in
+            "$EXPECTED_COMMIT"*) ;;
+            *) echo "Staging commit mismatch: $actual" >&2; exit 1 ;;
+          esac
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@1aa8e0f2454b781fbf0fbf306a4c9533a0c57409 # v3.7.0
+      - name: Verify image signature and provenance
+        env:
+          IMAGE_REF: ${{ inputs.image_ref }}
+        run: >-
+          cosign verify
+          --certificate-identity-regexp '^https://github.com/AngelMind7/AngelMind/.github/workflows/container.yml@refs/heads/main$'
+          --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
+          "$IMAGE_REF" | tee cosign-verification.json
+      - name: Login to GHCR
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io --username "${{ github.actor }}" --password-stdin
+      - name: Promote immutable image to release tag
+        env:
+          IMAGE_REF: ${{ inputs.image_ref }}
+          REPOSITORY: ghcr.io/${{ github.repository }}
+          EXPECTED_COMMIT: ${{ inputs.expected_commit }}
+        run: |
+          set -euo pipefail
+          tag="release-${EXPECTED_COMMIT:0:12}"
+          docker buildx imagetools create --tag "$REPOSITORY:$tag" "$IMAGE_REF"
+          echo "Promoted $IMAGE_REF to $REPOSITORY:$tag" | tee promotion.txt
+      - name: Upload promotion evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: promotion-${{ github.run_id }}
+          path: |
+            healthz.json
+            readyz.json
+            cosign-verification.json
+            promotion.txt
+          if-no-files-found: ignore

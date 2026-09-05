@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parsePassiveInventory } from "./passive-inventory";
+import { parsePassiveInventory, summarizePassiveInventoryDelta } from "./passive-inventory";
 
 describe("passive inventory parser", () => {
   it("parses CSV without fetching or probing assets", () => {
@@ -19,5 +19,10 @@ describe("passive inventory parser", () => {
 
   it("rejects non-array JSON input", () => {
     expect(() => parsePassiveInventory({ content: JSON.stringify({ host: "example.com" }), format: "json", allowlist: ["example.com"], exclusions: [] })).toThrow("must be an array");
+  });
+
+  it("summarizes new and stale hostnames deterministically", () => {
+    const parsed = parsePassiveInventory({ content: JSON.stringify(["api.example.com", "new.example.com"]), format: "json", allowlist: ["example.com"], exclusions: [] });
+    expect(summarizePassiveInventoryDelta([{ hostname: "api.example.com", status: "active" }, { hostname: "old.example.com", status: "active" }, { hostname: "retired.example.com", status: "retired" }], parsed)).toEqual({ totalCandidates: 2, inScopeCount: 2, newHostnames: ["new.example.com"], staleHostnames: ["old.example.com"] });
   });
 });

@@ -470,6 +470,20 @@
       "when": 1788440000007,
       "tag": "0066_approval_escalation_metadata",
       "breakpoints": true
+    },
+    {
+      "idx": 67,
+      "version": "7",
+      "when": 1788440000008,
+      "tag": "0067_asset_verification",
+      "breakpoints": true
+    },
+    {
+      "idx": 68,
+      "version": "7",
+      "when": 1788440000009,
+      "tag": "0068_passive_asset_delta_tracking",
+      "breakpoints": true
     }
   ]
 }

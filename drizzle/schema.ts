@@ -281,6 +281,8 @@ export const workspaces = mysqlTable("workspaces", {
 export const researchSessionState = ["draft", "ready", "active", "paused", "completed", "archived"] as const;
 export const researchAssetType = ["domain", "subdomain", "ip", "application", "api", "endpoint", "technology", "service"] as const;
 export const researchAssetState = ["discovered", "triaged", "in_scope", "out_of_scope", "archived"] as const;
+export const researchAssetVerificationMethod = ["dns_txt", "file_upload", "cloud_role", "authorization_letter"] as const;
+export const researchAssetVerificationStatus = ["unverified", "requested", "pending_review", "verified", "rejected", "expired", "cancelled"] as const;
 export const researchTaskStatus = ["queued", "running", "blocked", "paused", "failed", "retrying", "completed", "cancelled"] as const;
 export const researchTaskRiskClass = ["low", "medium", "high", "critical"] as const;
 export const researchObservationStatus = ["new", "reviewed", "linked", "archived"] as const;
@@ -309,12 +311,31 @@ export const researchAssets = mysqlTable("researchAssets", {
   hostname: varchar("hostname", { length: 255 }),
   state: mysqlEnum("state", researchAssetState).default("discovered").notNull(),
   inScope: int("inScope").default(0).notNull(),
+  verificationStatus: mysqlEnum("verificationStatus", researchAssetVerificationStatus).default("unverified").notNull(),
+  verifiedAt: timestamp("verifiedAt"),
   metadata: text("metadata").notNull(),
   traceId: varchar("traceId", { length: 128 }),
   createdByUserId: int("createdByUserId").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-}, table => [index("research_asset_id_workspace_idx").on(table.id, table.workspaceId), index("research_asset_session_state_idx").on(table.sessionId, table.state), uniqueIndex("research_asset_session_value_uq").on(table.sessionId, table.value), foreignKey({ columns: [table.sessionId, table.workspaceId], foreignColumns: [researchSessions.id, researchSessions.workspaceId], name: "research_asset_session_workspace_fk" })]);
-
+}, table => [index("research_asset_id_workspace_idx").on(table.id, table.workspaceId), index("research_asset_session_state_idx").on(table.sessionId, table.state), index("research_asset_verification_idx").on(table.workspaceId, table.verificationStatus, table.verifiedAt), uniqueIndex("research_asset_session_value_uq").on(table.sessionId, table.value), foreignKey({ columns: [table.sessionId, table.workspaceId], foreignColumns: [researchSessions.id, researchSessions.workspaceId], name: "research_asset_session_workspace_fk" })]);
+export const researchAssetVerifications = mysqlTable("researchAssetVerifications", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  assetId: int("assetId").notNull().references(() => researchAssets.id, { onDelete: "cascade" }),
+  method: mysqlEnum("method", researchAssetVerificationMethod).notNull(),
+  status: mysqlEnum("status", researchAssetVerificationStatus).default("requested").notNull(),
+  tokenHash: varchar("tokenHash", { length: 64 }).notNull(),
+  challengeReference: varchar("challengeReference", { length: 512 }).notNull(),
+  proofReference: varchar("proofReference", { length: 512 }),
+  evidenceArtifactId: int("evidenceArtifactId").references(() => evidenceArtifacts.id, { onDelete: "set null" }),
+  submittedByUserId: int("submittedByUserId"),
+  reviewedByUserId: int("reviewedByUserId"),
+  reviewNote: text("reviewNote"),
+  expiresAt: timestamp("expiresAt").notNull(),
+  verifiedAt: timestamp("verifiedAt"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [index("asset_verification_workspace_status_idx").on(table.workspaceId, table.status, table.expiresAt), index("asset_verification_asset_created_idx").on(table.assetId, table.createdAt)]);
 export const researchObservations = mysqlTable("researchObservations", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
@@ -1054,17 +1075,34 @@ export const incidentEvidenceLinks = mysqlTable("incidentEvidenceLinks", {
 ]);
 
 export const passiveAssetSource = ["csv", "json"] as const;
+export const passiveAssetStatus = ["active", "stale", "retired"] as const;
 export const passiveAssets = mysqlTable("passiveAssets", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
   value: varchar("value", { length: 512 }).notNull(),
   hostname: varchar("hostname", { length: 255 }).notNull(),
   source: mysqlEnum("source", passiveAssetSource).notNull(),
+  status: mysqlEnum("status", passiveAssetStatus).default("active").notNull(),
   inScope: int("inScope").default(0).notNull(),
   reason: varchar("reason", { length: 32 }).notNull(),
   importedByUserId: int("importedByUserId").notNull(),
+  firstSeenAt: timestamp("firstSeenAt").defaultNow().notNull(),
+  lastSeenAt: timestamp("lastSeenAt").defaultNow().notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
-}, table => [index("passive_asset_workspace_scope_idx").on(table.workspaceId, table.inScope), index("passive_asset_workspace_host_idx").on(table.workspaceId, table.hostname)]);
+}, table => [index("passive_asset_workspace_scope_idx").on(table.workspaceId, table.inScope), index("passive_asset_workspace_host_idx").on(table.workspaceId, table.hostname), index("passive_asset_workspace_status_idx").on(table.workspaceId, table.status, table.lastSeenAt)]);
+export const passiveAssetDiscoveryRuns = mysqlTable("passiveAssetDiscoveryRuns", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  source: mysqlEnum("source", passiveAssetSource).notNull(),
+  contentSha256: varchar("contentSha256", { length: 64 }).notNull(),
+  observedAt: timestamp("observedAt").defaultNow().notNull(),
+  importedByUserId: int("importedByUserId").notNull(),
+  totalCandidates: int("totalCandidates").default(0).notNull(),
+  inScopeCount: int("inScopeCount").default(0).notNull(),
+  newCount: int("newCount").default(0).notNull(),
+  staleCount: int("staleCount").default(0).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [index("passive_discovery_workspace_observed_idx").on(table.workspaceId, table.observedAt), index("passive_discovery_workspace_hash_idx").on(table.workspaceId, table.contentSha256)]);
 
 export const reportPlatform = ["hackerone", "bugcrowd", "intigriti", "markdown"] as const;
 export const submissionStatus = ["submitted", "acknowledged", "triaged", "accepted", "rejected", "duplicate", "resolved", "retest"] as const;

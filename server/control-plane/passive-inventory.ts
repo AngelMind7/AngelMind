@@ -25,3 +25,11 @@ function parseJson(content: string): string[] {
 function parseCsv(content: string): string[] {
   return content.split(/\r?\n/).slice(0, 10_001).map(line => line.split(",")[0]?.trim().replace(/^['\"]|['\"]$/g, "") ?? "").filter(value => value && !["asset", "hostname", "host", "url"].includes(value.toLowerCase()));
 }
+
+export function summarizePassiveInventoryDelta(existing: Array<{ hostname: string; status?: "active" | "stale" | "retired" }>, parsed: PassiveAsset[]) {
+  const existingHostnames = new Set(existing.map(asset => asset.hostname));
+  const seenHostnames = new Set(parsed.map(asset => asset.hostname));
+  const newHostnames = Array.from(new Set(parsed.map(asset => asset.hostname).filter(hostname => !existingHostnames.has(hostname))));
+  const staleHostnames = Array.from(new Set(existing.filter(asset => (asset.status ?? "active") === "active" && !seenHostnames.has(asset.hostname)).map(asset => asset.hostname)));
+  return { totalCandidates: parsed.length, inScopeCount: parsed.filter(asset => asset.inScope).length, newHostnames, staleHostnames };
+}

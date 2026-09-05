@@ -83,3 +83,9 @@
 - [x] Add explicit loading, error, empty, success, and retry states to the authenticated UTF/tool catalog surface.
 - [x] Add staging-only authenticated axe coverage for core application routes and ignore local Playwright artifacts.
 - [x] Treat completed, partial, failed, and cancelled AI runs as terminal so a finalized run cannot be reopened or billed twice; add direct state coverage.
+
+- [x] Add target-verification persistence with four governed methods: DNS TXT, file upload, cloud role, and authorization letter.
+- [x] Add fail-closed verification state machine: requested → pending_review → verified/rejected, expiry handling, reviewer authorization, evidence scan checks, audit events, and worker expiry maintenance.
+- [x] Add authenticated Research Workspace verification panel with challenge instructions, proof submission, reviewer controls, and explicit protected/empty/error/success states.
+- [x] Add passive asset discovery delta tracking with deterministic hostname deduplication, active/stale lifecycle, first/last-seen timestamps, content SHA-256 run summaries, authenticated Coverage metrics, and unit coverage.
+- [x] Register migrations `0067_asset_verification` and `0068_passive_asset_delta_tracking`; migration journal and database contracts remain green.

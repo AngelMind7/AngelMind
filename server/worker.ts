@@ -7,6 +7,7 @@ import { executeEmailDeliveryJob } from "./email-delivery";
 import { executePlaybookRunJob } from "./playbook-executor";
 import { withTraceContext } from "./_core/trace-context";
 import { executeNotificationDeliveryJob } from "./notification-delivery";
+import { expireAssetVerifications } from "./asset-verification";
 import { executeToolPipeline } from "./tool-execution-pipeline";
 import type { ToolRuntimeRequest } from "./tool-runtime";
 
@@ -25,6 +26,7 @@ export const DEFAULT_POLL_INTERVAL_MS = 5_000;
 export const WORKER_HEARTBEAT_INTERVAL_MS = 10_000;
 export const MODEL_CATALOG_REFRESH_INTERVAL_MS = 15 * 60_000;
 export const MEMORY_PURGE_INTERVAL_MS = 15 * 60_000;
+export const ASSET_VERIFICATION_EXPIRY_INTERVAL_MS = 15 * 60_000;
 export const MAX_JOB_PAYLOAD_BYTES = 1_000_000;
 export const MAX_TRACE_FIELD_LENGTH = 256;
 
@@ -155,6 +157,10 @@ if (process.env.RUN_WORKER === "true") {
     void Promise.all([purgeExpiredAiRunMemory(100), purgeExpiredAiMemories(100)]).catch(error => console.error(`[worker] memory purge failed: ${error instanceof Error ? error.message : "unknown error"}`));
   }, MEMORY_PURGE_INTERVAL_MS);
   retentionTimer.unref?.();
+  const verificationExpiryTimer = setInterval(() => {
+    void expireAssetVerifications(100).catch(error => console.error(`[worker] asset verification expiry failed: ${error instanceof Error ? error.message : "unknown error"}`));
+  }, ASSET_VERIFICATION_EXPIRY_INTERVAL_MS);
+  verificationExpiryTimer.unref?.();
   createWorkerLoop({
     "orchestration.plan": orchestrationPlanHandler(async payload => {
       await executeOrchestrationPlanJob(payload);

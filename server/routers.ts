@@ -19,6 +19,7 @@ import * as analytics from "./control-plane/analytics";
 import * as collaboration from "./control-plane/collaboration";
 import * as accountSecurity from "./account-security";
 import * as researchWorkflow from "./research-workflow";
+import * as assetVerification from "./asset-verification";
 import * as organization from "./organization";
 import * as evidenceWorkflow from "./evidence-workflow";
 import * as aiPlatform from "./ai-platform";
@@ -514,6 +515,9 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         workflowPersistence.listPassiveAssets(ctx.user.id, input.workspaceId)
       ),
+    listWorkspaceInventoryRuns: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive() }))
+      .query(({ ctx, input }) => workflowPersistence.listPassiveDiscoveryRuns(ctx.user.id, input.workspaceId)),
     validateReport: protectedProcedure
       .input(
         z.object({
@@ -1898,6 +1902,18 @@ export const appRouter = router({
       .mutation(({ ctx, input }) =>
         researchWorkflow.createResearchAsset(ctx.user.id, input)
       ),
+    assetVerifications: protectedProcedure
+      .input(z.object({ assetId: z.number().int().positive() }))
+      .query(({ ctx, input }) => assetVerification.listAssetVerifications(ctx.user.id, input.assetId)),
+    requestAssetVerification: protectedProcedure
+      .input(z.object({ assetId: z.number().int().positive(), method: z.enum(["dns_txt", "file_upload", "cloud_role", "authorization_letter"]) }))
+      .mutation(({ ctx, input }) => assetVerification.requestAssetVerification(ctx.user.id, input)),
+    submitAssetVerification: protectedProcedure
+      .input(z.object({ verificationId: z.number().int().positive(), proofReference: z.string().trim().min(3).max(512), evidenceArtifactId: z.number().int().positive().optional() }))
+      .mutation(({ ctx, input }) => assetVerification.submitAssetVerification(ctx.user.id, input)),
+    reviewAssetVerification: protectedProcedure
+      .input(z.object({ verificationId: z.number().int().positive(), decision: z.enum(["verified", "rejected"]), proofReference: z.string().trim().max(512).optional(), evidenceArtifactId: z.number().int().positive().optional(), reviewNote: z.string().trim().max(20_000).optional() }))
+      .mutation(({ ctx, input }) => assetVerification.reviewAssetVerification(ctx.user.id, input)),
     observations: protectedProcedure
       .input(z.object({ sessionId: z.number().int().positive() }))
       .query(({ ctx, input }) =>

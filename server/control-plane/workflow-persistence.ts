@@ -1,9 +1,10 @@
+import { createHash } from "node:crypto";
 import { and, desc, eq, inArray } from "drizzle-orm";
-import { findings, passiveAssets, reportDrafts, reportVersions } from "../../drizzle/schema";
+import { findings, passiveAssetDiscoveryRuns, passiveAssets, reportDrafts, reportVersions } from "../../drizzle/schema";
 import { getDb } from "../db";
 import { canAccessWorkspace } from "./operations";
 import { composeReport, type ReportInput, type ReportPlatform } from "./report-composer";
-import { parsePassiveInventory, type PassiveAsset } from "./passive-inventory";
+import { parsePassiveInventory, summarizePassiveInventoryDelta, type PassiveAsset } from "./passive-inventory";
 import { upsertSearchDocument } from "../global-search";
 
 export async function importPassiveAssets(userId: number, input: { workspaceId: number; content: string; format: "csv" | "json"; allowlist: string[]; exclusions: string[] }): Promise<PassiveAsset[]> {
@@ -12,7 +13,22 @@ export async function importPassiveAssets(userId: number, input: { workspaceId: 
   const parsed = parsePassiveInventory(input);
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
-  if (parsed.length > 0) await db.insert(passiveAssets).values(parsed.map(asset => ({ workspaceId: input.workspaceId, value: asset.value, hostname: asset.hostname, source: asset.source, inScope: asset.inScope ? 1 : 0, reason: asset.reason, importedByUserId: userId })));
+  const observedAt = new Date();
+  const contentSha256 = createHash("sha256").update(input.content, "utf8").digest("hex");
+  const existing = await db.select().from(passiveAssets).where(eq(passiveAssets.workspaceId, input.workspaceId));
+  const delta = summarizePassiveInventoryDelta(existing, parsed);
+  const byHostname = new Map(existing.map(asset => [asset.hostname, asset]));
+  for (const asset of parsed) {
+    const current = byHostname.get(asset.hostname);
+    if (current) {
+      await db.update(passiveAssets).set({ value: asset.value, source: asset.source, status: "active", inScope: asset.inScope ? 1 : 0, reason: asset.reason, importedByUserId: userId, lastSeenAt: observedAt }).where(eq(passiveAssets.id, current.id));
+    } else {
+      await db.insert(passiveAssets).values({ workspaceId: input.workspaceId, value: asset.value, hostname: asset.hostname, source: asset.source, status: "active", inScope: asset.inScope ? 1 : 0, reason: asset.reason, importedByUserId: userId, firstSeenAt: observedAt, lastSeenAt: observedAt });
+    }
+  }
+  const stale = existing.filter(asset => delta.staleHostnames.includes(asset.hostname));
+  if (stale.length) await db.update(passiveAssets).set({ status: "stale" }).where(inArray(passiveAssets.id, stale.map(asset => asset.id)));
+  await db.insert(passiveAssetDiscoveryRuns).values({ workspaceId: input.workspaceId, source: input.format, contentSha256, observedAt, importedByUserId: userId, totalCandidates: delta.totalCandidates, inScopeCount: delta.inScopeCount, newCount: delta.newHostnames.length, staleCount: delta.staleHostnames.length });
   return parsed;
 }
 
@@ -20,7 +36,14 @@ export async function listPassiveAssets(userId: number, workspaceId: number) {
   if (!(await canAccessWorkspace(userId, workspaceId, "read"))) throw new Error("Workspace tidak dapat diakses oleh user ini.");
   const db = await getDb();
   if (!db) return [];
-  return db.select().from(passiveAssets).where(eq(passiveAssets.workspaceId, workspaceId)).orderBy(desc(passiveAssets.createdAt));
+  return db.select().from(passiveAssets).where(eq(passiveAssets.workspaceId, workspaceId)).orderBy(desc(passiveAssets.lastSeenAt), desc(passiveAssets.createdAt));
+}
+
+export async function listPassiveDiscoveryRuns(userId: number, workspaceId: number) {
+  if (!(await canAccessWorkspace(userId, workspaceId, "read"))) throw new Error("Workspace tidak dapat diakses oleh user ini.");
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(passiveAssetDiscoveryRuns).where(eq(passiveAssetDiscoveryRuns.workspaceId, workspaceId)).orderBy(desc(passiveAssetDiscoveryRuns.observedAt)).limit(50);
 }
 
 async function ensureFindingInWorkspace(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, findingId: number, workspaceId: number) {

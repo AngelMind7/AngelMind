@@ -18,6 +18,7 @@ const workspaces = lazy(() => import("@/pages/Workspaces"));
 const organizations = lazy(() => import("@/pages/Organizations"));
 const governance = lazy(() => import("@/pages/Governance"));
 const findings = lazy(() => import("@/pages/Findings"));
+const evidenceVault = lazy(() => import("@/pages/EvidenceVault"));
 const audit = lazy(() => import("@/pages/Audit"));
 const operations = lazy(() => import("@/pages/Operations"));
 const assurance = lazy(() => import("@/pages/Assurance"));
@@ -41,7 +42,7 @@ export const authenticatedRoutes = [
   { path: "/utf/runners", component: blueprintModule }, { path: "/utf/runners/new", component: blueprintModule }, { path: "/utf/runners/:id/execute", component: blueprintModule }, { path: "/utf/runners/:id", component: blueprintModule },
   { path: "/redteam/implants/:id/beacon", component: blueprintModule }, { path: "/redteam/implants/:id/status", component: blueprintModule },
   { path: "/playbooks", component: blueprintModule }, { path: "/playbooks/new", component: blueprintModule }, { path: "/playbooks/:id/edit", component: blueprintModule }, { path: "/playbooks/:id/run", component: blueprintModule }, { path: "/playbooks/:id", component: blueprintModule },
-  { path: "/evidence", component: blueprintModule }, { path: "/evidence/:id", component: blueprintModule },
+  { path: "/evidence", component: evidenceVault }, { path: "/evidence/:id", component: evidenceVault },
   { path: "/reports", component: reports }, { path: "/reports/new", component: reports }, { path: "/reports/:id", component: reports },
   { path: "/workspaces", component: workspaces }, { path: "/workspaces/new", component: workspaces }, { path: "/workspaces/:id", component: workspaces }, { path: "/organizations", component: organizations }, { path: "/organizations/new", component: organizations }, { path: "/organizations/:id", component: organizations },
   { path: "/governance", component: governance }, { path: "/governance/approvals", component: governance }, { path: "/governance/policies", component: governance }, { path: "/findings", component: findings }, { path: "/findings/:id", component: findings }, { path: "/audit", component: audit },

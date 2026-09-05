@@ -1,10 +1,11 @@
 import { createHash, randomBytes } from "node:crypto";
 import { and, asc, desc, eq, lt } from "drizzle-orm";
 import { getDb, getUserByEmail } from "./db";
-import { organizationInvitations, programScopeVersions, programs, organizationMembers, organizations, workspaces } from "../drizzle/schema";
+import { organizationAuditEvents, organizationInvitations, programScopeVersions, programs, organizationMembers, organizations, workspaces } from "../drizzle/schema";
 import { diffProgramScope, nextProgramScopeVersion, normalizeProgramScope, parseStoredProgramScope } from "./control-plane/program-scope";
 import { buildOrganizationInvitationEmail } from "./_core/email-templates";
 import { enqueueEmailDelivery } from "./email-delivery";
+import { currentTraceContext } from "./_core/trace-context";
 
 const organizationRoles = ["owner", "admin", "researcher", "reviewer", "auditor"] as const;
 type OrganizationRole = (typeof organizationRoles)[number];
@@ -145,6 +146,7 @@ export async function updateOrganizationMemberRole(userId: number, input: { orga
   if (!member) throw new Error("Organization member tidak ditemukan.");
   if (member.role === "owner") throw new Error("Owner role requires the protected ownership transfer workflow.");
   await db.update(organizationMembers).set({ role: input.role }).where(and(eq(organizationMembers.id, input.memberId), eq(organizationMembers.organizationId, input.organizationId)));
+  await db.insert(organizationAuditEvents).values({ organizationId: input.organizationId, actorUserId: userId, category: "organization-membership", subject: "member-role-changed", details: JSON.stringify({ memberId: member.id, memberUserId: member.userId, previousRole: member.role, nextRole: input.role }), traceId: currentTraceContext()?.traceId ?? null });
   return { success: true as const, memberId: member.id, role: input.role };
 }
 

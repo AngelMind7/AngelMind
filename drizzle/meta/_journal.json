@@ -519,6 +519,13 @@
       "when": 1788440000014,
       "tag": "0073_notification_email_preference",
       "breakpoints": true
+    },
+    {
+      "idx": 74,
+      "version": "7",
+      "when": 1788440000015,
+      "tag": "0074_organization_audit_events",
+      "breakpoints": true
     }
   ]
 }

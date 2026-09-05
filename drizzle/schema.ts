@@ -166,6 +166,16 @@ export const organizationMembers = mysqlTable("organizationMembers", {
   invitedByUserId: int("invitedByUserId").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [uniqueIndex("organization_member_uq").on(table.organizationId, table.userId), index("organization_member_user_idx").on(table.userId, table.role)]);
+export const organizationAuditEvents = mysqlTable("organizationAuditEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  organizationId: int("organizationId").notNull(),
+  actorUserId: int("actorUserId").notNull(),
+  category: varchar("category", { length: 80 }).notNull(),
+  subject: varchar("subject", { length: 160 }).notNull(),
+  details: text("details").notNull(),
+  traceId: varchar("traceId", { length: 128 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [index("organization_audit_org_created_idx").on(table.organizationId, table.createdAt), index("organization_audit_actor_idx").on(table.actorUserId, table.createdAt)]);
 export const invitationStatus = ["pending", "accepted", "expired", "revoked"] as const;
 export const organizationInvitations = mysqlTable("organizationInvitations", {
   id: int("id").autoincrement().primaryKey(),

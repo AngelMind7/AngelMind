@@ -12,14 +12,14 @@ export function applyPolicyDecisionWorkflow(status: "pending" | "approved" | "re
   return { status: decision, activePolicyUpdated: decision === "approved" } as const;
 }
 
-export function transitionIncidentWorkflow(status: "open" | "acknowledged" | "resolved", action: "acknowledge" | "resolve") {
+export function transitionIncidentWorkflow(status: "open" | "acknowledged" | "investigating" | "escalated" | "resolved" | "closed", action: "acknowledge" | "resolve") {
   if (action === "acknowledge" && status !== "open") throw new Error("Only open incidents can be acknowledged.");
-  if (action === "resolve" && status === "resolved") throw new Error("Incident already resolved.");
+  if (action === "resolve" && (status === "resolved" || status === "closed")) throw new Error("Incident already resolved.");
   return action === "acknowledge" ? "acknowledged" as const : "resolved" as const;
 }
 
-export function shouldEscalateIncident(status: "open" | "acknowledged" | "resolved", escalationDueAt: Date, escalatedAt: Date | null, now = new Date()): boolean {
-  return status !== "resolved" && escalatedAt === null && escalationDueAt.getTime() < now.getTime();
+export function shouldEscalateIncident(status: "open" | "acknowledged" | "investigating" | "escalated" | "resolved" | "closed", escalationDueAt: Date, escalatedAt: Date | null, now = new Date()): boolean {
+  return status !== "resolved" && status !== "closed" && escalatedAt === null && escalationDueAt.getTime() < now.getTime();
 }
 
 export function prepareWebhookActivationWorkflow(readinessValid: boolean, existingPendingRequest: boolean, requesterId: number) {

@@ -47,7 +47,7 @@ export const generatedToolCatalog = [
       "approvalGate": targetFacing ? "human_approval" : "scope_check",
       "verificationStatus": "manifest_only",
       "disposition": targetFacing ? "simulation_only" : "candidate_passive_review",
-      "enabledByDefault": true,
+      "enabledByDefault": false,
     };
   }),
 ];

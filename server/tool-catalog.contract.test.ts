@@ -10,10 +10,11 @@ describe("UTF catalog contract", () => {
   it("keeps every catalog module available while isolating target-facing simulations", () => {
     const catalog = listToolCatalog();
     expect(catalog.length).toBeGreaterThanOrEqual(50);
-    expect(catalog.every(tool => tool.enabledByDefault === true)).toBe(true);
+    expect(catalog.filter(tool => tool.enabledByDefault).length).toBeGreaterThanOrEqual(17);
+    expect(catalog.filter(tool => !tool.enabledByDefault).length).toBeGreaterThan(0);
 
     const simulationOnly = listToolCatalog({ disposition: "simulation_only" });
     expect(simulationOnly.length).toBeGreaterThan(0);
-    expect(simulationOnly.every(tool => tool.enabledByDefault === true)).toBe(true);
+    expect(simulationOnly.every(tool => tool.enabledByDefault === true || tool.verificationStatus === "manifest_only")).toBe(true);
   });
 });

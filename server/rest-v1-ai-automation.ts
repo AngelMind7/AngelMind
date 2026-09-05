@@ -7,7 +7,7 @@ const workerSchema = z.object({ workspaceId: z.number().int().positive(), name: 
 const promptSchema = z.object({ name: z.string().min(2), template: z.string().min(2) });
 const routeSchema = z.object({ capabilities: z.array(z.string()).optional(), minimumContextWindow: z.number().int().nonnegative().optional(), maxCostCentsPerMillionTokens: z.number().nonnegative().optional() });
 const runSchema = z.object({ purpose: z.string().min(2), inputReference: z.string().min(2), estimatedCostCents: z.number().int().min(0).optional() });
-async function userId(req: Request) { const auth = await sdk.authenticateRequest(req); if (!auth.authenticated) throw new Error("Unauthorized"); return auth.user.id; }
+async function userId(req: Request) { const user = await sdk.authenticateRequest(req); return user.id; }
 export function registerAiAutomationRestV1Routes(app: Express) {
   app.get("/api/v1/ai/automation/catalog", async (_req, res) => { try { res.json({ ok: true, data: await getAutomationCatalog() }); } catch (error) { res.status(500).json({ ok: false, error: error instanceof Error ? error.message : "AI catalog failed" }); } });
   app.post("/api/v1/ai/workers", async (req, res) => { try { const uid = await userId(req); const input = workerSchema.parse(req.body); if (!(await canAccessWorkspace(uid, input.workspaceId, "respond"))) return res.status(403).json({ ok: false, error: "Forbidden" }); res.status(201).json({ ok: true, data: createAiWorker(input) }); } catch (error) { res.status(400).json({ ok: false, error: error instanceof Error ? error.message : "Invalid worker" }); } });

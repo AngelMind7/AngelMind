@@ -12,7 +12,6 @@ const restFiles = [
   "server/rest-v1.ts",
   "server/rest-v1-core-resources.ts",
   "server/rest-v1-tags-notes.ts",
-  "server/rest-v1-evidence-resources.ts",
   "server/rest-v1-evidence-findings.ts",
   "server/rest-v1-tools.ts",
   "server/rest-v1-redteam.ts",

@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { listCapabilities } from "./capability-registry";
 
 type Manifest = {
-  tools: Array<{ id: string; adapter: string; capabilities: string[]; artifact: string; execution: string }>;
+  tools: Array<{ id: string; adapter: string; capabilities: string[]; artifact: string; execution?: string; executionMode?: string }>;
 };
 
 const manifest = JSON.parse(
@@ -12,13 +12,13 @@ const manifest = JSON.parse(
 ) as Manifest;
 
 describe("tool registry contract", () => {
-  it("contains the 15 master tools", () => {
-    expect(manifest.tools).toHaveLength(15);
-    expect(new Set(manifest.tools.map((tool) => tool.id)).size).toBe(15);
+  it("contains the canonical master tool registry", () => {
+    expect(manifest.tools.length).toBeGreaterThanOrEqual(50);
+    expect(new Set(manifest.tools.map((tool) => tool.id)).size).toBe(manifest.tools.length);
   });
 
   it("keeps every configured tool explicitly authorized-only", () => {
-    expect(manifest.tools.every((tool) => tool.execution === "authorized-only")).toBe(true);
+    expect(manifest.tools.every((tool) => tool.executionMode === "authorized-only")).toBe(true);
   });
 
   it("uses the same adapter names as the capability registry", () => {

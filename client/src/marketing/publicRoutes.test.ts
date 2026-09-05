@@ -5,11 +5,11 @@ import { publicRoutes } from "../publicRoutes";
 
 describe("public route inventory", () => {
   it("covers every public route with explicit component ownership and a declared safe boundary", () => {
-    expect(publicRoutes).toHaveLength(32);
+    expect(publicRoutes).toHaveLength(33);
     expect(new Set(publicRoutes.map(route => route.path)).size).toBe(publicRoutes.length);
     publicRoutes.forEach(route => {
       expect(route.path).toMatch(/^\//);
-      expect(route.component.name).toMatch(/^(MarketingHome|TrustCenter|PublicInfoPage)$/);
+      expect(route.component.name).toMatch(/^(MarketingHome|TrustCenter|PublicInfoPage|ClientPortal)$/);
       expect(route.boundary).toBeTruthy();
     });
   });

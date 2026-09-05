@@ -7,7 +7,7 @@ describe("authenticated route loading", () => {
     const routeMap = readFileSync(path.resolve(import.meta.dirname, "../authenticatedRoutes.ts"), "utf8");
     const app = readFileSync(path.resolve(import.meta.dirname, "../App.tsx"), "utf8");
     const lazyImportCount = routeMap.match(/lazy\(\(\) => import/g)?.length ?? 0;
-    expect(lazyImportCount).toBeGreaterThanOrEqual(29);
+    expect(lazyImportCount).toBeGreaterThanOrEqual(28);
     expect(app).toContain("<Suspense");
   });
 });

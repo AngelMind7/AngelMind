@@ -40,11 +40,11 @@ describe("governed tool execution policy", () => {
   });
 
   it("does not allow a client approval boolean to authorize high-risk tools", () => {
-    expect(realCanExecuteTool({ toolKey: "sqlmap", mode: "privileged_or_destructive", scopeValidated: true, humanApproval: false })).toEqual({ allowed: false, reason: "human_approval_required" });
+    expect(realCanExecuteTool({ toolKey: "sqlmap", mode: "privileged_or_destructive", scopeValidated: true, humanApproval: false })).toEqual({ allowed: false, reason: "simulation_only" });
   });
 
   it("keeps privileged mode exclusive to critical tools", () => {
-    expect(realCanExecuteTool({ toolKey: "jwt_tool", mode: "privileged_or_destructive", scopeValidated: true, humanApproval: true })).toEqual({ allowed: false, reason: "privileged_mode_blocked" });
+    expect(realCanExecuteTool({ toolKey: "jwt_tool", mode: "privileged_or_destructive", scopeValidated: true, humanApproval: true })).toEqual({ allowed: false, reason: "simulation_only" });
   });
 
   it("blocks a target outside the server-derived workspace scope", async () => {

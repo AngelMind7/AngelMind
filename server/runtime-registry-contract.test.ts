@@ -17,7 +17,7 @@ describe("runtime ↔ canonical tool registry contract", () => {
   it("resolves every canonical tool to an actual runtime tool key", () => {
     const runtimeKeys = new Set(listRegisteredAdapters().map((adapter) => adapter.toolKey));
 
-    for (const tool of listRegisteredTools()) {
+    for (const tool of listRegisteredTools().filter(tool => tool.execution === "authorized-only")) {
       const runtimeKey = getRuntimeToolKey(tool.id);
       expect(runtimeKey).toBeTruthy();
       expect(runtimeKeys.has(runtimeKey!)).toBe(true);

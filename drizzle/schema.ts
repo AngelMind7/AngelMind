@@ -249,7 +249,7 @@ export const notificationEventType = ["approval_required", "guardrail_blocked", 
 export const workspaceMemberRole = ["owner", "operator", "reviewer", "auditor", "approval_authority"] as const;
 export const policyVersionStatus = ["pending", "approved", "rejected", "superseded"] as const;
 export const incidentSeverity = ["low", "medium", "high", "critical"] as const;
-export const incidentStatus = ["open", "acknowledged", "resolved"] as const;
+export const incidentStatus = ["open", "acknowledged", "investigating", "escalated", "resolved", "closed"] as const;
 
 export const workspaces = mysqlTable("workspaces", {
   id: int("id").autoincrement().primaryKey(),

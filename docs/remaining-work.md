@@ -171,3 +171,6 @@ Runtime container CI now runs a pinned Trivy scan for HIGH and CRITICAL vulnerab
 
 ## Latest implementation slice — 2026-09-05 (Image signing)
 Main-branch runtime image publishing now uses GHCR with GitHub OIDC permissions, keyless Cosign signing, certificate identity and issuer verification, and uploaded verification evidence. Pull requests still build and scan locally without publishing or signing. Full DAST and production registry retention policy remain open.
+
+## Latest implementation slice — 2026-09-05 (DAST)
+The manual staging DAST workflow now supports both pinned OWASP ZAP baseline and active full scans. Full scans require two explicit confirmations (`STAGING` and `FULL-STAGING`), reject production-looking or non-HTTPS targets, disable issue-writing, and retain scan artifacts. Actual execution still requires an authorized non-production staging URL and operator confirmation.

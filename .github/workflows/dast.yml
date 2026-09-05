@@ -11,6 +11,11 @@ on:
         description: "Type STAGING to confirm this is an authorized staging target"
         required: true
         type: string
+      confirm_full:
+        description: "Type FULL-STAGING to authorize the active full scan; leave blank for baseline only"
+        required: false
+        default: ""
+        type: string
 
 permissions:
   contents: read
@@ -36,9 +41,37 @@ jobs:
               ;;
           esac
       - name: Run OWASP ZAP baseline scan
-        uses: zaproxy/action-baseline@v0.14.0
+        uses: zaproxy/action-baseline@7c4deb10e6261301961c86d65d54a516394f9aed # v0.14.0
         with:
           target: ${{ inputs.target_url }}
           fail_action: true
           allow_issue_writing: false
           artifact_name: zap-baseline-${{ github.run_id }}
+
+  zap-full-scan:
+    needs: zap-baseline
+    if: ${{ inputs.confirm_staging == 'STAGING' && inputs.confirm_full == 'FULL-STAGING' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Validate HTTPS staging target
+        env:
+          TARGET_URL: ${{ inputs.target_url }}
+        run: |
+          case "$TARGET_URL" in
+            https://*) ;;
+            *) echo "DAST target must use HTTPS" >&2; exit 1 ;;
+          esac
+          case "$TARGET_URL" in
+            *localhost*|*127.0.0.1*|*production*|*prod.*)
+              echo "Refusing localhost or production-looking target" >&2
+              exit 1
+              ;;
+          esac
+      - name: Run OWASP ZAP full scan
+        uses: zaproxy/action-full-scan@75ee1686750ab1511a73b26b77a2aedd295053ed # v0.12.0
+        with:
+          target: ${{ inputs.target_url }}
+          fail_action: true
+          allow_issue_writing: false
+          artifact_name: zap-full-${{ github.run_id }}

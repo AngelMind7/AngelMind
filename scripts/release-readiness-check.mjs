@@ -10,6 +10,7 @@ const requiredFiles = [
   "docs/RELEASE_GATES.md",
   ".github/workflows/promote-staging.yml",
   ".github/workflows/deploy-production.yml",
+  ".github/workflows/migrate-database.yml",
   "config/monitoring/angelmind-alerts.yml",
   "config/monitoring/alertmanager.yml",
   "scripts/check-monitoring-contract.mjs",

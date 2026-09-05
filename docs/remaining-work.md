@@ -180,3 +180,6 @@ A manual promotion workflow now accepts only an immutable AngelMind GHCR digest,
 
 ## Latest implementation slice — 2026-09-05 (Monitoring and alerting)
 Prometheus alert rules now cover readiness/provider failures, runtime and database readiness, HTTP error and latency budgets, and purge worker health. An Alertmanager template adds warning/critical routing, resolved notifications, and critical-alert inhibition. Release readiness runs a monitoring contract checker that prevents metric/rule drift. Webhook credentials and hosted dashboard provisioning remain deployment-level configuration.
+
+## Latest implementation slice — 2026-09-05 (Database management)
+Database management now has a protected automatic migration workflow for staging and production. It serializes runs per environment, requires backup and apply confirmations, validates journal/safety/rollback contracts, calls a provider backup checkpoint hook before applying forward migrations, and retains migration evidence. Provider-specific backup/PITR execution and live database verification remain environment-gated.

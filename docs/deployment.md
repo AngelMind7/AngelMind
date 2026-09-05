@@ -71,3 +71,9 @@ Configure `PRODUCTION_DEPLOY_HOOK_URL` and `PRODUCTION_DEPLOY_HOOK_TOKEN` as sec
 ## Monitoring and alerting
 
 Prometheus alert rules are versioned in `config/monitoring/angelmind-alerts.yml` and cover readiness/provider failure, runtime/database readiness, HTTP error and slow-request budgets, and purge worker health. `config/monitoring/alertmanager.yml` routes warning and critical events separately, sends resolved notifications, and inhibits lower-severity alerts when a critical service alert is active. Configure `ALERTMANAGER_WEBHOOK_URL` and `ALERTMANAGER_CRITICAL_WEBHOOK_URL` only in the monitoring environment; no webhook URL or credential belongs in the repository. Run `pnpm check:monitoring-contract` before deploying a monitoring configuration change.
+
+## Database management and automatic migrations
+
+`.github/workflows/migrate-database.yml` is the only supported automatic migration path for protected staging or production environments. It requires the GitHub environment approval, `BACKUP-COMPLETED`, and `APPLY-MIGRATIONS` confirmations; serializes migrations per target environment; installs the locked dependency tree; runs database schema, journal, safety, and rollback contracts; requests a provider backup checkpoint; applies forward-only Drizzle migrations; and uploads migration evidence.
+
+Configure `DATABASE_URL`, `DATABASE_BACKUP_HOOK_URL`, and `DATABASE_BACKUP_HOOK_TOKEN` as secrets on each protected environment. The backup hook must return a successful checkpoint response before `drizzle-kit migrate` is invoked. Rollback remains an owner-approved restore/forward-fix operation; the workflow intentionally never runs destructive rollback SQL automatically.

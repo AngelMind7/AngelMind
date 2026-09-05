@@ -1,0 +1,104 @@
+name: Apply database migrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      target_environment:
+        description: "Protected GitHub environment containing DATABASE_URL and backup hook secrets"
+        required: true
+        type: choice
+        options:
+          - staging
+          - production
+      confirm_backup:
+        description: "Type BACKUP-COMPLETED after the provider backup/PITR checkpoint is available"
+        required: true
+        type: string
+      confirm_migration:
+        description: "Type APPLY-MIGRATIONS to authorize the migration run"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: database-migration-${{ inputs.target_environment }}
+  cancel-in-progress: false
+
+jobs:
+  migrate:
+    if: ${{ inputs.confirm_backup == 'BACKUP-COMPLETED' && inputs.confirm_migration == 'APPLY-MIGRATIONS' }}
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.target_environment }}
+    timeout-minutes: 25
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.1
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Validate migration and database safety contracts
+        run: |
+          pnpm check
+          node scripts/check-database-contract.mjs
+          pnpm check:migration-journal
+          pnpm check:migration-safety
+          pnpm check:migration-rollback
+      - name: Validate environment database URL
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          TARGET_ENVIRONMENT: ${{ inputs.target_environment }}
+        run: |
+          set -euo pipefail
+          test -n "$DATABASE_URL" || { echo "DATABASE_URL is not configured in the protected environment" >&2; exit 1; }
+          case "$DATABASE_URL" in
+            *password*|*secret*) echo "Database URL is present; secret content is never printed." ;;
+          esac
+          if [ "$TARGET_ENVIRONMENT" = "staging" ]; then
+            case "$DATABASE_URL" in
+              *production*|*prod.*) echo "Refusing production-looking URL for staging migration" >&2; exit 1 ;;
+            esac
+          fi
+      - name: Request provider backup checkpoint
+        env:
+          BACKUP_HOOK_URL: ${{ secrets.DATABASE_BACKUP_HOOK_URL }}
+          BACKUP_HOOK_TOKEN: ${{ secrets.DATABASE_BACKUP_HOOK_TOKEN }}
+          TARGET_ENVIRONMENT: ${{ inputs.target_environment }}
+          COMMIT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test -n "$BACKUP_HOOK_URL" || { echo "DATABASE_BACKUP_HOOK_URL is not configured" >&2; exit 1; }
+          test -n "$BACKUP_HOOK_TOKEN" || { echo "DATABASE_BACKUP_HOOK_TOKEN is not configured" >&2; exit 1; }
+          jq -n --arg environment "$TARGET_ENVIRONMENT" --arg commit "$COMMIT_SHA" '{environment:$environment,commit:$commit,reason:"pre-migration-checkpoint"}' > backup-request.json
+          curl --fail --silent --show-error --max-time 30 \
+            -X POST "$BACKUP_HOOK_URL" \
+            -H "Authorization: Bearer $BACKUP_HOOK_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data @backup-request.json | tee backup-response.json
+      - name: Apply forward migrations
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: pnpm drizzle-kit migrate 2>&1 | tee migration-output.log
+      - name: Verify migration journal after apply
+        run: |
+          node scripts/check-migration-journal.mjs
+          node scripts/check-migration-safety.mjs
+      - name: Upload migration evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: database-migration-${{ inputs.target_environment }}-${{ github.run_id }}
+          path: |
+            backup-request.json
+            backup-response.json
+            migration-output.log
+          if-no-files-found: ignore

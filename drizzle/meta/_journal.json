@@ -463,6 +463,13 @@
       "when": 1788440000006,
       "tag": "0065_break_glass_access",
       "breakpoints": true
+    },
+    {
+      "idx": 66,
+      "version": "7",
+      "when": 1788440000007,
+      "tag": "0066_approval_escalation_metadata",
+      "breakpoints": true
     }
   ]
 }

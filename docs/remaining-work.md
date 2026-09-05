@@ -152,3 +152,8 @@ The repository completion pass added a fail-closed UUID v3/v5/v6 external-buffer
 The repository now registers the complete 17-tool catalog required by the master specification, including `naabu` for port discovery and `katana` for endpoint mining. Both tools have canonical capability mappings, passive-readonly runtime adapters, catalog tests, smoke-test requirements, master-contract enforcement, and pinned provisioning in `Dockerfile.tools`. The supported pnpm overrides and patched dependency configuration were moved from the deprecated `package.json.pnpm` field to `pnpm-workspace.yaml`.
 
 This closes the repository contract gap only. Burp/vendor artifacts, tool-image build and runtime verification, owner-approved target execution, staging deployment, and production health evidence remain environment and safety-gated work. The target-facing execution boundary remains fail-closed by design until those controls are explicitly approved and verified.
+
+## Latest implementation slice — 2026-09-05
+Governance approval escalation is now implemented instead of returning HTTP 501. A permitted reviewer can escalate only a pending, unexpired approval with a bounded note; the workflow increments an escalation counter, extends the review window by 24 hours, records the actor and timestamp, and appends an audit event. Migration `0066_approval_escalation_metadata` adds the durable escalation fields. No target-facing action is triggered by escalation.
+
+Typecheck, migration journal/safety checks, governance tests, master contract, API v1 contract, and diff validation pass.

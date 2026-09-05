@@ -48,6 +48,26 @@ export async function decideApproval(userId: number, input: { id: number; decisi
   return { id: row.id, status };
 }
 
+export async function escalateApproval(userId: number, input: { id: number; note: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [row] = await db.select().from(approvals).where(eq(approvals.id, input.id)).limit(1);
+  if (!row || !(await hasApprovalAuthorityMembership(userId, row.workspaceId)) && !(await canAccessWorkspace(userId, row.workspaceId, "manage"))) throw new Error("Approval tidak ditemukan atau tidak dapat dieskalasikan.");
+  if (row.status !== "pending") throw new Error("Only pending approvals can be escalated.");
+  if (row.expiresAt && row.expiresAt <= new Date()) throw new Error("Approval sudah kedaluwarsa dan tidak dapat dieskalasikan.");
+  const note = input.note.trim();
+  if (note.length < 10 || note.length > 2_000) throw new Error("Escalation note must contain 10-2000 characters.");
+  const now = new Date();
+  const expiresAt = new Date(Math.max(row.expiresAt?.getTime() ?? now.getTime(), now.getTime()) + 24 * 60 * 60 * 1_000);
+  await db.update(approvals).set({ escalationCount: row.escalationCount + 1, escalatedByUserId: userId, escalatedAt: now, expiresAt, decisionNote: note }).where(and(eq(approvals.id, row.id), eq(approvals.status, "pending")));
+  const details = { approvalId: row.id, escalatedByUserId: userId, escalationCount: row.escalationCount + 1, note, expiresAt: expiresAt.toISOString(), execution: "blocked-by-safety-boundary" };
+  const [previous] = await db.select({ chainHash: auditEvents.chainHash }).from(auditEvents).where(eq(auditEvents.workspaceId, row.workspaceId)).orderBy(desc(auditEvents.id)).limit(1);
+  const evidenceHash = digest(details);
+  const chainHash = digest({ previousEntryHash: previous?.chainHash ?? null, workspaceId: row.workspaceId, category: "governance", subject: "approval-escalated", evidenceHash });
+  await db.insert(auditEvents).values({ workspaceId: row.workspaceId, category: "governance", subject: "approval-escalated", evidenceHash, previousEntryHash: previous?.chainHash ?? null, chainHash, traceId: randomUUID(), details: JSON.stringify(details) });
+  return { id: row.id, status: "pending" as const, escalationCount: row.escalationCount + 1, expiresAt };
+}
+
 export async function createApproval(userId: number, input: { workspaceId: number; actionName: string; tier: "tier1" | "tier2" | "tier3"; context?: Record<string, unknown>; expiresAt?: Date }) {
   const db = await access(userId, input.workspaceId, "respond");
   if (!input.actionName.trim()) throw new Error("Approval action name is required.");

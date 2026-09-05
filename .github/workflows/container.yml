@@ -24,6 +24,14 @@ jobs:
         run: docker build --target runtime --tag angelmind:${{ github.sha }} .
       - name: Inspect image metadata
         run: docker image inspect angelmind:${{ github.sha }} --format '{{.Config.User}} {{.Config.ExposedPorts}}'
+      - name: Generate CycloneDX SBOM
+        uses: anchore/sbom-action@d94f46e13c6c62f59525ac9a1e147a99dc0b9bf5 # v0.17.0
+        with:
+          image: angelmind:${{ github.sha }}
+          format: cyclonedx-json
+          output-file: sbom-cyclonedx.json
+          artifact-name: angelmind-sbom-${{ github.sha }}
+          upload-artifact: true
 
   tools-smoke:
     name: Build and execute tools adapter smoke suite

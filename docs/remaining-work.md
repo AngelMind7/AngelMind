@@ -162,3 +162,6 @@ Typecheck, migration journal/safety checks, governance tests, master contract, A
 Public SEO coverage is now repository-backed: route-aware metadata updates titles, descriptions, canonical URLs, Open Graph, and Twitter cards; the static shell contains JSON-LD; the sitemap covers all concrete public routes; robots excludes authenticated and organization portal paths while allowing public security content; and `check:seo-contract` prevents route/sitemap/robots drift. Search-engine crawl/render verification remains deployment-level work.
 
 Targeted public-route tests, SEO contract, web-page contract, master/API contracts, migration checks, and diff validation pass.
+
+## Latest implementation slice — 2026-09-05 (Supply chain)
+The container workflow now generates and uploads a CycloneDX JSON SBOM for every runtime image build using a pinned `anchore/sbom-action` commit. This closes the repository-side SBOM evidence gap while image signing/verification and full DAST remain separate release-gated work.

@@ -61,3 +61,9 @@ Installing a binary does not grant execution permission. The catalog and tool AP
 ## Operational boundaries
 
 No target-facing integration is shipped or activated by this dashboard. Any future authorized research worker must obtain only policy-approved, workspace-scoped work from the control plane and must treat a missing, blocked, or expired approval as a hard stop.
+
+## Production deployment pipeline
+
+The repository includes a manual `.github/workflows/deploy-production.yml` workflow. It runs inside the protected GitHub `production` environment and requires `DEPLOY-PRODUCTION` confirmation, a verified GHCR `release-*` image, an expected commit, and a production HTTPS URL. Before the provider deployment hook is called, the workflow verifies the keyless Cosign signature. After the hook returns, it polls `/healthz`, validates the deployed commit, and checks `/readyz` and `/metrics` before retaining deployment evidence.
+
+Configure `PRODUCTION_DEPLOY_HOOK_URL` and `PRODUCTION_DEPLOY_HOOK_TOKEN` as secrets on the protected `production` environment. The hook is provider-neutral so Railway, a container platform, or an organization-owned deployment controller can consume the immutable release image without exposing provider credentials to the repository. The workflow is manual by design and does not deploy merely because code is pushed to `main`.

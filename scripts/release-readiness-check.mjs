@@ -9,6 +9,7 @@ const requiredFiles = [
   "docs/EXECUTION_VERTICAL_SLICE.md",
   "docs/RELEASE_GATES.md",
   ".github/workflows/promote-staging.yml",
+  ".github/workflows/deploy-production.yml",
 ];
 
 const failures = [];
@@ -108,6 +109,23 @@ for (const token of [
   if (!promotion.includes(token)) failures.push(`promotion-gate:${token}`);
 }
 
+const productionDeploy = readFileSync(
+  ".github/workflows/deploy-production.yml",
+  "utf8"
+);
+for (const token of [
+  "DEPLOY-PRODUCTION",
+  "environment:",
+  "PRODUCTION_DEPLOY_HOOK_URL",
+  "PRODUCTION_DEPLOY_HOOK_TOKEN",
+  "cosign verify",
+  "/healthz",
+  "/readyz",
+  "release-",
+]) {
+  if (!productionDeploy.includes(token))
+    failures.push(`production-deploy:${token}`);
+}
 const workflowDirectory = ".github/workflows";
 if (existsSync(workflowDirectory)) {
   for (const name of readdirSync(workflowDirectory)) {

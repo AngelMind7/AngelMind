@@ -1,0 +1,112 @@
+name: Deploy production release
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_ref:
+        description: "Verified GHCR release image, for example ghcr.io/angelmind7/angelmind:release-<commit>"
+        required: true
+        type: string
+      expected_commit:
+        description: "Commit SHA expected from the deployed /healthz endpoint"
+        required: true
+        type: string
+      production_url:
+        description: "Production HTTPS base URL"
+        required: true
+        type: string
+      confirm_deploy:
+        description: "Type DEPLOY-PRODUCTION to authorize this deployment"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+  packages: read
+
+environment:
+  name: production
+  url: ${{ inputs.production_url }}
+
+jobs:
+  deploy:
+    if: ${{ inputs.confirm_deploy == 'DEPLOY-PRODUCTION' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Validate production deployment inputs
+        env:
+          IMAGE_REF: ${{ inputs.image_ref }}
+          EXPECTED_COMMIT: ${{ inputs.expected_commit }}
+          PRODUCTION_URL: ${{ inputs.production_url }}
+        run: |
+          set -euo pipefail
+          case "$IMAGE_REF" in
+            ghcr.io/angelmind7/angelmind:release-*) ;;
+            *) echo "Production deployment requires a verified GHCR release tag" >&2; exit 1 ;;
+          esac
+          case "$PRODUCTION_URL" in
+            https://*) ;;
+            *) echo "Production URL must use HTTPS" >&2; exit 1 ;;
+          esac
+          test "${#EXPECTED_COMMIT}" -ge 7
+      - name: Install Cosign
+        uses: sigstore/cosign-installer@1aa8e0f2454b781fbf0fbf306a4c9533a0c57409 # v3.7.0
+      - name: Verify release image signature
+        env:
+          IMAGE_REF: ${{ inputs.image_ref }}
+        run: >-
+          cosign verify
+          --certificate-identity-regexp '^https://github.com/AngelMind7/AngelMind/.github/workflows/container.yml@refs/heads/main$'
+          --certificate-oidc-issuer 'https://token.actions.githubusercontent.com'
+          "$IMAGE_REF" | tee cosign-verification.json
+      - name: Request provider deployment
+        env:
+          DEPLOY_HOOK_URL: ${{ secrets.PRODUCTION_DEPLOY_HOOK_URL }}
+          DEPLOY_HOOK_TOKEN: ${{ secrets.PRODUCTION_DEPLOY_HOOK_TOKEN }}
+          IMAGE_REF: ${{ inputs.image_ref }}
+          EXPECTED_COMMIT: ${{ inputs.expected_commit }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          set -euo pipefail
+          test -n "$DEPLOY_HOOK_URL" || { echo "PRODUCTION_DEPLOY_HOOK_URL is not configured" >&2; exit 1; }
+          test -n "$DEPLOY_HOOK_TOKEN" || { echo "PRODUCTION_DEPLOY_HOOK_TOKEN is not configured" >&2; exit 1; }
+          payload=$(jq -n --arg imageRef "$IMAGE_REF" --arg expectedCommit "$EXPECTED_COMMIT" --arg releaseRunId "$RUN_ID" '{imageRef:$imageRef,expectedCommit:$expectedCommit,releaseRunId:$releaseRunId}')
+          curl --fail --silent --show-error --max-time 30 \
+            -X POST "$DEPLOY_HOOK_URL" \
+            -H "Authorization: Bearer $DEPLOY_HOOK_TOKEN" \
+            -H "Content-Type: application/json" \
+            --data "$payload" | tee deploy-response.json
+      - name: Verify production health and deployed commit
+        env:
+          PRODUCTION_URL: ${{ inputs.production_url }}
+          EXPECTED_COMMIT: ${{ inputs.expected_commit }}
+        run: |
+          set -euo pipefail
+          for attempt in $(seq 1 12); do
+            if curl --fail --silent --show-error --max-time 15 "$PRODUCTION_URL/healthz" > healthz.json; then
+              actual=$(python3 -c 'import json,sys; print(json.load(sys.stdin).get("commit", ""))' < healthz.json)
+              case "$actual" in
+                "$EXPECTED_COMMIT"*) break ;;
+              esac
+            fi
+            if [ "$attempt" -eq 12 ]; then
+              echo "Production did not expose expected commit: $actual" >&2
+              exit 1
+            fi
+            sleep 10
+          done
+          curl --fail --silent --show-error --max-time 15 "$PRODUCTION_URL/readyz" | tee readyz.json
+          curl --fail --silent --show-error --max-time 15 "$PRODUCTION_URL/metrics" >/dev/null
+      - name: Upload deployment evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-deploy-${{ github.run_id }}
+          path: |
+            cosign-verification.json
+            deploy-response.json
+            healthz.json
+            readyz.json
+          if-no-files-found: ignore

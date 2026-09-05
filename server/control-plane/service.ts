@@ -1304,15 +1304,16 @@ export async function listNotificationPreferences(userId: number) {
 export async function setNotificationPreference(
   userId: number,
   eventType: NotificationEvent,
-  inAppEnabled: boolean
+  inAppEnabled: boolean,
+  emailEnabled = true
 ) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   await db
     .insert(notificationPreferences)
-    .values({ userId, eventType, inAppEnabled: inAppEnabled ? 1 : 0 })
+    .values({ userId, eventType, inAppEnabled: inAppEnabled ? 1 : 0, emailEnabled: emailEnabled ? 1 : 0 })
     .onDuplicateKeyUpdate({
-      set: { inAppEnabled: inAppEnabled ? 1 : 0, updatedAt: new Date() },
+      set: { inAppEnabled: inAppEnabled ? 1 : 0, emailEnabled: emailEnabled ? 1 : 0, updatedAt: new Date() },
     });
   return { success: true };
 }

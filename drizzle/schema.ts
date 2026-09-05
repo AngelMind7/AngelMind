@@ -941,6 +941,7 @@ export const notificationPreferences = mysqlTable("notificationPreferences", {
   userId: int("userId").notNull(),
   eventType: mysqlEnum("eventType", notificationEventType).notNull(),
   inAppEnabled: int("inAppEnabled").default(1).notNull(),
+  emailEnabled: int("emailEnabled").default(1).notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => [
   uniqueIndex("notification_preference_user_event_uq").on(table.userId, table.eventType),

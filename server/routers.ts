@@ -794,13 +794,15 @@ export const appRouter = router({
             "comment_mentioned",
           ]),
           inAppEnabled: z.boolean(),
+          emailEnabled: z.boolean().optional(),
         })
       )
       .mutation(({ ctx, input }) =>
         controlPlane.setNotificationPreference(
           ctx.user.id,
           input.eventType,
-          input.inAppEnabled
+          input.inAppEnabled,
+          input.emailEnabled ?? true
         )
       ),
     markRead: protectedProcedure

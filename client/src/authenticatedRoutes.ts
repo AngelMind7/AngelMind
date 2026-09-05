@@ -24,6 +24,7 @@ const aiWorkers = lazy(() => import("@/pages/AIWorkers"));
 const agents = lazy(() => import("@/pages/Agents"));
 const utfRunners = lazy(() => import("@/pages/UFTRunners"));
 const purpleTeam = lazy(() => import("@/pages/PurpleTeam"));
+const redTeam = lazy(() => import("@/pages/RedTeam"));
 const audit = lazy(() => import("@/pages/Audit"));
 const operations = lazy(() => import("@/pages/Operations"));
 const assurance = lazy(() => import("@/pages/Assurance"));
@@ -45,7 +46,7 @@ export const authenticatedRoutes = [
   { path: "/tools", component: tools }, { path: "/tools/capabilities", component: tools }, { path: "/tools/installed", component: tools }, { path: "/tools/health", component: tools }, { path: "/tools/history", component: tools }, { path: "/tools/:id", component: tools },
   { path: "/ai/workers", component: aiWorkers }, { path: "/ai/workers/new", component: aiWorkers }, { path: "/ai/workers/:id", component: aiWorkers },
   { path: "/utf/runners", component: utfRunners }, { path: "/utf/runners/new", component: utfRunners }, { path: "/utf/runners/:id/execute", component: utfRunners }, { path: "/utf/runners/:id", component: utfRunners },
-  { path: "/redteam/implants/:id/beacon", component: blueprintModule }, { path: "/redteam/implants/:id/status", component: blueprintModule },
+  { path: "/redteam/implants/:id/beacon", component: redTeam }, { path: "/redteam/implants/:id/status", component: redTeam },
   { path: "/playbooks", component: playbooks }, { path: "/playbooks/new", component: playbooks }, { path: "/playbooks/:id/edit", component: playbooks }, { path: "/playbooks/:id/run", component: playbooks }, { path: "/playbooks/:id", component: playbooks },
   { path: "/evidence", component: evidenceVault }, { path: "/evidence/:id", component: evidenceVault },
   { path: "/reports", component: reports }, { path: "/reports/new", component: reports }, { path: "/reports/:id", component: reports },
@@ -53,7 +54,7 @@ export const authenticatedRoutes = [
   { path: "/governance", component: governance }, { path: "/governance/approvals", component: governance }, { path: "/governance/policies", component: governance }, { path: "/findings", component: findings }, { path: "/findings/:id", component: findings }, { path: "/audit", component: audit },
   { path: "/operations", component: operations }, { path: "/operations/health", component: operations }, { path: "/operations/queue", component: operations }, { path: "/operations/workers", component: operations }, { path: "/operations-console", component: operationsAdmin }, { path: "/assurance", component: assurance }, { path: "/assurance/quality", component: assurance }, { path: "/assurance/compliance", component: assurance },
   { path: "/incidents", component: incidents }, { path: "/incidents/new", component: incidents }, { path: "/incidents/:id", component: incidents },
-  { path: "/redteam", component: blueprintModule }, { path: "/redteam/operations", component: blueprintModule }, { path: "/redteam/operations/new", component: blueprintModule }, { path: "/redteam/implants", component: blueprintModule }, { path: "/redteam/phishing", component: blueprintModule },
+  { path: "/redteam", component: redTeam }, { path: "/redteam/operations", component: redTeam }, { path: "/redteam/operations/new", component: redTeam }, { path: "/redteam/implants", component: redTeam }, { path: "/redteam/phishing", component: redTeam },
   { path: "/purpleteam", component: purpleTeam }, { path: "/purpleteam/exercises", component: purpleTeam }, { path: "/purpleteam/exercises/new", component: purpleTeam },
   { path: "/bugbounty", component: blueprintModule }, { path: "/bugbounty/programs", component: blueprintModule }, { path: "/bugbounty/programs/new", component: blueprintModule }, { path: "/bugbounty/submissions", component: blueprintModule },
   { path: "/client/:orgSlug", component: clientPortal }, { path: "/client", component: clientPortal },

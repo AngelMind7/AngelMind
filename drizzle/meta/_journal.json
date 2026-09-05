@@ -491,6 +491,20 @@
       "when": 1788440000010,
       "tag": "0069_program_scope_versions_research_context",
       "breakpoints": true
+    },
+    {
+      "idx": 70,
+      "version": "7",
+      "when": 1788440000011,
+      "tag": "0070_research_asset_relations",
+      "breakpoints": true
+    },
+    {
+      "idx": 71,
+      "version": "7",
+      "when": 1788440000012,
+      "tag": "0071_passive_asset_signals",
+      "breakpoints": true
     }
   ]
 }

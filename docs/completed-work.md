@@ -93,3 +93,7 @@
 - [x] Add durable `programScopeVersions` history with authorized Program scope updates, versioned diffs, change summaries, and organization-scoped revision listing.
 - [x] Snapshot linked `programId` and `programVersion` into new ResearchSession records and include the context in research audit events.
 - [x] Register migration `0069_program_scope_versions_research_context`; migration journal, schema, TypeScript, and focused lifecycle contracts pass.
+
+- [x] Add session-scoped `researchAssetRelations` with same-session authorization, deterministic duplicate prevention, relation-type validation, and Research Workspace controls.
+- [x] Add technology/service inventory query and passive threat-signal ledger for certificate expiry, service exposure, cloud exposure, code leak, subdomain history, and brand mention observations.
+- [x] Add migration `0070_research_asset_relations` and `0071_passive_asset_signals`; all schema, migration, API, page, and master contracts pass. Active probing remains disabled.

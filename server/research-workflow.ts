@@ -4,6 +4,8 @@ import {
   auditEvents,
   findings,
   researchAssets,
+  researchAssetRelations,
+  researchAssetSignals,
   researchHypotheses,
   researchObservations,
   researchSessions,
@@ -138,6 +140,51 @@ export async function transitionResearchSession(userId: number, sessionId: numbe
 export async function listResearchAssets(userId: number, sessionId: number) {
   const { db, session } = await requireSession(userId, sessionId);
   return db.select().from(researchAssets).where(eq(researchAssets.sessionId, session.id)).orderBy(asc(researchAssets.hostname), asc(researchAssets.value));
+}
+export async function listResearchTechnologyAssets(userId: number, sessionId: number) {
+  const { db, session } = await requireSession(userId, sessionId);
+  return db.select().from(researchAssets).where(and(eq(researchAssets.sessionId, session.id), inArray(researchAssets.assetType, ["technology", "service"]))).orderBy(asc(researchAssets.assetType), asc(researchAssets.value));
+}
+export async function listResearchAssetRelations(userId: number, sessionId: number) {
+  const { db, session } = await requireSession(userId, sessionId);
+  return db.select().from(researchAssetRelations).where(eq(researchAssetRelations.sessionId, session.id)).orderBy(desc(researchAssetRelations.createdAt));
+}
+export async function createResearchAssetRelation(userId: number, input: { sessionId: number; sourceAssetId: number; targetAssetId: number; relationType: "depends_on" | "hosts" | "resolves_to" | "uses_technology" | "exposes_service" | "related_to"; metadata?: Record<string, unknown> }) {
+  const { db, session } = await requireSession(userId, input.sessionId, "respond");
+  if (input.sourceAssetId === input.targetAssetId) throw new Error("Asset relation cannot point to itself.");
+  const metadata = JSON.stringify(input.metadata ?? {});
+  if (metadata.length > 20_000) throw new Error("Asset relation metadata is too large.");
+  const assets = await db.select({ id: researchAssets.id, workspaceId: researchAssets.workspaceId }).from(researchAssets).where(and(eq(researchAssets.sessionId, session.id), inArray(researchAssets.id, [input.sourceAssetId, input.targetAssetId])));
+  if (assets.length !== 2 || assets.some(asset => asset.workspaceId !== session.workspaceId)) throw new Error("Both relation assets must belong to the same research session.");
+  const [existing] = await db.select().from(researchAssetRelations).where(and(eq(researchAssetRelations.sessionId, session.id), eq(researchAssetRelations.sourceAssetId, input.sourceAssetId), eq(researchAssetRelations.targetAssetId, input.targetAssetId), eq(researchAssetRelations.relationType, input.relationType))).limit(1);
+  if (existing) return existing;
+  await db.insert(researchAssetRelations).values({ workspaceId: session.workspaceId, sessionId: session.id, sourceAssetId: input.sourceAssetId, targetAssetId: input.targetAssetId, relationType: input.relationType, metadata, traceId: currentTraceContext()?.traceId ?? session.traceId ?? null, createdByUserId: userId });
+  const [relation] = await db.select().from(researchAssetRelations).where(and(eq(researchAssetRelations.sessionId, session.id), eq(researchAssetRelations.sourceAssetId, input.sourceAssetId), eq(researchAssetRelations.targetAssetId, input.targetAssetId), eq(researchAssetRelations.relationType, input.relationType))).limit(1);
+  if (!relation) throw new Error("Asset relation could not be created.");
+  await addResearchAudit(db, session.workspaceId, userId, "research-asset-relation-created", { sessionId: session.id, relationId: relation.id, sourceAssetId: input.sourceAssetId, targetAssetId: input.targetAssetId, relationType: input.relationType });
+  return relation;
+}
+export async function listResearchAssetSignals(userId: number, sessionId: number) {
+  const { db, session } = await requireSession(userId, sessionId);
+  return db.select().from(researchAssetSignals).where(eq(researchAssetSignals.sessionId, session.id)).orderBy(desc(researchAssetSignals.observedAt));
+}
+export async function recordResearchAssetSignal(userId: number, input: { sessionId: number; assetId?: number; signalType: "certificate_expiry" | "service_exposure" | "cloud_exposure" | "code_leak" | "subdomain_history" | "brand_mention"; title: string; details: string; source: string; confidence?: number; observedAt?: Date; expiresAt?: Date }) {
+  const { db, session } = await requireSession(userId, input.sessionId, "respond");
+  const title = input.title.trim();
+  const details = input.details.trim();
+  const source = input.source.trim();
+  if (title.length < 3 || title.length > 240 || details.length < 3 || details.length > 40_000 || source.length < 2 || source.length > 255) throw new Error("Passive signal fields are invalid.");
+  if (input.assetId) {
+    const [asset] = await db.select({ id: researchAssets.id }).from(researchAssets).where(and(eq(researchAssets.id, input.assetId), eq(researchAssets.sessionId, session.id))).limit(1);
+    if (!asset) throw new Error("Passive signal asset must belong to the same research session.");
+  }
+  const confidence = Math.min(100, Math.max(0, Math.trunc(input.confidence ?? 50)));
+  const fingerprint = createHash("sha256").update(`${session.id}:${input.assetId ?? "workspace"}:${input.signalType}:${title}:${source}`).digest("hex");
+  await db.insert(researchAssetSignals).values({ workspaceId: session.workspaceId, sessionId: session.id, assetId: input.assetId ?? null, signalType: input.signalType, status: "observed", fingerprint, title, details, source, confidence, observedAt: input.observedAt ?? new Date(), expiresAt: input.expiresAt ?? null, traceId: currentTraceContext()?.traceId ?? session.traceId ?? null, createdByUserId: userId }).onDuplicateKeyUpdate({ set: { details, confidence, observedAt: input.observedAt ?? new Date(), expiresAt: input.expiresAt ?? null, status: "observed" } });
+  const [signal] = await db.select().from(researchAssetSignals).where(and(eq(researchAssetSignals.sessionId, session.id), eq(researchAssetSignals.fingerprint, fingerprint))).limit(1);
+  if (!signal) throw new Error("Passive asset signal could not be recorded.");
+  await addResearchAudit(db, session.workspaceId, userId, "research-asset-signal-recorded", { sessionId: session.id, signalId: signal.id, signalType: input.signalType, assetId: input.assetId ?? null, fingerprint });
+  return signal;
 }
 
 export async function createResearchAsset(userId: number, input: { sessionId: number; assetType: "domain" | "subdomain" | "ip" | "application" | "api" | "endpoint" | "technology" | "service"; value: string; hostname?: string; metadata?: Record<string, unknown> }) {

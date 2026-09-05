@@ -1893,6 +1893,37 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         researchWorkflow.listResearchAssets(ctx.user.id, input.sessionId)
       ),
+    technologyInventory: protectedProcedure
+      .input(z.object({ sessionId: z.number().int().positive() }))
+      .query(({ ctx, input }) => researchWorkflow.listResearchTechnologyAssets(ctx.user.id, input.sessionId)),
+    assetRelations: protectedProcedure
+      .input(z.object({ sessionId: z.number().int().positive() }))
+      .query(({ ctx, input }) => researchWorkflow.listResearchAssetRelations(ctx.user.id, input.sessionId)),
+    assetSignals: protectedProcedure
+      .input(z.object({ sessionId: z.number().int().positive() }))
+      .query(({ ctx, input }) => researchWorkflow.listResearchAssetSignals(ctx.user.id, input.sessionId)),
+    recordAssetSignal: protectedProcedure
+      .input(z.object({
+        sessionId: z.number().int().positive(),
+        assetId: z.number().int().positive().optional(),
+        signalType: z.enum(["certificate_expiry", "service_exposure", "cloud_exposure", "code_leak", "subdomain_history", "brand_mention"]),
+        title: z.string().trim().min(3).max(240),
+        details: z.string().trim().min(3).max(40_000),
+        source: z.string().trim().min(2).max(255),
+        confidence: z.number().int().min(0).max(100).optional(),
+        observedAt: z.coerce.date().optional(),
+        expiresAt: z.coerce.date().optional(),
+      }))
+      .mutation(({ ctx, input }) => researchWorkflow.recordResearchAssetSignal(ctx.user.id, input)),
+    createAssetRelation: protectedProcedure
+      .input(z.object({
+        sessionId: z.number().int().positive(),
+        sourceAssetId: z.number().int().positive(),
+        targetAssetId: z.number().int().positive(),
+        relationType: z.enum(["depends_on", "hosts", "resolves_to", "uses_technology", "exposes_service", "related_to"]),
+        metadata: z.record(z.string(), z.unknown()).optional(),
+      }))
+      .mutation(({ ctx, input }) => researchWorkflow.createResearchAssetRelation(ctx.user.id, input)),
     createAsset: protectedProcedure
       .input(
         z.object({

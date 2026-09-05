@@ -293,6 +293,9 @@ export const workspaces = mysqlTable("workspaces", {
 
 export const researchSessionState = ["draft", "ready", "active", "paused", "completed", "archived"] as const;
 export const researchAssetType = ["domain", "subdomain", "ip", "application", "api", "endpoint", "technology", "service"] as const;
+export const researchAssetRelationType = ["depends_on", "hosts", "resolves_to", "uses_technology", "exposes_service", "related_to"] as const;
+export const researchAssetSignalType = ["certificate_expiry", "service_exposure", "cloud_exposure", "code_leak", "subdomain_history", "brand_mention"] as const;
+export const researchAssetSignalStatus = ["observed", "acknowledged", "resolved"] as const;
 export const researchAssetState = ["discovered", "triaged", "in_scope", "out_of_scope", "archived"] as const;
 export const researchAssetVerificationMethod = ["dns_txt", "file_upload", "cloud_role", "authorization_letter"] as const;
 export const researchAssetVerificationStatus = ["unverified", "requested", "pending_review", "verified", "rejected", "expired", "cancelled"] as const;
@@ -333,6 +336,36 @@ export const researchAssets = mysqlTable("researchAssets", {
   createdByUserId: int("createdByUserId").notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [index("research_asset_id_workspace_idx").on(table.id, table.workspaceId), index("research_asset_session_state_idx").on(table.sessionId, table.state), index("research_asset_verification_idx").on(table.workspaceId, table.verificationStatus, table.verifiedAt), uniqueIndex("research_asset_session_value_uq").on(table.sessionId, table.value), foreignKey({ columns: [table.sessionId, table.workspaceId], foreignColumns: [researchSessions.id, researchSessions.workspaceId], name: "research_asset_session_workspace_fk" })]);
+export const researchAssetRelations = mysqlTable("researchAssetRelations", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  sessionId: int("sessionId").notNull().references(() => researchSessions.id, { onDelete: "cascade" }),
+  sourceAssetId: int("sourceAssetId").notNull().references(() => researchAssets.id, { onDelete: "cascade" }),
+  targetAssetId: int("targetAssetId").notNull().references(() => researchAssets.id, { onDelete: "cascade" }),
+  relationType: mysqlEnum("relationType", researchAssetRelationType).notNull(),
+  metadata: text("metadata").notNull(),
+  traceId: varchar("traceId", { length: 128 }),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("research_asset_relation_uq").on(table.sessionId, table.sourceAssetId, table.targetAssetId, table.relationType), index("research_asset_relation_workspace_idx").on(table.workspaceId, table.relationType), index("research_asset_relation_target_idx").on(table.targetAssetId)]);
+export const researchAssetSignals = mysqlTable("researchAssetSignals", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  sessionId: int("sessionId").notNull().references(() => researchSessions.id, { onDelete: "cascade" }),
+  assetId: int("assetId").references(() => researchAssets.id, { onDelete: "set null" }),
+  signalType: mysqlEnum("signalType", researchAssetSignalType).notNull(),
+  status: mysqlEnum("status", researchAssetSignalStatus).default("observed").notNull(),
+  fingerprint: varchar("fingerprint", { length: 64 }).notNull(),
+  title: varchar("title", { length: 240 }).notNull(),
+  details: text("details").notNull(),
+  source: varchar("source", { length: 255 }).notNull(),
+  confidence: int("confidence").default(50).notNull(),
+  observedAt: timestamp("observedAt").defaultNow().notNull(),
+  expiresAt: timestamp("expiresAt"),
+  traceId: varchar("traceId", { length: 128 }),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("research_asset_signal_fingerprint_uq").on(table.sessionId, table.fingerprint), index("research_asset_signal_workspace_status_idx").on(table.workspaceId, table.status, table.observedAt), index("research_asset_signal_asset_idx").on(table.assetId, table.signalType)]);
 export const researchAssetVerifications = mysqlTable("researchAssetVerifications", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),

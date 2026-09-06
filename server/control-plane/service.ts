@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import { and, count, desc, eq, gt, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
+import { and, asc, count, desc, eq, gt, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
 import {
   auditEvents,
   approvals,
@@ -460,9 +460,16 @@ async function expireApprovals(rows: ApprovalRow[]) {
       row.status = "expired";
     }
   }
-  return rows;
+    return rows;
 }
-
+export async function expirePendingApprovals(limit = 250) {
+  const db = await getDb();
+  if (!db) return { inspected: 0, expired: 0 };
+  const now = new Date();
+  const rows = await db.select().from(approvals).where(and(eq(approvals.status, "pending"), isNotNull(approvals.expiresAt), lt(approvals.expiresAt, now))).orderBy(asc(approvals.expiresAt), asc(approvals.id)).limit(Math.min(500, Math.max(1, Math.trunc(limit))));
+  const expired = await expireApprovals(rows);
+  return { inspected: rows.length, expired: expired.filter(row => row.status === "expired").length };
+}
 export async function listApprovals(
   userId: number,
   userRole: "user" | "admin"

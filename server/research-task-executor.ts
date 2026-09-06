@@ -23,6 +23,15 @@ function stringValue(value: unknown): string | undefined {
   return typeof value === "string" && value.trim() ? value.trim() : undefined;
 }
 
+function parseStringArray(value: string): string[] {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string" && item.trim().length > 0).map(item => item.trim()) : [];
+  } catch {
+    return [];
+  }
+}
+
 export async function enqueueResearchTask(userId: number, input: { taskId: number; idempotencyKey?: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
@@ -52,7 +61,7 @@ export async function executeResearchTaskJob(payload: Record<string, unknown>, a
 
   await transitionResearchTask(Number(payload.userId), task.id, "running", undefined, task.revision);
   const inputs = parseObject(task.inputs);
-  const toolKey = stringValue(inputs.toolKey) ?? stringValue(inputs.adapter) ?? task.suggestedAdapters.split(",")[0]?.trim();
+  const toolKey = stringValue(inputs.toolKey) ?? stringValue(inputs.adapter) ?? parseStringArray(task.suggestedAdapters)[0];
   const mode = stringValue(inputs.mode) as ToolRuntimeRequest["mode"] | undefined;
   const target = stringValue(inputs.input) ?? stringValue(inputs.target) ?? stringValue(inputs.assetValue);
   if (!toolKey || !mode || !EXECUTABLE_MODES.includes(mode) || !target) {

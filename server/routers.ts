@@ -1743,6 +1743,9 @@ export const appRouter = router({
     list: protectedProcedure.query(({ ctx }) =>
       organization.listOrganizations(ctx.user.id)
     ),
+    listPage: protectedProcedure
+      .input(z.object({ pageSize: z.number().int().min(1).max(100).optional(), cursor: z.string().max(512).optional() }))
+      .query(({ ctx, input }) => organization.listOrganizationsPage(ctx.user.id, input)),
     create: protectedProcedure
       .input(z.object({ name: z.string().min(2).max(160) }))
       .mutation(({ ctx, input }) =>

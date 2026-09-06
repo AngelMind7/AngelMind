@@ -34,6 +34,24 @@ export async function listOrganizations(userId: number) {
   return db.select({ id: organizations.id, name: organizations.name, slug: organizations.slug, status: organizations.status, role: organizationMembers.role, createdAt: organizations.createdAt, updatedAt: organizations.updatedAt }).from(organizationMembers).innerJoin(organizations, eq(organizationMembers.organizationId, organizations.id)).where(and(eq(organizationMembers.userId, userId), eq(organizations.status, "active"))).orderBy(desc(organizations.updatedAt));
 }
 
+export async function listOrganizationsPage(userId: number, input: { pageSize?: number; cursor?: string }) {
+  const db = await getDb();
+  if (!db) return { items: [], nextCursor: null };
+  const pageSize = normalizePageSize(input.pageSize);
+  const scope = `user:${userId}:organizations`;
+  const cursor = assertCursor(input.cursor, scope);
+  const conditions = [eq(organizationMembers.userId, userId), eq(organizations.status, "active")];
+  if (cursor) {
+    let boundary: { updatedAt: string; id: number };
+    try { boundary = JSON.parse(cursor.after) as { updatedAt: string; id: number }; } catch { throw new Error("Invalid or expired pagination cursor."); }
+    const date = new Date(boundary.updatedAt);
+    if (!Number.isInteger(boundary.id) || Number.isNaN(date.getTime())) throw new Error("Invalid or expired pagination cursor.");
+    conditions.push(or(lt(organizations.updatedAt, date), and(eq(organizations.updatedAt, date), lt(organizations.id, boundary.id)))!);
+  }
+  const rows = await db.select({ id: organizations.id, name: organizations.name, slug: organizations.slug, status: organizations.status, role: organizationMembers.role, createdAt: organizations.createdAt, updatedAt: organizations.updatedAt }).from(organizationMembers).innerJoin(organizations, eq(organizationMembers.organizationId, organizations.id)).where(and(...conditions)).orderBy(desc(organizations.updatedAt), desc(organizations.id)).limit(pageSize + 1);
+  return { items: rows.slice(0, pageSize), nextCursor: rows.length > pageSize ? createCursor(JSON.stringify({ updatedAt: rows[pageSize - 1].updatedAt.toISOString(), id: rows[pageSize - 1].id }), scope) : null };
+}
+
 export async function createOrganization(userId: number, input: { name: string }) {
   if (!Number.isInteger(userId) || userId < 1 || !input || typeof input.name !== "string") throw new Error("Organization input is invalid.");
   const db = await getDb();

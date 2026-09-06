@@ -533,6 +533,20 @@
       "when": 1788440000016,
       "tag": "0075_llm_provider_circuit_state",
       "breakpoints": true
+    },
+    {
+      "idx": 76,
+      "version": "7",
+      "when": 1788440000017,
+      "tag": "0076_ai_circuit_notification_events",
+      "breakpoints": true
+    },
+    {
+      "idx": 77,
+      "version": "7",
+      "when": 1788440000018,
+      "tag": "0077_llm_circuit_fencing_epoch",
+      "breakpoints": true
     }
   ]
 }

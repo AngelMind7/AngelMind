@@ -803,6 +803,8 @@ export const appRouter = router({
             "incident_created",
             "webhook_activation_requested",
             "comment_mentioned",
+            "ai_provider_circuit_opened",
+            "ai_provider_circuit_recovered",
           ]),
           inAppEnabled: z.boolean(),
           emailEnabled: z.boolean().optional(),
@@ -876,6 +878,8 @@ export const appRouter = router({
                 "incident_created",
                 "webhook_activation_requested",
                 "comment_mentioned",
+                "ai_provider_circuit_opened",
+                "ai_provider_circuit_recovered",
               ])
             )
             .min(1),

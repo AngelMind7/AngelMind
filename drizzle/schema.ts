@@ -268,7 +268,7 @@ export const runStatus = ["queued", "running", "checkpointed", "completed", "blo
 export const findingStatus = ["discovered", "triaged", "candidate", "reproducing", "validated", "reported", "notified", "remediation", "retest", "resolved", "reopened", "false_positive", "submitted", "invalid", "duplicate", "inconclusive"] as const;
 export const findingSeverity = ["informational", "low", "medium", "high", "critical"] as const;
 export const approvalStatus = ["pending", "approved", "rejected", "expired"] as const;
-export const notificationEventType = ["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check", "policy_review_required", "incident_created", "webhook_activation_requested", "comment_mentioned"] as const;
+export const notificationEventType = ["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check", "policy_review_required", "incident_created", "webhook_activation_requested", "comment_mentioned", "ai_provider_circuit_opened", "ai_provider_circuit_recovered"] as const;
 export const workspaceMemberRole = ["owner", "operator", "reviewer", "auditor", "approval_authority"] as const;
 export const policyVersionStatus = ["pending", "approved", "rejected", "superseded"] as const;
 export const incidentSeverity = ["low", "medium", "high", "critical"] as const;
@@ -572,6 +572,8 @@ export const llmProviderCircuitStates = mysqlTable("llmProviderCircuitStates", {
   provider: varchar("provider", { length: 80 }).notNull(),
   state: mysqlEnum("state", llmCircuitState).default("closed").notNull(),
   consecutiveFailures: int("consecutiveFailures").default(0).notNull(),
+  coordinationEpoch: int("coordinationEpoch").default(0).notNull(),
+  writerRegion: varchar("writerRegion", { length: 120 }),
   openedAt: timestamp("openedAt"),
   nextProbeAt: timestamp("nextProbeAt"),
   probeLeaseUntil: timestamp("probeLeaseUntil"),

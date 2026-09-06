@@ -1,4 +1,4 @@
-export const notificationEvents = ["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check", "policy_review_required", "incident_created", "webhook_activation_requested", "comment_mentioned"] as const;
+export const notificationEvents = ["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check", "policy_review_required", "incident_created", "webhook_activation_requested", "comment_mentioned", "ai_provider_circuit_opened", "ai_provider_circuit_recovered"] as const;
 export type NotificationEvent = (typeof notificationEvents)[number];
 export type NotificationSeverity = "info" | "warning" | "critical";
 
@@ -11,6 +11,8 @@ export const notificationLabels: Record<NotificationEvent, string> = {
   incident_created: "Incident baru tercatat",
   webhook_activation_requested: "Aktivasi webhook menunggu review",
   comment_mentioned: "Anda disebut dalam comment finding",
+  ai_provider_circuit_opened: "AI provider circuit dibuka",
+  ai_provider_circuit_recovered: "AI provider circuit pulih",
 };
 
 export function isInAppEnabled(event: NotificationEvent, preferences: Array<{ eventType: NotificationEvent; inAppEnabled: number }>): boolean {

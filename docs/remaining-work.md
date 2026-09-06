@@ -248,3 +248,7 @@ Administrators can now inspect redacted SMTP provider health and run a no-send c
 ## Latest implementation slice — 2026-09-06 (Privacy export/delete coverage hardening)
 
 Privacy exports now include owned organizations and workspaces plus durable email unsubscribe preferences, while deletion removes unsubscribe preferences alongside the existing user-scoped records. Export and delete executors now require the request to be in `processing` and return completed requests idempotently, preventing direct execution of unprocessed requests and repeated destructive work. Live provider-backed integration drills remain deployment-gated.
+
+## Latest implementation slice — 2026-09-06 (Behavioral abuse detection)
+
+API rate limiting now feeds repeated violations into a bounded behavioral risk registry. The detector tracks strikes, escalation score, cooldown state, and credential-variant signals without storing raw authorization material. Administrators can inspect only hashed, capped diagnostics through `operations.abuseDiagnostics`; existing rate-limit cooldown and safe execution boundaries remain fail-closed. Account-level identity correlation and an external malware provider remain deployment/integration gaps.

@@ -1787,6 +1787,9 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         organization.listOrganizationMembers(ctx.user.id, input.organizationId)
       ),
+    membersPage: protectedProcedure
+      .input(z.object({ organizationId: z.number().int().positive(), pageSize: z.number().int().min(1).max(100).optional(), cursor: z.string().max(512).optional() }))
+      .query(({ ctx, input }) => organization.listOrganizationMembersPage(ctx.user.id, input)),
     addMember: protectedProcedure
       .input(
         z.object({

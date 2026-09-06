@@ -71,6 +71,21 @@ export async function listOrganizationMembers(userId: number, organizationId: nu
   return db.select({ id: organizationMembers.id, userId: organizationMembers.userId, role: organizationMembers.role, createdAt: organizationMembers.createdAt }).from(organizationMembers).where(eq(organizationMembers.organizationId, organizationId)).orderBy(asc(organizationMembers.createdAt));
 }
 
+export async function listOrganizationMembersPage(userId: number, input: { organizationId: number; pageSize?: number; cursor?: string }) {
+  const { db } = await requireMembership(userId, input.organizationId);
+  const pageSize = normalizePageSize(input.pageSize);
+  const scope = `organization:${input.organizationId}:members`;
+  const cursor = assertCursor(input.cursor, scope);
+  const conditions = [eq(organizationMembers.organizationId, input.organizationId)];
+  if (cursor) {
+    const after = Number(cursor.after);
+    if (!Number.isInteger(after) || after < 1) throw new Error("Invalid or expired pagination cursor.");
+    conditions.push(gt(organizationMembers.id, after));
+  }
+  const rows = await db.select({ id: organizationMembers.id, userId: organizationMembers.userId, role: organizationMembers.role, createdAt: organizationMembers.createdAt }).from(organizationMembers).where(and(...conditions)).orderBy(asc(organizationMembers.id)).limit(pageSize + 1);
+  return { items: rows.slice(0, pageSize), nextCursor: rows.length > pageSize ? createCursor(rows[pageSize - 1].id, scope) : null };
+}
+
 export async function addOrganizationMember(userId: number, input: { organizationId: number; email: string; role: OrganizationRole }) {
   const { db } = await requireMembership(userId, input.organizationId, "manage");
   const member = await getUserByEmail(input.email);

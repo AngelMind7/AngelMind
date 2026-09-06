@@ -23,6 +23,9 @@ export type AiResultProvenance = {
   outputHash: string;
 };
 
+export type AiFailureKind = "context_overflow" | "provider_unavailable" | "partial_result" | "contradictory_result" | "invalid_result" | "unknown";
+export type AiRecoveryAction = "reduce_context" | "fallback_provider" | "require_human_review" | "retry_transient" | "fail_closed";
+
 const MAX_TEXT = 16_384;
 const MAX_FINDINGS = 100;
 const MAX_REFERENCES = 50;
@@ -37,6 +40,27 @@ function boundedId(value: unknown, field: string): string {
 
 function hash(value: string): string {
   return createHash("sha256").update(value, "utf8").digest("hex");
+}
+
+export function classifyAiFailure(error: unknown): AiFailureKind {
+  const message = error instanceof Error ? error.message : typeof error === "string" ? error : JSON.stringify(error ?? "");
+  const normalized = message.toLocaleLowerCase();
+  if (/context|token.{0,12}(limit|length)|maximum.{0,12}(token|context)|too many tokens/.test(normalized)) return "context_overflow";
+  if (/partial|incomplete|truncated|finish_reason.{0,8}(length|partial)/.test(normalized)) return "partial_result";
+  if (/contradict|conflict|inconsistent/.test(normalized)) return "contradictory_result";
+  if (/invalid json|schema|malformed|validation/.test(normalized)) return "invalid_result";
+  if (/provider|gateway|timeout|rate limit|429|5\d\d|unavailable|connection/.test(normalized)) return "provider_unavailable";
+  return "unknown";
+}
+
+export function planAiFailureRecovery(error: unknown, attempt = 0): { kind: AiFailureKind; action: AiRecoveryAction; nextAttempt: number; maxAttempts: number } {
+  const kind = classifyAiFailure(error);
+  const safeAttempt = Number.isFinite(attempt) ? Math.max(0, Math.trunc(attempt)) : 0;
+  if (kind === "context_overflow") return { kind, action: "reduce_context", nextAttempt: safeAttempt + 1, maxAttempts: 1 };
+  if (kind === "provider_unavailable") return { kind, action: safeAttempt < 2 ? "fallback_provider" : "fail_closed", nextAttempt: safeAttempt + 1, maxAttempts: 2 };
+  if (kind === "partial_result" || kind === "contradictory_result") return { kind, action: "require_human_review", nextAttempt: safeAttempt, maxAttempts: safeAttempt };
+  if (kind === "invalid_result") return { kind, action: "fail_closed", nextAttempt: safeAttempt, maxAttempts: safeAttempt };
+  return { kind, action: safeAttempt < 1 ? "retry_transient" : "fail_closed", nextAttempt: safeAttempt + 1, maxAttempts: 1 };
 }
 
 function normalizeReferences(values: unknown): string[] {
@@ -123,10 +147,17 @@ export function synthesizeAiResults(results: AiResultInput[]) {
   if (!Array.isArray(results) || results.length === 0 || results.length > 50) throw new Error("AI results are invalid.");
   const normalized = results.map(normalizeAiResult);
   const findings = correlateFindings(normalized);
+  const contradictoryFindingCount = findings.filter(finding => finding.conclusions.length > 1).length;
+  const partialResultCount = normalized.filter(result => result.findings.length === 0).length;
   return {
     results: normalized.length,
     findings,
     requiresHumanReview: findings.some(finding => finding.requiresHumanReview),
+    failureIsolation: {
+      contradictoryFindingCount,
+      partialResultCount,
+      requiresHumanReview: contradictoryFindingCount > 0 || partialResultCount > 0,
+    },
     provenance: normalized.map(buildAiResultProvenance),
   };
 }

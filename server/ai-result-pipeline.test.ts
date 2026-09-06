@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildAiResultProvenance, correlateFindings, deduplicateFindings, normalizeAiResult, synthesizeAiResults } from "./ai-result-pipeline";
+import { buildAiResultProvenance, classifyAiFailure, correlateFindings, deduplicateFindings, normalizeAiResult, planAiFailureRecovery, synthesizeAiResults } from "./ai-result-pipeline";
 
 describe("AI result pipeline", () => {
   const result = { runId: "run-1", taskId: "task-1", modelId: "model-1", input: "objective", findings: [
@@ -33,6 +33,20 @@ describe("AI result pipeline", () => {
   it("requires review for low confidence synthesis", () => {
     const low = { ...result, findings: [{ key: "risk-low", conclusion: "Uncertain", confidence: 0.2, evidenceReferences: [] }] };
     expect(synthesizeAiResults([low]).requiresHumanReview).toBe(true);
+  });
+
+  it("isolates contradictory and partial result failures", () => {
+    const partial = { ...result, findings: [] };
+    const synthesized = synthesizeAiResults([result, partial]);
+    expect(synthesized.failureIsolation.partialResultCount).toBe(1);
+    expect(synthesized.failureIsolation.requiresHumanReview).toBe(true);
+  });
+
+  it("classifies failures and caps recovery actions", () => {
+    expect(classifyAiFailure(new Error("context window exceeded"))).toBe("context_overflow");
+    expect(planAiFailureRecovery("provider timeout", 0)).toMatchObject({ action: "fallback_provider", maxAttempts: 2 });
+    expect(planAiFailureRecovery("provider timeout", 2).action).toBe("fail_closed");
+    expect(planAiFailureRecovery("contradictory conclusions").action).toBe("require_human_review");
   });
 
   it("fails closed on oversized or invalid inputs", () => {

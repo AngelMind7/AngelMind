@@ -66,8 +66,8 @@ export async function executeResearchTaskJob(payload: Record<string, unknown>, a
   const target = stringValue(inputs.input) ?? stringValue(inputs.target) ?? stringValue(inputs.assetValue);
   if (!toolKey || !mode || !EXECUTABLE_MODES.includes(mode) || !target) {
     const outputs = { state: "blocked", reason: "passive_adapter_input_required", required: ["toolKey", "mode", "input"], attempt };
-    await transitionResearchTask(Number(payload.userId), task.id, "blocked", outputs);
-    return { taskId: task.id, status: "blocked", outputs };
+    await transitionResearchTask(Number(payload.userId), task.id, "failed", outputs);
+    return { taskId: task.id, status: "failed", outputs };
   }
 
   try {

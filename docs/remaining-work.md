@@ -204,3 +204,7 @@ Notification delivery operations now expose a user-scoped cursor-paginated ledge
 ## Latest implementation slice — 2026-09-06 (Evidence transformation lineage)
 
 Evidence provenance now records an authorized source-artifact → target-artifact transformation edge with bounded transformation type, source and target SHA-256 references, structured metadata, workspace isolation, duplicate-safe lineage persistence, and an audit event. The new `evidence.recordTransformation` procedure complements external-source capture and research-node links. Acquisition workers, immutable chain verification, and full provenance UI remain open.
+
+## Latest implementation slice — 2026-09-06 (Acquisition provenance and immutable audit verification)
+
+The durable `evidence.scan` job now carries the initiating actor and records a worker acquisition provenance record plus a duplicate-safe `captured_from` lineage edge containing scanner, source, content, and hash metadata. Control-plane and evidence-workflow audit writes now append through the atomic workspace hash chain rather than standalone hashes. Authorized users can call `audit.verifyChain` to verify every workspace entry, detect missing or altered links, and receive the first broken entry and reason. Acquisition replay history and provenance UI remain open.

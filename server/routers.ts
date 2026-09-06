@@ -2609,6 +2609,9 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         controlPlane.listAudit(ctx.user.id, input.workspaceId, input.traceId)
       ),
+    verifyChain: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive() }))
+      .query(({ ctx, input }) => controlPlane.verifyWorkspaceAuditChain(ctx.user.id, input.workspaceId)),
     evidence: protectedProcedure
       .input(z.object({ workspaceId: z.number().int().positive() }))
       .query(({ ctx, input }) =>

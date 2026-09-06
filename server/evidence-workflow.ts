@@ -1,11 +1,12 @@
 import { createHash } from "node:crypto";
 import { and, desc, eq, like, ne, or } from "drizzle-orm";
-import { auditEvents, evidenceArtifacts, evidenceLineage, evidenceProvenance, findingRelations, findingRetests, findings, researchEvidenceLinks, researchHypotheses, researchObservations, reportVersions, workspaces } from "../drizzle/schema";
+import { evidenceArtifacts, evidenceLineage, evidenceProvenance, findingRelations, findingRetests, findings, researchEvidenceLinks, researchHypotheses, researchObservations, reportVersions, workspaces } from "../drizzle/schema";
 import { upsertSearchDocument } from "./global-search";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { assertExpectedRevision, nextRevision } from "./_core/query-safety";
 import { assertRetestOutcome } from "./retest-validation";
+import { appendAuditChainEntry } from "./control-plane/audit-chain";
 
 function digest(value: unknown) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -17,13 +18,13 @@ async function recordEvidenceWorkflowAudit(
   details: Record<string, unknown>,
 ) {
   const evidenceHash = digest({ workspaceId, category: "finding", subject: "finding-retest", details });
-  await db.insert(auditEvents).values({
+  await db.transaction(async trx => appendAuditChainEntry(trx, {
     workspaceId,
     category: "finding",
     subject: "finding-retest",
     evidenceHash,
     details: JSON.stringify(details),
-  });
+  }));
 }
 
 async function persistEvidenceLineage(db: NonNullable<Awaited<ReturnType<typeof getDb>>>, input: { workspaceId: number; evidenceArtifactId: number; sourceNodeType: "external_source" | "evidence_artifact" | "observation" | "hypothesis" | "finding" | "finding_retest" | "report_version"; sourceNodeId: number; targetNodeType: "external_source" | "evidence_artifact" | "observation" | "hypothesis" | "finding" | "finding_retest" | "report_version"; targetNodeId: number; relationType: "captured_from" | "supports" | "derived_from" | "retested_by" | "reported_in"; metadata?: Record<string, unknown>; createdByUserId: number }) {

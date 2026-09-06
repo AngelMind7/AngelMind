@@ -5,6 +5,8 @@ import {
   approvals,
   credentialReferences,
   evidenceArtifacts,
+  evidenceLineage,
+  evidenceProvenance,
   findings,
   notificationDeliveries,
   notificationPreferences,
@@ -60,6 +62,7 @@ import { parseStoredProgramScope } from "./program-scope";
 import { verifyAuthorizationReference } from "./authorization-reference";
 import { assertExpectedRevision, nextRevision } from "../_core/query-safety";
 import { assertCursor, createCursor, normalizePageSize } from "../pagination";
+import { appendAuditChainEntry, verifyAuditChain } from "./audit-chain";
 
 const parseList = (serialized: string): string[] => {
   try {
@@ -85,16 +88,17 @@ async function addAudit(
   const db = await getDb();
   if (!db) return;
   const traceId = currentTraceContext()?.traceId ?? null;
-  await db.insert(auditEvents).values({
+  const serializedDetails = ENV.auditStateEncryptionKey
+    ? encryptAuditState(details, ENV.auditStateEncryptionKey)
+    : JSON.stringify(details);
+  await db.transaction(async trx => appendAuditChainEntry(trx, {
     workspaceId,
     category,
     subject,
     traceId,
     evidenceHash: digest({ workspaceId, category, subject, details, traceId }),
-    details: ENV.auditStateEncryptionKey
-      ? encryptAuditState(details, ENV.auditStateEncryptionKey)
-      : JSON.stringify(details),
-  });
+    details: serializedDetails,
+  }));
 }
 
 async function ownedWorkspaceOrThrow(userId: number, workspaceId: number) {
@@ -1002,6 +1006,7 @@ export async function uploadEvidence(
       payload: {
         type: "evidence_scan",
         artifactId: storedArtifact.id,
+        acquiredByUserId: userId,
         storageKey,
         contentType: validatedEvidence.contentType,
         fileName: cleanName,
@@ -1063,6 +1068,7 @@ export async function executeEvidenceScanJob(payload: Record<string, unknown>) {
   const legacyStorageReference = String(payload.storageReference ?? "").trim();
   const contentType = String(payload.contentType ?? "application/octet-stream");
   const fileName = String(payload.fileName ?? "evidence.bin");
+  const acquiredByUserId = Number(payload.acquiredByUserId);
   if (
     !Number.isInteger(artifactId) ||
     artifactId < 1 ||
@@ -1103,6 +1109,39 @@ export async function executeEvidenceScanJob(payload: Record<string, unknown>) {
         eq(evidenceArtifacts.status, "quarantined")
       )
     );
+  const acquisitionAt = new Date();
+  const acquisitionSource = (storageKey || legacyStorageReference).slice(0, 512);
+  const acquisitionActor = Number.isInteger(acquiredByUserId) && acquiredByUserId > 0 ? acquiredByUserId : 0;
+  const acquisitionMetadata = {
+    worker: "evidence.scan",
+    scanner: result.scanner,
+    scanPassed: result.passed,
+    contentType,
+    fileName,
+    sourceReference: acquisitionSource,
+    sourceSha256: artifact.sha256,
+    reason: result.reason ?? null,
+  };
+  await db.insert(evidenceProvenance).values({
+    evidenceArtifactId: artifact.id,
+    workspaceId: artifact.workspaceId,
+    sourceType: "worker_acquisition",
+    sourceReference: acquisitionSource,
+    capturedAt: acquisitionAt,
+    capturedByUserId: acquisitionActor,
+    metadata: JSON.stringify(acquisitionMetadata),
+  });
+  await db.insert(evidenceLineage).values({
+    workspaceId: artifact.workspaceId,
+    evidenceArtifactId: artifact.id,
+    sourceNodeType: "external_source",
+    sourceNodeId: 0,
+    targetNodeType: "evidence_artifact",
+    targetNodeId: artifact.id,
+    relationType: "captured_from",
+    metadata: JSON.stringify(acquisitionMetadata),
+    createdByUserId: acquisitionActor,
+  }).onDuplicateKeyUpdate({ set: { metadata: JSON.stringify(acquisitionMetadata), createdAt: acquisitionAt } });
   await addAudit(
     artifact.workspaceId,
     "evidence",
@@ -1247,6 +1286,11 @@ export async function listAudit(
     .where(condition)
     .orderBy(desc(auditEvents.createdAt))
     .limit(100);
+}
+
+export async function verifyWorkspaceAuditChain(userId: number, workspaceId: number) {
+  await readableWorkspaceIdOrThrow(userId, workspaceId);
+  return verifyAuditChain(workspaceId);
 }
 
 export async function listNotifications(userId: number) {

@@ -1,4 +1,5 @@
 import { ENV } from "./env";
+import { createProviderCircuitBreakers, type CircuitSnapshot } from "./llm-circuit-breaker";
 
 export type Role = "system" | "user" | "assistant" | "tool" | "function";
 
@@ -242,6 +243,12 @@ const getLlmProviders = (): LlmProvider[] => {
   return providers.filter(provider => provider.baseUrl && provider.apiKey);
 };
 
+const providerCircuits = createProviderCircuitBreakers(["9router", "omniroute"]);
+
+export function getLlmCircuitSnapshots(): CircuitSnapshot[] {
+  return Array.from(providerCircuits.values()).map(circuit => circuit.snapshot());
+}
+
 const resolveApiUrl = (provider: LlmProvider, path: "chat/completions" | "models") =>
   provider.baseUrl.endsWith("/v1")
     ? `${provider.baseUrl}/${path}`
@@ -439,12 +446,18 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
   const providers = getLlmProviders();
   for (let providerIndex = 0; providerIndex < providers.length; providerIndex++) {
     const provider = providers[providerIndex];
+    const circuit = providerCircuits.get(provider.name);
+    if (circuit && !circuit.allowRequest()) {
+      lastError = new Error(`${provider.name} circuit is open; provider temporarily isolated`);
+      continue;
+    }
     const providerPayload = {
       ...payload,
       ...(model || provider.model || fallbackModels?.[providerIndex - 1]
         ? { model: providerIndex === 0 ? (model || provider.model) : (fallbackModels?.[providerIndex - 1] || provider.model) }
         : {}),
     };
+    let recordCircuitFailure = true;
 
     try {
       const response = await fetchWithBackoff(resolveApiUrl(provider, "chat/completions"), {
@@ -457,6 +470,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
       });
 
       if (response.ok) {
+        circuit?.recordSuccess();
         return (await response.json()) as InvokeResult;
       }
 
@@ -464,10 +478,15 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
       lastError = new Error(
         `${provider.name} LLM invoke failed: ${response.status} ${response.statusText} – ${errorText}`
       );
-      if (!shouldFallback(response.status)) throw lastError;
+      if (!shouldFallback(response.status)) {
+        recordCircuitFailure = false;
+        throw lastError;
+      }
+      circuit?.recordFailure();
       console.warn(`${provider.name} unavailable; trying the next LLM provider`);
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
+      if (recordCircuitFailure) circuit?.recordFailure();
       if (providerIndex === providers.length - 1) throw lastError;
       console.warn(`${provider.name} request failed; trying the next LLM provider`);
     }

@@ -1676,6 +1676,28 @@ export const appRouter = router({
     roleAudit: protectedProcedure
       .input(z.object({ organizationId: z.number().int().positive(), limit: z.number().int().min(1).max(100).optional() }))
       .query(({ ctx, input }) => organization.listOrganizationRoleAudit(ctx.user.id, input.organizationId, input.limit)),
+    roleAuditPage: protectedProcedure
+      .input(z.object({
+        organizationId: z.number().int().positive(),
+        pageSize: z.number().int().min(1).max(100).optional(),
+        cursor: z.string().max(512).optional(),
+        actorUserId: z.number().int().positive().optional(),
+        memberUserId: z.number().int().positive().optional(),
+        role: z.enum(["admin", "researcher", "reviewer", "auditor"]).optional(),
+        from: z.coerce.date().optional(),
+        to: z.coerce.date().optional(),
+      }))
+      .query(({ ctx, input }) => organization.listOrganizationRoleAuditPage(ctx.user.id, input.organizationId, input)),
+    exportRoleAudit: protectedProcedure
+      .input(z.object({
+        organizationId: z.number().int().positive(),
+        actorUserId: z.number().int().positive().optional(),
+        memberUserId: z.number().int().positive().optional(),
+        role: z.enum(["admin", "researcher", "reviewer", "auditor"]).optional(),
+        from: z.coerce.date().optional(),
+        to: z.coerce.date().optional(),
+      }))
+      .query(({ ctx, input }) => organization.exportOrganizationRoleAudit(ctx.user.id, input.organizationId, input)),
     privileges: protectedProcedure
       .input(z.object({ organizationId: z.number().int().positive() }))
       .query(({ ctx, input }) => organization.listOrganizationPrivileges(ctx.user.id, input.organizationId)),

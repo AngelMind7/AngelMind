@@ -1,11 +1,12 @@
 import { createHash, randomBytes } from "node:crypto";
-import { and, asc, desc, eq, lt } from "drizzle-orm";
+import { and, asc, desc, eq, gt, lt, or } from "drizzle-orm";
 import { getDb, getUserByEmail } from "./db";
 import { organizationAuditEvents, organizationInvitations, programScopeVersions, programs, organizationMembers, organizations, workspaces } from "../drizzle/schema";
 import { diffProgramScope, nextProgramScopeVersion, normalizeProgramScope, parseStoredProgramScope } from "./control-plane/program-scope";
 import { buildOrganizationInvitationEmail } from "./_core/email-templates";
 import { enqueueEmailDelivery } from "./email-delivery";
 import { currentTraceContext } from "./_core/trace-context";
+import { assertCursor, createCursor, normalizePageSize } from "./pagination";
 
 const organizationRoles = ["owner", "admin", "researcher", "reviewer", "auditor"] as const;
 type OrganizationRole = (typeof organizationRoles)[number];
@@ -150,10 +151,69 @@ export async function updateOrganizationMemberRole(userId: number, input: { orga
   return { success: true as const, memberId: member.id, role: input.role };
 }
 
-export async function listOrganizationRoleAudit(userId: number, organizationId: number, limit = 50) {
+type RoleAuditDetails = { memberId: number; memberUserId: number; previousRole: string; nextRole: string };
+type RoleAuditFilters = { actorUserId?: number; memberUserId?: number; role?: Exclude<OrganizationRole, "owner">; from?: Date; to?: Date };
+
+function parseRoleAuditDetails(value: string): RoleAuditDetails | null {
+  try {
+    const parsed = JSON.parse(value) as Partial<RoleAuditDetails>;
+    if (!Number.isInteger(parsed.memberId) || !Number.isInteger(parsed.memberUserId) || typeof parsed.previousRole !== "string" || typeof parsed.nextRole !== "string") return null;
+    const memberId = parsed.memberId;
+    const memberUserId = parsed.memberUserId;
+    const previousRole = parsed.previousRole;
+    const nextRole = parsed.nextRole;
+    if (memberId === undefined || memberUserId === undefined || previousRole === undefined || nextRole === undefined) return null;
+    return { memberId, memberUserId, previousRole, nextRole };
+  } catch {
+    return null;
+  }
+}
+
+function roleAuditScope(organizationId: number, filters: RoleAuditFilters) {
+  return `organization:${organizationId}:role-audit:${filters.actorUserId ?? "*"}:${filters.memberUserId ?? "*"}:${filters.role ?? "*"}:${filters.from?.toISOString() ?? "*"}:${filters.to?.toISOString() ?? "*"}`;
+}
+
+export async function listOrganizationRoleAuditPage(userId: number, organizationId: number, input: { pageSize?: number; cursor?: string } & RoleAuditFilters) {
   const { db } = await requireMembership(userId, organizationId);
-  const rows = await db.select().from(organizationAuditEvents).where(eq(organizationAuditEvents.organizationId, organizationId)).orderBy(desc(organizationAuditEvents.createdAt)).limit(Math.min(100, Math.max(1, Math.trunc(limit))));
-  return rows.filter(row => row.subject === "member-role-changed").map(row => ({ ...row, details: JSON.parse(row.details) as { memberId: number; memberUserId: number; previousRole: string; nextRole: string } }));
+  const pageSize = normalizePageSize(input.pageSize);
+  const filters: RoleAuditFilters = { actorUserId: input.actorUserId, memberUserId: input.memberUserId, role: input.role, from: input.from, to: input.to };
+  const scope = roleAuditScope(organizationId, filters);
+  const cursor = assertCursor(input.cursor, scope);
+  const conditions = [eq(organizationAuditEvents.organizationId, organizationId), eq(organizationAuditEvents.subject, "member-role-changed")];
+  if (filters.actorUserId) conditions.push(eq(organizationAuditEvents.actorUserId, filters.actorUserId));
+  if (filters.from) conditions.push(gt(organizationAuditEvents.createdAt, filters.from));
+  if (filters.to) conditions.push(lt(organizationAuditEvents.createdAt, filters.to));
+  if (cursor) {
+    let boundary: { createdAt: string; id: number };
+    try { boundary = JSON.parse(cursor.after) as { createdAt: string; id: number }; } catch { throw new Error("Invalid or expired pagination cursor."); }
+    if (!boundary || typeof boundary.createdAt !== "string" || !Number.isInteger(boundary.id)) throw new Error("Invalid or expired pagination cursor.");
+    const date = new Date(boundary.createdAt);
+    if (Number.isNaN(date.getTime())) throw new Error("Invalid or expired pagination cursor.");
+    conditions.push(or(lt(organizationAuditEvents.createdAt, date), and(eq(organizationAuditEvents.createdAt, date), lt(organizationAuditEvents.id, boundary.id)))!);
+  }
+  const rows = await db.select().from(organizationAuditEvents).where(and(...conditions)).orderBy(desc(organizationAuditEvents.createdAt), desc(organizationAuditEvents.id)).limit(pageSize + 1);
+  const pageRows = rows.slice(0, pageSize).map(row => ({ ...row, details: parseRoleAuditDetails(row.details) })).filter((row): row is typeof row & { details: RoleAuditDetails } => row.details !== null);
+  if (filters.memberUserId || filters.role) {
+    return { items: pageRows.filter(row => row.details && (!filters.memberUserId || row.details.memberUserId === filters.memberUserId) && (!filters.role || row.details.nextRole === filters.role)), nextCursor: rows.length > pageSize ? createCursor(JSON.stringify({ createdAt: rows[pageSize - 1].createdAt.toISOString(), id: rows[pageSize - 1].id }), scope) : null };
+  }
+  return { items: pageRows, nextCursor: rows.length > pageSize ? createCursor(JSON.stringify({ createdAt: rows[pageSize - 1].createdAt.toISOString(), id: rows[pageSize - 1].id }), scope) : null };
+}
+
+export async function listOrganizationRoleAudit(userId: number, organizationId: number, limit = 50) {
+  const page = await listOrganizationRoleAuditPage(userId, organizationId, { pageSize: limit });
+  return page.items;
+}
+
+export async function exportOrganizationRoleAudit(userId: number, organizationId: number, filters: RoleAuditFilters = {}) {
+  const { db } = await requireMembership(userId, organizationId);
+  const conditions = [eq(organizationAuditEvents.organizationId, organizationId), eq(organizationAuditEvents.subject, "member-role-changed")];
+  if (filters.actorUserId) conditions.push(eq(organizationAuditEvents.actorUserId, filters.actorUserId));
+  if (filters.from) conditions.push(gt(organizationAuditEvents.createdAt, filters.from));
+  if (filters.to) conditions.push(lt(organizationAuditEvents.createdAt, filters.to));
+  const rows = await db.select().from(organizationAuditEvents).where(and(...conditions)).orderBy(desc(organizationAuditEvents.createdAt), desc(organizationAuditEvents.id)).limit(10_000);
+  const selected = rows.map(row => ({ row, details: parseRoleAuditDetails(row.details) })).filter(item => item.details && (!filters.memberUserId || item.details.memberUserId === filters.memberUserId) && (!filters.role || item.details.nextRole === filters.role));
+  const csv = ["id,created_at,actor_user_id,member_user_id,previous_role,next_role,trace_id", ...selected.map(({ row, details }) => [row.id, row.createdAt.toISOString(), row.actorUserId, details!.memberUserId, details!.previousRole, details!.nextRole, row.traceId ?? ""].map(value => `"${String(value).replaceAll('"', '""')}"`).join(","))].join("\n");
+  return { filename: `organization-${organizationId}-role-audit.csv`, contentType: "text/csv" as const, csv };
 }
 
 export async function listOrganizationPrivileges(userId: number, organizationId: number) {

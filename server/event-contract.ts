@@ -25,6 +25,12 @@ export const realtimeEventTypes = [
   "observation.reviewed",
   "observation.linked",
   "observation.archived",
+  "finding.retest_requested",
+  "finding.retest_in_progress",
+  "finding.retest_passed",
+  "finding.retest_failed",
+  "finding.retest_inconclusive",
+  "finding.retest_cancelled",
   "finding.created",
   "correlation.chain_detected",
 ] as const;

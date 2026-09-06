@@ -1,12 +1,13 @@
 import { createHash } from "node:crypto";
 import { and, asc, desc, eq, like, ne, or } from "drizzle-orm";
-import { evidenceArtifacts, evidenceLineage, evidenceProvenance, findingRelations, findingRetests, findings, researchEvidenceLinks, researchHypotheses, researchObservations, reportVersions, workspaces } from "../drizzle/schema";
+import { evidenceArtifacts, evidenceLineage, evidenceProvenance, findingRelations, findingRetests, findings, outboxEvents, researchEvidenceLinks, researchHypotheses, researchObservations, reportVersions, workspaces } from "../drizzle/schema";
 import { upsertSearchDocument } from "./global-search";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { assertExpectedRevision, nextRevision } from "./_core/query-safety";
 import { assertRetestOutcome } from "./retest-validation";
 import { appendAuditChainEntry } from "./control-plane/audit-chain";
+import { assertEventPayload, assertEventType } from "./event-contract";
 
 function digest(value: unknown) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -162,6 +163,9 @@ export async function requestFindingRetest(userId: number, input: { findingId: n
     scopeDigest,
     requestedByUserId: userId,
   });
+  const requestEventType = assertEventType("finding.retest_requested");
+  const requestEventPayload = assertEventPayload({ findingId: finding.id, retestId: retest?.id ?? null, workspaceId: finding.workspaceId, status: "requested", scopeDigest });
+  await db.insert(outboxEvents).values({ workspaceId: finding.workspaceId, eventType: requestEventType, traceId: finding.traceId, aggregateType: "finding_retest", aggregateId: retest?.id ?? finding.id, idempotencyKey: `finding-retest:${retest?.id ?? finding.id}:requested`, schemaVersion: 1, payload: JSON.stringify(requestEventPayload), status: "pending", attempts: 0 });
   await upsertSearchDocument({ workspaceId: finding.workspaceId, entityType: "finding", entityId: finding.id, title: finding.title, body: [finding.impactSummary, finding.remediationNotes ?? "", "status:retest"].filter(Boolean).join("\\n") });
   return retest;
 }
@@ -202,6 +206,9 @@ export async function completeFindingRetest(userId: number, input: { retestId: n
     evidenceArtifactId,
     reviewedByUserId: userId,
   });
+  const resultEventType = assertEventType(`finding.retest_${input.status}`);
+  const resultEventPayload = assertEventPayload({ findingId: finding.id, retestId: retest.id, workspaceId: finding.workspaceId, status: input.status, findingStatus: nextStatus, evidenceArtifactId: evidenceArtifactId ?? null });
+  await db.insert(outboxEvents).values({ workspaceId: finding.workspaceId, eventType: resultEventType, traceId: finding.traceId, aggregateType: "finding_retest", aggregateId: retest.id, idempotencyKey: `finding-retest:${retest.id}:${input.status}`, schemaVersion: 1, payload: JSON.stringify(resultEventPayload), status: "pending", attempts: 0 });
   await upsertSearchDocument({ workspaceId: finding.workspaceId, entityType: "finding", entityId: finding.id, title: finding.title, body: [finding.impactSummary, finding.remediationNotes ?? "", `status:${nextStatus}`, `retest:${input.status}`, resultSummary].filter(Boolean).join("\\n") });
   return { success: true as const, retestId: retest.id, status: input.status, findingStatus: nextStatus };
 }

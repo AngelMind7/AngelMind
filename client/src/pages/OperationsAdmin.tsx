@@ -67,6 +67,7 @@ export default function OperationsAdmin() {
           <ArchivePanel workspaceId={workspaceId} />
           <CircuitDashboard />
           <EmailProviderHealth />
+          <AbuseDiagnostics />
         </div>
       ) : (
         <NeonFrame className="p-10 text-center">
@@ -89,6 +90,11 @@ function EmailProviderHealth() {
   const health = trpc.operations.emailProviderHealth.useQuery(undefined, { retry: false });
   const verify = trpc.operations.verifyEmailProvider.useMutation({ onSuccess: result => { health.refetch(); if (result.verified) toast.success("SMTP connection verified."); else toast.error("SMTP connection verification failed."); }, onError: error => toast.error(error.message) });
   return <NeonFrame className="p-5 sm:p-6 xl:col-span-2"><div className="flex items-center justify-between gap-4"><div><Eyebrow>Email delivery health</Eyebrow><h2 className="mt-2 font-display text-2xl font-bold text-white">SMTP provider verification</h2></div><Badge variant="outline" className={health.data?.configured ? "border-emerald-300/40 text-emerald-200" : "border-amber-300/40 text-amber-200"}>{health.data?.configured ? "configured" : "not configured"}</Badge></div><p className="mt-3 text-sm leading-6 text-slate-500">Verifies the configured SMTP connection without sending a test message. Credentials are never returned.</p><div className="mt-5 flex flex-wrap items-center gap-3 text-xs text-slate-400"><span>Host: {health.data?.host || "—"}</span><span>Port: {health.data?.port || "—"}</span><span>From: {health.data?.from || "—"}</span><Button variant="outline" className="ml-auto" onClick={() => verify.mutate()} disabled={verify.isPending || !health.data?.configured}>{verify.isPending ? "Verifying…" : "Verify SMTP connection"}</Button></div></NeonFrame>;
+}
+
+function AbuseDiagnostics() {
+  const signals = trpc.operations.abuseDiagnostics.useQuery(undefined, { retry: false });
+  return <NeonFrame className="p-5 sm:p-6 xl:col-span-2"><div className="flex items-center justify-between"><div><Eyebrow>Abuse protection</Eyebrow><h2 className="mt-2 font-display text-2xl font-bold text-white">Behavioral risk signals</h2></div><Badge variant="outline" className="border-amber-300/40 text-amber-200">{signals.data?.length ?? 0} signals</Badge></div><p className="mt-3 text-sm leading-6 text-slate-500">Bounded, hashed diagnostics from repeated rate-limit violations. Raw IPs, authorization material, and credential values are never exposed.</p><div className="mt-5 space-y-2">{signals.data?.slice(0, 8).map(signal => <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-white/10 p-3" key={signal.key}><div><p className="font-mono text-xs text-slate-300">{signal.key}</p><p className="mt-1 text-[11px] text-slate-500">violations {signal.violations} · credential variants {signal.credentialVariantCount}</p></div><Badge variant="outline" className={signal.score >= 60 ? "border-rose-300/40 text-rose-200" : "border-amber-300/40 text-amber-200"}>risk {signal.score}</Badge></div>)}{!signals.data?.length && <p className="text-xs text-slate-500">No abuse signals recorded.</p>}</div></NeonFrame>;
 }
 
 function TeamPanel({ workspaceId }: { workspaceId: number }) {

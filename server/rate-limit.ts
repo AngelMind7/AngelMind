@@ -1,5 +1,6 @@
 import { createHash } from "node:crypto";
 import type { NextFunction, Request, RequestHandler, Response } from "express";
+import { recordAbuseViolation } from "./abuse-detection";
 
 export type RateLimitOptions = {
   windowMs: number;
@@ -78,7 +79,9 @@ export function createRateLimiter(options: RateLimitOptions): RequestHandler {
     if (bucket.count > max) {
       const nextState = state ?? { strikes: 0, blockedUntil: 0 };
       nextState.strikes += 1;
-      if (nextState.strikes >= strikeThreshold) nextState.blockedUntil = now + Math.min(cooldownMs * 2 ** Math.min(nextState.strikes - strikeThreshold, 4), 86_400_000);
+      const authorization = typeof req.get === "function" ? req.get("authorization") : req.headers?.authorization;
+      const decision = recordAbuseViolation(key, { credentialFingerprint: authorization ?? undefined, cooldownMs, strikeThreshold, now });
+      nextState.blockedUntil = decision.blockedUntil;
       abuse.set(key, nextState);
       res.setHeader("Retry-After", String(Math.max(1, Math.ceil(((nextState.blockedUntil || bucket.resetAt) - now) / 1_000))));
       res.status(429).json({ error: { code: "RATE_LIMITED", message: "Too many requests; retry after the rate-limit window." }, apiVersion: "v1" });

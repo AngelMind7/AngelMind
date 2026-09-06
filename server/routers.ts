@@ -25,6 +25,7 @@ import * as evidenceWorkflow from "./evidence-workflow";
 import * as aiPlatform from "./ai-platform";
 import { listEmailUnsubscribePreferences, setEmailUnsubscribePreference } from "./email-delivery";
 import { getEmailProviderHealth, verifyEmailProvider } from "./_core/email";
+import { getAbuseDetectionSnapshot } from "./abuse-detection";
 import { listDistributedCircuitStates } from "./_core/llm-distributed-circuit";
 import * as aiMemory from "./ai-memory";
 import * as aiOrchestration from "./ai-orchestration";
@@ -837,6 +838,10 @@ export const appRouter = router({
     ),
   }),
   operations: router({
+    abuseDiagnostics: protectedProcedure.query(({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new Error("Admin role is required to view abuse diagnostics.");
+      return getAbuseDetectionSnapshot();
+    }),
     emailProviderHealth: protectedProcedure.query(({ ctx }) => {
       if (ctx.user.role !== "admin") throw new Error("Admin role is required to view email provider health.");
       return getEmailProviderHealth();

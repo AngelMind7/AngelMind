@@ -42,6 +42,7 @@ export const routedProcedurePermissions = {
   "operations.members": "owner",
   "operations.emailProviderHealth": "authenticated",
   "operations.verifyEmailProvider": "authenticated",
+  "operations.abuseDiagnostics": "authenticated",
   "operations.addMember": "owner",
   "operations.removeMember": "owner",
   "operations.webhook": "owner",

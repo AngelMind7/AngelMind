@@ -244,3 +244,7 @@ Email delivery now persists category-level unsubscribe preferences for collabora
 ## Latest implementation slice — 2026-09-06 (SMTP provider verification)
 
 Administrators can now inspect redacted SMTP provider health and run a no-send connection verification from the Operations Console. The verification uses the configured transport's native `verify()` handshake and never sends a test message or exposes credentials. Provider credentials and live deployment verification remain environment-gated.
+
+## Latest implementation slice — 2026-09-06 (Privacy export/delete coverage hardening)
+
+Privacy exports now include owned organizations and workspaces plus durable email unsubscribe preferences, while deletion removes unsubscribe preferences alongside the existing user-scoped records. Export and delete executors now require the request to be in `processing` and return completed requests idempotently, preventing direct execution of unprocessed requests and repeated destructive work. Live provider-backed integration drills remain deployment-gated.

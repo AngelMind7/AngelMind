@@ -1256,6 +1256,9 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         aiPlatform.getAiRunOutput(ctx.user.id, input.runId)
       ),
+    provenance: protectedProcedure
+      .input(z.object({ runId: z.number().int().positive() }))
+      .query(({ ctx, input }) => aiPlatform.getAiRunProvenance(ctx.user.id, input.runId)),
     evaluationSummary: protectedProcedure
       .input(z.object({ workspaceId: z.number().int().positive() }))
       .query(({ ctx, input }) =>

@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import { and, asc, desc, eq, inArray, isNotNull, lte, lt, ne, or, sql } from "drizzle-orm";
 import { aiModels, aiRunEvaluations, aiRunOutputs, aiRuns, jobs, outboxConsumerReceipts, outboxEvents, researchSessions, researchTasks, workspaces } from "../drizzle/schema";
 import { getDb } from "./db";
@@ -431,6 +431,32 @@ export async function getAiRunOutput(userId: number, runId: number) {
   if (run.retentionUntil && run.retentionUntil <= new Date()) return null;
   const [output] = await db.select().from(aiRunOutputs).where(eq(aiRunOutputs.runId, runId)).limit(1);
   return output ? { ...output, output: JSON.parse(output.outputJson) as unknown } : null;
+}
+
+export async function getAiRunProvenance(userId: number, runId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, runId)).limit(1);
+  if (!run || !(await canAccessWorkspace(userId, run.workspaceId, "read"))) throw new Error("AI run tidak ditemukan atau tidak dapat diakses.");
+  const [[model], [task], [output]] = await Promise.all([
+    db.select({ id: aiModels.id, modelKey: aiModels.modelKey, provider: aiModels.provider, gateway: aiModels.gateway, version: aiModels.version }).from(aiModels).where(eq(aiModels.modelKey, run.modelKey)).limit(1),
+    run.taskId ? db.select({ id: researchTasks.id, title: researchTasks.title, status: researchTasks.status }).from(researchTasks).where(and(eq(researchTasks.id, run.taskId), eq(researchTasks.workspaceId, run.workspaceId))).limit(1) : Promise.resolve([]),
+    db.select({ id: aiRunOutputs.id, outputJson: aiRunOutputs.outputJson, createdAt: aiRunOutputs.createdAt }).from(aiRunOutputs).where(eq(aiRunOutputs.runId, run.id)).limit(1),
+  ]);
+  const hash = (value: string | null | undefined) => value ? createHash("sha256").update(value).digest("hex") : null;
+  return {
+    run: { id: run.id, workspaceId: run.workspaceId, sessionId: run.sessionId, taskId: run.taskId, traceId: run.traceId, purpose: run.purpose, status: run.status, createdAt: run.createdAt, completedAt: run.completedAt },
+    task: task ?? null,
+    model: model ?? { modelKey: run.modelKey, provider: null, gateway: run.gateway, version: null },
+    input: { reference: run.inputReference, sha256: hash(run.inputReference) },
+    output: { reference: run.outputReference, sha256: hash(output?.outputJson), persisted: Boolean(output), createdAt: output?.createdAt ?? null },
+    edges: [
+      { from: "task", fromId: run.taskId, to: "ai_run", toId: run.id, relation: "executed_by" },
+      { from: "ai_run", fromId: run.id, to: "model", toId: model?.id ?? null, relation: "routed_to" },
+      { from: "input", fromId: hash(run.inputReference), to: "ai_run", toId: run.id, relation: "provided_to" },
+      { from: "ai_run", fromId: run.id, to: "output", toId: output?.id ?? null, relation: "produced" },
+    ],
+  };
 }
 
 export type OutboxEventHandler = (event: { id: number; eventType: string; aggregateType: string; aggregateId: number; schemaVersion: number; payload: Record<string, unknown> }) => Promise<void>;

@@ -2244,6 +2244,9 @@ export const appRouter = router({
     enqueueTask: protectedProcedure
       .input(z.object({ taskId: z.number().int().positive(), idempotencyKey: z.string().trim().min(8).max(180).optional() }))
       .mutation(({ ctx, input }) => researchTaskExecutor.enqueueResearchTask(ctx.user.id, input)),
+    enqueueReadyTasks: protectedProcedure
+      .input(z.object({ sessionId: z.number().int().positive(), limit: z.number().int().min(1).max(100).optional() }))
+      .mutation(({ ctx, input }) => researchTaskExecutor.enqueueReadyResearchTasks(ctx.user.id, input)),
     failureObservations: protectedProcedure
       .input(
         z.object({

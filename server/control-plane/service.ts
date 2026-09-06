@@ -27,6 +27,7 @@ import {
 import { buildRehearsal } from "./rehearsal";
 import { getAdministrativeCheckEligibility } from "./scheduler";
 import { getRunEligibility } from "./run-eligibility";
+import { recordReputationEvent } from "../reputation";
 import {
   assertDistinctApprover,
   canReviewApproval,
@@ -711,6 +712,7 @@ export async function approveFindingReview(userId: number, findingId: number) {
     "human-review-approved",
     { findingId: finding.id }
   );
+  await recordReputationEvent(userId, { workspaceId: finding.workspaceId, userId, eventType: "review_completed", referenceType: "finding", referenceId: finding.id });
   return { success: true };
 }
 
@@ -792,6 +794,7 @@ export async function transitionFinding(
     body: updatedBody,
   });
   if (input.status === "validated") {
+    await recordReputationEvent(userId, { workspaceId: finding.workspaceId, userId, eventType: "finding_validated", referenceType: "finding", referenceId: finding.id });
     const workspace = await db
       .select({
         id: workspaces.id,

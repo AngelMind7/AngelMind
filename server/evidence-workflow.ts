@@ -8,6 +8,7 @@ import { assertExpectedRevision, nextRevision } from "./_core/query-safety";
 import { assertRetestOutcome } from "./retest-validation";
 import { appendAuditChainEntry } from "./control-plane/audit-chain";
 import { assertEventPayload, assertEventType } from "./event-contract";
+import { recordReputationEvent } from "./reputation";
 
 function digest(value: unknown) {
   return createHash("sha256").update(JSON.stringify(value)).digest("hex");
@@ -209,6 +210,8 @@ export async function completeFindingRetest(userId: number, input: { retestId: n
   const resultEventType = assertEventType(`finding.retest_${input.status}`);
   const resultEventPayload = assertEventPayload({ findingId: finding.id, retestId: retest.id, workspaceId: finding.workspaceId, status: input.status, findingStatus: nextStatus, evidenceArtifactId: evidenceArtifactId ?? null });
   await db.insert(outboxEvents).values({ workspaceId: finding.workspaceId, eventType: resultEventType, traceId: finding.traceId, aggregateType: "finding_retest", aggregateId: retest.id, idempotencyKey: `finding-retest:${retest.id}:${input.status}`, schemaVersion: 1, payload: JSON.stringify(resultEventPayload), status: "pending", attempts: 0 });
+  if (evidenceArtifactId) await recordReputationEvent(userId, { workspaceId: finding.workspaceId, userId, eventType: "evidence_verified", referenceType: "finding_retest", referenceId: retest.id });
+  if (input.status === "passed") await recordReputationEvent(userId, { workspaceId: finding.workspaceId, userId, eventType: "finding_resolved", referenceType: "finding_retest", referenceId: retest.id });
   await upsertSearchDocument({ workspaceId: finding.workspaceId, entityType: "finding", entityId: finding.id, title: finding.title, body: [finding.impactSummary, finding.remediationNotes ?? "", `status:${nextStatus}`, `retest:${input.status}`, resultSummary].filter(Boolean).join("\\n") });
   return { success: true as const, retestId: retest.id, status: input.status, findingStatus: nextStatus };
 }

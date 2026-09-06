@@ -37,8 +37,8 @@ export async function recordReputationEvent(actorUserId: number, input: { worksp
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const points = pointsForEvent(input.eventType);
-  await db.insert(reputationEvents).values({ workspaceId: input.workspaceId, userId: input.userId, eventType: input.eventType, points, referenceType: input.referenceType ?? null, referenceId: input.referenceId ?? null });
-  await db.insert(reputationProfiles).values({ userId: input.userId, totalPoints: points, level: reputationLevel(points), updatedAt: new Date() }).onDuplicateKeyUpdate({ set: { totalPoints: sql`${reputationProfiles.totalPoints} + ${points}`, level: sql`CASE WHEN ${reputationProfiles.totalPoints} + ${points} >= 1000 THEN 'expert' WHEN ${reputationProfiles.totalPoints} + ${points} >= 500 THEN 'advanced' WHEN ${reputationProfiles.totalPoints} + ${points} >= 200 THEN 'practitioner' ELSE 'contributor' END`, updatedAt: new Date() } });
+  const inserted = await db.insert(reputationEvents).values({ workspaceId: input.workspaceId, userId: input.userId, eventType: input.eventType, points, referenceType: input.referenceType ?? null, referenceId: input.referenceId ?? null }).onDuplicateKeyUpdate({ set: { points } });
+  if (inserted[0].affectedRows === 1) await db.insert(reputationProfiles).values({ userId: input.userId, totalPoints: points, level: reputationLevel(points), updatedAt: new Date() }).onDuplicateKeyUpdate({ set: { totalPoints: sql`${reputationProfiles.totalPoints} + ${points}`, level: sql`CASE WHEN ${reputationProfiles.totalPoints} + ${points} >= 1000 THEN 'expert' WHEN ${reputationProfiles.totalPoints} + ${points} >= 500 THEN 'advanced' WHEN ${reputationProfiles.totalPoints} + ${points} >= 200 THEN 'practitioner' ELSE 'contributor' END`, updatedAt: new Date() } });
   return getProfile(actorUserId, input.workspaceId, input.userId);
 }
 

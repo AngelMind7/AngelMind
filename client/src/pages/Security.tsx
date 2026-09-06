@@ -38,6 +38,7 @@ export default function Security() {
   const [totpChallenge, setTotpChallenge] = useState<string>();
   const [totpSecret, setTotpSecret] = useState<string>();
   const [totpCode, setTotpCode] = useState("");
+  const [mfaVerificationCode, setMfaVerificationCode] = useState("");
   const mfa = trpc.auth.mfa.useQuery();
   const registerDevice = trpc.auth.registerDevice.useMutation({
     onSuccess: () => {
@@ -88,6 +89,8 @@ export default function Security() {
   const confirmTotp = trpc.auth.confirmTotpEnrollment.useMutation({ onSuccess: result => { setTotpChallenge(undefined); setTotpSecret(undefined); setTotpCode(""); void mfa.refetch(); toast.success(`MFA aktif. Simpan ${result.recoveryCodes.length} recovery codes.`); window.alert(`Recovery codes (simpan offline):\n\n${result.recoveryCodes.join("\n")}`); }, onError: error => toast.error(error.message) });
   const registerPasskey = trpc.auth.beginPasskeyRegistration.useMutation();
   const finishPasskey = trpc.auth.finishPasskeyRegistration.useMutation({ onSuccess: () => { void mfa.refetch(); toast.success("Passkey berhasil didaftarkan."); }, onError: error => toast.error(error.message) });
+  const regenerateRecoveryCodes = trpc.auth.regenerateRecoveryCodes.useMutation({ onSuccess: result => { setMfaVerificationCode(""); void mfa.refetch(); toast.success("Recovery codes baru dibuat."); window.alert(`Recovery codes baru (simpan offline):\n\n${result.recoveryCodes.join("\n")}`); }, onError: error => toast.error(error.message) });
+  const revokeMfaFactor = trpc.auth.revokeMfaFactor.useMutation({ onSuccess: () => { setMfaVerificationCode(""); void mfa.refetch(); toast.success("MFA factor berhasil dicabut."); }, onError: error => toast.error(error.message) });
   const registerPasskeyFromBrowser = async () => {
     if (!window.PublicKeyCredential) { toast.error("Browser ini belum mendukung passkey."); return; }
     try {
@@ -152,9 +155,10 @@ export default function Security() {
       <NeonFrame className="p-5 sm:p-6">
         <div className="flex flex-wrap items-center justify-between gap-3"><div><Eyebrow>Multi-factor authentication</Eyebrow><h2 className="mt-2 font-display text-2xl font-bold text-white">MFA / Passkeys</h2></div><ShieldCheck className="h-5 w-5 text-emerald-300" /></div>
         <p className="mt-3 text-sm leading-6 text-slate-400">Tambahkan authenticator TOTP atau passkey WebAuthn. Recovery codes hanya ditampilkan saat enrollment.</p>
-        <div className="mt-4 flex flex-wrap gap-2">{mfa.data?.factors.map(factor => <Badge key={factor.id} variant="outline" className="border-emerald-300/40 text-emerald-200">{factor.type}: {factor.label}</Badge>)}{!mfa.data?.factors.length && <Badge variant="outline" className="border-amber-300/40 text-amber-200">MFA belum aktif</Badge>}</div>
+        <div className="mt-4 space-y-3">{mfa.data?.factors.map(factor => <div key={factor.id} className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-emerald-300/20 bg-emerald-300/[.03] p-3"><Badge variant="outline" className="border-emerald-300/40 text-emerald-200">{factor.type}: {factor.label}</Badge><Button variant="ghost" size="sm" onClick={() => { if (!mfaVerificationCode.trim()) { toast.error("Masukkan TOTP atau recovery code terlebih dahulu."); return; } revokeMfaFactor.mutate({ factorId: factor.id, verificationCode: mfaVerificationCode }); }} disabled={revokeMfaFactor.isPending}>Revoke factor</Button></div>)}{!mfa.data?.factors.length && <Badge variant="outline" className="border-amber-300/40 text-amber-200">MFA belum aktif</Badge>}</div>
         <div className="mt-5 grid gap-3 md:grid-cols-[1fr_auto_auto]"><Input value={totpSecret || ""} readOnly placeholder="TOTP secret muncul di sini" /><Button variant="outline" onClick={() => beginTotp.mutate({ label: "Authenticator app" })} disabled={beginTotp.isPending}>Setup TOTP</Button><Button onClick={registerPasskeyFromBrowser} disabled={registerPasskey.isPending || finishPasskey.isPending}>Register passkey</Button></div>
         {totpChallenge && <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]"><Input value={totpCode} onChange={event => setTotpCode(event.target.value)} placeholder="6-digit authenticator code" inputMode="numeric" maxLength={6} /><Button onClick={() => confirmTotp.mutate({ challenge: totpChallenge, code: totpCode })} disabled={totpCode.length !== 6 || confirmTotp.isPending}>Confirm TOTP</Button></div>}
+        {!!mfa.data?.factors.length && <div className="mt-4 grid gap-3 md:grid-cols-[1fr_auto]"><Input value={mfaVerificationCode} onChange={event => setMfaVerificationCode(event.target.value)} placeholder="TOTP or unused recovery code for security changes" maxLength={64} /><Button variant="outline" onClick={() => regenerateRecoveryCodes.mutate({ verificationCode: mfaVerificationCode })} disabled={mfaVerificationCode.trim().length < 6 || regenerateRecoveryCodes.isPending}>Rotate recovery codes</Button></div>}
       </NeonFrame>
 
       <NeonFrame className="p-5 sm:p-6">

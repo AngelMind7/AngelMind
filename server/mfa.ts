@@ -1,9 +1,10 @@
-import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
+import { createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import { and, desc, eq, gt, isNull } from "drizzle-orm";
 import { generateAuthenticationOptions, generateRegistrationOptions, verifyAuthenticationResponse, verifyRegistrationResponse } from "@simplewebauthn/server";
 import { mfaChallenges, mfaFactors, mfaRecoveryCodes } from "../drizzle/schema";
 import { getDb } from "./db";
 import { recordAuthEvent } from "./account-security";
+import { decryptEnvelope, encryptEnvelope, isEnvelope } from "./envelope-crypto";
 
 const TOTP_STEP_SECONDS = 30;
 const TOTP_DIGITS = 6;
@@ -18,15 +19,22 @@ function encryptionKey() {
   return createHash("sha256").update(configured).digest();
 }
 
+function encryptionKeyVersion() { return process.env.MFA_ENCRYPTION_KEY_VERSION || "current"; }
+function encryptionKeys() {
+  const current = process.env.MFA_ENCRYPTION_KEY;
+  if (!current) throw new Error("MFA_ENCRYPTION_KEY is required before enrolling MFA.");
+  return { [encryptionKeyVersion()]: current, ...(process.env.MFA_ENCRYPTION_KEY_PREVIOUS ? { previous: process.env.MFA_ENCRYPTION_KEY_PREVIOUS } : {}) };
+}
+
 function encrypt(value: string) {
-  const iv = randomBytes(12);
-  const cipher = createCipheriv("aes-256-gcm", encryptionKey(), iv);
-  const ciphertext = Buffer.concat([cipher.update(value, "utf8"), cipher.final()]);
-  return [iv, cipher.getAuthTag(), ciphertext].map(part => part.toString("base64url")).join(".");
+  const configured = process.env.MFA_ENCRYPTION_KEY;
+  if (!configured) throw new Error("MFA_ENCRYPTION_KEY is required before enrolling MFA.");
+  return encryptEnvelope(value, configured, encryptionKeyVersion());
 }
 
 function decrypt(value: string) {
   if (typeof value !== "string") throw new Error("Stored MFA secret is invalid.");
+  if (isEnvelope(value)) return decryptEnvelope(value, encryptionKeys());
   const parts = value.split(".");
   if (parts.length !== 3 || parts.some(part => !part)) throw new Error("Stored MFA secret is invalid.");
   const [iv, tag, ciphertext] = parts.map(part => Buffer.from(part, "base64url"));

@@ -8,6 +8,8 @@ Dokumen ini adalah antrean pekerjaan aktif. Status requirement otoritatif tetap 
 
 Reputation dan integration lifecycle kini memiliki persistence, migration, validation, workspace authorization, fail-closed route permissions, API, dan tests/boundaries. Reputation event hooks lintas domain, public researcher profile, OAuth handshakes, provider delivery adapters, secret provisioning, dan live verification tetap terbuka.
 
+Retest outcomes `verified_fixed` dan `still_present`, Integrations settings UI, automatic reputation hooks untuk validation/review/evidence/retest, dan authenticated accessibility route inventory untuk knowledge/integrations/admin kini sudah dipublish. Sisa provider handshake, live verification, dan richer public profile tetap environment/provider-dependent.
+
 ### Account security recovery lifecycle (2026-09-06)
 
 MFA account security kini memiliki lifecycle recovery yang lebih lengkap: recovery codes dapat dirotasi hanya setelah step-up verification dengan TOTP atau recovery code aktif, factor TOTP/WebAuthn dapat dicabut dengan verifikasi yang sama, dan setiap perubahan direkam pada security event ledger. UI Security Center mengekspos rotasi serta revoke secara eksplisit tanpa menampilkan secret tersimpan. Connected-app recovery, provider-level identity verification, dan live Firebase MFA enforcement tetap memerlukan konfigurasi serta verifikasi environment.

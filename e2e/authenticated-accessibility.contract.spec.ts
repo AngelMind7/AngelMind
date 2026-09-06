@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 
 const token = process.env.ANGELMIND_E2E_TOKEN;
-const authenticatedRoutes = ["/dashboard", "/research", "/assets", "/tools", "/findings", "/reports", "/security"];
+const authenticatedRoutes = ["/dashboard", "/research", "/assets", "/tools", "/findings", "/reports", "/security", "/knowledge", "/settings/integrations", "/operations-console"];
 
 test.describe("authenticated accessibility contract", () => {
   for (const route of authenticatedRoutes) {
@@ -19,4 +19,3 @@ test.describe("authenticated accessibility contract", () => {
     });
   }
 });
-

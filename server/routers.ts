@@ -24,6 +24,7 @@ import * as organization from "./organization";
 import * as evidenceWorkflow from "./evidence-workflow";
 import * as aiPlatform from "./ai-platform";
 import { listEmailUnsubscribePreferences, setEmailUnsubscribePreference } from "./email-delivery";
+import { getEmailProviderHealth, verifyEmailProvider } from "./_core/email";
 import { listDistributedCircuitStates } from "./_core/llm-distributed-circuit";
 import * as aiMemory from "./ai-memory";
 import * as aiOrchestration from "./ai-orchestration";
@@ -836,6 +837,14 @@ export const appRouter = router({
     ),
   }),
   operations: router({
+    emailProviderHealth: protectedProcedure.query(({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new Error("Admin role is required to view email provider health.");
+      return getEmailProviderHealth();
+    }),
+    verifyEmailProvider: protectedProcedure.mutation(async ({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new Error("Admin role is required to verify the email provider.");
+      return verifyEmailProvider();
+    }),
     members: protectedProcedure
       .input(z.object({ workspaceId: z.number().int().positive() }))
       .query(({ ctx, input }) =>

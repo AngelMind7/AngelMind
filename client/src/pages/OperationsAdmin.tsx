@@ -66,6 +66,7 @@ export default function OperationsAdmin() {
           <WebhookActivationRequest workspaceId={workspaceId} />
           <ArchivePanel workspaceId={workspaceId} />
           <CircuitDashboard />
+          <EmailProviderHealth />
         </div>
       ) : (
         <NeonFrame className="p-10 text-center">
@@ -82,6 +83,12 @@ export default function OperationsAdmin() {
 function CircuitDashboard() {
   const circuits = trpc.ai.circuitStates.useQuery(undefined, { retry: false });
   return <NeonFrame className="p-5 sm:p-6 xl:col-span-2"><div className="flex items-center justify-between"><div><Eyebrow>AI reliability control</Eyebrow><h2 className="mt-2 font-display text-2xl font-bold text-white">Provider circuit dashboard</h2></div><Badge variant="outline" className="border-cyan-300/30 text-cyan-200">{circuits.data?.length ?? 0} providers</Badge></div><p className="mt-3 text-sm leading-6 text-slate-500">Distributed state, fencing epoch, writer region, cooldown, and the latest failure are visible to administrators.</p><div className="mt-5 overflow-x-auto"><table className="w-full min-w-[760px] text-left text-xs"><thead className="border-b border-cyan-300/10 text-[10px] uppercase tracking-[.14em] text-slate-500"><tr><th className="px-3 py-2">Provider</th><th className="px-3 py-2">State</th><th className="px-3 py-2">Failures</th><th className="px-3 py-2">Epoch / region</th><th className="px-3 py-2">Next probe</th><th className="px-3 py-2">Last error</th></tr></thead><tbody>{circuits.data?.map(circuit => <tr className="border-b border-white/5" key={circuit.provider}><td className="px-3 py-3 font-semibold text-slate-100">{circuit.provider}</td><td className="px-3 py-3"><Badge variant="outline" className={circuit.state === "open" ? "border-rose-300/40 text-rose-200" : circuit.state === "half_open" ? "border-amber-300/40 text-amber-200" : "border-emerald-300/40 text-emerald-200"}>{circuit.state}</Badge></td><td className="px-3 py-3 text-slate-300">{circuit.consecutiveFailures}</td><td className="px-3 py-3 text-slate-400">{circuit.coordinationEpoch} · {circuit.writerRegion || "—"}</td><td className="px-3 py-3 text-slate-400">{circuit.nextProbeAt ? <LocalizedDate value={circuit.nextProbeAt} /> : "—"}</td><td className="max-w-[320px] truncate px-3 py-3 text-slate-500" title={circuit.lastError ?? undefined}>{circuit.lastError || "No failure recorded"}</td></tr>)}</tbody></table>{!circuits.data?.length && <p className="py-8 text-center text-xs text-slate-500">No distributed circuit state has been recorded yet.</p>}</div></NeonFrame>;
+}
+
+function EmailProviderHealth() {
+  const health = trpc.operations.emailProviderHealth.useQuery(undefined, { retry: false });
+  const verify = trpc.operations.verifyEmailProvider.useMutation({ onSuccess: result => { health.refetch(); if (result.verified) toast.success("SMTP connection verified."); else toast.error("SMTP connection verification failed."); }, onError: error => toast.error(error.message) });
+  return <NeonFrame className="p-5 sm:p-6 xl:col-span-2"><div className="flex items-center justify-between gap-4"><div><Eyebrow>Email delivery health</Eyebrow><h2 className="mt-2 font-display text-2xl font-bold text-white">SMTP provider verification</h2></div><Badge variant="outline" className={health.data?.configured ? "border-emerald-300/40 text-emerald-200" : "border-amber-300/40 text-amber-200"}>{health.data?.configured ? "configured" : "not configured"}</Badge></div><p className="mt-3 text-sm leading-6 text-slate-500">Verifies the configured SMTP connection without sending a test message. Credentials are never returned.</p><div className="mt-5 flex flex-wrap items-center gap-3 text-xs text-slate-400"><span>Host: {health.data?.host || "—"}</span><span>Port: {health.data?.port || "—"}</span><span>From: {health.data?.from || "—"}</span><Button variant="outline" className="ml-auto" onClick={() => verify.mutate()} disabled={verify.isPending || !health.data?.configured}>{verify.isPending ? "Verifying…" : "Verify SMTP connection"}</Button></div></NeonFrame>;
 }
 
 function TeamPanel({ workspaceId }: { workspaceId: number }) {

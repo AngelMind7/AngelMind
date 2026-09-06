@@ -40,6 +40,8 @@ export const routedProcedurePermissions = {
   "tools.runtimeHealth": "read-member",
   "tools.run": "responder",
   "operations.members": "owner",
+  "operations.emailProviderHealth": "authenticated",
+  "operations.verifyEmailProvider": "authenticated",
   "operations.addMember": "owner",
   "operations.removeMember": "owner",
   "operations.webhook": "owner",

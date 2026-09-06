@@ -82,6 +82,24 @@ export async function sendEmail(message: EmailMessage): Promise<EmailDeliveryRes
   return emailAdapter.send(message);
 }
 
+export function getEmailProviderHealth() {
+  const config = getSmtpConfig();
+  return {
+    configured: Boolean(config),
+    host: config?.host ?? null,
+    port: config?.port ?? null,
+    secure: config?.secure ?? null,
+    from: config?.from ?? null,
+  };
+}
+
+export async function verifyEmailProvider() {
+  const adapter = getEmailAdapter();
+  if (!adapter) return { configured: false as const, verified: false as const, reason: "not-configured" as const };
+  const verified = await adapter.verify();
+  return { configured: true as const, verified, reason: verified ? null : "smtp-verification-failed" as const };
+}
+
 export function resetEmailAdapterForTests() {
   adapter = null;
 }

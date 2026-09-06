@@ -2022,6 +2022,9 @@ export const appRouter = router({
     assetSignals: protectedProcedure
       .input(z.object({ sessionId: z.number().int().positive() }))
       .query(({ ctx, input }) => researchWorkflow.listResearchAssetSignals(ctx.user.id, input.sessionId)),
+    assetSignalsPage: protectedProcedure
+      .input(z.object({ sessionId: z.number().int().positive(), pageSize: z.number().int().min(1).max(100).optional(), cursor: z.string().max(512).optional() }))
+      .query(({ ctx, input }) => researchWorkflow.listResearchAssetSignalsPage(ctx.user.id, input)),
     recordAssetSignal: protectedProcedure
       .input(z.object({
         sessionId: z.number().int().positive(),

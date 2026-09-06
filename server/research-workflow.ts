@@ -202,6 +202,16 @@ export async function listResearchAssetSignals(userId: number, sessionId: number
   const { db, session } = await requireSession(userId, sessionId);
   return db.select().from(researchAssetSignals).where(eq(researchAssetSignals.sessionId, session.id)).orderBy(desc(researchAssetSignals.observedAt));
 }
+export async function listResearchAssetSignalsPage(userId: number, input: { sessionId: number; pageSize?: number; cursor?: string }) {
+  const { db, session } = await requireSession(userId, input.sessionId);
+  const cursor = decodePageCursor(input.cursor);
+  const where = cursor
+    ? and(eq(researchAssetSignals.sessionId, session.id), or(lt(researchAssetSignals.observedAt, new Date(cursor.createdAt)), and(eq(researchAssetSignals.observedAt, new Date(cursor.createdAt)), lt(researchAssetSignals.id, cursor.id))))
+    : eq(researchAssetSignals.sessionId, session.id);
+  const pageSize = Math.min(Math.max(input.pageSize ?? 25, 1), 100);
+  const rows = await db.select().from(researchAssetSignals).where(where).orderBy(desc(researchAssetSignals.observedAt), desc(researchAssetSignals.id)).limit(pageSize + 1);
+  return pageResult(rows, pageSize);
+}
 export async function recordResearchAssetSignal(userId: number, input: { sessionId: number; assetId?: number; signalType: "certificate_expiry" | "service_exposure" | "cloud_exposure" | "code_leak" | "subdomain_history" | "brand_mention"; title: string; details: string; source: string; confidence?: number; observedAt?: Date; expiresAt?: Date }) {
   const { db, session } = await requireSession(userId, input.sessionId, "respond");
   const title = input.title.trim();

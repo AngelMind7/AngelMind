@@ -22,7 +22,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 1 | Prinsip utama dan capability chain | **Partial** | Jalur UI–API–authz–validation–domain–DB/storage–audit sudah ada untuk core; event/worker/AI penuh belum merata. |
 | 2 | Website public | **Partial** | Product, features, docs, trust, security, pricing, legal, status, contact, academy, roadmap, changelog tersedia; blog/program/researcher public belum menjadi fitur penuh. |
 | 3 | Authentication | **Partial** | Firebase Google Sign-In, token verification, session, logout tersedia; register/email verification/password reset/MFA/passkey belum lengkap. |
-| 4 | Account security | **Partial** | Device registry, login/security event ledger, API key lifecycle, revocation, and security page are implemented; MFA/passkey/connected-app recovery remains incomplete. |
+| 4 | Account security | **Partial** | Device registry, login/security event ledger, API key lifecycle, MFA TOTP/passkey enrollment, encrypted secrets, step-up verified factor revocation, recovery-code rotation, and security page are implemented; connected-app recovery and provider-level identity verification remain incomplete. |
 | 5 | User profile | **Partial** | Identitas dasar tersedia; profil researcher, skill, reputation, achievements, privacy controls belum lengkap. |
 | 6 | Onboarding | **Partial** | Workspace onboarding dan policy gate tersedia; lifecycle register–verify–profile–preferences–security setup belum end-to-end. |
 | 7 | Organization/workspace | **Partial** | Workspace, membership, owner/operator/reviewer/auditor, isolation, settings, audit tersedia; organization/team hierarchy penuh belum. |

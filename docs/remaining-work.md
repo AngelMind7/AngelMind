@@ -4,6 +4,10 @@ Dokumen ini adalah antrean pekerjaan aktif. Status requirement otoritatif tetap 
 
 ## A/B — Pekerjaan repository yang masih terbuka
 
+### Account security recovery lifecycle (2026-09-06)
+
+MFA account security kini memiliki lifecycle recovery yang lebih lengkap: recovery codes dapat dirotasi hanya setelah step-up verification dengan TOTP atau recovery code aktif, factor TOTP/WebAuthn dapat dicabut dengan verifikasi yang sama, dan setiap perubahan direkam pada security event ledger. UI Security Center mengekspos rotasi serta revoke secara eksplisit tanpa menampilkan secret tersimpan. Connected-app recovery, provider-level identity verification, dan live Firebase MFA enforcement tetap memerlukan konfigurasi serta verifikasi environment.
+
 | Priority | Work item | Status terbaru |
 |---|---|---|
 | P0 | Composite workspace consistency di database boundary. | **Selesai untuk research lifecycle**: composite indexes dan foreign keys session/asset/observation/hypothesis/task sudah ada pada schema dan migration `0032`; relasi domain lain dapat diperluas bila diperlukan. |

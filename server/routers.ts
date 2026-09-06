@@ -2071,6 +2071,9 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         researchWorkflow.listResearchObservations(ctx.user.id, input.sessionId)
       ),
+    observationsPage: protectedProcedure
+      .input(z.object({ sessionId: z.number().int().positive(), pageSize: z.number().int().min(1).max(100).optional(), cursor: z.string().max(512).optional() }))
+      .query(({ ctx, input }) => researchWorkflow.listResearchObservationsPage(ctx.user.id, input)),
     createObservation: protectedProcedure
       .input(
         z.object({
@@ -2100,6 +2103,9 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         researchWorkflow.listResearchHypotheses(ctx.user.id, input.sessionId)
       ),
+    hypothesesPage: protectedProcedure
+      .input(z.object({ sessionId: z.number().int().positive(), pageSize: z.number().int().min(1).max(100).optional(), cursor: z.string().max(512).optional(), status: z.enum(["proposed", "investigating", "supported", "disproven", "validated", "archived"]).optional() }))
+      .query(({ ctx, input }) => researchWorkflow.listResearchHypothesesPage(ctx.user.id, input)),
     createHypothesis: protectedProcedure
       .input(
         z.object({

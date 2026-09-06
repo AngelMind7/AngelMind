@@ -239,6 +239,14 @@ export async function listResearchObservations(userId: number, sessionId: number
   return db.select().from(researchObservations).where(eq(researchObservations.sessionId, session.id)).orderBy(desc(researchObservations.createdAt));
 }
 
+export async function listResearchObservationsPage(userId: number, input: { sessionId: number; pageSize?: number; cursor?: string }) {
+  const { db, session } = await requireSession(userId, input.sessionId);
+  const cursor = decodePageCursor(input.cursor);
+  const where = cursor ? and(eq(researchObservations.sessionId, session.id), or(lt(researchObservations.createdAt, new Date(cursor.createdAt)), and(eq(researchObservations.createdAt, new Date(cursor.createdAt)), lt(researchObservations.id, cursor.id)))) : eq(researchObservations.sessionId, session.id);
+  const rows = await db.select().from(researchObservations).where(where).orderBy(desc(researchObservations.createdAt), desc(researchObservations.id)).limit(Math.min(Math.max(input.pageSize ?? 25, 1), 100) + 1);
+  return pageResult(rows, input.pageSize ?? 25);
+}
+
 export async function createResearchObservation(userId: number, input: { sessionId: number; assetId?: number; title: string; content: string; sourceType?: string; sourceReference?: string; rawOutputSha256?: string; normalizedEvidenceSha256?: string }) {
   if (!input || typeof input.title !== "string" || typeof input.content !== "string" || (input.assetId !== undefined && (!Number.isInteger(input.assetId) || input.assetId < 1))) throw new Error("Research observation input is invalid.");
   const { db, session } = await requireSession(userId, input.sessionId, "respond");
@@ -279,6 +287,14 @@ export async function promoteObservationToFinding(userId: number, input: { sessi
 export async function listResearchHypotheses(userId: number, sessionId: number) {
   const { db, session } = await requireSession(userId, sessionId);
   return db.select().from(researchHypotheses).where(eq(researchHypotheses.sessionId, session.id)).orderBy(desc(researchHypotheses.priority), desc(researchHypotheses.updatedAt));
+}
+
+export async function listResearchHypothesesPage(userId: number, input: { sessionId: number; pageSize?: number; cursor?: string; status?: "proposed" | "investigating" | "supported" | "disproven" | "validated" | "archived" }) {
+  const { db, session } = await requireSession(userId, input.sessionId);
+  const cursor = decodePageCursor(input.cursor);
+  const where = and(eq(researchHypotheses.sessionId, session.id), input.status ? eq(researchHypotheses.status, input.status) : undefined, cursor ? or(lt(researchHypotheses.updatedAt, new Date(cursor.createdAt)), and(eq(researchHypotheses.updatedAt, new Date(cursor.createdAt)), lt(researchHypotheses.id, cursor.id))) : undefined);
+  const rows = await db.select().from(researchHypotheses).where(where).orderBy(desc(researchHypotheses.updatedAt), desc(researchHypotheses.id)).limit(Math.min(Math.max(input.pageSize ?? 25, 1), 100) + 1);
+  return pageResult(rows, input.pageSize ?? 25);
 }
 
 export async function createResearchHypothesis(userId: number, input: { sessionId: number; assetId?: number; observationId?: number; description: string; reason: string; priority: number }) {

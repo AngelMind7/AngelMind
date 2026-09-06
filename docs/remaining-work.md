@@ -252,3 +252,7 @@ Privacy exports now include owned organizations and workspaces plus durable emai
 ## Latest implementation slice — 2026-09-06 (Behavioral abuse detection)
 
 API rate limiting now feeds repeated violations into a bounded behavioral risk registry. The detector tracks strikes, escalation score, cooldown state, and credential-variant signals without storing raw authorization material. Administrators can inspect only hashed, capped diagnostics through `operations.abuseDiagnostics`; existing rate-limit cooldown and safe execution boundaries remain fail-closed. Account-level identity correlation and an external malware provider remain deployment/integration gaps.
+
+## Latest implementation slice — 2026-09-06 (Versioned envelope encryption)
+
+Sensitive MFA secrets now use a reusable AES-256-GCM envelope format carrying an explicit key version. Decryption accepts the active key and an optional `MFA_ENCRYPTION_KEY_PREVIOUS` during rotation, while legacy three-part MFA ciphertext remains readable for migration compatibility. Tamper rejection, key-version selection, and previous-key rotation are covered by deterministic tests. Centralized KMS/HSM integration and live rotation drills remain environment-gated.

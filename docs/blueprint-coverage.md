@@ -68,7 +68,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 42 | Reputation | **Planned** | Metrics internal ada; reputation, specialization, achievement belum menjadi domain. |
 | 43 | API platform | **Partial** | tRPC dan public `/api/v1` read endpoints with versioned response envelopes are available; developer SDK, CLI, and docs platform remain open. |
 | 44 | API security | **Implemented (repository)** | Authz, validation, audit, body limits, API-key hashing, explicit REST scopes, rotation, bounded API rate limiting, trusted-proxy-aware client keys, and abuse cooldowns are implemented; distributed quota coordination remains environment-dependent. |
-| 45 | Webhook engine | **Partial** | Draft, HTTPS confirmation, signing reference, activation approval tersedia; dispatcher/delivery/retry/backoff belum aktif. |
+| 45 | Webhook engine | **Partial** | Draft, HTTPS confirmation, signing reference, activation approval, injectable signed dispatcher, HTTPS/private-address policy, event subscription filter, timeout, HTTP failure result, and bounded retry contract are implemented; database delivery-ledger integration and live provider/secret verification remain open. |
 | 46 | Integrations | **Planned** | GitHub/GitLab/Slack/Discord/custom integration lifecycle belum menjadi fitur production. |
 
 ## Requirement 47–65: AI, jobs, events, dan reliability
@@ -92,7 +92,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 61 | Scheduler | **Partial** | Administrative scheduled check tersedia; general scheduler belum. |
 | 62 | Real-time | **Implemented (repository)** | Authenticated WebSocket with SSE fallback, Last-Event-ID replay, workspace-scoped published outbox filtering, heartbeats, reconnect logic, React Query invalidation, and dashboard connection status indicator are implemented; gateway/proxy behavior remains deployment verification. |
 | 63 | Event architecture | **Partial** | Versioned event schema, task lifecycle publication, outbox lease/retry/consumer receipt, audit/notification events, and realtime publication boundaries are implemented; complete domain-wide publisher/consumer adoption remains open. |
-| 64 | Outbox pattern | **Partial** | Versioned outbox schema, event records, leases, consumer receipts, retry/backoff, and bounded dispatcher exist; complete production publisher/consumer coverage and operational delivery monitoring remain incomplete. |
+| 64 | Outbox pattern | **Partial** | Versioned outbox schema, event records, leases, consumer receipts, retry/backoff, bounded dispatcher, and research task lifecycle publication exist; complete production publisher/consumer coverage and operational delivery monitoring remain incomplete. |
 | 65 | Idempotency | **Partial** | Centralized jobs/outbox enforce bounded keys, unique persistence, duplicate replay, and payload-collision rejection; domain-wide mutation coverage remains incomplete. |
 
 ## Requirement 66–89: data, security, admin, billing

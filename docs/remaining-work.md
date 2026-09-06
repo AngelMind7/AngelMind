@@ -228,3 +228,7 @@ Provider circuit state is now durable in `llmProviderCircuitStates`, shared acro
 ## Latest implementation slice — 2026-09-06 (Cross-region fencing and circuit alert routing)
 
 Distributed circuit transitions now carry a monotonic coordination epoch and deployment-region writer metadata. Every locked state transition advances the fencing epoch, and alert idempotency keys use provider, transition, and epoch rather than timestamps, preventing stale cross-region workers from replaying an older transition. Circuit open/recovered events are now registered notification event types with in-app/email preference controls on the Notifications page. Dedicated multi-database consensus and alert dashboards remain open.
+
+## Latest implementation slice — 2026-09-06 (Dedicated circuit diagnostics dashboard)
+
+Administrators can now query `ai.circuitStates` and view provider circuit state, consecutive failures, coordination epoch, writer region, next probe, and last error in the Operations Console. The dashboard is intentionally read-only and complements the notification preference controls and delivery ledger; state remains protected by the distributed circuit service and admin guard.

@@ -211,6 +211,16 @@ export const appRouter = router({
       .mutation(({ ctx, input }) =>
         mfa.verifyTotpOrRecoveryCode(ctx.user.id, input.code)
       ),
+    regenerateRecoveryCodes: protectedProcedure
+      .input(z.object({ verificationCode: z.string().trim().min(6).max(64) }))
+      .mutation(({ ctx, input }) =>
+        mfa.regenerateRecoveryCodes(ctx.user.id, input.verificationCode)
+      ),
+    revokeMfaFactor: protectedProcedure
+      .input(z.object({ factorId: z.number().int().positive(), verificationCode: z.string().trim().min(6).max(64) }))
+      .mutation(({ ctx, input }) =>
+        mfa.revokeMfaFactor(ctx.user.id, input.factorId, input.verificationCode)
+      ),
     beginPasskeyRegistration: protectedProcedure
       .input(z.object({ label: z.string().trim().max(120).optional() }))
       .mutation(({ ctx, input }) =>

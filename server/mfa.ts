@@ -162,6 +162,33 @@ export async function verifyTotpOrRecoveryCode(userId: number, code: string) {
   return { verified: true as const, method: "recovery" as const };
 }
 
+export async function regenerateRecoveryCodes(userId: number, verificationCode: string) {
+  if (!Number.isInteger(userId) || userId < 1) throw new Error("User identity is invalid.");
+  if (typeof verificationCode !== "string" || verificationCode.trim().length < 6 || verificationCode.length > 64) throw new Error("Verification code is invalid.");
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  await verifyTotpOrRecoveryCode(userId, verificationCode.trim());
+  const recoveryCodes = generateRecoveryCodes();
+  await db.transaction(async tx => {
+    await tx.delete(mfaRecoveryCodes).where(and(eq(mfaRecoveryCodes.userId, userId), isNull(mfaRecoveryCodes.usedAt)));
+    for (const code of recoveryCodes) await tx.insert(mfaRecoveryCodes).values({ userId, codeHash: hashCode(code) });
+  });
+  await recordAuthEvent(userId, "mfa_enrolled", { type: "recovery_codes_regenerated" });
+  return { recoveryCodes };
+}
+
+export async function revokeMfaFactor(userId: number, factorId: number, verificationCode: string) {
+  if (!Number.isInteger(userId) || userId < 1 || !Number.isInteger(factorId) || factorId < 1) throw new Error("MFA factor identity is invalid.");
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  await verifyTotpOrRecoveryCode(userId, verificationCode);
+  const [factor] = await db.select({ id: mfaFactors.id, type: mfaFactors.type, label: mfaFactors.label }).from(mfaFactors).where(and(eq(mfaFactors.id, factorId), eq(mfaFactors.userId, userId), eq(mfaFactors.enabled, 1))).limit(1);
+  if (!factor) throw new Error("MFA factor tidak ditemukan atau sudah dicabut.");
+  await db.update(mfaFactors).set({ enabled: 0 }).where(and(eq(mfaFactors.id, factorId), eq(mfaFactors.userId, userId), eq(mfaFactors.enabled, 1)));
+  await recordAuthEvent(userId, "mfa_unenrolled", { type: factor.type, label: factor.label });
+  return { success: true as const, factorId };
+}
+
 export async function beginPasskeyRegistration(userId: number, label?: string) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");

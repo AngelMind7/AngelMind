@@ -1571,6 +1571,14 @@ export const appRouter = router({
       .mutation(({ ctx, input }) =>
         evidenceWorkflow.recordEvidenceProvenance(ctx.user.id, input)
       ),
+    recordTransformation: protectedProcedure
+      .input(z.object({
+        sourceEvidenceArtifactId: z.number().int().positive(),
+        targetEvidenceArtifactId: z.number().int().positive(),
+        transformationType: z.string().trim().min(2).max(120),
+        metadata: z.record(z.string(), z.unknown()).optional(),
+      }))
+      .mutation(({ ctx, input }) => evidenceWorkflow.recordEvidenceTransformation(ctx.user.id, input)),
     lineage: protectedProcedure
       .input(z.object({ evidenceArtifactId: z.number().int().positive() }))
       .query(({ ctx, input }) => evidenceWorkflow.listEvidenceLineage(ctx.user.id, input.evidenceArtifactId)),

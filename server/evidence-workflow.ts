@@ -84,6 +84,19 @@ export async function recordEvidenceProvenance(userId: number, input: { evidence
   return provenance;
 }
 
+export async function recordEvidenceTransformation(userId: number, input: { sourceEvidenceArtifactId: number; targetEvidenceArtifactId: number; transformationType: string; metadata?: Record<string, unknown> }) {
+  if (input.sourceEvidenceArtifactId === input.targetEvidenceArtifactId) throw new Error("Evidence transformation requires distinct source and target artifacts.");
+  const source = await loadArtifact(userId, input.sourceEvidenceArtifactId, "respond");
+  const target = await loadArtifact(userId, input.targetEvidenceArtifactId, "respond");
+  if (source.artifact.workspaceId !== target.artifact.workspaceId) throw new Error("Evidence transformation must stay within one workspace.");
+  const transformationType = input.transformationType.trim().slice(0, 120);
+  if (transformationType.length < 2) throw new Error("Evidence transformation type is required.");
+  const metadata = { transformationType, sourceSha256: source.artifact.sha256, targetSha256: target.artifact.sha256, ...(input.metadata ?? {}) };
+  await persistEvidenceLineage(target.db, { workspaceId: target.artifact.workspaceId, evidenceArtifactId: target.artifact.id, sourceNodeType: "evidence_artifact", sourceNodeId: source.artifact.id, targetNodeType: "evidence_artifact", targetNodeId: target.artifact.id, relationType: "derived_from", metadata, createdByUserId: userId });
+  await recordEvidenceWorkflowAudit(target.db, target.artifact.workspaceId, { sourceEvidenceArtifactId: source.artifact.id, targetEvidenceArtifactId: target.artifact.id, transformationType, metadata, lineage: "evidence-transformation" });
+  return { success: true as const, sourceEvidenceArtifactId: source.artifact.id, targetEvidenceArtifactId: target.artifact.id, transformationType, metadata };
+}
+
 export async function listEvidenceLineage(userId: number, evidenceArtifactId: number) {
   const { db, artifact } = await loadArtifact(userId, evidenceArtifactId);
   return db.select().from(evidenceLineage).where(and(eq(evidenceLineage.workspaceId, artifact.workspaceId), eq(evidenceLineage.evidenceArtifactId, artifact.id))).orderBy(desc(evidenceLineage.createdAt));

@@ -7,6 +7,7 @@ import {
   router,
 } from "./_core/trpc";
 import * as controlPlane from "./control-plane/service";
+import * as adminConsole from "./admin-console";
 import { isTargetInScope } from "./control-plane/guardrails";
 import * as operations from "./control-plane/operations";
 import * as assurance from "./control-plane/assurance";
@@ -61,6 +62,9 @@ const workspaceInput = z.object({
 export const appRouter = router({
   // if you need to use socket.io, read and register route in server/_core/index.ts, all api should start with '/api/' so that the gateway can route correctly
   system: systemRouter,
+  admin: router({
+    operationalSnapshot: adminProcedure.query(() => adminConsole.getAdminOperationalSnapshot()),
+  }),
   auth: router({
     apiKeys: protectedProcedure.query(({ ctx }) =>
       securityPlatform.listApiKeys(ctx.user.id)

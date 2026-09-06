@@ -1,5 +1,5 @@
 import { createHash } from "crypto";
-import { and, desc, eq, gt, inArray, isNotNull, isNull } from "drizzle-orm";
+import { and, count, desc, eq, gt, inArray, isNotNull, isNull, lt, or } from "drizzle-orm";
 import {
   auditEvents,
   approvals,
@@ -59,6 +59,7 @@ import { isCronDueAt, normalizeUtcCronExpression } from "./cron";
 import { parseStoredProgramScope } from "./program-scope";
 import { verifyAuthorizationReference } from "./authorization-reference";
 import { assertExpectedRevision, nextRevision } from "../_core/query-safety";
+import { assertCursor, createCursor, normalizePageSize } from "../pagination";
 
 const parseList = (serialized: string): string[] => {
   try {
@@ -1290,6 +1291,42 @@ export async function listNotificationDeliveries(userId: number, limit = 100) {
     .where(eq(notificationDeliveries.userId, userId))
     .orderBy(desc(notificationDeliveries.createdAt))
     .limit(Math.min(100, Math.max(1, limit)));
+}
+
+type NotificationDeliveryFilters = { status?: "queued" | "sending" | "sent" | "failed" | "disabled"; channel?: "in_app" | "email" | "webhook" };
+
+export async function listNotificationDeliveriesPage(userId: number, input: NotificationDeliveryFilters & { pageSize?: number; cursor?: string }) {
+  const db = await getDb();
+  if (!db) return { items: [], nextCursor: null, summary: [] };
+  const pageSize = normalizePageSize(input.pageSize);
+  const scope = `user:${userId}:notification-deliveries:${input.status ?? "*"}:${input.channel ?? "*"}`;
+  const cursor = assertCursor(input.cursor, scope);
+  const conditions = [eq(notificationDeliveries.userId, userId)];
+  if (input.status) conditions.push(eq(notificationDeliveries.status, input.status));
+  if (input.channel) conditions.push(eq(notificationDeliveries.channel, input.channel));
+  if (cursor) {
+    let boundary: { createdAt: string; id: number };
+    try { boundary = JSON.parse(cursor.after) as { createdAt: string; id: number }; } catch { throw new Error("Invalid or expired pagination cursor."); }
+    const date = new Date(boundary.createdAt);
+    if (!boundary || !Number.isInteger(boundary.id) || Number.isNaN(date.getTime())) throw new Error("Invalid or expired pagination cursor.");
+    conditions.push(or(lt(notificationDeliveries.createdAt, date), and(eq(notificationDeliveries.createdAt, date), lt(notificationDeliveries.id, boundary.id)))!);
+  }
+  const rows = await db.select().from(notificationDeliveries).where(and(...conditions)).orderBy(desc(notificationDeliveries.createdAt), desc(notificationDeliveries.id)).limit(pageSize + 1);
+  const items = rows.slice(0, pageSize);
+  const summary = await db.select({ status: notificationDeliveries.status, total: count() }).from(notificationDeliveries).where(eq(notificationDeliveries.userId, userId)).groupBy(notificationDeliveries.status);
+  const last = items.at(-1);
+  return { items, nextCursor: rows.length > pageSize && last ? createCursor(JSON.stringify({ createdAt: last.createdAt.toISOString(), id: last.id }), scope) : null, summary };
+}
+
+export async function retryNotificationDelivery(userId: number, deliveryId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [delivery] = await db.select().from(notificationDeliveries).where(and(eq(notificationDeliveries.id, deliveryId), eq(notificationDeliveries.userId, userId))).limit(1);
+  if (!delivery) throw new Error("Notification delivery tidak ditemukan.");
+  if (delivery.status !== "failed") throw new Error("Only failed notification deliveries can be retried.");
+  await db.update(notificationDeliveries).set({ status: "queued", nextAttemptAt: new Date(), lastError: null, updatedAt: new Date() }).where(and(eq(notificationDeliveries.id, delivery.id), eq(notificationDeliveries.status, "failed")));
+  await enqueueJob(userId, { workspaceId: delivery.workspaceId ?? undefined, kind: "notification.deliver", idempotencyKey: `notification-deliver:${delivery.id}:manual:${Date.now()}`, payload: { type: "notification_delivery", deliveryId: delivery.id }, maxAttempts: 3 });
+  return { success: true as const, deliveryId: delivery.id, status: "queued" as const };
 }
 
 export async function listNotificationPreferences(userId: number) {

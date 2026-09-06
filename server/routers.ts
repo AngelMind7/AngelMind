@@ -777,6 +777,17 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         controlPlane.listNotificationDeliveries(ctx.user.id, input?.limit)
       ),
+    deliveryLedgerPage: protectedProcedure
+      .input(z.object({
+        pageSize: z.number().int().min(1).max(100).optional(),
+        cursor: z.string().max(512).optional(),
+        status: z.enum(["queued", "sending", "sent", "failed", "disabled"]).optional(),
+        channel: z.enum(["in_app", "email", "webhook"]).optional(),
+      }))
+      .query(({ ctx, input }) => controlPlane.listNotificationDeliveriesPage(ctx.user.id, input)),
+    retryDelivery: protectedProcedure
+      .input(z.object({ deliveryId: z.number().int().positive() }))
+      .mutation(({ ctx, input }) => controlPlane.retryNotificationDelivery(ctx.user.id, input.deliveryId)),
     preferences: protectedProcedure.query(({ ctx }) =>
       controlPlane.listNotificationPreferences(ctx.user.id)
     ),

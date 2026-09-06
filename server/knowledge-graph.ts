@@ -1,4 +1,4 @@
-import { and, asc, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray, lte } from "drizzle-orm";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { knowledgeEdges, knowledgeNodes } from "../drizzle/schema";
@@ -13,13 +13,14 @@ async function requireAccess(userId: number, workspaceId: number, intent: "read"
   return db;
 }
 
-export async function listGraph(userId: number, workspaceId: number, input?: { nodeType?: typeof knowledgeNodes.$inferSelect.nodeType; status?: "active" | "archived" }) {
+export async function listGraph(userId: number, workspaceId: number, input?: { nodeType?: typeof knowledgeNodes.$inferSelect.nodeType; status?: "active" | "archived"; asOf?: Date }) {
   const db = await requireAccess(userId, workspaceId);
   const filters = [eq(knowledgeNodes.workspaceId, workspaceId)];
   if (input?.nodeType) filters.push(eq(knowledgeNodes.nodeType, input.nodeType));
   if (input?.status) filters.push(eq(knowledgeNodes.status, input.status));
+  if (input?.asOf) filters.push(lte(knowledgeNodes.updatedAt, input.asOf));
   const nodes = await db.select().from(knowledgeNodes).where(and(...filters)).orderBy(asc(knowledgeNodes.id));
-  const edges = await db.select().from(knowledgeEdges).where(eq(knowledgeEdges.workspaceId, workspaceId)).orderBy(asc(knowledgeEdges.id));
+  const edges = await db.select().from(knowledgeEdges).where(and(eq(knowledgeEdges.workspaceId, workspaceId), input?.asOf ? lte(knowledgeEdges.createdAt, input.asOf) : undefined)).orderBy(asc(knowledgeEdges.id));
   return { nodes, edges };
 }
 
@@ -49,8 +50,8 @@ export async function createEdge(userId: number, input: { workspaceId: number; s
   return edge;
 }
 
-export async function traverseGraph(userId: number, input: { workspaceId: number; startNodeId: number; maxDepth?: number; limit?: number }) {
-  const graph = await listGraph(userId, input.workspaceId);
+export async function traverseGraph(userId: number, input: { workspaceId: number; startNodeId: number; maxDepth?: number; limit?: number; asOf?: Date }) {
+  const graph = await listGraph(userId, input.workspaceId, { asOf: input.asOf });
   const nodeById = new Map(graph.nodes.map(node => [node.id, node]));
   const start = nodeById.get(input.startNodeId);
   if (!start) throw new Error("Start node tidak ditemukan.");

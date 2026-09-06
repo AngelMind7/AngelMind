@@ -1547,6 +1547,7 @@ export const appRouter = router({
             ])
             .optional(),
           status: z.enum(["active", "archived"]).optional(),
+          asOf: z.coerce.date().optional(),
         })
       )
       .query(({ ctx, input }) =>
@@ -1594,6 +1595,7 @@ export const appRouter = router({
           startNodeId: z.number().int().positive(),
           maxDepth: z.number().int().min(0).max(12).optional(),
           limit: z.number().int().min(1).max(500).optional(),
+          asOf: z.coerce.date().optional(),
         })
       )
       .query(({ ctx, input }) =>

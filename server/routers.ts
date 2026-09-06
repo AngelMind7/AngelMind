@@ -1312,6 +1312,9 @@ export const appRouter = router({
     costGovernance: protectedProcedure
       .input(z.object({ workspaceId: z.number().int().positive() }))
       .query(({ ctx, input }) => aiPlatform.getAiCostGovernance(ctx.user.id, input.workspaceId)),
+    synthesizeRuns: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), runIds: z.array(z.number().int().positive()).min(1).max(50) }))
+      .query(({ ctx, input }) => aiPlatform.synthesizeWorkspaceAiRuns(ctx.user.id, input)),
     evaluations: protectedProcedure
       .input(z.object({ runId: z.number().int().positive() }))
       .query(({ ctx, input }) =>

@@ -11,6 +11,7 @@ import { currentTraceContext } from "./_core/trace-context";
 import { recordPurgeBatch } from "./purge-metrics";
 import { summarizeAiRuns } from "./ai-quality";
 import { assertEventPayload, assertEventType } from "./event-contract";
+import { synthesizeAiResults, type AiResultFinding } from "./ai-result-pipeline";
 
 async function requireWorkspace(userId: number, workspaceId: number, intent: "read" | "respond" = "read") {
   const db = await getDb();
@@ -162,6 +163,32 @@ export async function getAiCostGovernance(userId: number, workspaceId: number) {
     if (run.taskId) { const taskSummary = byTask.get(run.taskId) ?? { runs: 0, costCents: 0 }; taskSummary.runs += 1; taskSummary.costCents += run.costCents; byTask.set(run.taskId, taskSummary); }
   }
   return { workspaceBudgetCents: workspace.budgetCents, workspaceSpentCents: workspace.spentCents, totalRuns: runs.length, totalCostCents: runs.reduce((total, run) => total + run.costCents, 0), byProvider: Object.fromEntries(byProvider), byUser: Object.fromEntries(byUser), byTask: Object.fromEntries(byTask) };
+}
+
+export async function synthesizeWorkspaceAiRuns(userId: number, input: { workspaceId: number; runIds: number[] }) {
+  const { db } = await requireWorkspace(userId, input.workspaceId, "read");
+  const runIds = Array.from(new Set(input.runIds.filter(id => Number.isInteger(id) && id > 0))).slice(0, 50);
+  if (!runIds.length) throw new Error("At least one AI run is required.");
+  const [runs, outputs] = await Promise.all([
+    db.select().from(aiRuns).where(and(eq(aiRuns.workspaceId, input.workspaceId), inArray(aiRuns.id, runIds), eq(aiRuns.status, "completed"))),
+    db.select().from(aiRunOutputs).where(and(eq(aiRunOutputs.workspaceId, input.workspaceId), inArray(aiRunOutputs.runId, runIds))),
+  ]);
+  const outputByRun = new Map(outputs.map(output => [output.runId, output.outputJson]));
+  const results = runs.map(run => {
+    const raw = outputByRun.get(run.id);
+    if (!raw) throw new Error(`AI run ${run.id} has no persisted output.`);
+    let parsed: unknown;
+    try { parsed = JSON.parse(raw); } catch { throw new Error(`AI run ${run.id} output is not valid JSON.`); }
+    const candidate = (parsed && typeof parsed === "object" && "findings" in parsed) ? (parsed as { findings?: unknown }).findings : parsed;
+    if (!Array.isArray(candidate)) throw new Error(`AI run ${run.id} output must contain a findings array.`);
+    const findings = candidate.map((finding): AiResultFinding => {
+      if (!finding || typeof finding !== "object") throw new Error(`AI run ${run.id} contains an invalid finding.`);
+      const value = finding as Record<string, unknown>;
+      return { key: String(value.key ?? ""), conclusion: String(value.conclusion ?? value.summary ?? ""), confidence: Number(value.confidence ?? 0), evidenceReferences: Array.isArray(value.evidenceReferences) ? value.evidenceReferences.filter((reference): reference is string => typeof reference === "string") : [] };
+    });
+    return { runId: String(run.id), taskId: String(run.taskId ?? `run-${run.id}`), modelId: run.modelKey, input: run.inputReference, findings };
+  });
+  return synthesizeAiResults(results);
 }
 
 export async function getAiEvaluationSummary(userId: number, workspaceId: number) {

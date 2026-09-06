@@ -28,6 +28,8 @@ export const routedProcedurePermissions = {
   "notification.listSince": "self",
   "notification.deliveryLedger": "self",
   "notification.preferences": "self",
+  "notification.emailSubscriptions": "self",
+  "notification.setEmailSubscription": "self",
   "notification.setPreference": "self",
   "notification.markRead": "self",
   "notification.markAllRead": "self",

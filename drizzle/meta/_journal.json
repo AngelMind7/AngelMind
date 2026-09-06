@@ -547,6 +547,20 @@
       "when": 1788440000018,
       "tag": "0077_llm_circuit_fencing_epoch",
       "breakpoints": true
+    },
+    {
+      "idx": 78,
+      "version": "7",
+      "when": 1788440000019,
+      "tag": "0078_email_unsubscribe_preferences",
+      "breakpoints": true
+    },
+    {
+      "idx": 79,
+      "version": "7",
+      "when": 1788440000020,
+      "tag": "0079_email_delivery_suppressed_status",
+      "breakpoints": true
     }
   ]
 }

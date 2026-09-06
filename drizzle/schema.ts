@@ -232,7 +232,8 @@ export const organizationEntitlements = mysqlTable("organizationEntitlements", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => [uniqueIndex("organization_entitlement_uq").on(table.organizationId), index("organization_entitlement_period_idx").on(table.periodEnd)]);
 
-export const emailDeliveryStatus = ["queued", "sending", "sent", "failed"] as const;
+export const emailDeliveryStatus = ["queued", "sending", "sent", "failed", "suppressed"] as const;
+export const emailUnsubscribeCategory = ["collaboration", "notifications", "marketing"] as const;
 
 export const emailDeliveries = mysqlTable("emailDeliveries", {
   id: int("id").autoincrement().primaryKey(),
@@ -251,6 +252,15 @@ export const emailDeliveries = mysqlTable("emailDeliveries", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => [uniqueIndex("email_delivery_idempotency_uq").on(table.idempotencyKey), index("email_delivery_status_attempt_idx").on(table.status, table.nextAttemptAt), index("email_delivery_recipient_idx").on(table.recipient)]);
+
+export const emailUnsubscribePreferences = mysqlTable("emailUnsubscribePreferences", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  category: mysqlEnum("category", emailUnsubscribeCategory).notNull(),
+  unsubscribed: int("unsubscribed").default(1).notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("email_unsubscribe_user_category_uq").on(table.userId, table.category), index("email_unsubscribe_user_idx").on(table.userId, table.updatedAt)]);
 
 export const privacyRequests = mysqlTable("privacyRequests", {
   id: int("id").autoincrement().primaryKey(),

@@ -23,6 +23,7 @@ import * as assetVerification from "./asset-verification";
 import * as organization from "./organization";
 import * as evidenceWorkflow from "./evidence-workflow";
 import * as aiPlatform from "./ai-platform";
+import { listEmailUnsubscribePreferences, setEmailUnsubscribePreference } from "./email-delivery";
 import { listDistributedCircuitStates } from "./_core/llm-distributed-circuit";
 import * as aiMemory from "./ai-memory";
 import * as aiOrchestration from "./ai-orchestration";
@@ -792,6 +793,12 @@ export const appRouter = router({
     preferences: protectedProcedure.query(({ ctx }) =>
       controlPlane.listNotificationPreferences(ctx.user.id)
     ),
+    emailSubscriptions: protectedProcedure.query(({ ctx }) =>
+      listEmailUnsubscribePreferences(ctx.user.id)
+    ),
+    setEmailSubscription: protectedProcedure
+      .input(z.object({ category: z.enum(["collaboration", "notifications", "marketing"]), unsubscribed: z.boolean() }))
+      .mutation(({ ctx, input }) => setEmailUnsubscribePreference(ctx.user.id, input.category, input.unsubscribed)),
     setPreference: protectedProcedure
       .input(
         z.object({

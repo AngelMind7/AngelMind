@@ -1,11 +1,33 @@
 import { and, eq } from "drizzle-orm";
-import { emailDeliveries } from "../drizzle/schema";
+import { emailDeliveries, emailUnsubscribePreferences } from "../drizzle/schema";
 import { getDb } from "./db";
 import { enqueueJob } from "./ai-platform";
 import { sendEmail } from "./_core/email";
 import { buildAccountVerificationEmail, buildPasswordResetEmail } from "./_core/email-templates";
 
 const MAX_EMAIL_DELIVERY_ATTEMPTS = 5;
+type EmailCategory = "security" | "collaboration" | "notifications" | "marketing";
+
+export async function isEmailUnsubscribed(userId: number | null | undefined, category: EmailCategory) {
+  if (!userId || category === "security") return false;
+  const db = await getDb();
+  if (!db) return false;
+  const [preference] = await db.select({ unsubscribed: emailUnsubscribePreferences.unsubscribed }).from(emailUnsubscribePreferences).where(and(eq(emailUnsubscribePreferences.userId, userId), eq(emailUnsubscribePreferences.category, category))).limit(1);
+  return preference?.unsubscribed === 1;
+}
+
+export async function setEmailUnsubscribePreference(userId: number, category: Exclude<EmailCategory, "security">, unsubscribed: boolean) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  await db.insert(emailUnsubscribePreferences).values({ userId, category, unsubscribed: unsubscribed ? 1 : 0 }).onDuplicateKeyUpdate({ set: { unsubscribed: unsubscribed ? 1 : 0, updatedAt: new Date() } });
+  return { userId, category, unsubscribed };
+}
+
+export async function listEmailUnsubscribePreferences(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(emailUnsubscribePreferences).where(eq(emailUnsubscribePreferences.userId, userId));
+}
 
 function affectedRowCount(result: unknown): number | undefined {
   if (!result || typeof result !== "object") return undefined;
@@ -22,7 +44,7 @@ function normalizeRecipient(value: string): string {
   return recipient;
 }
 
-export async function enqueueEmailDelivery(userId: number, input: { recipient: string; templateKey: string; subject: string; text: string; html?: string; replyTo?: string; idempotencyKey: string; workspaceId?: number }) {
+export async function enqueueEmailDelivery(userId: number, input: { recipient: string; templateKey: string; subject: string; text: string; html?: string; replyTo?: string; idempotencyKey: string; workspaceId?: number; category?: EmailCategory }) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   if (!Number.isInteger(userId) || userId < 1 || !input || typeof input.idempotencyKey !== "string") throw new Error("Email delivery input is invalid.");
@@ -31,8 +53,10 @@ export async function enqueueEmailDelivery(userId: number, input: { recipient: s
   if (idempotencyKey.length < 8 || idempotencyKey.length > 180) throw new Error("Email idempotency key must contain 8-180 characters.");
   const [existing] = await db.select().from(emailDeliveries).where(eq(emailDeliveries.idempotencyKey, idempotencyKey)).limit(1);
   if (existing) return existing;
+  const category = input.category ?? (input.templateKey === "organization_invitation" ? "collaboration" : "notifications");
+  if (await isEmailUnsubscribed(userId, category)) return { suppressed: true as const, reason: "user_unsubscribed" as const, idempotencyKey };
   if (typeof input.templateKey !== "string" || typeof input.subject !== "string" || typeof input.text !== "string") throw new Error("Email delivery content is invalid.");
-  const payload = { text: input.text, html: input.html, replyTo: input.replyTo };
+  const payload = { text: input.text, html: input.html, replyTo: input.replyTo, category };
   try {
     await db.insert(emailDeliveries).values({ userId, workspaceId: input.workspaceId ?? null, recipient, templateKey: input.templateKey.trim().slice(0, 120), subject: input.subject.trim().slice(0, 512), payload: JSON.stringify(payload), status: "queued", attempts: 0, nextAttemptAt: new Date(), idempotencyKey });
   } catch (error) {
@@ -48,12 +72,12 @@ export async function enqueueEmailDelivery(userId: number, input: { recipient: s
 
 export async function enqueuePasswordResetEmail(userId: number, input: { recipient: string; recipientName?: string; resetUrl: string; expiresAt?: Date; locale?: string; idempotencyKey: string }) {
   const template = buildPasswordResetEmail(input);
-  return enqueueEmailDelivery(userId, { recipient: input.recipient, templateKey: "password_reset", subject: template.subject, text: template.text, html: template.html, idempotencyKey: input.idempotencyKey });
+  return enqueueEmailDelivery(userId, { recipient: input.recipient, templateKey: "password_reset", subject: template.subject, text: template.text, html: template.html, category: "security", idempotencyKey: input.idempotencyKey });
 }
 
 export async function enqueueAccountVerificationEmail(userId: number, input: { recipient: string; recipientName?: string; verificationUrl: string; expiresAt?: Date; locale?: string; idempotencyKey: string }) {
   const template = buildAccountVerificationEmail(input);
-  return enqueueEmailDelivery(userId, { recipient: input.recipient, templateKey: "account_verification", subject: template.subject, text: template.text, html: template.html, idempotencyKey: input.idempotencyKey });
+  return enqueueEmailDelivery(userId, { recipient: input.recipient, templateKey: "account_verification", subject: template.subject, text: template.text, html: template.html, category: "security", idempotencyKey: input.idempotencyKey });
 }
 
 export async function executeEmailDeliveryJob(payload: Record<string, unknown>) {
@@ -69,8 +93,12 @@ export async function executeEmailDeliveryJob(payload: Record<string, unknown>) 
     await db.update(emailDeliveries).set({ status: "failed", lastError: "Email delivery reached the maximum retry limit.", updatedAt: new Date() }).where(eq(emailDeliveries.id, delivery.id));
     return { ...delivery, status: "failed" as const, lastError: "Email delivery reached the maximum retry limit." };
   }
-  let message: { text: string; html?: string; replyTo?: string };
+  let message: { text: string; html?: string; replyTo?: string; category?: EmailCategory };
   try { message = JSON.parse(delivery.payload) as typeof message; } catch { throw new Error("Email delivery payload is invalid."); }
+  if (await isEmailUnsubscribed(delivery.userId, message.category ?? "notifications")) {
+    await db.update(emailDeliveries).set({ status: "suppressed", lastError: "Email delivery suppressed by user preference.", updatedAt: new Date() }).where(eq(emailDeliveries.id, delivery.id));
+    return { ...delivery, status: "suppressed" as const, lastError: "Email delivery suppressed by user preference." };
+  }
   const claim = await db.update(emailDeliveries).set({ status: "sending", attempts: delivery.attempts + 1, updatedAt: new Date() }).where(and(eq(emailDeliveries.id, delivery.id), eq(emailDeliveries.status, delivery.status)));
   const claimedRows = affectedRowCount(claim);
   if (claimedRows !== 1) throw new Error(claimedRows === 0 ? "Email delivery is already being processed." : "Email delivery claim could not be verified safely.");

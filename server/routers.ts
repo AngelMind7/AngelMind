@@ -45,6 +45,8 @@ import * as knowledgeGraph from "./knowledge-graph";
 import * as mfa from "./mfa";
 import * as findingSimilarity from "./finding-similarity";
 import { executeIdempotent } from "./idempotency";
+import * as reputation from "./reputation";
+import * as integrations from "./integrations";
 
 const workspaceInput = z.object({
   name: z.string().min(2).max(120),
@@ -64,6 +66,28 @@ export const appRouter = router({
   system: systemRouter,
   admin: router({
     operationalSnapshot: adminProcedure.query(() => adminConsole.getAdminOperationalSnapshot()),
+  }),
+  reputation: router({
+    profile: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), userId: z.number().int().positive().optional() }))
+      .query(({ ctx, input }) => reputation.getProfile(ctx.user.id, input.workspaceId, input.userId ?? ctx.user.id)),
+    leaderboard: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), limit: z.number().int().min(1).max(100).optional() }))
+      .query(({ ctx, input }) => reputation.listLeaderboard(ctx.user.id, input.workspaceId, input.limit)),
+    recordEvent: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), userId: z.number().int().positive(), eventType: z.enum(reputation.reputationEventTypes), referenceType: z.string().trim().min(1).max(80).optional(), referenceId: z.number().int().positive().optional() }))
+      .mutation(({ ctx, input }) => reputation.recordReputationEvent(ctx.user.id, input)),
+  }),
+  integrations: router({
+    list: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive() }))
+      .query(({ ctx, input }) => integrations.listConnections(ctx.user.id, input.workspaceId)),
+    upsert: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), provider: z.enum(integrations.integrationProviders), name: z.string().trim().min(2).max(160), endpoint: z.string().url().optional(), secretReference: z.string().trim().max(512).optional(), scopes: z.array(z.string().trim().min(1).max(80)).max(50) }))
+      .mutation(({ ctx, input }) => integrations.upsertConnection(ctx.user.id, input)),
+    setStatus: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), integrationId: z.number().int().positive(), status: z.enum(integrations.integrationStatuses) }))
+      .mutation(({ ctx, input }) => integrations.setStatus(ctx.user.id, input.workspaceId, input.integrationId, input.status)),
   }),
   auth: router({
     apiKeys: protectedProcedure.query(({ ctx }) =>

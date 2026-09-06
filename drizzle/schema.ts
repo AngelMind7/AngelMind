@@ -1312,3 +1312,45 @@ export const knowledgeEdges = mysqlTable("knowledgeEdges", {
 
 export type KnowledgeNode = typeof knowledgeNodes.$inferSelect;
 export type KnowledgeEdge = typeof knowledgeEdges.$inferSelect;
+
+export const reputationLevel = ["contributor", "practitioner", "advanced", "expert"] as const;
+export const reputationEventType = ["finding_validated", "finding_resolved", "evidence_verified", "review_completed", "research_completed"] as const;
+export const reputationProfiles = mysqlTable("reputationProfiles", {
+  userId: int("userId").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  totalPoints: int("totalPoints").default(0).notNull(),
+  level: mysqlEnum("level", reputationLevel).default("contributor").notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export const reputationEvents = mysqlTable("reputationEvents", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  eventType: mysqlEnum("eventType", reputationEventType).notNull(),
+  points: int("points").notNull(),
+  referenceType: varchar("referenceType", { length: 80 }),
+  referenceId: int("referenceId"),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [index("reputation_event_workspace_created_idx").on(table.workspaceId, table.createdAt), index("reputation_event_user_idx").on(table.userId, table.createdAt), uniqueIndex("reputation_event_reference_uq").on(table.workspaceId, table.userId, table.eventType, table.referenceType, table.referenceId)]);
+export const userAchievements = mysqlTable("userAchievements", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  achievementKey: varchar("achievementKey", { length: 80 }).notNull(),
+  awardedAt: timestamp("awardedAt").defaultNow().notNull(),
+  metadata: text("metadata").notNull(),
+}, table => [uniqueIndex("user_achievement_uq").on(table.userId, table.achievementKey), index("user_achievement_awarded_idx").on(table.userId, table.awardedAt)]);
+
+export const integrationProvider = ["github", "gitlab", "slack", "discord", "custom"] as const;
+export const integrationConnectionStatus = ["draft", "connected", "disabled"] as const;
+export const integrationConnections = mysqlTable("integrationConnections", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  provider: mysqlEnum("provider", integrationProvider).notNull(),
+  name: varchar("name", { length: 160 }).notNull(),
+  endpoint: varchar("endpoint", { length: 512 }),
+  secretReference: varchar("secretReference", { length: 512 }),
+  scopes: text("scopes").notNull(),
+  status: mysqlEnum("status", integrationConnectionStatus).default("draft").notNull(),
+  createdByUserId: int("createdByUserId").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [uniqueIndex("integration_workspace_provider_name_uq").on(table.workspaceId, table.provider, table.name), index("integration_workspace_status_idx").on(table.workspaceId, table.status)]);

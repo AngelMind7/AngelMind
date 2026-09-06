@@ -12,6 +12,12 @@ export type RoutePermission =
 export const routedProcedurePermissions = {
   "auth.me": "public",
   "auth.logout": "public",
+  "integrations.list": "read-member",
+  "integrations.upsert": "owner",
+  "integrations.setStatus": "owner",
+  "reputation.profile": "read-member",
+  "reputation.leaderboard": "read-member",
+  "reputation.recordEvent": "responder",
   "agent.analyzeEvidence": "responder",
   "agent.analyzeAndCreateFinding": "responder",
   "agent.importPassiveInventory": "responder",

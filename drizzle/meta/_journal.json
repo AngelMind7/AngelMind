@@ -561,6 +561,20 @@
       "when": 1788440000020,
       "tag": "0079_email_delivery_suppressed_status",
       "breakpoints": true
+    },
+    {
+      "idx": 80,
+      "version": "7",
+      "when": 1788440000021,
+      "tag": "0080_reputation_achievements",
+      "breakpoints": true
+    },
+    {
+      "idx": 81,
+      "version": "7",
+      "when": 1788440000022,
+      "tag": "0081_integration_connections",
+      "breakpoints": true
     }
   ]
 }

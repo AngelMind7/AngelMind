@@ -8,11 +8,11 @@ import { recordPrivacyEvent } from "./account-security";
 const exportTables = [
   ["users", "id"], ["userProfiles", "userId"], ["authDevices", "userId"], ["accountSecurityEvents", "userId"], ["emailDeliveries", "userId"], ["organizationInvitations", "invitedByUserId"],
   ["onboardingProfiles", "userId"], ["apiKeys", "userId"], ["organizationMembers", "userId"], ["workspaceMemberships", "userId"],
-  ["savedViews", "userId"], ["notificationPreferences", "userId"], ["notifications", "userId"], ["privacyRequests", "userId"],
+  ["savedViews", "userId"], ["notificationPreferences", "userId"], ["notifications", "userId"], ["emailUnsubscribePreferences", "userId"], ["privacyRequests", "userId"], ["organizations", "ownerUserId"], ["workspaces", "ownerUserId"],
 ] as const;
 
 const deleteTables = [
-  ["notificationPreferences", "userId"], ["notifications", "userId"], ["emailDeliveries", "userId"], ["organizationInvitations", "invitedByUserId"], ["savedViews", "userId"], ["workspaceMemberships", "userId"],
+  ["notificationPreferences", "userId"], ["notifications", "userId"], ["emailDeliveries", "userId"], ["emailUnsubscribePreferences", "userId"], ["organizationInvitations", "invitedByUserId"], ["savedViews", "userId"], ["workspaceMemberships", "userId"],
   ["organizationMembers", "userId"], ["apiKeys", "userId"], ["authDevices", "userId"], ["accountSecurityEvents", "userId"],
   ["onboardingProfiles", "userId"], ["userProfiles", "userId"],
 ] as const;
@@ -38,6 +38,8 @@ export async function executePrivacyExport(requestId: number) {
   if (!db) throw new Error("Database tidak tersedia.");
   const [request] = await db.select().from(privacyRequests).where(and(eq(privacyRequests.id, requestId), eq(privacyRequests.requestType, "export"))).limit(1);
   if (!request) throw new Error("Export request tidak ditemukan.");
+  if (request.status === "completed") return request;
+  if (request.status !== "processing") throw new Error("Export request must be processing before execution.");
   const data = await collectUserExport(request.userId);
   const artifact = await storagePut(`privacy-exports/${request.userId}/${request.id}.json`, JSON.stringify({ schemaVersion: 1, generatedAt: new Date().toISOString(), userId: request.userId, data }), "application/json");
   void recordPrivacyEvent(request.userId, "privacy_export_completed", { requestId, artifactKey: artifact.key });
@@ -50,6 +52,8 @@ export async function executePrivacyDelete(requestId: number) {
   if (!db) throw new Error("Database tidak tersedia.");
   const [request] = await db.select().from(privacyRequests).where(and(eq(privacyRequests.id, requestId), eq(privacyRequests.requestType, "delete"))).limit(1);
   if (!request) throw new Error("Delete request tidak ditemukan.");
+  if (request.status === "completed") return request;
+  if (request.status !== "processing") throw new Error("Delete request must be processing before execution.");
   const ownedOrganizations = await db.select({ id: organizations.id }).from(organizations).where(eq(organizations.ownerUserId, request.userId)).limit(1);
   const ownedWorkspaces = await db.select({ id: workspaces.id }).from(workspaces).where(eq(workspaces.ownerUserId, request.userId)).limit(1);
   if (ownedOrganizations.length || ownedWorkspaces.length) {

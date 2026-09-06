@@ -236,3 +236,7 @@ Administrators can now query `ai.circuitStates` and view provider circuit state,
 ## Latest implementation slice — 2026-09-06 (Auth email delivery queue wiring)
 
 The durable email service now exposes typed `enqueuePasswordResetEmail` and `enqueueAccountVerificationEmail` helpers. They render the existing locale-aware, HTML-escaped templates and route both messages through the idempotent `emailDeliveries` ledger and `email.deliver` worker queue, preserving retry and provider-message tracking. Firebase/provider trigger wiring, unsubscribe preferences, and live provider verification remain open.
+
+## Latest implementation slice — 2026-09-06 (Durable email unsubscribe preferences)
+
+Email delivery now persists category-level unsubscribe preferences for collaboration, notifications, and marketing messages. Enqueueing checks the preference before creating a delivery, while already-queued work is rechecked by the worker and transitions to an explicit `suppressed` ledger state when the user has opted out. Security email categories, including password reset and account verification, cannot be unsubscribed. The Notifications page exposes the controls, and protected list/update procedures provide the user-scoped API.

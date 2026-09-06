@@ -109,3 +109,11 @@ Repository `main` sekarang memiliki control plane yang lebih lengkap dan lebih d
 2. `docs/blueprint-coverage.md` — matriks coverage repository terbaru.
 3. `docs/remaining-work.md` — backlog dan batasan pekerjaan yang masih terbuka.
 4. `docs/repository-audit-2026-09-06.md` — baseline audit repository.
+
+## Delivery lanjutan setelah laporan baseline
+
+Dua gap repository yang sebelumnya berstatus **Planned** ditutup sebagian melalui vertical slice production-shaped. Domain **Reputation** sekarang memiliki `reputationProfiles`, `reputationEvents`, dan `userAchievements` dengan migration `0080`, scoring deterministik untuk lima event governed, level progression, persisted profile/leaderboard, validasi, dan workspace authorization. Domain **Integrations** sekarang memiliki migration `0081`, provider-neutral connection lifecycle untuk GitHub, GitLab, Slack, Discord, dan custom endpoint, persisted scopes/status, owner-only mutations, HTTPS validation, serta secret-reference boundary yang tidak menyimpan credential mentah.
+
+API tRPC baru terdaftar dalam permission inventory fail-closed: `reputation.profile`, `reputation.leaderboard`, `reputation.recordEvent`, `integrations.list`, `integrations.upsert`, dan `integrations.setStatus`. Unit test reputation lulus. Typecheck, migration journal/safety, master contract, API surface contract, provider-neutral check, dan `git diff --check` lulus. Migration count meningkat dari 80 menjadi 82; concrete tRPC leaves meningkat menjadi 262.
+
+OAuth handshake, provider-specific delivery, automatic reputation event hooks lintas seluruh domain, public researcher profile, live secret provisioning, deployment, dan external receiver verification tetap **Partial/environment-dependent**. Tidak ada credential provider atau target-facing offensive action yang diaktifkan.

@@ -65,11 +65,11 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 39 | Collaboration | **Partial** | Membership, workspace roles, assignment dasar, comments/mentions, threaded finding comments, review room UI, organization invitation schema/token lifecycle/API/UI foundation are implemented; invitation email wiring, activity feed, and full organization/team hierarchy remain open. |
 | 40 | Review system | **Partial** | Human approval dan finding review tersedia; peer-review/security-review sequence umum belum. |
 | 41 | Notification | **Partial** | In-app notifications/preferences, cursor polling, mention delivery, safe webhook boundary, notification audit, delivery ledger, persisted per-event email opt-in state, cursor-filtered delivery operations, status summary, user-scoped manual retry, and fail-closed governed webhook provider integration are implemented; generic notification queue and signed unsubscribe links remain open. |
-| 42 | Reputation | **Planned** | Metrics internal ada; reputation, specialization, achievement belum menjadi domain. |
+| 42 | Reputation | **Partial** | Workspace-scoped reputation events, deterministic points/levels, persisted profiles/achievements, leaderboard/profile API, validation, dan authorization tersedia; automatic event hooks dari seluruh domain dan public researcher profile masih terbuka. |
 | 43 | API platform | **Partial** | tRPC dan public `/api/v1` read endpoints with versioned response envelopes are available; developer SDK, CLI, and docs platform remain open. |
 | 44 | API security | **Implemented (repository)** | Authz, validation, audit, body limits, API-key hashing, explicit REST scopes, rotation, bounded API rate limiting, trusted-proxy-aware client keys, and abuse cooldowns are implemented; distributed quota coordination remains environment-dependent. |
 | 45 | Webhook engine | **Partial** | Draft, HTTPS confirmation, signing reference, activation approval, injectable signed dispatcher, HTTPS/private-address policy, event subscription filter, timeout, HTTP failure result, bounded retry contract, and notification delivery-ledger integration are implemented; live provider/secret verification remains environment-dependent. |
-| 46 | Integrations | **Planned** | GitHub/GitLab/Slack/Discord/custom integration lifecycle belum menjadi fitur production. |
+| 46 | Integrations | **Partial** | Provider-neutral GitHub/GitLab/Slack/Discord/custom connection lifecycle dengan persisted status, scopes, HTTPS endpoint validation, secret-reference boundary, owner authorization, dan API tersedia; OAuth handshakes, live delivery adapters, dan provider verification tetap environment-dependent. |
 
 ## Requirement 47–65: AI, jobs, events, dan reliability
 

@@ -15,6 +15,12 @@ export const realtimeEventTypes = [
   "task.failed",
   "task.completed",
   "task.cancelled",
+  "hypothesis.proposed",
+  "hypothesis.investigating",
+  "hypothesis.supported",
+  "hypothesis.disproven",
+  "hypothesis.validated",
+  "hypothesis.archived",
   "finding.created",
   "correlation.chain_detected",
 ] as const;

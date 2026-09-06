@@ -322,7 +322,11 @@ export async function transitionResearchHypothesis(userId: number, hypothesisId:
   const [hypothesis] = await db.select().from(researchHypotheses).where(eq(researchHypotheses.id, hypothesisId)).limit(1);
   if (!hypothesis || !(await canAccessWorkspace(userId, hypothesis.workspaceId, "respond"))) throw new Error("Hypothesis tidak ditemukan atau tidak dapat diakses.");
   if (!hypothesisTransitions[hypothesis.status]?.includes(nextStatus)) throw new Error(`Invalid hypothesis transition: ${hypothesis.status} -> ${nextStatus}`);
-  await db.update(researchHypotheses).set({ status: nextStatus, outcome: outcome?.trim() || hypothesis.outcome, updatedAt: new Date() }).where(eq(researchHypotheses.id, hypothesisId));
+  const updated = await db.update(researchHypotheses).set({ status: nextStatus, outcome: outcome?.trim() || hypothesis.outcome, updatedAt: new Date() }).where(eq(researchHypotheses.id, hypothesisId));
+  if (updated[0].affectedRows !== 1) throw new Error("Concurrent hypothesis update detected; reload and retry.");
+  const eventType = assertEventType(`hypothesis.${nextStatus}`);
+  const eventPayload = assertEventPayload({ hypothesisId, sessionId: hypothesis.sessionId, workspaceId: hypothesis.workspaceId, from: hypothesis.status, to: nextStatus, outcome: outcome?.trim() || hypothesis.outcome || null });
+  await db.insert(outboxEvents).values({ workspaceId: hypothesis.workspaceId, eventType, traceId: hypothesis.traceId, aggregateType: "research_hypothesis", aggregateId: hypothesis.id, idempotencyKey: `research-hypothesis:${hypothesis.id}:${nextStatus}:${hypothesis.updatedAt.toISOString()}`, schemaVersion: 1, payload: JSON.stringify(eventPayload), status: "pending", attempts: 0 }).onDuplicateKeyUpdate({ set: { idempotencyKey: `research-hypothesis:${hypothesis.id}:${nextStatus}:${hypothesis.updatedAt.toISOString()}` } });
   await addResearchAudit(db, hypothesis.workspaceId, userId, "research-hypothesis-transitioned", { hypothesisId, from: hypothesis.status, to: nextStatus });
   await upsertSearchDocument({ workspaceId: hypothesis.workspaceId, entityType: "hypothesis", entityId: hypothesis.id, title: hypothesis.description, body: `${hypothesis.reason} status:${nextStatus} ${outcome?.trim() ?? hypothesis.outcome ?? ""}` });
   return { success: true as const, hypothesisId, status: nextStatus };

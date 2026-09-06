@@ -19,6 +19,7 @@ import * as analytics from "./control-plane/analytics";
 import * as collaboration from "./control-plane/collaboration";
 import * as accountSecurity from "./account-security";
 import * as researchWorkflow from "./research-workflow";
+import * as researchTaskExecutor from "./research-task-executor";
 import * as assetVerification from "./asset-verification";
 import * as organization from "./organization";
 import * as evidenceWorkflow from "./evidence-workflow";
@@ -2216,6 +2217,9 @@ export const appRouter = router({
           input.expectedRevision
         )
       ),
+    enqueueTask: protectedProcedure
+      .input(z.object({ taskId: z.number().int().positive(), idempotencyKey: z.string().trim().min(8).max(180).optional() }))
+      .mutation(({ ctx, input }) => researchTaskExecutor.enqueueResearchTask(ctx.user.id, input)),
     failureObservations: protectedProcedure
       .input(
         z.object({

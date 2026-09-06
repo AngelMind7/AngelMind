@@ -10,6 +10,7 @@ import { executeNotificationDeliveryJob } from "./notification-delivery";
 import { expireAssetVerifications } from "./asset-verification";
 import { executeToolPipeline } from "./tool-execution-pipeline";
 import type { ToolRuntimeRequest } from "./tool-runtime";
+import { executeResearchTaskJob } from "./research-task-executor";
 
 export type WorkerJob = {
   id: number;
@@ -188,6 +189,9 @@ if (process.env.RUN_WORKER === "true") {
     "playbook.run": async (_job, payload) => {
       if (payload.type !== "playbook_run") throw new Error("Unsupported playbook run payload type.");
       await executePlaybookRunJob(payload);
+    },
+    "research.task.execute": async (job, payload) => {
+      await executeResearchTaskJob(payload, job.attempts);
     },
     tool_execution: toolExecutionJobHandler(),
   });

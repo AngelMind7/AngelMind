@@ -92,15 +92,27 @@ export function isAiRunTerminal(status: string) {
   return ["completed", "partial", "failed", "cancelled"].includes(status);
 }
 
+export function calculateAiRunCostCents(inputTokens: number, outputTokens: number, rates: { inputCostPerMillionCents: number; outputCostPerMillionCents: number }) {
+  const input = Number.isFinite(inputTokens) ? Math.max(0, Math.trunc(inputTokens)) : 0;
+  const output = Number.isFinite(outputTokens) ? Math.max(0, Math.trunc(outputTokens)) : 0;
+  const inputRate = Number.isFinite(rates.inputCostPerMillionCents) ? Math.max(0, Math.trunc(rates.inputCostPerMillionCents)) : 0;
+  const outputRate = Number.isFinite(rates.outputCostPerMillionCents) ? Math.max(0, Math.trunc(rates.outputCostPerMillionCents)) : 0;
+  return Math.ceil((input * inputRate + output * outputRate) / 1_000_000);
+}
+
 export async function updateAiRun(userId: number, input: { runId: number; status: "running" | "completed" | "failed" | "partial" | "cancelled"; outputReference?: string; inputTokens?: number; outputTokens?: number; costCents?: number; errorCode?: string }) {
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, input.runId)).limit(1);
   if (!run || !(await canAccessWorkspace(userId, run.workspaceId, "respond"))) throw new Error("AI run tidak ditemukan atau tidak dapat diakses.");
-  const costCents = Math.max(0, input.costCents ?? run.costCents);
+  const [model] = await db.select({ inputCostPerMillionCents: aiModels.inputCostPerMillionCents, outputCostPerMillionCents: aiModels.outputCostPerMillionCents }).from(aiModels).where(eq(aiModels.modelKey, run.modelKey)).limit(1);
+  const nextInputTokens = Math.max(0, Math.trunc(input.inputTokens ?? run.inputTokens));
+  const nextOutputTokens = Math.max(0, Math.trunc(input.outputTokens ?? run.outputTokens));
+  const measuredCostCents = model ? calculateAiRunCostCents(nextInputTokens, nextOutputTokens, model) : run.costCents;
+  const costCents = Math.max(0, input.costCents ?? (input.status === "completed" || input.status === "partial" ? measuredCostCents : run.costCents));
   const terminalBeforeUpdate = isAiRunTerminal(run.status);
   if (terminalBeforeUpdate) throw new Error("AI run is already terminal and cannot be billed or reopened.");
-  await db.update(aiRuns).set({ status: input.status, outputReference: input.outputReference?.trim() || run.outputReference, inputTokens: input.inputTokens ?? run.inputTokens, outputTokens: input.outputTokens ?? run.outputTokens, costCents, errorCode: input.errorCode?.trim() || null, startedAt: run.startedAt ?? new Date(), completedAt: ["completed", "failed", "partial", "cancelled"].includes(input.status) ? new Date() : null }).where(eq(aiRuns.id, run.id));
+  await db.update(aiRuns).set({ status: input.status, outputReference: input.outputReference?.trim() || run.outputReference, inputTokens: nextInputTokens, outputTokens: nextOutputTokens, costCents, errorCode: input.errorCode?.trim() || null, startedAt: run.startedAt ?? new Date(), completedAt: ["completed", "failed", "partial", "cancelled"].includes(input.status) ? new Date() : null }).where(eq(aiRuns.id, run.id));
   if ((input.status === "completed" || input.status === "partial") && !terminalBeforeUpdate) await db.update(workspaces).set({ spentCents: sql`${workspaces.spentCents} + ${costCents}` }).where(eq(workspaces.id, run.workspaceId));
   const [updated] = await db.select().from(aiRuns).where(eq(aiRuns.id, run.id)).limit(1);
   return updated;

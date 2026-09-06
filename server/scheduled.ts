@@ -1,13 +1,12 @@
 import { closeDb } from "./db";
-import { runScheduledAdministrativeChecks } from "./control-plane/service";
+import { runAllScheduledJobs } from "./scheduled-maintenance";
 import { validateRuntimeConfig } from "./_core/env";
 
 async function main() {
   validateRuntimeConfig();
-  const result = await runScheduledAdministrativeChecks(new Date());
-  if (!result.ok) throw new Error(`Scheduled maintenance could not run: ${result.reason}`);
-  console.info(`[scheduled] completed processed=${result.processed} failed=${result.failed} skipped=${result.skipped}`);
-  if (result.failed > 0) process.exitCode = 1;
+  const result = await runAllScheduledJobs(new Date());
+  console.info(`[scheduled] completed ok=${result.ok} jobs=${result.results.length}`);
+  if (!result.ok) process.exitCode = 1;
 }
 
 void main()

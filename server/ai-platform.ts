@@ -310,6 +310,17 @@ export async function claimOutboxConsumer(eventId: number, consumerKey: string, 
   }
 }
 
+export async function recoverStaleOutboxLeases(limit = 250) {
+  const db = await getDb();
+  if (!db) return { inspected: 0, recovered: 0 };
+  const now = new Date();
+  const staleBefore = new Date(now.getTime() - 5 * 60 * 1000);
+  const rows = await db.select({ id: outboxEvents.id }).from(outboxEvents).where(and(eq(outboxEvents.status, "retrying"), isNotNull(outboxEvents.lockedAt), lt(outboxEvents.lockedAt, staleBefore))).orderBy(asc(outboxEvents.lockedAt), asc(outboxEvents.id)).limit(Math.min(500, Math.max(1, Math.trunc(limit))));
+  if (!rows.length) return { inspected: 0, recovered: 0 };
+  const result = await db.update(outboxEvents).set({ status: "retrying", lockedAt: null, workerId: null, availableAt: now, lastError: "Outbox lease recovered by scheduled maintenance." }).where(and(inArray(outboxEvents.id, rows.map(row => row.id)), eq(outboxEvents.status, "retrying")));
+  return { inspected: rows.length, recovered: result[0]?.affectedRows ?? rows.length };
+}
+
 export async function claimOutboxEvent(eventId: number, now = new Date()) {
   const db = await getDb();
   if (!db) return { claimed: false as const, reason: "database-unavailable" as const };

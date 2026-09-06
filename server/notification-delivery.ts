@@ -1,6 +1,6 @@
 import { and, eq } from "drizzle-orm";
 import { createHmac } from "node:crypto";
-import { notificationDeliveries, notifications, type notificationDeliveryChannel } from "../drizzle/schema";
+import { notificationDeliveries, notifications, type notificationDeliveryChannel, webhookConfigurations } from "../drizzle/schema";
 import { getDb } from "./db";
 import { enqueueJob } from "./ai-platform";
 
@@ -48,7 +48,24 @@ export function buildRedactedNotificationPayload(notification: Pick<Notification
 export const notificationProviders: Record<NotificationChannel, NotificationProvider> = {
   in_app: { channel: "in_app", isEnabled: () => true, deliver: async () => ({ delivered: true }) },
   email: { channel: "email", isEnabled: () => Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD), deliver: async () => ({ delivered: false, reason: "email-provider-delegated-to-email-delivery-ledger" }) },
-  webhook: { channel: "webhook", isEnabled: () => false, deliver: async () => ({ delivered: false, reason: "webhook-provider-disabled-until-approved-activation" }) },
+  webhook: {
+    channel: "webhook",
+    isEnabled: () => process.env.ANGELMIND_WEBHOOK_DELIVERY_ENABLED === "1",
+    deliver: async (notification, payload) => {
+      if (!notification.workspaceId) return { delivered: false, reason: "webhook-workspace-required" };
+      const db = await getDb();
+      if (!db) return { delivered: false, reason: "database-unavailable" };
+      const [configuration] = await db.select().from(webhookConfigurations).where(eq(webhookConfigurations.workspaceId, notification.workspaceId)).limit(1);
+      if (!configuration) return { delivered: false, reason: "webhook-configuration-missing" };
+      const reference = configuration.signingSecretReference?.trim() ?? "";
+      const secretName = reference.startsWith("env:") ? reference.slice(4).trim() : "";
+      if (!secretName || !/^[A-Z0-9_]{3,120}$/.test(secretName)) return { delivered: false, reason: "webhook-secret-reference-invalid" };
+      const secret = process.env[secretName] ?? null;
+      if (!secret) return { delivered: false, reason: "webhook-signing-secret-unavailable" };
+      const { dispatchWebhook } = await import("./webhook-dispatcher");
+      return dispatchWebhook({ eventType: notification.eventType, payload, configuration, resolveSecret: async () => secret });
+    },
+  },
 };
 
 function isDuplicateKeyError(error: unknown): boolean {

@@ -1,5 +1,5 @@
 import { and, eq } from "drizzle-orm";
-import { researchTasks, researchSessions } from "../drizzle/schema";
+import { researchTasks, researchSessions, researchTaskDependencies } from "../drizzle/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 import { enqueueJob } from "./ai-platform";
@@ -47,6 +47,27 @@ export async function enqueueResearchTask(userId: number, input: { taskId: numbe
     payload: { type: "research_task_execute", taskId: task.id, userId, workspaceId: task.workspaceId },
     maxAttempts: 3,
   });
+}
+
+export async function enqueueReadyResearchTasks(userId: number, input: { sessionId: number; limit?: number }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [session] = await db.select({ id: researchSessions.id, workspaceId: researchSessions.workspaceId }).from(researchSessions).where(eq(researchSessions.id, input.sessionId)).limit(1);
+  if (!session || !(await canAccessWorkspace(userId, session.workspaceId, "respond"))) throw new Error("Research session tidak ditemukan atau tidak dapat diakses.");
+  const limit = Math.min(100, Math.max(1, Math.trunc(input.limit ?? 25)));
+  const candidates = await db.select().from(researchTasks).where(and(eq(researchTasks.sessionId, session.id), eq(researchTasks.workspaceId, session.workspaceId), eq(researchTasks.status, "queued"))).orderBy(researchTasks.priority, researchTasks.id).limit(limit * 3);
+  const queued: Awaited<ReturnType<typeof enqueueJob>>[] = [];
+  for (const task of candidates) {
+    if (queued.length >= limit) break;
+    const dependencies = await db.select({ dependsOnTaskId: researchTaskDependencies.dependsOnTaskId }).from(researchTaskDependencies).where(and(eq(researchTaskDependencies.taskId, task.id), eq(researchTaskDependencies.workspaceId, session.workspaceId)));
+    if (dependencies.length) {
+      const dependencyRows = await db.select({ id: researchTasks.id, status: researchTasks.status }).from(researchTasks).where(and(eq(researchTasks.workspaceId, session.workspaceId), eq(researchTasks.sessionId, session.id)));
+      const statusById = new Map(dependencyRows.map(row => [row.id, row.status]));
+      if (dependencies.some(dependency => statusById.get(dependency.dependsOnTaskId) !== "completed")) continue;
+    }
+    queued.push(await enqueueResearchTask(userId, { taskId: task.id }));
+  }
+  return { sessionId: session.id, queued: queued.length, jobs: queued };
 }
 
 export async function executeResearchTaskJob(payload: Record<string, unknown>, attempt = 1) {

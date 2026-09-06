@@ -216,3 +216,7 @@ The new workspace-authorized `ai.provenance` query composes the persisted task, 
 ## Latest implementation slice — 2026-09-06 (AI failure isolation)
 
 The AI result pipeline now classifies context overflow, provider unavailability, partial results, contradictory conclusions, invalid output, and unknown failures. Bounded recovery plans select context reduction, provider fallback, human-review escalation, transient retry, or fail-closed behavior with explicit attempt caps. Synthesis responses now include contradiction/partial-result counts and a human-review requirement without silently promoting unsafe output. Provider-specific circuit breakers remain open.
+
+## Latest implementation slice — 2026-09-06 (Provider-specific AI circuit breaker)
+
+The LLM gateway now maintains isolated in-process circuit state per configured provider. Retryable HTTP and network failures increment a bounded failure counter; providers transition from `closed` to `open`, reject requests during cooldown, then admit one `half_open` probe. Successful probes close and reset the circuit, while failed probes reopen it. Non-retryable HTTP errors do not poison provider health, and normal fallback selection continues around isolated providers. Distributed circuit state and operational alerting remain open.

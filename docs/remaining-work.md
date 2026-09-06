@@ -200,3 +200,7 @@ The unused `BlueprintModule` lazy import and source file were removed after rout
 ## Latest implementation slice — 2026-09-06 (Notification delivery operations)
 
 Notification delivery operations now expose a user-scoped cursor-paginated ledger with status/channel filters, deterministic timestamp/ID continuation, aggregate status summary, and a guarded manual retry action for failed deliveries. Retry resets the delivery to `queued`, clears the previous error, and submits a new durable `notification.deliver` job with a distinct idempotency key. External email/webhook provider activation and signed unsubscribe links remain environment/provider work.
+
+## Latest implementation slice — 2026-09-06 (Evidence transformation lineage)
+
+Evidence provenance now records an authorized source-artifact → target-artifact transformation edge with bounded transformation type, source and target SHA-256 references, structured metadata, workspace isolation, duplicate-safe lineage persistence, and an audit event. The new `evidence.recordTransformation` procedure complements external-source capture and research-node links. Acquisition workers, immutable chain verification, and full provenance UI remain open.

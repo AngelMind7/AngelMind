@@ -240,3 +240,7 @@ The durable email service now exposes typed `enqueuePasswordResetEmail` and `enq
 ## Latest implementation slice — 2026-09-06 (Durable email unsubscribe preferences)
 
 Email delivery now persists category-level unsubscribe preferences for collaboration, notifications, and marketing messages. Enqueueing checks the preference before creating a delivery, while already-queued work is rechecked by the worker and transitions to an explicit `suppressed` ledger state when the user has opted out. Security email categories, including password reset and account verification, cannot be unsubscribed. The Notifications page exposes the controls, and protected list/update procedures provide the user-scoped API.
+
+## Latest implementation slice — 2026-09-06 (SMTP provider verification)
+
+Administrators can now inspect redacted SMTP provider health and run a no-send connection verification from the Operations Console. The verification uses the configured transport's native `verify()` handshake and never sends a test message or exposes credentials. Provider credentials and live deployment verification remain environment-gated.

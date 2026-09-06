@@ -566,6 +566,21 @@ export const aiModels = mysqlTable("aiModels", {
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 }, table => [uniqueIndex("ai_model_key_uq").on(table.modelKey), index("ai_model_status_idx").on(table.status, table.updatedAt)]);
 
+export const llmCircuitState = ["closed", "open", "half_open"] as const;
+export const llmProviderCircuitStates = mysqlTable("llmProviderCircuitStates", {
+  id: int("id").autoincrement().primaryKey(),
+  provider: varchar("provider", { length: 80 }).notNull(),
+  state: mysqlEnum("state", llmCircuitState).default("closed").notNull(),
+  consecutiveFailures: int("consecutiveFailures").default(0).notNull(),
+  openedAt: timestamp("openedAt"),
+  nextProbeAt: timestamp("nextProbeAt"),
+  probeLeaseUntil: timestamp("probeLeaseUntil"),
+  lastError: varchar("lastError", { length: 512 }),
+  lastAlertState: mysqlEnum("lastAlertState", llmCircuitState),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+}, table => [uniqueIndex("llm_provider_circuit_provider_uq").on(table.provider), index("llm_provider_circuit_state_probe_idx").on(table.state, table.nextProbeAt)]);
+
 export const aiRuns = mysqlTable("aiRuns", {
   id: int("id").autoincrement().primaryKey(),
   workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),

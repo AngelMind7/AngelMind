@@ -526,6 +526,13 @@
       "when": 1788440000015,
       "tag": "0074_organization_audit_events",
       "breakpoints": true
+    },
+    {
+      "idx": 75,
+      "version": "7",
+      "when": 1788440000016,
+      "tag": "0075_llm_provider_circuit_state",
+      "breakpoints": true
     }
   ]
 }

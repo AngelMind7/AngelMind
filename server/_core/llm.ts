@@ -1,5 +1,6 @@
 import { ENV } from "./env";
 import { createProviderCircuitBreakers, type CircuitSnapshot } from "./llm-circuit-breaker";
+import { allowDistributedProviderRequest, recordDistributedProviderFailure, recordDistributedProviderSuccess } from "./llm-distributed-circuit";
 
 export type Role = "system" | "user" | "assistant" | "tool" | "function";
 
@@ -451,6 +452,10 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
       lastError = new Error(`${provider.name} circuit is open; provider temporarily isolated`);
       continue;
     }
+    if (!(await allowDistributedProviderRequest(provider.name))) {
+      lastError = new Error(`${provider.name} distributed circuit is open; provider temporarily isolated`);
+      continue;
+    }
     const providerPayload = {
       ...payload,
       ...(model || provider.model || fallbackModels?.[providerIndex - 1]
@@ -471,6 +476,7 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
 
       if (response.ok) {
         circuit?.recordSuccess();
+        await recordDistributedProviderSuccess(provider.name);
         return (await response.json()) as InvokeResult;
       }
 
@@ -483,10 +489,14 @@ export async function invokeLLM(params: InvokeParams): Promise<InvokeResult> {
         throw lastError;
       }
       circuit?.recordFailure();
+      await recordDistributedProviderFailure(provider.name, lastError);
       console.warn(`${provider.name} unavailable; trying the next LLM provider`);
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
-      if (recordCircuitFailure) circuit?.recordFailure();
+      if (recordCircuitFailure) {
+        circuit?.recordFailure();
+        await recordDistributedProviderFailure(provider.name, lastError);
+      }
       if (providerIndex === providers.length - 1) throw lastError;
       console.warn(`${provider.name} request failed; trying the next LLM provider`);
     }

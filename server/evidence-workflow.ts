@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { and, desc, eq, like, ne, or } from "drizzle-orm";
+import { and, asc, desc, eq, like, ne, or } from "drizzle-orm";
 import { evidenceArtifacts, evidenceLineage, evidenceProvenance, findingRelations, findingRetests, findings, researchEvidenceLinks, researchHypotheses, researchObservations, reportVersions, workspaces } from "../drizzle/schema";
 import { upsertSearchDocument } from "./global-search";
 import { getDb } from "./db";
@@ -101,6 +101,16 @@ export async function recordEvidenceTransformation(userId: number, input: { sour
 export async function listEvidenceLineage(userId: number, evidenceArtifactId: number) {
   const { db, artifact } = await loadArtifact(userId, evidenceArtifactId);
   return db.select().from(evidenceLineage).where(and(eq(evidenceLineage.workspaceId, artifact.workspaceId), eq(evidenceLineage.evidenceArtifactId, artifact.id))).orderBy(desc(evidenceLineage.createdAt));
+}
+
+export async function replayEvidenceProvenance(userId: number, evidenceArtifactId: number) {
+  const { db, artifact } = await loadArtifact(userId, evidenceArtifactId);
+  const [provenance, lineage, links] = await Promise.all([
+    db.select().from(evidenceProvenance).where(eq(evidenceProvenance.evidenceArtifactId, artifact.id)).limit(1),
+    db.select().from(evidenceLineage).where(and(eq(evidenceLineage.workspaceId, artifact.workspaceId), eq(evidenceLineage.evidenceArtifactId, artifact.id))).orderBy(asc(evidenceLineage.createdAt), asc(evidenceLineage.id)),
+    db.select().from(researchEvidenceLinks).where(and(eq(researchEvidenceLinks.workspaceId, artifact.workspaceId), eq(researchEvidenceLinks.evidenceArtifactId, artifact.id))).orderBy(asc(researchEvidenceLinks.createdAt)),
+  ]);
+  return { artifact, provenance: provenance[0] ?? null, lineage, researchLinks: links, replayable: Boolean(provenance[0] || lineage.length || links.length) };
 }
 
 export async function listFindingRelations(userId: number, findingId: number) {

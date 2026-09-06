@@ -1635,6 +1635,9 @@ export const appRouter = router({
     lineage: protectedProcedure
       .input(z.object({ evidenceArtifactId: z.number().int().positive() }))
       .query(({ ctx, input }) => evidenceWorkflow.listEvidenceLineage(ctx.user.id, input.evidenceArtifactId)),
+    provenanceReplay: protectedProcedure
+      .input(z.object({ evidenceArtifactId: z.number().int().positive() }))
+      .query(({ ctx, input }) => evidenceWorkflow.replayEvidenceProvenance(ctx.user.id, input.evidenceArtifactId)),
     linkResearchNode: protectedProcedure
       .input(
         z.object({

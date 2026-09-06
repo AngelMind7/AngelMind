@@ -13,6 +13,7 @@ import {
   researchTasks,
   researchTaskDependencies,
   researchAssetType,
+  outboxEvents,
   workspaces,
 } from "../drizzle/schema";
 import { getDb } from "./db";
@@ -25,6 +26,7 @@ import { assertExpectedRevision, decodePageCursor, nextRevision, pageResult } fr
 import { upsertSearchDocument } from "./global-search";
 import { parseAssetMetadata, selectVectorsForAsset } from "./research-vector-selection";
 import { assertDependencyGraphAcyclic, validateResearchHypothesisInput, validateResearchTaskDefinition } from "./research-validation";
+import { assertEventType, assertEventPayload } from "./event-contract";
 
 const sessionTransitions: Record<string, string[]> = {
   draft: ["ready", "archived"],
@@ -384,9 +386,13 @@ export async function transitionResearchTask(userId: number, taskId: number, nex
       if (dependencyRows.length !== dependencies.length || dependencyRows.some(row => row.status !== "completed")) throw new Error("Task blocked: all dependencies must be completed first.");
     }
   }
-  const updated = await db.update(researchTasks).set({ status: nextStatus, revision: nextRevision(task.revision), outputs: outputs ? JSON.stringify(outputs) : task.outputs, retryCount: nextStatus === "retrying" ? task.retryCount + 1 : task.retryCount, completedAt: nextStatus === "completed" || nextStatus === "cancelled" ? new Date() : null, updatedAt: new Date() }).where(and(eq(researchTasks.id, taskId), eq(researchTasks.revision, task.revision)));
+  const revision = nextRevision(task.revision);
+  const updated = await db.update(researchTasks).set({ status: nextStatus, revision, outputs: outputs ? JSON.stringify(outputs) : task.outputs, retryCount: nextStatus === "retrying" ? task.retryCount + 1 : task.retryCount, completedAt: nextStatus === "completed" || nextStatus === "cancelled" ? new Date() : null, updatedAt: new Date() }).where(and(eq(researchTasks.id, taskId), eq(researchTasks.revision, task.revision)));
   if (updated[0].affectedRows !== 1) throw new Error("Concurrent update detected; reload the research task and retry.");
-  await addResearchAudit(db, task.workspaceId, userId, "research-task-transitioned", { taskId, from: task.status, to: nextStatus });
+  const eventType = assertEventType(`task.${nextStatus}`);
+  const eventPayload = assertEventPayload({ taskId, sessionId: task.sessionId, workspaceId: task.workspaceId, from: task.status, to: nextStatus, revision });
+  await db.insert(outboxEvents).values({ workspaceId: task.workspaceId, eventType, traceId: task.traceId, aggregateType: "research_task", aggregateId: task.id, idempotencyKey: `research-task:${task.id}:revision:${revision}`, schemaVersion: 1, payload: JSON.stringify(eventPayload), status: "pending", attempts: 0 }).onDuplicateKeyUpdate({ set: { idempotencyKey: `research-task:${task.id}:revision:${revision}` } });
+  await addResearchAudit(db, task.workspaceId, userId, "research-task-transitioned", { taskId, from: task.status, to: nextStatus, revision });
   await upsertSearchDocument({ workspaceId: task.workspaceId, entityType: "task", entityId: task.id, title: task.title, body: `${task.inputs} ${outputs ? JSON.stringify(outputs) : task.outputs} status:${nextStatus}` });
   return { success: true as const, taskId, status: nextStatus };
 }

@@ -9,6 +9,12 @@ export const realtimeEventTypes = [
   "execution.progress",
   "execution.completed",
   "execution.failed",
+  "task.queued",
+  "task.started",
+  "task.blocked",
+  "task.failed",
+  "task.completed",
+  "task.cancelled",
   "finding.created",
   "correlation.chain_detected",
 ] as const;

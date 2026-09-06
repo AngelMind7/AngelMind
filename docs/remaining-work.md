@@ -190,3 +190,9 @@ A scheduled backup workflow now requests encrypted database-and-object checkpoin
 ## Latest implementation slice — 2026-09-06 (Retest evidence and traceability)
 
 Retest operators can now upload a new evidence artifact inline instead of first leaving the workflow to create an artifact. The server still enforces workspace/finding ownership, file validation, quarantine, asynchronous scanning, and scanned/promoted attachment requirements. Durable jobs now receive explicit or generated trace IDs, AI execution jobs inherit their AI run trace, and execution progress outbox events persist the same correlation field. External provider distributed tracing and full browser-level trace assertions remain deployment/test-gated.
+
+## Latest implementation slice — 2026-09-06 (Organization audit pagination and legacy cleanup)
+
+Organization role history now supports bounded cursor pagination with scoped timestamp/ID continuation, actor/member/target-role/date filters, malformed-detail rejection, and bounded CSV export for authorized organization members. The existing bounded `roleAudit` procedure remains backward compatible while clients adopt `roleAuditPage` incrementally.
+
+The unused `BlueprintModule` lazy import and source file were removed after route-reference verification. Active authenticated routes are now domain-specific; provider delivery, authenticated staging E2E, and full domain-wide pagination remain environment or follow-up work.

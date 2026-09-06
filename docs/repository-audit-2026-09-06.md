@@ -13,7 +13,7 @@ Namun repository **belum memenuhi seluruh blueprint V5.3 sebagai platform end-to
 
 Audit lokal menemukan **601 file** pada area `client/src`, `server`, `drizzle`, `e2e`, dan `scripts`. Contract surface saat ini terdiri dari **226 concrete tRPC leaves, 63 REST routes menurut master contract, dan 267 named API contract entries**. Repository memiliki **75 migration SQL dan 75 journal entries** yang konsisten.
 
-Tidak ditemukan pemakaian route aktif yang memetakan `BlueprintModule`; file `client/src/pages/BlueprintModule.tsx` masih ada dan lazy-imported, tetapi tidak digunakan oleh route map saat ini. Ini merupakan **dead generic module**, bukan bukti bahwa seluruh route masih generic.
+Tidak ditemukan pemakaian route aktif yang memetakan `BlueprintModule`; modul generic legacy tersebut telah dihapus setelah verifikasi referensi route. Ini bukan bukti bahwa seluruh route masih generic.
 
 ## 2. Bukti verifikasi yang dijalankan
 
@@ -94,7 +94,7 @@ Temuan utama frontend adalah sebagai berikut:
 1. `client/src/pages/Organizations.tsx` kini menyediakan perubahan role anggota, protected owner state, effective privileges, dan role audit history.
 2. `client/src/pages/Findings.tsx` menyediakan upload evidence langsung dari retest workflow.
 3. `client/src/authenticatedRoutes.ts` tidak memetakan `BlueprintModule` ke route aktif.
-4. `client/src/pages/BlueprintModule.tsx` masih ada sebagai file generic legacy dan masih lazy-imported. File ini sebaiknya dihapus atau diberi status legacy yang eksplisit setelah seluruh referensi build/contract dipastikan tidak dibutuhkan.
+4. `BlueprintModule.tsx` telah dihapus setelah seluruh referensi build/contract diperiksa.
 5. Beberapa page masih berupa file besar dengan banyak inline JSX. Ini meningkatkan biaya maintainability dan menyulitkan browser-level test isolation.
 6. UI state contracts pada core surfaces tersedia, tetapi audit penuh terhadap loading/error/empty/accessibility state untuk setiap sub-route belum selesai.
 
@@ -104,7 +104,7 @@ Backend memiliki domain service luas dengan unit test yang relatif kuat. Server-
 
 1. Organization role mutation memakai `requireMembership(..., "manage")` dan menolak perubahan role owner.
 2. Role mutation membuat record `organizationAuditEvents` dengan actor, target member, role lama, role baru, dan trace ID.
-3. Role audit query mengulang authorization membership, membatasi limit maksimal 100, dan memfilter subject `member-role-changed`.
+3. Role audit query mengulang authorization membership, memiliki backward-compatible bounded list, serta cursor pagination dengan filter actor/member/role/date dan CSV export yang memfilter subject `member-role-changed`.
 4. Durable job enqueue memiliki trace ID eksplisit atau generated fallback.
 5. AI execution job mewarisi trace ID AI run.
 6. Execution progress outbox events menyimpan trace ID.
@@ -127,7 +127,7 @@ Status matrix sebaiknya diperbarui berdasarkan bukti current `main`, bukan hanya
 
 ### 5.2 Generic module legacy masih tersisa
 
-`BlueprintModule.tsx` tidak digunakan oleh route aktif berdasarkan audit route map, tetapi masih menjadi dependency lazy import. Ini bukan bug runtime yang terdeteksi, tetapi merupakan sisa file/modul yang dapat membingungkan audit berikutnya dan bertentangan dengan tujuan menghapus generic shells.
+`BlueprintModule.tsx` tidak digunakan oleh route aktif dan telah dihapus setelah reference/build check.
 
 ### 5.3 Bundle memiliki warning circular chunk
 
@@ -139,17 +139,17 @@ Smoke E2E publik lulus. Authenticated lifecycle contract ada, tetapi membutuhkan
 
 ### 5.5 Organization audit history belum memakai pagination penuh
 
-Endpoint `organization.roleAudit` memakai bounded limit maksimal 100. Ini aman untuk mencegah query tidak terbatas, tetapi belum cukup untuk audit history jangka panjang. Cursor pagination, filter, dan export audit sebaiknya menjadi pekerjaan berikutnya.
+Endpoint backward-compatible `organization.roleAudit` tetap bounded, sedangkan `organization.roleAuditPage` menambahkan cursor timestamp/ID, filter actor/member/role/date, dan `organization.exportRoleAudit` menyediakan CSV bounded hingga 10.000 baris. Browser authenticated verification masih staging-gated.
 
 ## 6. File yang tampak belum selesai atau perlu keputusan
 
 | File/area | Status audit | Tindakan yang disarankan |
 |---|---|---|
-| `client/src/pages/BlueprintModule.tsx` | Legacy generic file, route aktif tidak ditemukan | Hapus setelah contract/reference check atau tandai legacy secara eksplisit |
+| `client/src/pages/BlueprintModule.tsx` | Dihapus setelah reference check | Pastikan tidak muncul kembali pada audit berikutnya |
 | `client/src/authenticatedRoutes.ts` | Banyak route dikelompokkan ke page domain yang sama | Pecah feature folders secara bertahap, bukan sekadar route rename |
 | `client/src/pages/Organizations.tsx` | Fitur bekerja, tetapi page padat | Pecah member management, privilege viewer, audit history menjadi components |
 | `client/src/pages/Findings.tsx` | Retest/evidence bekerja, tetapi page padat | Pisahkan retest panel dan evidence upload hook |
-| `server/organization.ts` | Role audit query bounded tetapi non-cursor | Tambahkan cursor/filter contract |
+| `server/organization.ts` | Role audit cursor/filter/export sudah tersedia | Tambahkan browser E2E setelah staging token tersedia |
 | `server/routers.ts` | API surface besar dan terpusat | Pertimbangkan domain router split tanpa mengubah contract |
 | `docs/blueprint-coverage.md` | Ada stale descriptions | Sinkronkan seluruh row dengan current `main` |
 | `docs/remaining-work.md` | Catatan incremental panjang | Konsolidasikan status menjadi queue aktif yang lebih ringkas |

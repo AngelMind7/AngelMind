@@ -2,7 +2,7 @@
 
 **Sumber acuan:** `Angelmindstrukturjelas.pdf` yang diberikan pengguna. Dokumen ini membedakan implementasi nyata dari desain target. Requirement hanya boleh disebut **Implemented** bila mempunyai jalur UI/API/domain/persistence atau boundary yang sesuai; folder, komentar, dan tombol tanpa backend tidak dihitung.
 
-**Sinkronisasi terakhir:** Setelah commit privacy lifecycle `063b25d` dan endpoint signed-download `193d1ca`. Status di bawah mencerminkan repository `main`; provider secrets, migration production, deployment, dan smoke test live tetap berstatus environment-dependent.
+**Sinkronisasi terakhir:** 2026-09-06, setelah role audit pagination/export dan pembersihan legacy generic module. Status di bawah mencerminkan repository `main`; provider secrets, migration production, deployment, dan smoke test live tetap berstatus environment-dependent.
 
 ## Status ringkas
 
@@ -53,7 +53,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 27 | Report builder | **Implemented** | Compose, validate, save versions, preview/export Markdown/JSON, evidence references tersedia. |
 | 28 | Report version control | **Implemented** | `reportVersions` menyimpan versi, creator, content, validation state, dan timestamps. |
 | 29 | Submission tracking | **Deferred** | External submission tidak diaktifkan; status preparation/internal review tersedia secara terbatas. |
-| 30 | Retest | **Partial** | `findingRetests`, retest evidence/result, relation linking, status synchronization, and Findings UI request/result workflow are implemented; richer OPEN → VERIFIED_FIXED/STILL_PRESENT state semantics and evidence upload integration remain incomplete. |
+| 30 | Retest | **Partial** | `findingRetests`, retest evidence/result, relation linking, status synchronization, Findings UI request/result workflow, and inline evidence upload are implemented; richer OPEN → VERIFIED_FIXED/STILL_PRESENT state semantics and browser E2E remain incomplete. |
 | 31 | Knowledge graph | **Partial** | Workspace-scoped relationship/evidence/finding records, search documents, and intelligence feed persistence exist; generic graph nodes/edges/traversal/temporal provenance engine remains incomplete. |
 | 32 | Intelligence center | **Partial** | Coverage dan analytics tersedia; correlation, historical intelligence, recommendation center belum. |
 | 33 | Change detection | **Implemented** | Workspace policy/configuration change detection tersedia; asset/technology change belum. |
@@ -102,7 +102,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 66 | Database | **Implemented** | MySQL/Drizzle schema dan forward migrations tersedia. |
 | 67 | Database integrity | **Partial** | Research session/asset/observation/hypothesis/task, finding relation/retest, evidence link, multi-event provenance foreign keys, and finding remediation metadata are enforced through forward migrations `0024` and `0056`; complete data preflight/load verification remains deployment work. |
 | 68 | Concurrency | **Partial** | Optimistic revision checks now cover research, findings, remediation, and retest requests; generic middleware-wide conflict handling and distributed multi-process locks remain incomplete. |
-| 69 | Pagination | **Partial** | Workspace-scoped list queries and cursor pagination for global search are implemented with deterministic timestamp/ID continuation; remaining domain-wide adoption is incomplete. |
+| 69 | Pagination | **Partial** | Workspace-scoped list queries, global-search cursor pagination, and organization role-audit cursor pagination with actor/member/role/date filters and CSV export are implemented with deterministic timestamp/ID continuation; remaining domain-wide adoption is incomplete. |
 | 70 | Cache | **Deferred** | Belum ada cache layer; tidak ditambahkan tanpa workload requirement dan invalidation design. |
 | 71 | Data consistency | **Partial** | MySQL source of truth dan derived analytics ada; explicit consistency classification belum. |
 | 72 | File storage | **Implemented** | Supabase Storage backend upload/signed URL, metadata MySQL, hash, audit tersedia. |
@@ -117,7 +117,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 81 | Security headers | **Implemented** | HSTS production, CSP, frame/content/referrer/permissions policies, secure cookies tersedia. |
 | 82 | Threat modeling | **Implemented (repository)** | `docs/threat-model-register.md` memetakan aset, trust boundary, threat scenario, severity, kontrol repository, evidence, residual risk, owner, status, dan review triggers; live deployment evidence tetap dipisahkan. |
 | 83 | Break-glass access | **Implemented (repository)** | Admin-only temporary access request, second-admin approval, bounded 5–1440 minute expiry, explicit revoke, active-access lookup, workspace scope, migration, and audit-chain events are implemented; live policy review and deployment verification remain environment-dependent. |
-| 84 | Admin console | **Partial** | Operations admin/assurance tersedia; admin users/orgs/abuse/AI/billing/flags/infrastructure penuh belum. |
+| 84 | Admin console | **Partial** | Operations admin/assurance and organization role-management/audit controls tersedia; admin users/orgs/abuse/AI/billing/flags/infrastructure penuh belum. |
 | 85 | Admin privilege separation | **Partial** | Owner/reviewer/operator/auditor tersedia; granular admin privilege families belum. |
 | 86 | Feature flags | **Implemented (repository)** | Fail-closed `FEATURE_FLAGS` parsing mendukung environment, organization, user, entitlement, deterministic rollout, dan kill-switch evaluation dengan unit tests. |
 | 87 | Configuration management | **Implemented (repository)** | Typed runtime environment groups, validation, bounded defaults, audit-state encryption key validation, required-binary readiness configuration, explicit `PRODUCTION_REQUIRED_CAPABILITIES` fail-closed gate, dan feature-flag separation tersedia; secret provisioning/rotation tetap environment-dependent. |

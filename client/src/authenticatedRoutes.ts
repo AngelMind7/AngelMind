@@ -34,7 +34,6 @@ const security = lazy(() => import("@/pages/Security"));
 const notifications = lazy(() => import("@/pages/Notifications"));
 const profile = lazy(() => import("@/pages/Profile"));
 const operationsAdmin = lazy(() => import("@/pages/OperationsAdmin"));
-const blueprintModule = lazy(() => import("@/pages/BlueprintModule"));
 const clientPortal = lazy(() => import("@/pages/ClientPortal"));
 
 export const authenticatedRoutes = [

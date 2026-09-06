@@ -67,6 +67,24 @@ export async function listPrograms(userId: number, organizationId: number) {
   return db.select().from(programs).where(eq(programs.organizationId, organizationId)).orderBy(desc(programs.updatedAt));
 }
 
+export async function listProgramsPage(userId: number, input: { organizationId: number; pageSize?: number; cursor?: string; status?: (typeof programs.$inferSelect)["status"] }) {
+  const { db } = await requireMembership(userId, input.organizationId);
+  const pageSize = normalizePageSize(input.pageSize);
+  const scope = `organization:${input.organizationId}:programs:${input.status ?? "*"}`;
+  const cursor = assertCursor(input.cursor, scope);
+  const conditions = [eq(programs.organizationId, input.organizationId)];
+  if (input.status) conditions.push(eq(programs.status, input.status));
+  if (cursor) {
+    let boundary: { updatedAt: string; id: number };
+    try { boundary = JSON.parse(cursor.after) as { updatedAt: string; id: number }; } catch { throw new Error("Invalid or expired pagination cursor."); }
+    const date = new Date(boundary.updatedAt);
+    if (!Number.isInteger(boundary.id) || Number.isNaN(date.getTime())) throw new Error("Invalid or expired pagination cursor.");
+    conditions.push(or(lt(programs.updatedAt, date), and(eq(programs.updatedAt, date), lt(programs.id, boundary.id)))!);
+  }
+  const rows = await db.select().from(programs).where(and(...conditions)).orderBy(desc(programs.updatedAt), desc(programs.id)).limit(pageSize + 1);
+  return { items: rows.slice(0, pageSize), nextCursor: rows.length > pageSize ? createCursor(JSON.stringify({ updatedAt: rows[pageSize - 1].updatedAt.toISOString(), id: rows[pageSize - 1].id }), scope) : null };
+}
+
 export async function createProgram(userId: number, input: { organizationId: number; name: string; description: string; includedAssets: string[]; excludedAssets: string[]; rules: string[]; safeHarbor: string }) {
   const { db } = await requireMembership(userId, input.organizationId, "manage");
   const name = input.name.trim();

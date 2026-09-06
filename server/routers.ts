@@ -1838,6 +1838,9 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         organization.listPrograms(ctx.user.id, input.organizationId)
       ),
+    programsPage: protectedProcedure
+      .input(z.object({ organizationId: z.number().int().positive(), pageSize: z.number().int().min(1).max(100).optional(), cursor: z.string().max(512).optional(), status: z.enum(["draft", "active", "paused", "completed", "archived"]).optional() }))
+      .query(({ ctx, input }) => organization.listProgramsPage(ctx.user.id, input)),
     createProgram: protectedProcedure
       .input(
         z.object({

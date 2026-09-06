@@ -9,6 +9,8 @@ export type FindingWorkflowStatus =
   | "remediation"
   | "retest"
   | "resolved"
+  | "verified_fixed"
+  | "still_present"
   | "reopened"
   | "false_positive"
   | "submitted"
@@ -25,8 +27,10 @@ const transitions: Record<FindingWorkflowStatus, readonly FindingWorkflowStatus[
   reported: ["notified", "remediation", "false_positive"],
   notified: ["remediation", "false_positive"],
   remediation: ["retest", "false_positive"],
-  retest: ["resolved", "remediation", "inconclusive"],
+  retest: ["resolved", "verified_fixed", "still_present", "remediation", "inconclusive"],
   resolved: ["reopened"],
+  verified_fixed: ["reopened"],
+  still_present: ["remediation", "reopened"],
   reopened: ["reproducing", "remediation", "false_positive"],
   false_positive: ["reopened"],
   submitted: [],
@@ -52,5 +56,5 @@ export function assertFindingTransition(
 }
 
 export function isFindingTerminal(status: FindingWorkflowStatus): boolean {
-  return ["resolved", "false_positive", "invalid", "duplicate"].includes(status);
+  return ["resolved", "verified_fixed", "false_positive", "invalid", "duplicate"].includes(status);
 }

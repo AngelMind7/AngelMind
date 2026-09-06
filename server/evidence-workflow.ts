@@ -194,8 +194,8 @@ export async function completeFindingRetest(userId: number, input: { retestId: n
     await persistEvidenceLineage(db, { workspaceId: finding.workspaceId, evidenceArtifactId, sourceNodeType: "evidence_artifact", sourceNodeId: evidenceArtifactId, targetNodeType: "finding_retest", targetNodeId: retest.id, relationType: "retested_by", metadata: { status: input.status, resultSummary }, createdByUserId: userId });
     await persistEvidenceLineage(db, { workspaceId: finding.workspaceId, evidenceArtifactId, sourceNodeType: "evidence_artifact", sourceNodeId: evidenceArtifactId, targetNodeType: "finding", targetNodeId: finding.id, relationType: "supports", metadata: { status: input.status }, createdByUserId: userId });
   }
-  const nextStatus = input.status === "passed" ? "resolved" : input.status === "failed" ? "remediation" : input.status === "inconclusive" ? "inconclusive" : input.status === "cancelled" ? "remediation" : "retest";
-  const findingUpdate = await db.update(findings).set({ status: nextStatus, revision: nextRevision(finding.revision), resolvedAt: nextStatus === "resolved" ? now : null, humanReviewStatus: nextStatus === "resolved" ? "pending" : finding.humanReviewStatus, updatedAt: now }).where(and(eq(findings.id, finding.id), eq(findings.revision, finding.revision)));
+  const nextStatus = input.status === "passed" ? "verified_fixed" : input.status === "failed" ? "still_present" : input.status === "inconclusive" ? "inconclusive" : input.status === "cancelled" ? "remediation" : "retest";
+  const findingUpdate = await db.update(findings).set({ status: nextStatus, revision: nextRevision(finding.revision), resolvedAt: nextStatus === "verified_fixed" ? now : null, humanReviewStatus: nextStatus === "verified_fixed" ? "pending" : finding.humanReviewStatus, updatedAt: now }).where(and(eq(findings.id, finding.id), eq(findings.revision, finding.revision)));
   if (findingUpdate[0].affectedRows !== 1) throw new Error("Concurrent update detected; reload the finding before recording the retest result.");
   await recordEvidenceWorkflowAudit(db, finding.workspaceId, {
     findingId: finding.id,

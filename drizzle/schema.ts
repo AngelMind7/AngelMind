@@ -275,7 +275,7 @@ export const privacyRequests = mysqlTable("privacyRequests", {
 
 export const workspaceStatus = ["active", "paused", "archived"] as const;
 export const runStatus = ["queued", "running", "checkpointed", "completed", "blocked", "failed"] as const;
-export const findingStatus = ["discovered", "triaged", "candidate", "reproducing", "validated", "reported", "notified", "remediation", "retest", "resolved", "reopened", "false_positive", "submitted", "invalid", "duplicate", "inconclusive"] as const;
+export const findingStatus = ["discovered", "triaged", "candidate", "reproducing", "validated", "reported", "notified", "remediation", "retest", "resolved", "verified_fixed", "still_present", "reopened", "false_positive", "submitted", "invalid", "duplicate", "inconclusive"] as const;
 export const findingSeverity = ["informational", "low", "medium", "high", "critical"] as const;
 export const approvalStatus = ["pending", "approved", "rejected", "expired"] as const;
 export const notificationEventType = ["approval_required", "guardrail_blocked", "finding_validated", "scheduled_check", "policy_review_required", "incident_created", "webhook_activation_requested", "comment_mentioned", "ai_provider_circuit_opened", "ai_provider_circuit_recovered"] as const;

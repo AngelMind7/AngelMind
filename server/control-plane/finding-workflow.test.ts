@@ -23,6 +23,13 @@ describe("finding workflow", () => {
     expect(() => assertFindingTransition("reported", "resolved", false)).toThrow("Invalid finding transition");
   });
 
+  it("supports explicit retest outcomes with controlled reopen paths", () => {
+    expect(() => assertFindingTransition("retest", "verified_fixed", false)).not.toThrow();
+    expect(() => assertFindingTransition("retest", "still_present", false)).not.toThrow();
+    expect(() => assertFindingTransition("verified_fixed", "reopened", false)).not.toThrow();
+    expect(() => assertFindingTransition("still_present", "resolved", false)).toThrow("Invalid finding transition");
+  });
+
   it("identifies terminal states explicitly", () => {
     expect(isFindingTerminal("resolved")).toBe(true);
     expect(isFindingTerminal("false_positive")).toBe(true);

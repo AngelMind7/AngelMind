@@ -1,0 +1,1 @@
+ALTER TABLE `findings` MODIFY COLUMN `status` enum('discovered','triaged','candidate','reproducing','validated','reported','notified','remediation','retest','resolved','verified_fixed','still_present','reopened','false_positive','submitted','invalid','duplicate','inconclusive') NOT NULL DEFAULT 'discovered';

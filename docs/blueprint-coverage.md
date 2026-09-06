@@ -49,7 +49,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 |---:|---|---|---|
 | 24 | Finding engine | **Implemented** | Finding lifecycle, severity/confidence/impact, human review, duplicate fingerprint, workspace isolation tersedia. |
 | 25 | Finding quality gate | **Implemented** | Completeness, evidence, scope, duplicate, validation, review gate tersedia; UI quality checklist dapat diperdalam. |
-| 26 | Duplicate intelligence | **Partial** | Fingerprint duplicate prevention tersedia; similarity search dan candidate historical matches belum. |
+| 26 | Duplicate intelligence | **Partial** | Fingerprint duplicate prevention, workspace-scoped similarity search, shared-token evidence, match-strength classification, and historical candidate metadata are implemented; vector/semantic matching and automated merge policy remain open. |
 | 27 | Report builder | **Implemented** | Compose, validate, save versions, preview/export Markdown/JSON, evidence references tersedia. |
 | 28 | Report version control | **Implemented** | `reportVersions` menyimpan versi, creator, content, validation state, dan timestamps. |
 | 29 | Submission tracking | **Deferred** | External submission tidak diaktifkan; status preparation/internal review tersedia secara terbatas. |
@@ -117,7 +117,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 81 | Security headers | **Implemented** | HSTS production, CSP, frame/content/referrer/permissions policies, secure cookies tersedia. |
 | 82 | Threat modeling | **Implemented (repository)** | `docs/threat-model-register.md` memetakan aset, trust boundary, threat scenario, severity, kontrol repository, evidence, residual risk, owner, status, dan review triggers; live deployment evidence tetap dipisahkan. |
 | 83 | Break-glass access | **Implemented (repository)** | Admin-only temporary access request, second-admin approval, bounded 5–1440 minute expiry, explicit revoke, active-access lookup, workspace scope, migration, and audit-chain events are implemented; live policy review and deployment verification remain environment-dependent. |
-| 84 | Admin console | **Partial** | Operations admin/assurance and organization role-management/audit controls tersedia; admin users/orgs/abuse/AI/billing/flags/infrastructure penuh belum. |
+| 84 | Admin console | **Partial** | Operations admin/assurance, organization role-management/audit controls, and an admin-only operational queue/outbox/delivery snapshot are implemented; full admin users/orgs/abuse/AI/billing/flags/infrastructure console remains open. |
 | 85 | Admin privilege separation | **Partial** | Owner/reviewer/operator/auditor tersedia; granular admin privilege families belum. |
 | 86 | Feature flags | **Implemented (repository)** | Fail-closed `FEATURE_FLAGS` parsing mendukung environment, organization, user, entitlement, deterministic rollout, dan kill-switch evaluation dengan unit tests. |
 | 87 | Configuration management | **Implemented (repository)** | Typed runtime environment groups, validation, bounded defaults, audit-state encryption key validation, required-binary readiness configuration, explicit `PRODUCTION_REQUIRED_CAPABILITIES` fail-closed gate, dan feature-flag separation tersedia; secret provisioning/rotation tetap environment-dependent. |
@@ -145,7 +145,7 @@ Repository saat ini adalah control plane terintegrasi yang aman untuk workflow w
 | 104 | Accessibility | **Partial** | Keyboard navigation, labels, focus-aware components, public desktop/mobile axe smoke tests, and staging-only authenticated core-route axe coverage tersedia; full authenticated WCAG remediation register masih terbuka. |
 | 105 | Internationalization | **Implemented** | 20 locale, timezone, RTL, locale fallback dan tests tersedia. |
 | 106 | SEO | **Implemented (repository)** | Static index metadata and JSON-LD, route-aware title/description/canonical/Open Graph/Twitter metadata, complete public sitemap, authenticated-route robots exclusions, and an SEO contract checker are implemented; search-engine crawl/render verification remains deployment-dependent. |
-| 107 | Performance | **Partial** | Lazy routes/PWA/cache ada; bundle masih memberi warning chunk besar dan performance budget belum. |
+| 107 | Performance | **Partial** | Lazy routes/PWA/cache and a passing 500 KiB largest-JS plus 950 KiB total-gzip budget check exist; Vite still emits circular-chunk warnings and profiling/load benchmark remain open. |
 | 108 | Database performance | **Partial** | Index dasar dan bounded queries ada; query profiling/load benchmark belum. |
 | 109 | Email system | **Partial** | Generic SMTP adapter, typed environment configuration, invitation/reset/verification templates, Indonesian/English locale fallback, durable `emailDeliveries` ledger, idempotent enqueueing, retry-compatible worker status, organization invitation queue wiring, reusable password-reset/account-verification queue helpers, durable category unsubscribe preferences, suppressed delivery state, Notifications UI controls, admin-only SMTP health, and no-send provider verification are implemented; identity-provider flow wiring and live deployment verification remain open. |
 | 110 | Documentation | **Partial** | README, architecture, governance, runbook, alignment, roadmap tersedia; API/domain/operator docs lengkap belum. |

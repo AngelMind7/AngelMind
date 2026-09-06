@@ -224,3 +224,7 @@ The LLM gateway now maintains isolated in-process circuit state per configured p
 ## Latest implementation slice — 2026-09-06 (Distributed AI circuit state and operational alerting)
 
 Provider circuit state is now durable in `llmProviderCircuitStates`, shared across application instances, and guarded by transactional row locks plus a bounded half-open probe lease. Retryable provider failures update the shared counter and open the circuit after three failures; recovery closes and resets it. Open and recovered transitions emit idempotent versioned outbox events (`ai.provider.circuit.opened` and `ai.provider.circuit.recovered`) with provider, severity, reason, and timestamp metadata. Cross-region consensus and alert routing UI remain open.
+
+## Latest implementation slice — 2026-09-06 (Cross-region fencing and circuit alert routing)
+
+Distributed circuit transitions now carry a monotonic coordination epoch and deployment-region writer metadata. Every locked state transition advances the fencing epoch, and alert idempotency keys use provider, transition, and epoch rather than timestamps, preventing stale cross-region workers from replaying an older transition. Circuit open/recovered events are now registered notification event types with in-app/email preference controls on the Notifications page. Dedicated multi-database consensus and alert dashboards remain open.

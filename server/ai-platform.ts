@@ -144,6 +144,26 @@ export async function listAiRuns(userId: number, workspaceId: number) {
   return db.select().from(aiRuns).where(eq(aiRuns.workspaceId, workspaceId)).orderBy(desc(aiRuns.createdAt)).limit(100);
 }
 
+export async function getAiCostGovernance(userId: number, workspaceId: number) {
+  const { db, workspace } = await requireWorkspace(userId, workspaceId);
+  const [runs, models] = await Promise.all([
+    db.select({ id: aiRuns.id, userId: aiRuns.userId, taskId: aiRuns.taskId, modelKey: aiRuns.modelKey, status: aiRuns.status, inputTokens: aiRuns.inputTokens, outputTokens: aiRuns.outputTokens, costCents: aiRuns.costCents, createdAt: aiRuns.createdAt }).from(aiRuns).where(eq(aiRuns.workspaceId, workspaceId)).orderBy(desc(aiRuns.createdAt)).limit(5_000),
+    db.select({ modelKey: aiModels.modelKey, provider: aiModels.provider }).from(aiModels),
+  ]);
+  const providers = new Map(models.map(model => [model.modelKey, model.provider]));
+  const byProvider = new Map<string, { runs: number; costCents: number; inputTokens: number; outputTokens: number }>();
+  const byUser = new Map<number, { runs: number; costCents: number }>();
+  const byTask = new Map<number, { runs: number; costCents: number }>();
+  for (const run of runs) {
+    const provider = providers.get(run.modelKey) ?? "unknown";
+    const providerSummary = byProvider.get(provider) ?? { runs: 0, costCents: 0, inputTokens: 0, outputTokens: 0 };
+    providerSummary.runs += 1; providerSummary.costCents += run.costCents; providerSummary.inputTokens += run.inputTokens; providerSummary.outputTokens += run.outputTokens; byProvider.set(provider, providerSummary);
+    const userSummary = byUser.get(run.userId) ?? { runs: 0, costCents: 0 }; userSummary.runs += 1; userSummary.costCents += run.costCents; byUser.set(run.userId, userSummary);
+    if (run.taskId) { const taskSummary = byTask.get(run.taskId) ?? { runs: 0, costCents: 0 }; taskSummary.runs += 1; taskSummary.costCents += run.costCents; byTask.set(run.taskId, taskSummary); }
+  }
+  return { workspaceBudgetCents: workspace.budgetCents, workspaceSpentCents: workspace.spentCents, totalRuns: runs.length, totalCostCents: runs.reduce((total, run) => total + run.costCents, 0), byProvider: Object.fromEntries(byProvider), byUser: Object.fromEntries(byUser), byTask: Object.fromEntries(byTask) };
+}
+
 export async function getAiEvaluationSummary(userId: number, workspaceId: number) {
   const { db } = await requireWorkspace(userId, workspaceId);
   const [runs, evaluations] = await Promise.all([

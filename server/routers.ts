@@ -1309,6 +1309,9 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         aiPlatform.getAiEvaluationSummary(ctx.user.id, input.workspaceId)
       ),
+    costGovernance: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive() }))
+      .query(({ ctx, input }) => aiPlatform.getAiCostGovernance(ctx.user.id, input.workspaceId)),
     evaluations: protectedProcedure
       .input(z.object({ runId: z.number().int().positive() }))
       .query(({ ctx, input }) =>

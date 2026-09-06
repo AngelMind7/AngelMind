@@ -232,3 +232,7 @@ Distributed circuit transitions now carry a monotonic coordination epoch and dep
 ## Latest implementation slice — 2026-09-06 (Dedicated circuit diagnostics dashboard)
 
 Administrators can now query `ai.circuitStates` and view provider circuit state, consecutive failures, coordination epoch, writer region, next probe, and last error in the Operations Console. The dashboard is intentionally read-only and complements the notification preference controls and delivery ledger; state remains protected by the distributed circuit service and admin guard.
+
+## Latest implementation slice — 2026-09-06 (Auth email delivery queue wiring)
+
+The durable email service now exposes typed `enqueuePasswordResetEmail` and `enqueueAccountVerificationEmail` helpers. They render the existing locale-aware, HTML-escaped templates and route both messages through the idempotent `emailDeliveries` ledger and `email.deliver` worker queue, preserving retry and provider-message tracking. Firebase/provider trigger wiring, unsubscribe preferences, and live provider verification remain open.

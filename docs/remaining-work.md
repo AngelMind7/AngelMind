@@ -212,3 +212,7 @@ The durable `evidence.scan` job now carries the initiating actor and records a w
 ## Latest implementation slice — 2026-09-06 (AI provenance lineage)
 
 The new workspace-authorized `ai.provenance` query composes the persisted task, AI run, registered model, input reference, output reference, output record, trace ID, and bounded graph edges into one lineage response. Input and output payloads are not returned by this endpoint; SHA-256 fingerprints provide non-sensitive correlation, while the existing output endpoint remains separately authorized. Provider-level distributed span lineage remains open.
+
+## Latest implementation slice — 2026-09-06 (AI failure isolation)
+
+The AI result pipeline now classifies context overflow, provider unavailability, partial results, contradictory conclusions, invalid output, and unknown failures. Bounded recovery plans select context reduction, provider fallback, human-review escalation, transient retry, or fail-closed behavior with explicit attempt caps. Synthesis responses now include contradiction/partial-result counts and a human-review requirement without silently promoting unsafe output. Provider-specific circuit breakers remain open.

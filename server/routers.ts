@@ -1995,6 +1995,12 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         researchWorkflow.listResearchAssets(ctx.user.id, input.sessionId)
       ),
+    assetsPage: protectedProcedure
+      .input(z.object({ sessionId: z.number().int().positive(), pageSize: z.number().int().min(1).max(100).optional(), cursor: z.string().max(512).optional(), assetType: z.string().trim().min(2).max(40).optional() }))
+      .query(({ ctx, input }) => researchWorkflow.listResearchAssetsPage(ctx.user.id, input)),
+    assetInventory: protectedProcedure
+      .input(z.object({ sessionId: z.number().int().positive() }))
+      .query(({ ctx, input }) => researchWorkflow.getResearchAssetInventory(ctx.user.id, input.sessionId)),
     technologyInventory: protectedProcedure
       .input(z.object({ sessionId: z.number().int().positive() }))
       .query(({ ctx, input }) => researchWorkflow.listResearchTechnologyAssets(ctx.user.id, input.sessionId)),

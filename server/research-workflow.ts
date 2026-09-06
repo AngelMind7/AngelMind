@@ -12,6 +12,7 @@ import {
   programs,
   researchTasks,
   researchTaskDependencies,
+  researchAssetType,
   workspaces,
 } from "../drizzle/schema";
 import { getDb } from "./db";
@@ -140,6 +141,31 @@ export async function transitionResearchSession(userId: number, sessionId: numbe
 export async function listResearchAssets(userId: number, sessionId: number) {
   const { db, session } = await requireSession(userId, sessionId);
   return db.select().from(researchAssets).where(eq(researchAssets.sessionId, session.id)).orderBy(asc(researchAssets.hostname), asc(researchAssets.value));
+}
+
+export async function listResearchAssetsPage(userId: number, input: { sessionId: number; pageSize?: number; cursor?: string; assetType?: string }) {
+  const { db, session } = await requireSession(userId, input.sessionId);
+  const cursor = decodePageCursor(input.cursor);
+  const typeFilter = input.assetType?.trim();
+  const conditions = [eq(researchAssets.sessionId, session.id)];
+  if (typeFilter && researchAssetType.includes(typeFilter as (typeof researchAssetType)[number])) conditions.push(eq(researchAssets.assetType, typeFilter as (typeof researchAssetType)[number]));
+  if (cursor) conditions.push(or(lt(researchAssets.createdAt, new Date(cursor.createdAt)), and(eq(researchAssets.createdAt, new Date(cursor.createdAt)), lt(researchAssets.id, cursor.id)))!);
+  const rows = await db.select().from(researchAssets).where(and(...conditions)).orderBy(desc(researchAssets.createdAt), desc(researchAssets.id)).limit(Math.min(Math.max(input.pageSize ?? 25, 1), 100) + 1);
+  return pageResult(rows, input.pageSize ?? 25);
+}
+
+export async function getResearchAssetInventory(userId: number, sessionId: number) {
+  const { db, session } = await requireSession(userId, sessionId);
+  const [assets, relations, signals] = await Promise.all([
+    db.select().from(researchAssets).where(eq(researchAssets.sessionId, session.id)).orderBy(asc(researchAssets.assetType), asc(researchAssets.value)),
+    db.select().from(researchAssetRelations).where(eq(researchAssetRelations.sessionId, session.id)),
+    db.select().from(researchAssetSignals).where(eq(researchAssetSignals.sessionId, session.id)).orderBy(desc(researchAssetSignals.observedAt)),
+  ]);
+  const byType = assets.reduce<Record<string, number>>((counts, asset) => { counts[asset.assetType] = (counts[asset.assetType] ?? 0) + 1; return counts; }, {});
+  const domains = assets.filter(asset => asset.assetType === "domain" || asset.assetType === "subdomain");
+  const technologies = assets.filter(asset => asset.assetType === "technology");
+  const services = assets.filter(asset => asset.assetType === "service");
+  return { total: assets.length, byType, domains, technologies, services, assets, relations, signals, history: signals.map(signal => ({ id: signal.id, assetId: signal.assetId, signalType: signal.signalType, observedAt: signal.observedAt, expiresAt: signal.expiresAt, status: signal.status })) };
 }
 export async function listResearchTechnologyAssets(userId: number, sessionId: number) {
   const { db, session } = await requireSession(userId, sessionId);

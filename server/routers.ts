@@ -23,6 +23,7 @@ import * as assetVerification from "./asset-verification";
 import * as organization from "./organization";
 import * as evidenceWorkflow from "./evidence-workflow";
 import * as aiPlatform from "./ai-platform";
+import { listDistributedCircuitStates } from "./_core/llm-distributed-circuit";
 import * as aiMemory from "./ai-memory";
 import * as aiOrchestration from "./ai-orchestration";
 import * as aiAutomation from "./ai-automation";
@@ -1174,6 +1175,10 @@ export const appRouter = router({
   }),
   ai: router({
     models: protectedProcedure.query(() => aiPlatform.listModels()),
+    circuitStates: protectedProcedure.query(({ ctx }) => {
+      if (ctx.user.role !== "admin") throw new Error("Admin role is required to view AI circuit diagnostics.");
+      return listDistributedCircuitStates();
+    }),
     registerModel: protectedProcedure
       .input(
         z.object({

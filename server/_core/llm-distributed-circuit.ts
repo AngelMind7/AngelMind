@@ -79,6 +79,23 @@ export async function recordDistributedProviderFailure(provider: string, error: 
   });
 }
 
+export async function listDistributedCircuitStates() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    provider: llmProviderCircuitStates.provider,
+    state: llmProviderCircuitStates.state,
+    consecutiveFailures: llmProviderCircuitStates.consecutiveFailures,
+    coordinationEpoch: llmProviderCircuitStates.coordinationEpoch,
+    writerRegion: llmProviderCircuitStates.writerRegion,
+    openedAt: llmProviderCircuitStates.openedAt,
+    nextProbeAt: llmProviderCircuitStates.nextProbeAt,
+    probeLeaseUntil: llmProviderCircuitStates.probeLeaseUntil,
+    lastError: llmProviderCircuitStates.lastError,
+    updatedAt: llmProviderCircuitStates.updatedAt,
+  }).from(llmProviderCircuitStates);
+}
+
 export function distributedCircuitConfig() {
   return { failureThreshold: FAILURE_THRESHOLD, cooldownMs: COOLDOWN_MS, probeLeaseMs: PROBE_LEASE_MS };
 }

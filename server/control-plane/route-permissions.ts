@@ -69,6 +69,7 @@ export const routedProcedurePermissions = {
   "workspace.addCredentialReference": "owner",
   "workspace.scheduleAdministrativeCheck": "owner",
   "ai.models": "read-member",
+  "ai.circuitStates": "authenticated",
   "ai.registerModel": "admin-or-distinct-reviewer",
   "ai.recordModelHealth": "admin-or-distinct-reviewer",
   "ai.runs": "read-member",

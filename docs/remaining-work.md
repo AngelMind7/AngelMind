@@ -196,3 +196,7 @@ Retest operators can now upload a new evidence artifact inline instead of first 
 Organization role history now supports bounded cursor pagination with scoped timestamp/ID continuation, actor/member/target-role/date filters, malformed-detail rejection, and bounded CSV export for authorized organization members. The existing bounded `roleAudit` procedure remains backward compatible while clients adopt `roleAuditPage` incrementally.
 
 The unused `BlueprintModule` lazy import and source file were removed after route-reference verification. Active authenticated routes are now domain-specific; provider delivery, authenticated staging E2E, and full domain-wide pagination remain environment or follow-up work.
+
+## Latest implementation slice — 2026-09-06 (Notification delivery operations)
+
+Notification delivery operations now expose a user-scoped cursor-paginated ledger with status/channel filters, deterministic timestamp/ID continuation, aggregate status summary, and a guarded manual retry action for failed deliveries. Retry resets the delivery to `queued`, clears the previous error, and submits a new durable `notification.deliver` job with a distinct idempotency key. External email/webhook provider activation and signed unsubscribe links remain environment/provider work.

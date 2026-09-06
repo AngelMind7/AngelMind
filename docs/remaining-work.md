@@ -220,3 +220,7 @@ The AI result pipeline now classifies context overflow, provider unavailability,
 ## Latest implementation slice — 2026-09-06 (Provider-specific AI circuit breaker)
 
 The LLM gateway now maintains isolated in-process circuit state per configured provider. Retryable HTTP and network failures increment a bounded failure counter; providers transition from `closed` to `open`, reject requests during cooldown, then admit one `half_open` probe. Successful probes close and reset the circuit, while failed probes reopen it. Non-retryable HTTP errors do not poison provider health, and normal fallback selection continues around isolated providers. Distributed circuit state and operational alerting remain open.
+
+## Latest implementation slice — 2026-09-06 (Distributed AI circuit state and operational alerting)
+
+Provider circuit state is now durable in `llmProviderCircuitStates`, shared across application instances, and guarded by transactional row locks plus a bounded half-open probe lease. Retryable provider failures update the shared counter and open the circuit after three failures; recovery closes and resets it. Open and recovered transitions emit idempotent versioned outbox events (`ai.provider.circuit.opened` and `ai.provider.circuit.recovered`) with provider, severity, reason, and timestamp metadata. Cross-region consensus and alert routing UI remain open.

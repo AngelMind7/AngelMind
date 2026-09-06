@@ -3,6 +3,7 @@ import { emailDeliveries } from "../drizzle/schema";
 import { getDb } from "./db";
 import { enqueueJob } from "./ai-platform";
 import { sendEmail } from "./_core/email";
+import { buildAccountVerificationEmail, buildPasswordResetEmail } from "./_core/email-templates";
 
 const MAX_EMAIL_DELIVERY_ATTEMPTS = 5;
 
@@ -43,6 +44,16 @@ export async function enqueueEmailDelivery(userId: number, input: { recipient: s
   if (!delivery) throw new Error("Email delivery could not be persisted.");
   await enqueueJob(userId, { workspaceId: input.workspaceId, kind: "email.deliver", idempotencyKey: `email-deliver:${delivery.id}`, payload: { type: "email_delivery", deliveryId: delivery.id }, maxAttempts: MAX_EMAIL_DELIVERY_ATTEMPTS });
   return delivery;
+}
+
+export async function enqueuePasswordResetEmail(userId: number, input: { recipient: string; recipientName?: string; resetUrl: string; expiresAt?: Date; locale?: string; idempotencyKey: string }) {
+  const template = buildPasswordResetEmail(input);
+  return enqueueEmailDelivery(userId, { recipient: input.recipient, templateKey: "password_reset", subject: template.subject, text: template.text, html: template.html, idempotencyKey: input.idempotencyKey });
+}
+
+export async function enqueueAccountVerificationEmail(userId: number, input: { recipient: string; recipientName?: string; verificationUrl: string; expiresAt?: Date; locale?: string; idempotencyKey: string }) {
+  const template = buildAccountVerificationEmail(input);
+  return enqueueEmailDelivery(userId, { recipient: input.recipient, templateKey: "account_verification", subject: template.subject, text: template.text, html: template.html, idempotencyKey: input.idempotencyKey });
 }
 
 export async function executeEmailDeliveryJob(payload: Record<string, unknown>) {

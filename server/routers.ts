@@ -2098,6 +2098,9 @@ export const appRouter = router({
       .mutation(({ ctx, input }) =>
         researchWorkflow.createResearchObservation(ctx.user.id, input)
       ),
+    transitionObservation: protectedProcedure
+      .input(z.object({ observationId: z.number().int().positive(), status: z.enum(["new", "reviewed", "linked", "archived"]) }))
+      .mutation(({ ctx, input }) => researchWorkflow.transitionResearchObservation(ctx.user.id, input.observationId, input.status)),
     promoteObservationToFinding: protectedProcedure
       .input(
         z.object({

@@ -21,6 +21,10 @@ export const realtimeEventTypes = [
   "hypothesis.disproven",
   "hypothesis.validated",
   "hypothesis.archived",
+  "observation.new",
+  "observation.reviewed",
+  "observation.linked",
+  "observation.archived",
   "finding.created",
   "correlation.chain_detected",
 ] as const;

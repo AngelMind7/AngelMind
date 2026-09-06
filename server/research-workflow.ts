@@ -36,6 +36,12 @@ const sessionTransitions: Record<string, string[]> = {
   completed: ["archived"],
   archived: [],
 };
+const observationTransitions: Record<string, string[]> = {
+  new: ["reviewed", "archived"],
+  reviewed: ["linked", "archived"],
+  linked: ["archived"],
+  archived: [],
+};
 const hypothesisTransitions: Record<string, string[]> = {
   proposed: ["investigating", "archived"],
   investigating: ["supported", "disproven", "validated", "archived"],
@@ -265,6 +271,22 @@ export async function createResearchObservation(userId: number, input: { session
   await addResearchAudit(db, session.workspaceId, userId, "research-observation-created", { sessionId: session.id, observationId: observation.id, assetId: input.assetId ?? null });
   await upsertSearchDocument({ workspaceId: session.workspaceId, entityType: "observation", entityId: observation.id, title: observation.title, body: observation.content });
   return observation;
+}
+
+export async function transitionResearchObservation(userId: number, observationId: number, nextStatus: "new" | "reviewed" | "linked" | "archived") {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [observation] = await db.select().from(researchObservations).where(eq(researchObservations.id, observationId)).limit(1);
+  if (!observation || !(await canAccessWorkspace(userId, observation.workspaceId, "respond"))) throw new Error("Observation tidak ditemukan atau tidak dapat diakses.");
+  if (!observationTransitions[observation.status]?.includes(nextStatus)) throw new Error(`Invalid observation transition: ${observation.status} -> ${nextStatus}`);
+  const updated = await db.update(researchObservations).set({ status: nextStatus, updatedAt: new Date() }).where(eq(researchObservations.id, observation.id));
+  if (updated[0].affectedRows !== 1) throw new Error("Concurrent observation update detected; reload and retry.");
+  const eventType = assertEventType(`observation.${nextStatus}`);
+  const eventPayload = assertEventPayload({ observationId: observation.id, sessionId: observation.sessionId, workspaceId: observation.workspaceId, from: observation.status, to: nextStatus });
+  await db.insert(outboxEvents).values({ workspaceId: observation.workspaceId, eventType, traceId: observation.traceId, aggregateType: "research_observation", aggregateId: observation.id, idempotencyKey: `research-observation:${observation.id}:${nextStatus}`, schemaVersion: 1, payload: JSON.stringify(eventPayload), status: "pending", attempts: 0 });
+  await addResearchAudit(db, observation.workspaceId, userId, "research-observation-transitioned", { observationId, from: observation.status, to: nextStatus });
+  await upsertSearchDocument({ workspaceId: observation.workspaceId, entityType: "observation", entityId: observation.id, title: observation.title, body: `${observation.content} status:${nextStatus}` });
+  return { success: true as const, observationId, status: nextStatus };
 }
 
 export async function promoteObservationToFinding(userId: number, input: { sessionId: number; observationId: number; confidence?: number; impactSummary: string }) {

@@ -42,6 +42,74 @@ Working tree harus bersih sebelum migration atau deployment. Catat commit SHA:
 git rev-parse HEAD
 ```
 
+## Cloudflare edge layer (direkomendasikan)
+
+Cloudflare bukan dependency runtime wajib aplikasi, tetapi sangat direkomendasikan di depan Railway untuk DNS, TLS, WAF, rate limiting, dan perlindungan origin. Gunakan Cloudflare sebagai edge layer sebelum membuka URL production ke publik.
+
+### Buat zone dan DNS
+
+1. Buat akun atau buka [Cloudflare Dashboard](https://dash.cloudflare.com/).
+2. Tambahkan domain production sebagai zone.
+3. Ganti nameserver domain pada registrar sesuai nameserver Cloudflare.
+4. Buat custom hostname aplikasi, misalnya `app.example.com`.
+5. Buat DNS record `CNAME` dari `app` ke domain public Railway yang diberikan untuk API service.
+6. Aktifkan **Proxied** atau orange-cloud untuk hostname aplikasi.
+7. Jangan expose `MYSQL_PUBLIC_URL` atau database hostname melalui DNS Cloudflare.
+
+Contoh:
+
+| Type | Name | Target | Proxy |
+| --- | --- | --- | --- |
+| `CNAME` | `app` | Railway public domain API | Proxied |
+
+Jika Railway memerlukan custom-domain verification, ikuti record verification yang diberikan Railway terlebih dahulu. Setelah certificate aktif, gunakan hostname Cloudflare sebagai `APP_BASE_URL`, Firebase authorized domain, callback origin, dan URL smoke test.
+
+### TLS dan origin
+
+1. Buka **SSL/TLS → Overview**.
+2. Set encryption mode ke **Full (strict)**.
+3. Pastikan origin Railway menerima HTTPS dan certificate origin valid.
+4. Aktifkan **Always Use HTTPS** dan **Automatic HTTPS Rewrites** bila tidak bertentangan dengan asset legacy.
+5. Jangan menggunakan `Flexible` karena koneksi Cloudflare-to-origin dapat menjadi HTTP.
+6. Pastikan cookie authentication menggunakan HTTPS dan konfigurasi CORS/origin hanya mengizinkan domain aplikasi yang benar.
+
+Cloudflare merekomendasikan Full atau Full (strict); Full (strict) memvalidasi certificate origin lebih ketat.[7]
+
+### WAF dan rate limiting
+
+Buat rule bertahap, mulai dari **Managed WAF rules** dengan action `Log` di staging, lalu `Block` setelah false-positive review. Tambahkan rate limit khusus untuk endpoint sensitif seperti login, `/api/trpc/*`, `/api/scheduled/*`, dan upload/evidence. Jangan membuat rule global yang memblokir WebSocket, signed URL, atau request API valid.
+
+Minimum policy yang disarankan:
+
+| Area | Tindakan |
+| --- | --- |
+| Login/auth | Rate limit dan challenge untuk burst/brute-force; jangan cache response auth |
+| API | Bypass cache; rate-limit berdasarkan path dan client identity |
+| Scheduled callback | Allow hanya method/path yang diperlukan dan tetap wajib secret aplikasi |
+| Evidence upload | Batasi method, body size, dan abuse rate; jangan cache upload |
+| Admin routes | Challenge/block negara atau ASN hanya jika policy organisasi mengizinkan |
+| Origin | Railway menerima traffic dari Cloudflare dan health monitor yang disetujui |
+
+Cloudflare Rate Limiting Rules memang ditujukan untuk membatasi abuse pada website dan API.[9] Rate limiting Cloudflare tidak menggantikan rate limit server-side AngelMind; keduanya harus tetap aktif.
+
+### WebSocket dan cache
+
+AngelMind mendaftarkan realtime WebSocket. Cloudflare mendukung proxied WebSocket tanpa konfigurasi tambahan, tetapi lakukan smoke test koneksi setelah proxy diaktifkan.[8] Buat cache rule yang **tidak melakukan cache** untuk `/api/*`, `/healthz`, `/readyz`, `/api/trpc/*`, dan WebSocket upgrade path. Cache hanya asset static yang hash-nya immutable.
+
+### Origin protection dan verification
+
+Setelah Cloudflare aktif:
+
+1. Uji `curl -I https://app.example.com/healthz` dan pastikan status serta certificate benar.
+2. Uji `/readyz` melalui hostname Cloudflare.
+3. Uji login Firebase dan API bearer request.
+4. Uji WebSocket/realtime.
+5. Uji signed URL Supabase secara langsung; Cloudflare tidak boleh mem-proxy atau mengekspos service key.
+6. Tinjau Security Events dan false positives.
+7. Simpan Cloudflare zone ID, DNS record, TLS mode, WAF ruleset version, rate-limit rule IDs, dan rollback owner.
+
+Jika origin Railway masih dapat diakses langsung, anggap itu sebagai bypass edge yang harus ditangani melalui Railway networking/access policy atau origin verification. Jangan mengandalkan Cloudflare sebagai satu-satunya authorization layer.
+
 ## 2. Buat dan konfigurasi Firebase
 
 ### 2.1 Buat project
@@ -415,3 +483,6 @@ Jika release bermasalah:
 [4]: https://docs.railway.com/databases/mysql "Railway MySQL provisioning, connection variables, and backups"
 [5]: https://firebase.google.com/docs/auth "Firebase Authentication documentation"
 [6]: https://supabase.com/docs/guides/storage "Supabase Storage documentation"
+[7]: https://developers.cloudflare.com/ssl/origin-configuration/ssl-modes/full-strict/ "Cloudflare Full (strict) TLS mode"
+[8]: https://developers.cloudflare.com/network/websockets/ "Cloudflare proxied WebSockets"
+[9]: https://developers.cloudflare.com/waf/rate-limiting-rules/ "Cloudflare WAF rate limiting rules"

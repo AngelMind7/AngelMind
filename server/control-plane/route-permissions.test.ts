@@ -6,7 +6,7 @@ import {
 
 describe("routed procedure authorization contract", () => {
   it("contains every workspace-scoped operation with an explicit role requirement", () => {
-    expect(Object.keys(routedProcedurePermissions)).toHaveLength(114);
+    expect(Object.keys(routedProcedurePermissions)).toHaveLength(120);
     expect(routedProcedurePermissions["operations.addMember"]).toBe("owner");
     expect(routedProcedurePermissions["operations.runRestoreDrill"]).toBe(
       "owner"
@@ -65,6 +65,10 @@ describe("routed procedure authorization contract", () => {
     expect(routedProcedurePermissions["evidence.recordProvenance"]).toBe(
       "responder"
     );
+    expect(routedProcedurePermissions["reputation.profile"]).toBe("read-member");
+    expect(routedProcedurePermissions["reputation.recordEvent"]).toBe("responder");
+    expect(routedProcedurePermissions["integrations.list"]).toBe("read-member");
+    expect(routedProcedurePermissions["integrations.upsert"]).toBe("owner");
   });
   it("identifies which route types require an explicit workspace role gate", () => {
     expect(permissionNeedsWorkspaceRole("owner")).toBe(true);

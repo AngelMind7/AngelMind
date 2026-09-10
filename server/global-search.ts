@@ -4,6 +4,7 @@ import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
 type SearchCursor = { score: number; updatedAt: string; rowId: number };
 const SEMANTIC_VECTOR_DIMENSIONS = 96;
+export function shouldIndexWorkspaceNote(visibility: "private" | "workspace") { return visibility === "workspace"; }
 
 function encodeSearchCursor(cursor: SearchCursor): string {
   if (!Number.isInteger(cursor.score) || cursor.score < 0 || !Number.isInteger(cursor.rowId) || cursor.rowId < 1 || Number.isNaN(new Date(cursor.updatedAt).getTime())) throw new Error("Search cursor is invalid.");
@@ -115,7 +116,7 @@ export async function rebuildWorkspaceSearchIndex(userId: number, workspaceId: n
     db.select({ id: researchTasks.id, title: researchTasks.title, body: researchTasks.outputs }).from(researchTasks).where(eq(researchTasks.workspaceId, workspaceId)),
     db.select({ id: evidenceArtifacts.id, title: evidenceArtifacts.artifactType, body: evidenceArtifacts.quarantineReason }).from(evidenceArtifacts).where(eq(evidenceArtifacts.workspaceId, workspaceId)),
     db.select({ id: intelligenceFeedItems.id, title: intelligenceFeedItems.source, body: intelligenceFeedItems.data }).from(intelligenceFeedItems).where(eq(intelligenceFeedItems.workspaceId, workspaceId)),
-    db.select({ id: workspaceNotes.id, title: workspaceNotes.title, body: workspaceNotes.body }).from(workspaceNotes).where(eq(workspaceNotes.workspaceId, workspaceId)),
+    db.select({ id: workspaceNotes.id, title: workspaceNotes.title, body: workspaceNotes.body }).from(workspaceNotes).where(and(eq(workspaceNotes.workspaceId, workspaceId), eq(workspaceNotes.visibility, "workspace"))),
   ]);
   await db.delete(searchDocuments).where(eq(searchDocuments.workspaceId, workspaceId));
   const programId = workspaceRow[0]?.programId;

@@ -3,6 +3,7 @@ import { mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { spawn } from "node:child_process";
+import { sandboxSpawn } from "./runtime-sandbox";
 import {
   getToolCatalogEntry,
   canExecuteTool,
@@ -188,7 +189,13 @@ function executeAdapter(adapter: Adapter, inputPath: string, input: string, time
   return new Promise<{ status: ToolRuntimeResult["status"]; exitCode: number | null; stdout: string; stderr: string; reason?: string }>(resolve => {
     const args = adapter.args(inputPath, input);
     if (!args) { resolve({ status: "blocked", exitCode: null, stdout: "", stderr: "", reason: "invalid_adapter_input" }); return; }
-    const child = spawn(adapter.binary, args, { cwd: "/tmp", env: { PATH: process.env.PATH ?? "/usr/bin:/bin", LANG: "C", LC_ALL: "C" }, shell: false, stdio: ["ignore", "pipe", "pipe"] });
+    let child: ReturnType<typeof sandboxSpawn>;
+    try {
+      child = sandboxSpawn(adapter.binary, args, { timeoutMs, maxOutputBytes });
+    } catch (error) {
+      resolve({ status: "blocked", exitCode: null, stdout: "", stderr: "", reason: error instanceof Error ? error.message : "sandbox_rejected" });
+      return;
+    }
     let stdout = "";
     let stderr = "";
     let settled = false;

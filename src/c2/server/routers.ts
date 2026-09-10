@@ -1367,6 +1367,9 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         aiPlatform.listAiRuns(ctx.user.id, input.workspaceId)
       ),
+    runsPage: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), pageSize: z.number().int().min(1).max(100).optional(), cursor: z.string().max(512).optional() }))
+      .query(({ ctx, input }) => aiPlatform.listAiRunsPage(ctx.user.id, input)),
     output: protectedProcedure
       .input(z.object({ runId: z.number().int().positive() }))
       .query(({ ctx, input }) =>
@@ -1466,6 +1469,9 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         aiPlatform.listJobs(ctx.user.id, input?.workspaceId)
       ),
+    jobsPage: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive().optional(), pageSize: z.number().int().min(1).max(100).optional(), cursor: z.string().max(512).optional() }).optional())
+      .query(({ ctx, input }) => aiPlatform.listJobsPage(ctx.user.id, input)),
     replayOutbox: protectedProcedure
       .input(z.object({ eventId: z.number().int().positive() }))
       .mutation(({ ctx, input }) => {

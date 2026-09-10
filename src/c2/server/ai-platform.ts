@@ -12,6 +12,7 @@ import { recordPurgeBatch } from "./purge-metrics";
 import { summarizeAiRuns } from "./ai-quality";
 import { assertEventPayload, assertEventType } from "./event-contract";
 import { synthesizeAiResults, type AiResultFinding } from "./ai-result-pipeline";
+import { decodePageCursor, pageResult } from "./_core/query-safety";
 
 async function requireWorkspace(userId: number, workspaceId: number, intent: "read" | "respond" = "read") {
   const db = await getDb();
@@ -145,6 +146,15 @@ export async function listAiRuns(userId: number, workspaceId: number) {
   return db.select().from(aiRuns).where(eq(aiRuns.workspaceId, workspaceId)).orderBy(desc(aiRuns.createdAt)).limit(100);
 }
 
+export async function listAiRunsPage(userId: number, input: { workspaceId: number; pageSize?: number; cursor?: string }) {
+  const { db } = await requireWorkspace(userId, input.workspaceId);
+  const pageSize = Math.min(Math.max(input.pageSize ?? 25, 1), 100);
+  const cursor = decodePageCursor(input.cursor);
+  const where = cursor ? and(eq(aiRuns.workspaceId, input.workspaceId), or(lt(aiRuns.createdAt, new Date(cursor.createdAt)), and(eq(aiRuns.createdAt, new Date(cursor.createdAt)), lt(aiRuns.id, cursor.id)))) : eq(aiRuns.workspaceId, input.workspaceId);
+  const rows = await db.select().from(aiRuns).where(where).orderBy(desc(aiRuns.createdAt), desc(aiRuns.id)).limit(pageSize + 1);
+  return pageResult(rows, pageSize);
+}
+
 export async function getAiCostGovernance(userId: number, workspaceId: number) {
   const { db, workspace } = await requireWorkspace(userId, workspaceId);
   const [runs, models] = await Promise.all([
@@ -262,6 +272,19 @@ export async function listJobs(userId: number, workspaceId?: number) {
   if (workspaceId) await requireWorkspace(userId, workspaceId);
   const rows = workspaceId ? await db.select().from(jobs).where(eq(jobs.workspaceId, workspaceId)).orderBy(desc(jobs.createdAt)).limit(100) : await db.select().from(jobs).where(eq(jobs.status, "queued")).orderBy(asc(jobs.availableAt)).limit(100);
   return rows;
+}
+
+export async function listJobsPage(userId: number, input?: { workspaceId?: number; pageSize?: number; cursor?: string }) {
+  const db = await getDb();
+  if (!db) return { items: [], nextCursor: null };
+  const workspaceId = input?.workspaceId;
+  if (workspaceId) await requireWorkspace(userId, workspaceId);
+  const pageSize = Math.min(Math.max(input?.pageSize ?? 25, 1), 100);
+  const cursor = decodePageCursor(input?.cursor);
+  const base = workspaceId ? eq(jobs.workspaceId, workspaceId) : eq(jobs.status, "queued");
+  const where = cursor ? and(base, or(lt(jobs.createdAt, new Date(cursor.createdAt)), and(eq(jobs.createdAt, new Date(cursor.createdAt)), lt(jobs.id, cursor.id)))) : base;
+  const rows = await db.select().from(jobs).where(where).orderBy(desc(jobs.createdAt), desc(jobs.id)).limit(pageSize + 1);
+  return pageResult(rows, pageSize);
 }
 
 export async function publishOutboxEvent(userId: number, input: { workspaceId?: number; eventType: string; aggregateType: string; aggregateId: number; idempotencyKey: string; schemaVersion?: number; payload: Record<string, unknown> }) {

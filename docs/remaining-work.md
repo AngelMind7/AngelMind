@@ -272,3 +272,7 @@ Sensitive MFA secrets now use a reusable AES-256-GCM envelope format carrying an
 Evidence artifacts now expose a bounded cursor-paginated `evidence.listPage` procedure using a deterministic `createdAt`/ID continuation cursor, while the Evidence Vault renders page counts and a next-page control without weakening workspace authorization. Audit records now expose a matching `audit.listPage` procedure with optional trace filtering, bounded page size, and deterministic continuation. Existing unpaginated procedures remain backward compatible for legacy clients. Domain-wide pagination for other bounded operational lists remains follow-up work.
 
 The Evidence Vault now renders provenance replay history and acquisition timeline records, and the Operations Console exposes workspace audit-chain verification results including checked count, first broken entry, and reason. Provider activation, distributed tracing, and live environment verification remain deployment-gated.
+
+## Latest implementation slice — 2026-09-10 (AI run and job pagination)
+
+AI run history now exposes `ai.runsPage`, and queued/workspace jobs expose `ai.jobsPage`, both with bounded page sizes and deterministic `createdAt`/ID cursors. Workspace authorization is enforced before page reads, while the original `ai.runs` and `ai.jobs` procedures remain available for compatibility. Additional bounded operational lists remain candidates for future pagination slices.

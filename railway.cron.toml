@@ -3,7 +3,7 @@
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
-watchPatterns = ["client/**", "server/**", "drizzle/**", "shared/**", "runtime/**", "config/**", "Dockerfile", "package.json", "pnpm-lock.yaml", "railway.cron.toml"]
+watchPatterns = ["apps/frontend-angular/**/*", "src/c2/server/**", "src/c2/database/**", "src/c2/shared/**", "src/c2/modules/adapter_runtime/**/*", "config/**", "Dockerfile", "package.json", "pnpm-lock.yaml", "railway.cron.toml"]
 
 [deploy]
 startCommand = "node dist/scheduled.js"

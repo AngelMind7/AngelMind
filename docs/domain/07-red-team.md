@@ -38,5 +38,5 @@ Shared runtime execution is simulation-only. Target-facing C2, payload delivery,
 
 ## Verification
 - `pnpm check:redteam-contract`
-- `pnpm exec vitest run server/redteam-operations.test.ts`
+- `pnpm exec vitest run src/c2/server/redteam-operations.test.ts`
 - CI workflow: `.github/workflows/redteam-contract.yml`

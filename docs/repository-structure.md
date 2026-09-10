@@ -5,19 +5,19 @@ AngelMind saat ini adalah satu control-plane repository dengan dua runtime utama
 | Path | Peran | Status |
 |---|---|---|
 | `client/` | React/Vite frontend, authenticated pages, marketing pages, localization, PWA | Aktif |
-| `server/` | Express/tRPC control plane, auth, authorization, domain services, persistence adapters | Aktif |
-| `shared/` | Shared constants, types, dan error contracts | Aktif |
-| `drizzle/` | Database schema, relations, migrations, metadata | Aktif |
+| `src/c2/server/` | Express/tRPC control plane, auth, authorization, domain services, persistence adapters | Aktif |
+| `src/c2/shared/` | Shared constants, types, dan error contracts | Aktif |
+| `src/c2/database/` | Database schema, relations, migrations, metadata | Aktif |
 | `apps/orchestrator-langgraph/` | Python safety-first contracts, planner, guardrails, dan network-free rehearsal | Aktif; belum menjadi active target-facing worker |
 | `scripts/` | Tooling maintenance dan one-off content migration | Campuran; script yang sudah dipakai perlu diarsipkan |
 | `docs/` | Architecture, governance, deployment, readiness, dan blueprint mapping | Aktif |
 | `.github/workflows/` | CI, container validation, E2E smoke, dependency/security checks | Aktif |
 | `deploy/` | Prometheus scrape configuration dan infrastructure notes | Aktif |
-| `ai-core/`, `api/`, `web/` | Dokumentasi boundary arsitektur masa depan; runtime source of truth tetap `apps/orchestrator-langgraph/`, `server/`, dan `client/` | Sengaja belum menjadi package/runtime terpisah |
+| `ai-core/`, `api/`, `web/` | Dokumentasi boundary arsitektur masa depan; runtime source of truth tetap `apps/orchestrator-langgraph/`, `src/c2/server/`, dan `client/` | Sengaja belum menjadi package/runtime terpisah |
 
 ## Boundary yang wajib dipertahankan
 
-`client/` tidak boleh menyimpan secret atau melakukan authorization sebagai source of truth. Semua authorization, tenant/workspace isolation, validation, audit, dan persistence harus ditegakkan di `server/` atau database layer.
+`client/` tidak boleh menyimpan secret atau melakukan authorization sebagai source of truth. Semua authorization, tenant/workspace isolation, validation, audit, dan persistence harus ditegakkan di `src/c2/server/` atau database layer.
 
 `apps/orchestrator-langgraph/` saat ini bersifat network-free. Ia boleh membuat plan, mengevaluasi guardrail, dan melakukan rehearsal deterministik, tetapi tidak boleh berubah menjadi target-facing capability tanpa scope tertulis, approval, egress policy, independent audit, dan deployment boundary terpisah.
 

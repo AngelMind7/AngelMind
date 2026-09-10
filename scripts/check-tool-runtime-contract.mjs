@@ -7,9 +7,9 @@ const files = Object.fromEntries(
   await Promise.all(
     [
       "config/tool-runtime-packs.yaml",
-      "server/tool-catalog-data.ts",
-      "server/tool-runtime.ts",
-      "server/tool-runtime-policy.ts",
+      "src/c2/server/tool-catalog-data.ts",
+      "src/c2/server/tool-runtime.ts",
+      "src/c2/server/tool-runtime-policy.ts",
       "scripts/runtime-tool-smoke-test.sh",
       "Dockerfile.tools",
     ].map(async path => [path, await readFile(resolve(root, path), "utf8")]),
@@ -18,10 +18,10 @@ const files = Object.fromEntries(
 
 const expected = ["burp_suite_pro", "jwt_tool", "dalfox", "ssrfmap", "interactsh", "ffuf", "cloudfox", "graphql_cop", "sqlmap", "nuclei", "subfinder", "httpx", "gitleaks", "trivy", "naabu", "katana", "custom_scripts"];
 const runtimeAliases = { gitleaks: "secrets_detection.1", subfinder: "asset_intelligence.28", trivy: "dependencies.12" };
-const catalog = files["server/tool-catalog-data.ts"];
+const catalog = files["src/c2/server/tool-catalog-data.ts"];
 const config = files["config/tool-runtime-packs.yaml"];
-const runtime = files["server/tool-runtime.ts"];
-const policy = files["server/tool-runtime-policy.ts"];
+const runtime = files["src/c2/server/tool-runtime.ts"];
+const policy = files["src/c2/server/tool-runtime-policy.ts"];
 const smoke = files["scripts/runtime-tool-smoke-test.sh"];
 const docker = files["Dockerfile.tools"];
 const failures = [];

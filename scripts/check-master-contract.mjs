@@ -7,7 +7,7 @@ const failures = [];
 const requireAtLeast = (actual, expected, label) => { if (actual < expected) failures.push(`${label}: expected at least ${expected}, found ${actual}`); };
 const requireFile = file => { if (!existsSync(resolve(root, file))) failures.push(`missing required repository contract ${file}`); };
 
-const apiContract = read("server/api-v1-contract.ts");
+const apiContract = read("src/c2/server/api-v1-contract.ts");
 const apiEntries = [...apiContract.matchAll(/endpoint\("([^"]+)",\s*"([^"]+)",\s*"([^"]+)",\s*"([^"]+)"(?:,\s*"([^"]+)")?\)/g)];
 const apiGroups = new Set(apiEntries.map(match => match[1]));
 requireAtLeast(apiEntries.length, 240, "named V4 API endpoints");
@@ -16,9 +16,9 @@ if (!apiContract.includes('API_V1_BLUEPRINT_TARGET = "260+"')) failures.push("V4
 const apiKeys = new Set(apiEntries.map(match => `${match[3]} ${match[4]}`));
 if (apiKeys.size !== apiEntries.length) failures.push("V4 API contract contains duplicate method/path pairs");
 
-const router = read("server/routers.ts");
+const router = read("src/c2/server/routers.ts");
 const executableApiLeaves = (router.match(/^\s*[A-Za-z0-9_$]+\s*:\s*(?:admin|protected|public)Procedure\b/gm) ?? []).length;
-const restFiles = ["server/rest-v1.ts", "server/rest-v1-core-resources.ts", "server/rest-v1-tags-notes.ts", "server/rest-v1-evidence-findings.ts", "server/rest-v1-tools.ts", "server/simulation-rest.ts"];
+const restFiles = ["src/c2/server/rest-v1.ts", "src/c2/server/rest-v1-core-resources.ts", "src/c2/server/rest-v1-tags-notes.ts", "src/c2/server/rest-v1-evidence-findings.ts", "src/c2/server/rest-v1-tools.ts", "src/c2/server/simulation-rest.ts"];
 const restEndpointPattern = /\bapp\.(get|post|put|patch|delete)\(\"(\/api\/v1\/[^\"]+)\"/g;
 const concreteRestKeys = new Set();
 for (const file of restFiles) for (const match of read(file).matchAll(restEndpointPattern)) concreteRestKeys.add(`${match[1].toUpperCase()} ${match[2]}`);
@@ -56,12 +56,12 @@ for (const route of ["/","/product","/features","/how-it-works","/bug-bounty","/
 
 const domainDocs = ["01-identity","02-organization","03-asset-intel","04-threat-surface","05-vuln-research","06-offensive-engine","07-red-team","08-purple-team","09-bug-bounty","10-findings","11-reporting","12-threat-intel","13-ai-automation","14-governance"];
 for (const doc of domainDocs) requireFile(`docs/domain/${doc}.md`);
-for (const file of ["docs/application-menu.md","docs/database-schema-contract.md","docs/api/openapi.yaml","docs/api/endpoint-inventory.md","docs/blueprint-conformance.md","docs/launch-gate.md","docs/architecture/system-architecture.md","docs/architecture/data-flow.md","docs/architecture/security-model.md","railway.json","deploy/cloudflare/wrangler.toml","deploy/supabase/config.toml","deploy/firebase/firebase.json","deploy/firebase/.firebaserc","deploy/firebase/firestore.rules","deploy/firebase/firestore.indexes.json","deploy/cloudflare/src/index.ts","deploy/firebase/functions/index.js","deploy/firebase/public/index.html","server/tool-simulation.ts","server/tool-simulation.test.ts","server/simulation-rest.ts","server/chain-engine.ts","server/egress-policy.ts","server/mobile-analysis.ts","apps/frontend-angular/src/pages/ClientPortal.tsx","server/v4-gap-closure.ts","server/v4-gap-closure.test.ts"]) requireFile(file);
+for (const file of ["docs/application-menu.md","docs/database-schema-contract.md","docs/api/openapi.yaml","docs/api/endpoint-inventory.md","docs/blueprint-conformance.md","docs/launch-gate.md","docs/architecture/system-architecture.md","docs/architecture/data-flow.md","docs/architecture/security-model.md","railway.json","deploy/cloudflare/wrangler.toml","deploy/supabase/config.toml","deploy/firebase/firebase.json","deploy/firebase/.firebaserc","deploy/firebase/firestore.rules","deploy/firebase/firestore.indexes.json","deploy/cloudflare/src/index.ts","deploy/firebase/functions/index.js","deploy/firebase/public/index.html","src/c2/server/tool-simulation.ts","src/c2/server/tool-simulation.test.ts","src/c2/server/simulation-rest.ts","src/c2/server/chain-engine.ts","src/c2/server/egress-policy.ts","src/c2/server/mobile-analysis.ts","apps/frontend-angular/src/pages/ClientPortal.tsx","src/c2/server/v4-gap-closure.ts","src/c2/server/v4-gap-closure.test.ts"]) requireFile(file);
 
-const gapClosure = read("server/v4-gap-closure.ts");
+const gapClosure = read("src/c2/server/v4-gap-closure.ts");
 for (const marker of ["proxy-egress-mesh","mobile-analysis","database-consolidation","custom-script-safety","chain-builder","governed-c2","client-portal","agent-namespaces","targetExecutionEnabled: false","privilegedRuntime: false"]) if (!gapClosure.includes(marker)) failures.push(`V4 gap closure contract missing ${marker}`);
 
-const catalog = read("server/tool-catalog-data.ts");
+const catalog = read("src/c2/server/tool-catalog-data.ts");
 const requiredTools = ["burp_suite_pro","jwt_tool","dalfox","ssrfmap","interactsh","ffuf","cloudfox","graphql_cop","sqlmap","nuclei","subfinder","httpx","gitleaks","trivy","naabu","katana","custom_scripts"];
 const toolAliases = { subfinder: "asset_intelligence.28", gitleaks: "secrets_detection.1", trivy: "dependencies.12" };
 for (const tool of requiredTools) if (!catalog.includes(`"toolKey":"${tool}"`) && !catalog.includes(`"toolKey": "${tool}"`) && !catalog.includes(`toolKey: "${tool}"`) && !catalog.includes(`toolKey: "${toolAliases[tool] ?? tool}"`) && !catalog.includes(`"toolKey":"${toolAliases[tool] ?? tool}"`)) failures.push(`missing master tool ${tool}`);
@@ -70,37 +70,37 @@ const generatedModules = new Set(catalog.match(/"(?:recon_|scan_|research_|fuzz_
 requireAtLeast(literalModules + generatedModules, 50, "UTF catalog modules");
 if (!catalog.includes("enabledByDefault:true") && !catalog.includes("enabledByDefault: true") && !catalog.includes("enabledByDefault = true") && !catalog.includes("\"enabledByDefault\":true") && !catalog.includes("\"enabledByDefault\": true")) failures.push("UTF catalog must expose enabled modules by default");
 
-const normalizer = read("server/evidence-normalizer.ts");
+const normalizer = read("src/c2/server/evidence-normalizer.ts");
 const schemas = ["jwt_token_comparison","sqli_evidence","xss_evidence","ssrf_evidence","cloud_metadata_evidence","graphql_introspection_evidence","graphql_batching_evidence","idor_evidence","ssti_evidence","rce_evidence","host_header_evidence","cache_poisoning_evidence","race_condition_evidence","file_upload_evidence","xxe_evidence"];
 for (const schema of schemas) if (!normalizer.includes(`${schema}:`)) failures.push(`missing evidence schema ${schema}`);
-const pipeline = read("server/tool-execution-pipeline.ts");
+const pipeline = read("src/c2/server/tool-execution-pipeline.ts");
 for (const phase of ["validate","prepare","execute","collect","parse","normalize","cleanup"]) if (!pipeline.includes(`"${phase}"`)) failures.push(`missing adapter lifecycle phase ${phase}`);
-const runtime = read("server/tool-runtime.ts");
+const runtime = read("src/c2/server/tool-runtime.ts");
 if (!runtime.includes("target_execution_disabled")) failures.push("target-facing execution must fail closed without explicit deployment opt-in");
 if (!runtime.includes("canExecuteTool")) failures.push("tool runtime must enforce catalog authorization before spawn");
-const governedRunner = read("server/governed-tool-runner.ts");
+const governedRunner = read("src/c2/server/governed-tool-runner.ts");
 if (!governedRunner.includes("decideRuntimeResources") || !governedRunner.includes("runtimeConcurrencyLimit")) failures.push("governed runtime resource gate is missing");
-const ledger = read("server/execution-ledger.ts");
+const ledger = read("src/c2/server/execution-ledger.ts");
 for (const marker of ["createExecutionLedger","getExecutionProgress","advanceExecutionLedger","persistExecutionReport","completeExecutionLedger","failExecutionLedger"]) if (!ledger.includes(`export async function ${marker}`)) failures.push(`missing execution ledger contract ${marker}`);
-const progressEvents = read("server/execution-progress-events.ts");
+const progressEvents = read("src/c2/server/execution-progress-events.ts");
 for (const marker of ["execution.queued","execution.started","execution.progress","execution.completed","execution.failed"]) if (!progressEvents.includes(`"${marker}"`)) failures.push(`missing execution progress event ${marker}`);
-if (!read("server/rest-v1.ts").includes("/api/v1/executions/:jobId")) failures.push("missing authenticated execution progress endpoint");
+if (!read("src/c2/server/rest-v1.ts").includes("/api/v1/executions/:jobId")) failures.push("missing authenticated execution progress endpoint");
 if (!read("apps/frontend-angular/src/pages/MissionControl.tsx").includes("/api/v1/executions/")) failures.push("Mission Control is not bound to persisted execution progress");
 
-const simulation = read("server/tool-simulation.ts");
+const simulation = read("src/c2/server/tool-simulation.ts");
 for (const marker of ["simulateRegisteredTool","synthetic","inputSha256","mode: \"simulation\""]) if (!simulation.includes(marker)) failures.push(`simulation engine missing ${marker}`);
-const simulationRest = read("server/simulation-rest.ts");
+const simulationRest = read("src/c2/server/simulation-rest.ts");
 for (const marker of ["registerSimulationRoutes","/api/v1/simulations/run","authenticateRequest","canAccessWorkspace","simulateGovernedChain"]) if (!simulationRest.includes(marker)) failures.push(`simulation API missing ${marker}`);
-const egress = read("server/egress-policy.ts");
+const egress = read("src/c2/server/egress-policy.ts");
 for (const marker of ["allowedTargetsOnly","blockInternalRanges","validateEgressPolicy"]) if (!egress.includes(marker)) failures.push(`egress governance missing ${marker}`);
-const mobile = read("server/mobile-analysis.ts");
+const mobile = read("src/c2/server/mobile-analysis.ts");
 for (const marker of ["static","android_dynamic_queue","ios_self_hosted","authorized-lab-only"]) if (!mobile.includes(marker)) failures.push(`mobile analysis contract missing ${marker}`);
 
-const chainEngine = read("server/chain-engine.ts");
+const chainEngine = read("src/c2/server/chain-engine.ts");
 for (const nodeType of ["module","action","condition","foreach","while","parallel","merge","sleep","subchain"]) if (!chainEngine.includes(`"${nodeType}"`)) failures.push(`missing DAG chain node type ${nodeType}`);
 if (!chainEngine.includes("cycle_detected") || !chainEngine.includes("planChainExecution")) failures.push("DAG chain validation/planning contract is missing");
 
-const migrations = readdirSync(resolve(root, "drizzle")).filter(file => file.endsWith(".sql"));
+const migrations = readdirSync(resolve(root, "src/c2/database")).filter(file => file.endsWith(".sql"));
 requireAtLeast(migrations.length, 64, "migration files");
 if (!read("src/c2/modules/adapter_runtime/custom_script_runner.py").includes("never executes input as code")) failures.push("custom script runner safety contract is missing");
 const toolsDockerfile = read("Dockerfile.tools"); const smoke = read("scripts/runtime-tool-smoke-test.sh");

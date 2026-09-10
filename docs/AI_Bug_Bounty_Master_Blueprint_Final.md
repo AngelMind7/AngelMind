@@ -585,7 +585,7 @@ ai-bug-bounty/
 │   ├── requirements.txt
 │   └── Dockerfile
 │
-├── 📁 shared/
+├── 📁 src/c2/shared/
 │   ├── types/
 │   ├── constants/
 │   └── schemas/

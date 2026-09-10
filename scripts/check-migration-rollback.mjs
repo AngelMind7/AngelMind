@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const migrationDir = path.join(root, "drizzle");
+const migrationDir = path.join(root, "src", "c2", "database");
 const runbookPath = path.join(root, "docs", "supabase-database-migration-runbook.md");
 const migrations = fs.readdirSync(migrationDir).filter(file => /^\d{4}_.+\.sql$/.test(file)).sort();
 if (!migrations.length) throw new Error("No migrations found.");

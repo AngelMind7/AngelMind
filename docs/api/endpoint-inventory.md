@@ -35,13 +35,13 @@ The PDF enumerates 28 API route groups and a 260+ endpoint target. The route-gro
 
 ## Canonical contract
 
-`server/api-v1-contract.ts` is the machine-readable V4 REST contract. It records the named routes from the PDF, method, domain group, authorization class, and whether execution must remain governed or simulation-only. `scripts/check-api-v1-contract.mjs` validates duplicate-free route keys, all 28 blueprint groups, the required concrete V4 additions, and preservation of the PDF's `260+` target.
+`src/c2/server/api-v1-contract.ts` is the machine-readable V4 REST contract. It records the named routes from the PDF, method, domain group, authorization class, and whether execution must remain governed or simulation-only. `scripts/check-api-v1-contract.mjs` validates duplicate-free route keys, all 28 blueprint groups, the required concrete V4 additions, and preservation of the PDF's `260+` target.
 
 The contract is deliberately separate from implementation status: a route is not considered implemented merely because it appears in the blueprint. Concrete REST handlers must be backed by authenticated services, tenant/workspace authorization, validation, persistence where applicable, and the existing fail-closed execution policy.
 
 ## Executable API gate
 
-The canonical tRPC router is also part of the API surface. `scripts/check-api-surface.mjs` counts executable tRPC leaves directly from `server/routers.ts` and fails CI unless at least 260 concrete procedures exist. This prevents the 260+ requirement from being satisfied by documentation-only entries.
+The canonical tRPC router is also part of the API surface. `scripts/check-api-surface.mjs` counts executable tRPC leaves directly from `src/c2/server/routers.ts` and fails CI unless at least 260 concrete procedures exist. This prevents the 260+ requirement from being satisfied by documentation-only entries.
 
 ## Concrete V4 additions already implemented
 

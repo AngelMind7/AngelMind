@@ -53,11 +53,11 @@ AngelMind/
 │       ├── components/              # Shared, accessible design-system components
 │       ├── contexts/                # Locale, theme, and client preferences
 │       └── locales/                 # Typed UI resources; English fallback
-├── server/                          # tRPC procedures, policy-bound service workflows
+├── src/c2/server/                          # tRPC procedures, policy-bound service workflows
 │   └── control-plane/               # Roles, guardrails, rehearsal, audit, assurance contracts
 ├── apps/orchestrator-langgraph/                # Python reference contracts and deterministic tests only
 │   └── src/angelmind_research/
-├── drizzle/                         # MySQL schema and forward-only migrations
+├── src/c2/database/                         # MySQL schema and forward-only migrations
 ├── docs/                            # Architecture, safety, i18n, operations, rollout evidence
 ├── scripts/                         # Repeatable maintenance and locale-resource generation
 ├── .github/                         # CI, dependency review, code ownership, issue templates

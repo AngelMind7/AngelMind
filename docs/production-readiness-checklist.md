@@ -24,9 +24,9 @@ This checklist separates repository-complete work from checks that require a rea
 | ------------------------------------------- | -------------------------------------------------------- | ---------------------- |
 | Dedicated MySQL-compatible staging database | Set `DATABASE_URL` through Railway variable reference    | Pending environment    |
 | Schema migration rehearsal                  | Run `pnpm db:push` only in staging                       | Pending environment    |
-| AI memory retention integration             | Run `server/ai-memory-retention.integration.test.ts`     | Pending environment    |
-| AI memory context integration               | Run `server/ai-memory-context.integration.test.ts`       | Pending environment    |
-| Semantic search integration                 | Run `server/global-search.integration.test.ts`           | Pending environment    |
+| AI memory retention integration             | Run `src/c2/server/ai-memory-retention.integration.test.ts`     | Pending environment    |
+| AI memory context integration               | Run `src/c2/server/ai-memory-context.integration.test.ts`       | Pending environment    |
+| Semantic search integration                 | Run `src/c2/server/global-search.integration.test.ts`           | Pending environment    |
 | Authenticated lifecycle E2E                 | Set `E2E_BASE_URL` and short-lived `ANGELMIND_E2E_TOKEN` | Pending environment    |
 | Health/readiness/metrics                    | Run post-deploy verification workflow                    | Pending deployment     |
 | Restore rehearsal                           | Restore a staging backup and record RTO/RPO              | Pending backup         |

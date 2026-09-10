@@ -1,12 +1,12 @@
 from pathlib import Path
 
-schema = Path('/home/ubuntu/AngelMind/drizzle/schema.ts')
+schema = Path('/home/ubuntu/AngelMind/src/c2/database/schema.ts')
 s = schema.read_text()
 s = s.replace('export const outboxEventStatus = ["pending", "published", "failed"] as const;', 'export const outboxEventStatus = ["pending", "retrying", "published", "failed"] as const;')
 s = s.replace('  attempts: int("attempts").default(0).notNull(),\n  publishedAt: timestamp("publishedAt"),\n  createdAt: timestamp("createdAt").defaultNow().notNull(),\n}, table => [uniqueIndex("outbox_event_idempotency_uq")', '  attempts: int("attempts").default(0).notNull(),\n  availableAt: timestamp("availableAt").defaultNow().notNull(),\n  lockedAt: timestamp("lockedAt"),\n  workerId: varchar("workerId", { length: 128 }),\n  lastError: text("lastError"),\n  publishedAt: timestamp("publishedAt"),\n  createdAt: timestamp("createdAt").defaultNow().notNull(),\n}, table => [uniqueIndex("outbox_event_idempotency_uq")', 1)
 schema.write_text(s)
 
-ai = Path('/home/ubuntu/AngelMind/server/ai-platform.ts')
+ai = Path('/home/ubuntu/AngelMind/src/c2/server/ai-platform.ts')
 s = ai.read_text()
 s = s.replace('const WORKER_ID = process.env.WORKER_ID?.trim() || randomUUID();\nconst WORKER_LEASE_MS = 10 * 60 * 1_000;', 'const WORKER_ID = process.env.WORKER_ID?.trim() || randomUUID();\nconst WORKER_LEASE_MS = 10 * 60 * 1_000;\nconst OUTBOX_MAX_ATTEMPTS = 5;\nconst OUTBOX_LEASE_MS = 2 * 60 * 1_000;')
 old = '''export async function markOutboxEventPublished(eventId: number) {
@@ -85,6 +85,6 @@ s = s.replace('''      await handler({ id: event.id, eventType: event.eventType,
 ''')
 ai.write_text(s)
 
-migration = Path('/home/ubuntu/AngelMind/drizzle/0036_outbox_retry_leases.sql')
+migration = Path('/home/ubuntu/AngelMind/src/c2/database/0036_outbox_retry_leases.sql')
 migration.write_text('''ALTER TABLE `outboxEvents` MODIFY COLUMN `status` enum('pending','retrying','published','failed') NOT NULL DEFAULT 'pending';\nALTER TABLE `outboxEvents` ADD COLUMN `availableAt` timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP;\nALTER TABLE `outboxEvents` ADD COLUMN `lockedAt` timestamp NULL;\nALTER TABLE `outboxEvents` ADD COLUMN `workerId` varchar(128) NULL;\nALTER TABLE `outboxEvents` ADD COLUMN `lastError` text NULL;\nCREATE INDEX `outbox_event_status_available_idx` ON `outboxEvents` (`status`,`availableAt`);\nCREATE INDEX `outbox_event_worker_lease_idx` ON `outboxEvents` (`workerId`,`lockedAt`);\n''')
 print('outbox hardening patch prepared')

@@ -29,7 +29,7 @@ Dokumen ini mencatat integrasi addendum katalog tool ke dalam registry AngelMind
 
 ## Enforcement
 
-`server/tool-catalog.ts` tetap menjadi boundary tunggal untuk pencarian, filtering, ringkasan, dan keputusan execution. `getToolCatalogSummary()` menyediakan agregasi aktual berdasarkan **risk**, **disposition**, dan **category**, sehingga dashboard atau service tidak perlu menggunakan angka hardcoded.
+`src/c2/server/tool-catalog.ts` tetap menjadi boundary tunggal untuk pencarian, filtering, ringkasan, dan keputusan execution. `getToolCatalogSummary()` menyediakan agregasi aktual berdasarkan **risk**, **disposition**, dan **category**, sehingga dashboard atau service tidak perlu menggunakan angka hardcoded.
 
 Semua entry addendum memenuhi guard berikut sebelum dapat dipertimbangkan untuk execution:
 
@@ -41,6 +41,6 @@ Semua entry addendum memenuhi guard berikut sebelum dapat dipertimbangkan untuk 
 
 ## Verification checklist
 
-Perubahan ini dilindungi oleh `server/tool-catalog.test.ts`, yang memeriksa total katalog, risk totals, jumlah kategori addendum, keberadaan semua 45 nama tool, status provisional, status disabled-by-default, filtering disposition, serta penolakan execution sebelum verifikasi.
+Perubahan ini dilindungi oleh `src/c2/server/tool-catalog.test.ts`, yang memeriksa total katalog, risk totals, jumlah kategori addendum, keberadaan semua 45 nama tool, status provisional, status disabled-by-default, filtering disposition, serta penolakan execution sebelum verifikasi.
 
 Entry tidak boleh dipindahkan ke status operational hanya karena tercantum di manifest. Setiap perubahan status harus disertai source, version pin, runtime analysis, dependency mapping, adapter/parser/normalizer, health check, scope/policy integration, execution test yang authorized, cleanup verification, audit logging, dan monitoring sebagaimana ditetapkan Master Build Specification.

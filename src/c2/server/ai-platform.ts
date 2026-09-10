@@ -1,0 +1,565 @@
+import { createHash, randomUUID } from "node:crypto";
+import { and, asc, desc, eq, inArray, isNotNull, lte, lt, ne, or, sql } from "drizzle-orm";
+import { aiModels, aiRunEvaluations, aiRunOutputs, aiRuns, jobs, outboxConsumerReceipts, outboxEvents, researchSessions, researchTasks, workspaces } from "../database/schema";
+import { getDb } from "./db";
+import { canAccessWorkspace } from "./control-plane/operations";
+import { planMultiAgentRun } from "./ai-orchestration";
+import { invokeLLM, type Message } from "./_core/llm";
+import { selectBestRegisteredModel } from "./ai-routing";
+import { discoverGatewayModels } from "./ai-catalog";
+import { currentTraceContext } from "./_core/trace-context";
+import { recordPurgeBatch } from "./purge-metrics";
+import { summarizeAiRuns } from "./ai-quality";
+import { assertEventPayload, assertEventType } from "./event-contract";
+import { synthesizeAiResults, type AiResultFinding } from "./ai-result-pipeline";
+
+async function requireWorkspace(userId: number, workspaceId: number, intent: "read" | "respond" = "read") {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  if (!(await canAccessWorkspace(userId, workspaceId, intent))) throw new Error("Workspace tidak ditemukan atau tidak dapat diakses.");
+  const [workspace] = await db.select().from(workspaces).where(eq(workspaces.id, workspaceId)).limit(1);
+  if (!workspace) throw new Error("Workspace tidak ditemukan.");
+  return { db, workspace };
+}
+
+export async function listModels() {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(aiModels).where(eq(aiModels.status, "active")).orderBy(asc(aiModels.provider), asc(aiModels.modelKey));
+}
+
+export async function refreshModelCatalog() {
+  const db = await getDb();
+  if (!db) return { discovered: 0, errors: ["database-unavailable"] };
+  const discovery = await discoverGatewayModels();
+  for (const model of discovery.models) {
+    await db.insert(aiModels).values({ modelKey: model.modelKey, provider: model.provider, gateway: model.gateway, capabilities: JSON.stringify(model.capabilities), contextWindow: model.contextWindow, status: "active", inputCostPerMillionCents: model.inputCostPerMillionCents, outputCostPerMillionCents: model.outputCostPerMillionCents }).onDuplicateKeyUpdate({ set: { provider: model.provider, gateway: model.gateway, capabilities: JSON.stringify(model.capabilities), contextWindow: model.contextWindow, inputCostPerMillionCents: model.inputCostPerMillionCents, outputCostPerMillionCents: model.outputCostPerMillionCents, status: "active", updatedAt: new Date() } });
+  }
+  return { discovered: discovery.models.length, errors: discovery.errors };
+}
+
+export async function selectRegisteredModel(requirements: { capabilities?: string[]; minimumContextWindow?: number; maxCostCentsPerMillionTokens?: number; allowDegraded?: boolean }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const existing = await db.select().from(aiModels);
+  const rows = existing.length ? existing : (await refreshModelCatalog(), await db.select().from(aiModels));
+  return selectBestRegisteredModel(rows.map(model => ({ ...model, capabilities: JSON.parse(model.capabilities) as string[] })), requirements);
+}
+
+export async function registerModel(userId: number, input: { modelKey: string; provider: string; gateway: string; capabilities: string[]; contextWindow: number; version?: string; inputCostPerMillionCents?: number; outputCostPerMillionCents?: number }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const modelKey = input.modelKey.trim();
+  if (modelKey.length < 2) throw new Error("Model key is required.");
+  await db.insert(aiModels).values({ modelKey, provider: input.provider.trim(), gateway: input.gateway.trim(), capabilities: JSON.stringify(input.capabilities), contextWindow: input.contextWindow, status: "active", version: input.version?.trim() || null, inputCostPerMillionCents: input.inputCostPerMillionCents ?? 0, outputCostPerMillionCents: input.outputCostPerMillionCents ?? 0 }).onDuplicateKeyUpdate({ set: { provider: input.provider.trim(), gateway: input.gateway.trim(), capabilities: JSON.stringify(input.capabilities), contextWindow: input.contextWindow, version: input.version?.trim() || null, inputCostPerMillionCents: input.inputCostPerMillionCents ?? 0, outputCostPerMillionCents: input.outputCostPerMillionCents ?? 0, status: "active", updatedAt: new Date() } });
+  const [model] = await db.select().from(aiModels).where(eq(aiModels.modelKey, modelKey)).limit(1);
+  return model;
+}
+
+export async function recordModelHealth(userId: number, input: { modelKey: string; status: "active" | "degraded" | "disabled"; latencyMs?: number; errorCode?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [model] = await db.select().from(aiModels).where(eq(aiModels.modelKey, input.modelKey.trim())).limit(1);
+  if (!model) throw new Error("AI model tidak ditemukan.");
+  await db.update(aiModels).set({ status: input.status, lastHealthCheckAt: new Date(), lastLatencyMs: input.latencyMs ?? null, lastErrorCode: input.errorCode?.trim() || null, updatedAt: new Date() }).where(eq(aiModels.id, model.id));
+  const [updated] = await db.select().from(aiModels).where(eq(aiModels.id, model.id)).limit(1);
+  return updated;
+}
+
+export async function startAiRun(userId: number, input: { workspaceId: number; sessionId?: number; taskId?: number; modelKey: string; gateway: string; purpose: string; inputReference: string; estimatedCostCents?: number; retentionDays?: number }) {
+  const { db, workspace } = await requireWorkspace(userId, input.workspaceId, "respond");
+  const [registeredModel] = await db.select().from(aiModels).where(eq(aiModels.modelKey, input.modelKey.trim())).limit(1);
+  if (!registeredModel || registeredModel.status !== "active") throw new Error("AI model tidak terdaftar atau tidak aktif.");
+  if (input.sessionId) {
+    const [session] = await db.select({ workspaceId: researchSessions.workspaceId }).from(researchSessions).where(eq(researchSessions.id, input.sessionId)).limit(1);
+    if (!session || session.workspaceId !== workspace.id) throw new Error("Research session tidak cocok dengan workspace AI run.");
+  }
+  if (input.taskId) {
+    const [task] = await db.select({ workspaceId: researchTasks.workspaceId }).from(researchTasks).where(eq(researchTasks.id, input.taskId)).limit(1);
+    if (!task || task.workspaceId !== workspace.id) throw new Error("Research task tidak cocok dengan workspace AI run.");
+  }
+  const estimatedCostCents = Math.max(0, input.estimatedCostCents ?? 0);
+  if (workspace.budgetCents > 0 && workspace.spentCents + estimatedCostCents > workspace.budgetCents) throw new Error("AI run blocked by workspace budget ceiling.");
+  const traceId = randomUUID();
+  const retentionDays = Math.min(3_650, Math.max(1, input.retentionDays ?? 90));
+  const retentionUntil = new Date(Date.now() + retentionDays * 86_400_000);
+  await db.insert(aiRuns).values({ workspaceId: workspace.id, sessionId: input.sessionId ?? null, taskId: input.taskId ?? null, userId, modelKey: registeredModel.modelKey, gateway: registeredModel.gateway, purpose: input.purpose.trim(), traceId, inputReference: input.inputReference.trim(), status: "queued", costCents: estimatedCostCents, retentionUntil });
+  const [run] = await db.select().from(aiRuns).where(eq(aiRuns.traceId, traceId)).limit(1);
+  if (!run) throw new Error("AI run could not be created.");
+  return run;
+}
+
+export function isAiRunTerminal(status: string) {
+  return ["completed", "partial", "failed", "cancelled"].includes(status);
+}
+
+export function calculateAiRunCostCents(inputTokens: number, outputTokens: number, rates: { inputCostPerMillionCents: number; outputCostPerMillionCents: number }) {
+  const input = Number.isFinite(inputTokens) ? Math.max(0, Math.trunc(inputTokens)) : 0;
+  const output = Number.isFinite(outputTokens) ? Math.max(0, Math.trunc(outputTokens)) : 0;
+  const inputRate = Number.isFinite(rates.inputCostPerMillionCents) ? Math.max(0, Math.trunc(rates.inputCostPerMillionCents)) : 0;
+  const outputRate = Number.isFinite(rates.outputCostPerMillionCents) ? Math.max(0, Math.trunc(rates.outputCostPerMillionCents)) : 0;
+  return Math.ceil((input * inputRate + output * outputRate) / 1_000_000);
+}
+
+export async function updateAiRun(userId: number, input: { runId: number; status: "running" | "completed" | "failed" | "partial" | "cancelled"; outputReference?: string; inputTokens?: number; outputTokens?: number; costCents?: number; errorCode?: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, input.runId)).limit(1);
+  if (!run || !(await canAccessWorkspace(userId, run.workspaceId, "respond"))) throw new Error("AI run tidak ditemukan atau tidak dapat diakses.");
+  const [model] = await db.select({ inputCostPerMillionCents: aiModels.inputCostPerMillionCents, outputCostPerMillionCents: aiModels.outputCostPerMillionCents }).from(aiModels).where(eq(aiModels.modelKey, run.modelKey)).limit(1);
+  const nextInputTokens = Math.max(0, Math.trunc(input.inputTokens ?? run.inputTokens));
+  const nextOutputTokens = Math.max(0, Math.trunc(input.outputTokens ?? run.outputTokens));
+  const measuredCostCents = model ? calculateAiRunCostCents(nextInputTokens, nextOutputTokens, model) : run.costCents;
+  const costCents = Math.max(0, input.costCents ?? (input.status === "completed" || input.status === "partial" ? measuredCostCents : run.costCents));
+  const terminalBeforeUpdate = isAiRunTerminal(run.status);
+  if (terminalBeforeUpdate) throw new Error("AI run is already terminal and cannot be billed or reopened.");
+  await db.update(aiRuns).set({ status: input.status, outputReference: input.outputReference?.trim() || run.outputReference, inputTokens: nextInputTokens, outputTokens: nextOutputTokens, costCents, errorCode: input.errorCode?.trim() || null, startedAt: run.startedAt ?? new Date(), completedAt: ["completed", "failed", "partial", "cancelled"].includes(input.status) ? new Date() : null }).where(eq(aiRuns.id, run.id));
+  if ((input.status === "completed" || input.status === "partial") && !terminalBeforeUpdate) await db.update(workspaces).set({ spentCents: sql`${workspaces.spentCents} + ${costCents}` }).where(eq(workspaces.id, run.workspaceId));
+  const [updated] = await db.select().from(aiRuns).where(eq(aiRuns.id, run.id)).limit(1);
+  return updated;
+}
+
+export async function evaluateAiRun(userId: number, input: { runId: number; rubric: string; score: number; verdict: "pass" | "fail" | "needs_review"; notes: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, input.runId)).limit(1);
+  if (!run || !(await canAccessWorkspace(userId, run.workspaceId, "review"))) throw new Error("AI run tidak ditemukan atau tidak dapat direview.");
+  const rubric = input.rubric.trim();
+  const notes = input.notes.trim();
+  if (rubric.length < 2 || notes.length < 2 || input.score < 0 || input.score > 100) throw new Error("Evaluation rubric, notes, dan score harus valid.");
+  await db.insert(aiRunEvaluations).values({ workspaceId: run.workspaceId, runId: run.id, rubric, score: input.score, verdict: input.verdict, notes, evaluatedByUserId: userId }).onDuplicateKeyUpdate({ set: { score: input.score, verdict: input.verdict, notes, evaluatedByUserId: userId, createdAt: new Date() } });
+  const [evaluation] = await db.select().from(aiRunEvaluations).where(and(eq(aiRunEvaluations.runId, run.id), eq(aiRunEvaluations.rubric, rubric))).limit(1);
+  return evaluation;
+}
+
+export async function listAiRunEvaluations(userId: number, runId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, runId)).limit(1);
+  if (!run || !(await canAccessWorkspace(userId, run.workspaceId, "read"))) throw new Error("AI run tidak ditemukan atau tidak dapat diakses.");
+  return db.select().from(aiRunEvaluations).where(eq(aiRunEvaluations.runId, runId)).orderBy(desc(aiRunEvaluations.createdAt));
+}
+
+export async function listAiRuns(userId: number, workspaceId: number) {
+  const { db } = await requireWorkspace(userId, workspaceId);
+  return db.select().from(aiRuns).where(eq(aiRuns.workspaceId, workspaceId)).orderBy(desc(aiRuns.createdAt)).limit(100);
+}
+
+export async function getAiCostGovernance(userId: number, workspaceId: number) {
+  const { db, workspace } = await requireWorkspace(userId, workspaceId);
+  const [runs, models] = await Promise.all([
+    db.select({ id: aiRuns.id, userId: aiRuns.userId, taskId: aiRuns.taskId, modelKey: aiRuns.modelKey, status: aiRuns.status, inputTokens: aiRuns.inputTokens, outputTokens: aiRuns.outputTokens, costCents: aiRuns.costCents, createdAt: aiRuns.createdAt }).from(aiRuns).where(eq(aiRuns.workspaceId, workspaceId)).orderBy(desc(aiRuns.createdAt)).limit(5_000),
+    db.select({ modelKey: aiModels.modelKey, provider: aiModels.provider }).from(aiModels),
+  ]);
+  const providers = new Map(models.map(model => [model.modelKey, model.provider]));
+  const byProvider = new Map<string, { runs: number; costCents: number; inputTokens: number; outputTokens: number }>();
+  const byUser = new Map<number, { runs: number; costCents: number }>();
+  const byTask = new Map<number, { runs: number; costCents: number }>();
+  for (const run of runs) {
+    const provider = providers.get(run.modelKey) ?? "unknown";
+    const providerSummary = byProvider.get(provider) ?? { runs: 0, costCents: 0, inputTokens: 0, outputTokens: 0 };
+    providerSummary.runs += 1; providerSummary.costCents += run.costCents; providerSummary.inputTokens += run.inputTokens; providerSummary.outputTokens += run.outputTokens; byProvider.set(provider, providerSummary);
+    const userSummary = byUser.get(run.userId) ?? { runs: 0, costCents: 0 }; userSummary.runs += 1; userSummary.costCents += run.costCents; byUser.set(run.userId, userSummary);
+    if (run.taskId) { const taskSummary = byTask.get(run.taskId) ?? { runs: 0, costCents: 0 }; taskSummary.runs += 1; taskSummary.costCents += run.costCents; byTask.set(run.taskId, taskSummary); }
+  }
+  return { workspaceBudgetCents: workspace.budgetCents, workspaceSpentCents: workspace.spentCents, totalRuns: runs.length, totalCostCents: runs.reduce((total, run) => total + run.costCents, 0), byProvider: Object.fromEntries(byProvider), byUser: Object.fromEntries(byUser), byTask: Object.fromEntries(byTask) };
+}
+
+export async function synthesizeWorkspaceAiRuns(userId: number, input: { workspaceId: number; runIds: number[] }) {
+  const { db } = await requireWorkspace(userId, input.workspaceId, "read");
+  const runIds = Array.from(new Set(input.runIds.filter(id => Number.isInteger(id) && id > 0))).slice(0, 50);
+  if (!runIds.length) throw new Error("At least one AI run is required.");
+  const [runs, outputs] = await Promise.all([
+    db.select().from(aiRuns).where(and(eq(aiRuns.workspaceId, input.workspaceId), inArray(aiRuns.id, runIds), eq(aiRuns.status, "completed"))),
+    db.select().from(aiRunOutputs).where(and(eq(aiRunOutputs.workspaceId, input.workspaceId), inArray(aiRunOutputs.runId, runIds))),
+  ]);
+  const outputByRun = new Map(outputs.map(output => [output.runId, output.outputJson]));
+  const results = runs.map(run => {
+    const raw = outputByRun.get(run.id);
+    if (!raw) throw new Error(`AI run ${run.id} has no persisted output.`);
+    let parsed: unknown;
+    try { parsed = JSON.parse(raw); } catch { throw new Error(`AI run ${run.id} output is not valid JSON.`); }
+    const candidate = (parsed && typeof parsed === "object" && "findings" in parsed) ? (parsed as { findings?: unknown }).findings : parsed;
+    if (!Array.isArray(candidate)) throw new Error(`AI run ${run.id} output must contain a findings array.`);
+    const findings = candidate.map((finding): AiResultFinding => {
+      if (!finding || typeof finding !== "object") throw new Error(`AI run ${run.id} contains an invalid finding.`);
+      const value = finding as Record<string, unknown>;
+      return { key: String(value.key ?? ""), conclusion: String(value.conclusion ?? value.summary ?? ""), confidence: Number(value.confidence ?? 0), evidenceReferences: Array.isArray(value.evidenceReferences) ? value.evidenceReferences.filter((reference): reference is string => typeof reference === "string") : [] };
+    });
+    return { runId: String(run.id), taskId: String(run.taskId ?? `run-${run.id}`), modelId: run.modelKey, input: run.inputReference, findings };
+  });
+  return synthesizeAiResults(results);
+}
+
+export async function getAiEvaluationSummary(userId: number, workspaceId: number) {
+  const { db } = await requireWorkspace(userId, workspaceId);
+  const [runs, evaluations] = await Promise.all([
+    db.select({ id: aiRuns.id, status: aiRuns.status, costCents: aiRuns.costCents, startedAt: aiRuns.startedAt, completedAt: aiRuns.completedAt }).from(aiRuns).where(eq(aiRuns.workspaceId, workspaceId)).limit(500),
+    db.select({ score: aiRunEvaluations.score, verdict: aiRunEvaluations.verdict }).from(aiRunEvaluations).where(eq(aiRunEvaluations.workspaceId, workspaceId)).limit(1_000),
+  ]);
+  const verdicts = { pass: 0, fail: 0, needs_review: 0 };
+  let scoreTotal = 0;
+  for (const evaluation of evaluations) { verdicts[evaluation.verdict] += 1; scoreTotal += evaluation.score; }
+  const runQuality = summarizeAiRuns(runs);
+  return { ...runQuality, evaluatedRunCount: evaluations.length, averageScore: evaluations.length ? Math.round((scoreTotal / evaluations.length) * 100) / 100 : null, verdicts };
+}
+
+/** Purges expired AI memory payloads but preserves run metadata, cost, status, and trace lineage. */
+export async function purgeExpiredAiRunMemory(limit = 100) {
+  const startedAt = Date.now();
+  const boundedLimit = Math.min(500, Math.max(1, limit));
+  try {
+    const db = await getDb();
+    if (!db) throw new Error("Database tidak tersedia.");
+    const expired = await db.select({ id: aiRuns.id }).from(aiRuns).where(and(isNotNull(aiRuns.retentionUntil), lte(aiRuns.retentionUntil, new Date()), ne(aiRuns.inputReference, "retention://purged"))).orderBy(asc(aiRuns.retentionUntil), asc(aiRuns.id)).limit(boundedLimit);
+    const ids = expired.map(run => run.id);
+    if (!ids.length) {
+      recordPurgeBatch(Date.now() - startedAt, 0);
+      return { inspected: 0, purged: 0 };
+    }
+    await db.delete(aiRunOutputs).where(inArray(aiRunOutputs.runId, ids));
+    await db.update(aiRuns).set({ inputReference: "retention://purged", outputReference: null }).where(and(inArray(aiRuns.id, ids), isNotNull(aiRuns.retentionUntil), lte(aiRuns.retentionUntil, new Date())));
+    recordPurgeBatch(Date.now() - startedAt, ids.length);
+    return { inspected: ids.length, purged: ids.length };
+  } catch (error) {
+    recordPurgeBatch(Date.now() - startedAt, 0, false);
+    throw error;
+  }
+}
+
+export async function enqueueJob(userId: number, input: { workspaceId?: number; kind: string; idempotencyKey: string; payload: Record<string, unknown>; maxAttempts?: number; traceId?: string | null }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  if (input.workspaceId) await requireWorkspace(userId, input.workspaceId, "respond");
+  const idempotencyKey = input.idempotencyKey.trim();
+  const kind = input.kind.trim();
+  const payload = JSON.stringify(input.payload);
+  if (idempotencyKey.length < 8 || idempotencyKey.length > 180) throw new Error("Idempotency key must contain 8-180 characters.");
+  if (kind.length < 2 || kind.length > 80) throw new Error("Job kind must contain 2-80 characters.");
+  const traceId = input.traceId?.trim() || currentTraceContext()?.traceId || randomUUID();
+  const [existing] = await db.select().from(jobs).where(eq(jobs.idempotencyKey, idempotencyKey)).limit(1);
+  if (existing) {
+    if (existing.kind !== kind || existing.workspaceId !== (input.workspaceId ?? null) || existing.payload !== payload) throw new Error("Idempotency key is already used for a different job payload.");
+    return existing;
+  }
+  try {
+    await db.insert(jobs).values({ workspaceId: input.workspaceId ?? null, kind, traceId, idempotencyKey, payload, status: "queued", attempts: 0, maxAttempts: input.maxAttempts ?? 3, availableAt: new Date() });
+  } catch (error) {
+    const [concurrent] = await db.select().from(jobs).where(eq(jobs.idempotencyKey, idempotencyKey)).limit(1);
+    if (concurrent) {
+      if (concurrent.kind !== kind || concurrent.workspaceId !== (input.workspaceId ?? null) || concurrent.payload !== payload) throw new Error("Idempotency key is already used for a different job payload.");
+      return concurrent;
+    }
+    throw error;
+  }
+  const [job] = await db.select().from(jobs).where(eq(jobs.idempotencyKey, idempotencyKey)).limit(1);
+  return job;
+}
+
+export async function listJobs(userId: number, workspaceId?: number) {
+  const db = await getDb();
+  if (!db) return [];
+  if (workspaceId) await requireWorkspace(userId, workspaceId);
+  const rows = workspaceId ? await db.select().from(jobs).where(eq(jobs.workspaceId, workspaceId)).orderBy(desc(jobs.createdAt)).limit(100) : await db.select().from(jobs).where(eq(jobs.status, "queued")).orderBy(asc(jobs.availableAt)).limit(100);
+  return rows;
+}
+
+export async function publishOutboxEvent(userId: number, input: { workspaceId?: number; eventType: string; aggregateType: string; aggregateId: number; idempotencyKey: string; schemaVersion?: number; payload: Record<string, unknown> }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  if (input.workspaceId) await requireWorkspace(userId, input.workspaceId, "respond");
+  const idempotencyKey = input.idempotencyKey.trim();
+  const eventPayload = assertEventPayload(input.payload);
+  const payload = JSON.stringify(eventPayload);
+  const eventType = assertEventType(input.eventType.trim());
+  const aggregateType = input.aggregateType.trim();
+  if (idempotencyKey.length < 8 || idempotencyKey.length > 180) throw new Error("Idempotency key must contain 8-180 characters.");
+  if (eventType.length < 3 || eventType.length > 120 || aggregateType.length < 2 || aggregateType.length > 80) throw new Error("Outbox event identity is invalid.");
+  const existing = await db.select().from(outboxEvents).where(eq(outboxEvents.idempotencyKey, idempotencyKey)).limit(1);
+  if (existing[0]) {
+    if (existing[0].eventType !== eventType || existing[0].aggregateType !== aggregateType || existing[0].aggregateId !== input.aggregateId || existing[0].workspaceId !== (input.workspaceId ?? null) || existing[0].payload !== payload) throw new Error("Idempotency key is already used for a different outbox event.");
+    return existing[0];
+  }
+  const traceId = currentTraceContext()?.traceId ?? null;
+  try {
+    await db.insert(outboxEvents).values({ workspaceId: input.workspaceId ?? null, eventType, traceId, aggregateType, aggregateId: input.aggregateId, idempotencyKey, schemaVersion: input.schemaVersion ?? 1, payload, status: "pending", attempts: 0 });
+  } catch (error) {
+    const [concurrent] = await db.select().from(outboxEvents).where(eq(outboxEvents.idempotencyKey, idempotencyKey)).limit(1);
+    if (concurrent) {
+      if (concurrent.eventType !== eventType || concurrent.aggregateType !== aggregateType || concurrent.aggregateId !== input.aggregateId || concurrent.workspaceId !== (input.workspaceId ?? null) || concurrent.payload !== payload) throw new Error("Idempotency key is already used for a different outbox event.");
+      return concurrent;
+    }
+    throw error;
+  }
+  const [event] = await db.select().from(outboxEvents).where(eq(outboxEvents.idempotencyKey, idempotencyKey)).limit(1);
+  return event;
+}
+
+export async function claimOutboxConsumer(eventId: number, consumerKey: string, resultHash?: string) {
+  const db = await getDb();
+  if (!db) return { claimed: false as const, reason: "database-unavailable" as const };
+  const normalizedKey = consumerKey.trim();
+  if (!normalizedKey) throw new Error("Consumer key is required.");
+  const existing = await db.select({ id: outboxConsumerReceipts.id }).from(outboxConsumerReceipts).where(and(eq(outboxConsumerReceipts.eventId, eventId), eq(outboxConsumerReceipts.consumerKey, normalizedKey))).limit(1);
+  if (existing[0]) return { claimed: false as const, reason: "already-processed" as const };
+  try {
+    await db.insert(outboxConsumerReceipts).values({ eventId, consumerKey: normalizedKey, resultHash: resultHash?.trim().slice(0, 64) || null });
+    return { claimed: true as const, eventId, consumerKey: normalizedKey };
+  } catch {
+    return { claimed: false as const, reason: "already-processed" as const };
+  }
+}
+
+export async function recoverStaleOutboxLeases(limit = 250) {
+  const db = await getDb();
+  if (!db) return { inspected: 0, recovered: 0 };
+  const now = new Date();
+  const staleBefore = new Date(now.getTime() - 5 * 60 * 1000);
+  const rows = await db.select({ id: outboxEvents.id }).from(outboxEvents).where(and(eq(outboxEvents.status, "retrying"), isNotNull(outboxEvents.lockedAt), lt(outboxEvents.lockedAt, staleBefore))).orderBy(asc(outboxEvents.lockedAt), asc(outboxEvents.id)).limit(Math.min(500, Math.max(1, Math.trunc(limit))));
+  if (!rows.length) return { inspected: 0, recovered: 0 };
+  const result = await db.update(outboxEvents).set({ status: "retrying", lockedAt: null, workerId: null, availableAt: now, lastError: "Outbox lease recovered by scheduled maintenance." }).where(and(inArray(outboxEvents.id, rows.map(row => row.id)), eq(outboxEvents.status, "retrying")));
+  return { inspected: rows.length, recovered: result[0]?.affectedRows ?? rows.length };
+}
+
+export async function claimOutboxEvent(eventId: number, now = new Date()) {
+  const db = await getDb();
+  if (!db) return { claimed: false as const, reason: "database-unavailable" as const };
+  const staleBefore = new Date(now.getTime() - OUTBOX_LEASE_MS);
+  await db.update(outboxEvents).set({ status: "retrying", lockedAt: null, workerId: null, availableAt: now, lastError: "Outbox lease expired." }).where(and(eq(outboxEvents.status, "retrying"), lt(outboxEvents.lockedAt, staleBefore)));
+  await db.update(outboxEvents).set({ status: "retrying", lockedAt: now, workerId: WORKER_ID, attempts: sql`${outboxEvents.attempts} + 1` }).where(and(eq(outboxEvents.id, eventId), or(eq(outboxEvents.status, "pending"), eq(outboxEvents.status, "retrying")), lte(outboxEvents.availableAt, now)));
+  const [claimed] = await db.select({ id: outboxEvents.id }).from(outboxEvents).where(and(eq(outboxEvents.id, eventId), eq(outboxEvents.status, "retrying"), eq(outboxEvents.workerId, WORKER_ID), eq(outboxEvents.lockedAt, now))).limit(1);
+  if (!claimed) return { claimed: false as const, reason: "already-claimed" as const };
+  return { claimed: true as const, eventId, workerId: WORKER_ID };
+}
+
+export async function markOutboxEventPublished(eventId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  await db.update(outboxEvents).set({ status: "published", publishedAt: new Date(), lockedAt: null, workerId: null, lastError: null }).where(and(eq(outboxEvents.id, eventId), eq(outboxEvents.workerId, WORKER_ID), eq(outboxEvents.status, "retrying")));
+  return { success: true as const, eventId, status: "published" as const };
+}
+
+export async function replayFailedOutboxEvent(userId: number, eventId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [event] = await db.select().from(outboxEvents).where(eq(outboxEvents.id, eventId)).limit(1);
+  if (!event || !event.workspaceId || !(await canAccessWorkspace(userId, event.workspaceId, "manage"))) throw new Error("Outbox event tidak ditemukan atau tidak dapat direplay.");
+  if (event.status !== "failed") throw new Error("Hanya outbox event berstatus failed yang dapat direplay.");
+  await db.update(outboxEvents).set({ status: "retrying", attempts: 0, availableAt: new Date(), lockedAt: null, workerId: null, lastError: "Manual replay requested.", publishedAt: null }).where(and(eq(outboxEvents.id, event.id), eq(outboxEvents.status, "failed")));
+  const [replayed] = await db.select().from(outboxEvents).where(eq(outboxEvents.id, event.id)).limit(1);
+  return replayed;
+}
+
+export async function failOutboxEvent(eventId: number, errorMessage: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [event] = await db.select().from(outboxEvents).where(eq(outboxEvents.id, eventId)).limit(1);
+  if (!event) throw new Error("Outbox event tidak ditemukan.");
+  const attempts = event.attempts;
+  const terminal = attempts >= OUTBOX_MAX_ATTEMPTS;
+  const nextStatus = terminal ? "failed" : "retrying";
+  const error = errorMessage.trim().slice(0, 4_000) || "Outbox handler failed.";
+  const availableAt = new Date(Date.now() + Math.min(60 * 60 * 1_000, 2 ** Math.max(0, attempts - 1) * 5_000));
+  await db.update(outboxEvents).set({ status: nextStatus, availableAt: terminal ? event.availableAt : availableAt, lockedAt: null, workerId: null, lastError: error }).where(and(eq(outboxEvents.id, eventId), eq(outboxEvents.workerId, WORKER_ID), eq(outboxEvents.status, "retrying")));
+  return { success: !terminal, eventId, status: nextStatus, attempts, error } as const;
+}
+
+const WORKER_ID = process.env.WORKER_ID?.trim() || randomUUID();
+const WORKER_LEASE_MS = 10 * 60 * 1_000;
+const OUTBOX_MAX_ATTEMPTS = 5;
+const OUTBOX_LEASE_MS = 2 * 60 * 1_000;
+
+export async function heartbeatJob(jobId: number) {
+  const db = await getDb();
+  if (!db) return { success: false as const, jobId };
+  await db.update(jobs).set({ heartbeatAt: new Date(), leaseExpiresAt: new Date(Date.now() + WORKER_LEASE_MS), updatedAt: new Date() }).where(and(eq(jobs.id, jobId), eq(jobs.status, "running"), eq(jobs.workerId, WORKER_ID)));
+  return { success: true as const, jobId };
+}
+
+function affectedRowCount(result: unknown): number | undefined {
+  if (!result || typeof result !== "object") return undefined;
+  const value = result as { affectedRows?: unknown; rowsAffected?: unknown };
+  if (typeof value.affectedRows === "number") return value.affectedRows;
+  if (typeof value.rowsAffected === "number") return value.rowsAffected;
+  return undefined;
+}
+
+export async function claimPendingJobs(limit = 25) {
+  const db = await getDb();
+  if (!db) return [];
+  const now = new Date();
+  const staleBefore = new Date(now.getTime() - WORKER_LEASE_MS);
+  await db.update(jobs).set({ status: "retrying", lockedAt: null, leaseExpiresAt: null, heartbeatAt: null, workerId: null, availableAt: now, lastError: "Worker lease expired.", updatedAt: now }).where(and(eq(jobs.status, "running"), or(lt(jobs.leaseExpiresAt, now), lt(jobs.lockedAt, staleBefore))));
+  const available = await db.select().from(jobs).where(and(or(eq(jobs.status, "queued"), eq(jobs.status, "retrying")), lte(jobs.availableAt, now))).orderBy(asc(jobs.availableAt)).limit(Math.min(100, Math.max(1, limit)));
+  const claimed = [];
+  for (const job of available) {
+    const leaseExpiresAt = new Date(now.getTime() + WORKER_LEASE_MS);
+    const claim = await db.update(jobs).set({ status: "running", attempts: job.attempts + 1, lockedAt: now, heartbeatAt: now, leaseExpiresAt, workerId: WORKER_ID, updatedAt: now }).where(and(eq(jobs.id, job.id), or(eq(jobs.status, "queued"), eq(jobs.status, "retrying"))));
+    const claimedRows = affectedRowCount(claim);
+    if (claimedRows !== undefined && claimedRows !== 1) continue;
+    if (claimedRows === undefined) {
+      const [verified] = await db.select({ id: jobs.id, workerId: jobs.workerId, status: jobs.status, lockedAt: jobs.lockedAt }).from(jobs).where(eq(jobs.id, job.id)).limit(1);
+      if (!verified || verified.status !== "running" || verified.workerId !== WORKER_ID || !verified.lockedAt || verified.lockedAt.getTime() !== now.getTime()) continue;
+    }
+    claimed.push({ ...job, status: "running" as const, attempts: job.attempts + 1, lockedAt: now, heartbeatAt: now, leaseExpiresAt, workerId: WORKER_ID });
+  }
+  return claimed;
+}
+
+export async function completeJob(jobId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  await db.update(jobs).set({ status: "succeeded", lockedAt: null, leaseExpiresAt: null, heartbeatAt: null, workerId: null, completedAt: new Date(), updatedAt: new Date() }).where(and(eq(jobs.id, jobId), eq(jobs.status, "running"), eq(jobs.workerId, WORKER_ID)));
+  return { success: true as const, jobId, status: "succeeded" as const };
+}
+
+export async function failJob(jobId: number, errorMessage: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [job] = await db.select().from(jobs).where(eq(jobs.id, jobId)).limit(1);
+  if (!job) throw new Error("Job tidak ditemukan.");
+  const lastError = errorMessage.trim().slice(0, 4_000) || "Worker failed.";
+  const terminal = job.attempts >= job.maxAttempts;
+  const nextStatus = terminal ? "dead_letter" : "retrying";
+  const backoffMs = Math.min(60 * 60 * 1_000, 2 ** Math.max(0, job.attempts - 1) * 5_000);
+  await db.update(jobs).set({ status: nextStatus, lockedAt: null, leaseExpiresAt: null, heartbeatAt: null, workerId: null, lastError, availableAt: terminal ? job.availableAt : new Date(Date.now() + backoffMs), completedAt: terminal ? new Date() : null, updatedAt: new Date() }).where(and(eq(jobs.id, jobId), eq(jobs.status, "running"), eq(jobs.workerId, WORKER_ID)));
+  return { success: true as const, jobId, status: nextStatus };
+}
+
+export async function enqueueOrchestrationPlan(userId: number, input: { workspaceId: number; objective: string; roles: ("scope" | "evidence" | "risk" | "report")[]; evidenceReferences?: string[]; idempotencyKey: string }) {
+  const plan = planMultiAgentRun(input);
+  const job = await enqueueJob(userId, {
+    workspaceId: input.workspaceId,
+    kind: "orchestration.plan",
+    idempotencyKey: input.idempotencyKey,
+    payload: { type: "orchestration_plan", planId: input.idempotencyKey, userId, workspaceId: input.workspaceId, plan },
+  });
+  return { job, plan };
+}
+
+export async function executeOrchestrationPlanJob(payload: Record<string, unknown>) {
+  const plan = payload.plan as { objective?: string; evidenceReferences?: string[]; tasks?: Array<{ id: string; role: string; objective: string; dependsOn: string[]; status: string }> };
+  const userId = Number(payload.userId);
+  const workspaceId = Number(payload.workspaceId);
+  const planId = String(payload.planId ?? "").trim();
+  if (!plan || !Number.isInteger(userId) || !Number.isInteger(workspaceId) || !planId || !Array.isArray(plan.tasks) || plan.tasks.length === 0) throw new Error("Invalid orchestration plan payload.");
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [model] = await db.select().from(aiModels).where(eq(aiModels.status, "active")).orderBy(asc(aiModels.updatedAt)).limit(1);
+  if (!model) throw new Error("No active AI model is available for orchestration.");
+  for (const task of plan.tasks) {
+    const inputReference = `orchestration:${planId}:${task.id}`;
+    const [existingRun] = await db.select().from(aiRuns).where(eq(aiRuns.inputReference, inputReference)).orderBy(desc(aiRuns.id)).limit(1);
+    if (!existingRun) await db.insert(aiRuns).values({ workspaceId, userId, modelKey: model.modelKey, gateway: model.gateway, purpose: `orchestration:${task.role}`, traceId: `${planId}:${task.id}`, inputReference, status: "queued", costCents: 0, retentionUntil: new Date(Date.now() + 90 * 86_400_000) });
+    const [run] = await db.select().from(aiRuns).where(eq(aiRuns.inputReference, inputReference)).orderBy(desc(aiRuns.id)).limit(1);
+    if (!run) throw new Error(`Could not persist orchestration task ${task.id}.`);
+    const idempotencyKey = `orchestration:${planId}:${task.id}`;
+    await enqueueJob(userId, { workspaceId, kind: "ai.run.execute", idempotencyKey, payload: { type: "ai_run_execute", runId: run.id, userId, workspaceId, modelKey: model.modelKey, messages: [{ role: "system", content: `You are the ${task.role} agent in a governed orchestration. Respect dependencies and never perform target-facing actions.` }, { role: "user", content: JSON.stringify({ objective: task.objective, dependsOn: task.dependsOn, evidenceReferences: plan.evidenceReferences ?? [] }) }] }, maxAttempts: 3 });
+  }
+  return { planId, tasksQueued: plan.tasks.length, modelKey: model.modelKey };
+}
+
+export async function startDurableAiRun(userId: number, input: { workspaceId: number; sessionId?: number; taskId?: number; modelKey?: string; capabilities?: string[]; minimumContextWindow?: number; maxCostCentsPerMillionTokens?: number; allowDegraded?: boolean; purpose: string; inputReference: string; messages: Message[]; estimatedCostCents?: number; retentionDays?: number; idempotencyKey: string }) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const model = input.modelKey?.trim() ? (await db.select().from(aiModels).where(eq(aiModels.modelKey, input.modelKey.trim())).limit(1))[0] : (await selectRegisteredModel({ capabilities: input.capabilities, minimumContextWindow: input.minimumContextWindow, maxCostCentsPerMillionTokens: input.maxCostCentsPerMillionTokens, allowDegraded: input.allowDegraded })).model;
+  if (!model || model.status !== "active") throw new Error("AI model tidak terdaftar atau tidak aktif.");
+  const run = await startAiRun(userId, { ...input, modelKey: model.modelKey, gateway: model.gateway });
+  const job = await enqueueJob(userId, { workspaceId: input.workspaceId, kind: "ai.run.execute", idempotencyKey: input.idempotencyKey, traceId: run.traceId, payload: { type: "ai_run_execute", runId: run.id, userId, workspaceId: input.workspaceId, modelKey: model.modelKey, messages: input.messages } });
+  return { run, job };
+}
+
+export async function executeAiRunJob(payload: Record<string, unknown>) {
+  const runId = Number(payload.runId);
+  const userId = Number(payload.userId);
+  const messages = payload.messages as Message[];
+  if (!Number.isInteger(runId) || !Number.isInteger(userId) || !Array.isArray(messages) || messages.length === 0) throw new Error("Invalid AI run job payload.");
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, runId)).limit(1);
+  if (!run || run.userId !== userId) throw new Error("AI run tidak ditemukan.");
+  const [model] = await db.select().from(aiModels).where(eq(aiModels.modelKey, run.modelKey)).limit(1);
+  if (!model || model.status !== "active" || model.gateway !== run.gateway) throw new Error("AI model registry validation failed.");
+  const modelCapabilities = JSON.parse(model.capabilities) as string[];
+  const registeredFallbacks = (await db.select().from(aiModels)).filter(candidate => candidate.modelKey !== model.modelKey && candidate.status === "active").filter(candidate => { const capabilities = new Set(JSON.parse(candidate.capabilities) as string[]); return modelCapabilities.every(capability => capabilities.has(capability)) && candidate.contextWindow >= model.contextWindow; }).sort((left, right) => { const gatewayOrder = (gateway: string) => gateway === run.gateway ? 0 : 1; return gatewayOrder(left.gateway) - gatewayOrder(right.gateway) || left.modelKey.localeCompare(right.modelKey); }).map(candidate => candidate.modelKey);
+  await updateAiRun(userId, { runId, status: "running" });
+  try {
+    const response = await invokeLLM({ model: model.modelKey, fallbackModels: registeredFallbacks, messages });
+    await db.insert(aiRunOutputs).values({ workspaceId: run.workspaceId, runId, outputJson: JSON.stringify(response) }).onDuplicateKeyUpdate({ set: { outputJson: JSON.stringify(response), createdAt: new Date() } });
+    await updateAiRun(userId, { runId, status: "completed", outputReference: `ai-run-output:${runId}`, inputTokens: response.usage?.prompt_tokens ?? 0, outputTokens: response.usage?.completion_tokens ?? 0 });
+  } catch (error) {
+    await updateAiRun(userId, { runId, status: "failed", errorCode: error instanceof Error ? error.message.slice(0, 120) : "AI_RUN_FAILED" });
+    throw error;
+  }
+}
+
+export async function getAiRunOutput(userId: number, runId: number) {
+  const db = await getDb();
+  if (!db) return null;
+  const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, runId)).limit(1);
+  if (!run || !(await canAccessWorkspace(userId, run.workspaceId, "read"))) throw new Error("AI run tidak ditemukan atau tidak dapat diakses.");
+  if (run.retentionUntil && run.retentionUntil <= new Date()) return null;
+  const [output] = await db.select().from(aiRunOutputs).where(eq(aiRunOutputs.runId, runId)).limit(1);
+  return output ? { ...output, output: JSON.parse(output.outputJson) as unknown } : null;
+}
+
+export async function getAiRunProvenance(userId: number, runId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [run] = await db.select().from(aiRuns).where(eq(aiRuns.id, runId)).limit(1);
+  if (!run || !(await canAccessWorkspace(userId, run.workspaceId, "read"))) throw new Error("AI run tidak ditemukan atau tidak dapat diakses.");
+  const [[model], [task], [output]] = await Promise.all([
+    db.select({ id: aiModels.id, modelKey: aiModels.modelKey, provider: aiModels.provider, gateway: aiModels.gateway, version: aiModels.version }).from(aiModels).where(eq(aiModels.modelKey, run.modelKey)).limit(1),
+    run.taskId ? db.select({ id: researchTasks.id, title: researchTasks.title, status: researchTasks.status }).from(researchTasks).where(and(eq(researchTasks.id, run.taskId), eq(researchTasks.workspaceId, run.workspaceId))).limit(1) : Promise.resolve([]),
+    db.select({ id: aiRunOutputs.id, outputJson: aiRunOutputs.outputJson, createdAt: aiRunOutputs.createdAt }).from(aiRunOutputs).where(eq(aiRunOutputs.runId, run.id)).limit(1),
+  ]);
+  const hash = (value: string | null | undefined) => value ? createHash("sha256").update(value).digest("hex") : null;
+  return {
+    run: { id: run.id, workspaceId: run.workspaceId, sessionId: run.sessionId, taskId: run.taskId, traceId: run.traceId, purpose: run.purpose, status: run.status, createdAt: run.createdAt, completedAt: run.completedAt },
+    task: task ?? null,
+    model: model ?? { modelKey: run.modelKey, provider: null, gateway: run.gateway, version: null },
+    input: { reference: run.inputReference, sha256: hash(run.inputReference) },
+    output: { reference: run.outputReference, sha256: hash(output?.outputJson), persisted: Boolean(output), createdAt: output?.createdAt ?? null },
+    edges: [
+      { from: "task", fromId: run.taskId, to: "ai_run", toId: run.id, relation: "executed_by" },
+      { from: "ai_run", fromId: run.id, to: "model", toId: model?.id ?? null, relation: "routed_to" },
+      { from: "input", fromId: hash(run.inputReference), to: "ai_run", toId: run.id, relation: "provided_to" },
+      { from: "ai_run", fromId: run.id, to: "output", toId: output?.id ?? null, relation: "produced" },
+    ],
+  };
+}
+
+export type OutboxEventHandler = (event: { id: number; eventType: string; aggregateType: string; aggregateId: number; schemaVersion: number; payload: Record<string, unknown> }) => Promise<void>;
+
+export async function dispatchPendingOutbox(handlers: Record<string, OutboxEventHandler>, limit = 25) {
+  const db = await getDb();
+  if (!db) return { claimed: 0, published: 0, failed: 0 };
+  const now = new Date();
+  const pending = await db.select().from(outboxEvents).where(and(or(eq(outboxEvents.status, "pending"), eq(outboxEvents.status, "retrying")), lte(outboxEvents.availableAt, now))).orderBy(asc(outboxEvents.createdAt)).limit(Math.min(100, Math.max(1, limit)));
+  let claimed = 0;
+  let published = 0;
+  let failed = 0;
+  for (const event of pending) {
+    const handler = handlers[event.eventType];
+    if (!handler) {
+      const claim = await claimOutboxEvent(event.id, now);
+      if (claim.claimed) { claimed += 1; await failOutboxEvent(event.id, `No outbox handler registered for event type '${event.eventType}'.`); failed += 1; }
+      continue;
+    }
+    const claim = await claimOutboxEvent(event.id, now);
+    if (!claim.claimed) continue;
+    claimed += 1;
+    try {
+      const payload: unknown = JSON.parse(event.payload);
+      if (!payload || typeof payload !== "object" || Array.isArray(payload)) throw new Error("Outbox payload must be a JSON object.");
+      await handler({ id: event.id, eventType: event.eventType, aggregateType: event.aggregateType, aggregateId: event.aggregateId, schemaVersion: event.schemaVersion, payload: payload as Record<string, unknown> });
+      await claimOutboxConsumer(event.id, `dispatcher:${event.eventType}`);
+      await markOutboxEventPublished(event.id);
+      published += 1;
+    } catch (error) {
+      await failOutboxEvent(event.id, error instanceof Error ? error.message : "Outbox handler failed.");
+      failed += 1;
+    }
+  }
+  return { claimed, published, failed };
+}

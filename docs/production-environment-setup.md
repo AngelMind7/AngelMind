@@ -328,7 +328,7 @@ Review SQL baru dan pastikan tidak ada migration yang tidak tercatat:
 
 ```bash
 find drizzle -maxdepth 1 -name '*.sql' -print | sort
-git diff -- drizzle drizzle/meta
+git diff -- drizzle src/c2/database/meta
 ```
 
 Jangan menjalankan migration terhadap database yang salah. Verifikasi hostname, database name, region, dan backup timestamp sebelum apply.

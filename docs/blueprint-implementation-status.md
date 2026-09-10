@@ -28,7 +28,7 @@ Dokumen ini memetakan 115 area pada `Angelmindstrukturjelas.pdf` terhadap implem
 
 ## Migration
 
-Schema terbaru berada pada rangkaian migration sampai `drizzle/0063_observation_provenance.sql`, termasuk identity, tenant, research lineage foreign keys, AI run lineage, relational task dependencies, worker lease/heartbeat fields, outbox consumer receipts, evidence quarantine lifecycle, failure observations, evolution snapshots, intelligence feeds, playbooks, evidence provenance, observation raw-output/normalized-evidence hashes, reports, collaboration, outbox versioning, AI evaluations, AI run retention, finding remediation metadata, dan optimistic finding revisions. Jalankan migration pada environment yang memiliki `DATABASE_URL` setelah meninjau SQL tersebut; sandbox tidak mengeksekusi migration ke database produksi.
+Schema terbaru berada pada rangkaian migration sampai `src/c2/database/0063_observation_provenance.sql`, termasuk identity, tenant, research lineage foreign keys, AI run lineage, relational task dependencies, worker lease/heartbeat fields, outbox consumer receipts, evidence quarantine lifecycle, failure observations, evolution snapshots, intelligence feeds, playbooks, evidence provenance, observation raw-output/normalized-evidence hashes, reports, collaboration, outbox versioning, AI evaluations, AI run retention, finding remediation metadata, dan optimistic finding revisions. Jalankan migration pada environment yang memiliki `DATABASE_URL` setelah meninjau SQL tersebut; sandbox tidak mengeksekusi migration ke database produksi.
 
 ## Validasi
 

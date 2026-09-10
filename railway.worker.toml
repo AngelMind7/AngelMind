@@ -5,7 +5,7 @@
 [build]
 builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
-watchPatterns = ["server/**", "drizzle/**", "shared/**", "runtime/**", "config/**", "Dockerfile", "package.json", "pnpm-lock.yaml", "railway.worker.toml"]
+watchPatterns = ["src/c2/server/**", "src/c2/database/**", "src/c2/shared/**", "src/c2/modules/adapter_runtime/**/*", "config/**", "Dockerfile", "package.json", "pnpm-lock.yaml", "railway.worker.toml"]
 
 [deploy]
 startCommand = "RUN_WORKER=true node dist/worker.js"

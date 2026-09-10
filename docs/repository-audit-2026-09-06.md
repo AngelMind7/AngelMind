@@ -149,8 +149,8 @@ Endpoint backward-compatible `organization.roleAudit` tetap bounded, sedangkan `
 | `apps/frontend-angular/src/authenticatedRoutes.ts` | Banyak route dikelompokkan ke page domain yang sama | Pecah feature folders secara bertahap, bukan sekadar route rename |
 | `apps/frontend-angular/src/pages/Organizations.tsx` | Fitur bekerja, tetapi page padat | Pecah member management, privilege viewer, audit history menjadi components |
 | `apps/frontend-angular/src/pages/Findings.tsx` | Retest/evidence bekerja, tetapi page padat | Pisahkan retest panel dan evidence upload hook |
-| `server/organization.ts` | Role audit cursor/filter/export sudah tersedia | Tambahkan browser E2E setelah staging token tersedia |
-| `server/routers.ts` | API surface besar dan terpusat | Pertimbangkan domain router split tanpa mengubah contract |
+| `src/c2/server/organization.ts` | Role audit cursor/filter/export sudah tersedia | Tambahkan browser E2E setelah staging token tersedia |
+| `src/c2/server/routers.ts` | API surface besar dan terpusat | Pertimbangkan domain router split tanpa mengubah contract |
 | `docs/blueprint-coverage.md` | Ada stale descriptions | Sinkronkan seluruh row dengan current `main` |
 | `docs/remaining-work.md` | Catatan incremental panjang | Konsolidasikan status menjadi queue aktif yang lebih ringkas |
 | `vite.config.ts` / manual chunks | Circular chunk warnings | Audit chunk graph dan pertimbangkan strategi chunk lebih sederhana |
@@ -186,9 +186,9 @@ Audit ini merekomendasikan agar status proyek diperlakukan sebagai **repository-
 [2]: ./remaining-work.md "AngelMind Remaining Work"
 [3]: ./e2e.md "AngelMind Browser E2E Verification"
 [4]: ../playwright.config.ts "AngelMind Playwright Configuration"
-[5]: ../server/organization.ts "AngelMind Organization Domain Service"
+[5]: ../src/c2/server/organization.ts "AngelMind Organization Domain Service"
 [6]: ../apps/frontend-angular/src/pages/Organizations.tsx "AngelMind Organizations UI"
 [7]: ../apps/frontend-angular/src/pages/Findings.tsx "AngelMind Findings and Retest UI"
-[8]: ../drizzle/0074_organization_audit_events.sql "Organization Audit Events Migration"
+[8]: ../src/c2/database/0074_organization_audit_events.sql "Organization Audit Events Migration"
 [9]: ../apps/frontend-angular/src/pages/BlueprintModule.tsx "Legacy Blueprint Module"
 [10]: ../apps/frontend-angular/src/authenticatedRoutes.ts "Authenticated Route Map"

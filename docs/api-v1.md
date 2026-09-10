@@ -2,7 +2,7 @@
 
 ## Status and compatibility
 
-The REST API is exposed under `/api/v1`. This document describes the routes currently implemented in `server/rest-v1.ts`. Breaking changes must use a new version such as `/api/v2`; existing v1 response envelopes must remain compatible.
+The REST API is exposed under `/api/v1`. This document describes the routes currently implemented in `src/c2/server/rest-v1.ts`. Breaking changes must use a new version such as `/api/v2`; existing v1 response envelopes must remain compatible.
 
 All responses use JSON. Successful responses use `{ "data": ..., "apiVersion": "v1" }`, except the health endpoint, which returns `{ "ok": true, "apiVersion": "v1" }`. Errors use `{ "error": { "code": ..., "message": ... }, "apiVersion": "v1" }`.
 
@@ -166,11 +166,11 @@ The CLI is intentionally read-only and does not expose target-facing execution, 
 
 ## Generic idempotency
 
-Mutation yang dapat diulang oleh client dapat memakai helper `executeIdempotent` dari `server/idempotency.ts`. Kontrak ini mengikat request pada kombinasi **user + scope + `Idempotency-Key`** dan menyimpan fingerprint SHA-256 serta response JSON di tabel `idempotencyRecords`.
+Mutation yang dapat diulang oleh client dapat memakai helper `executeIdempotent` dari `src/c2/server/idempotency.ts`. Kontrak ini mengikat request pada kombinasi **user + scope + `Idempotency-Key`** dan menyimpan fingerprint SHA-256 serta response JSON di tabel `idempotencyRecords`.
 
 Client mengirim header `Idempotency-Key` sepanjang 8–180 karakter. Pengulangan dengan key dan payload yang sama mengembalikan response tersimpan tanpa menjalankan handler lagi. Key yang sama dengan payload berbeda ditolak, request yang masih berjalan menghasilkan konflik, dan record memiliki TTL default 24 jam. Scope menjaga agar key dari operasi berbeda tidak saling bertabrakan.
 
-Integrasi mutation dilakukan dengan membungkus side effect di dalam `executeIdempotent({ userId, scope, key, request, handler })`. Migrasi database yang diperlukan adalah `drizzle/0060_generic_idempotency.sql`.
+Integrasi mutation dilakukan dengan membungkus side effect di dalam `executeIdempotent({ userId, scope, key, request, handler })`. Migrasi database yang diperlukan adalah `src/c2/database/0060_generic_idempotency.sql`.
 
 ## Current limitations
 

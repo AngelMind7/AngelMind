@@ -41,9 +41,9 @@ run(
     "exec",
     "vitest",
     "run",
-    "server/ai-memory-retention.integration.test.ts",
-    "server/ai-memory-context.integration.test.ts",
-    "server/global-search.integration.test.ts",
+    "src/c2/server/ai-memory-retention.integration.test.ts",
+    "src/c2/server/ai-memory-context.integration.test.ts",
+    "src/c2/server/global-search.integration.test.ts",
   ],
   {
     DATABASE_URL: databaseUrl,

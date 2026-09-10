@@ -79,7 +79,7 @@ Jalankan pemeriksaan berikut:
 
 ```bash
 pnpm check
-pnpm vitest run server/ai-memory-retention.integration.test.ts --reporter=dot
+pnpm vitest run src/c2/server/ai-memory-retention.integration.test.ts --reporter=dot
 node -e 'const c=require("./drizzle.config.ts"); console.log(c)' 2>/dev/null || true
 sed -n '1,80p' drizzle.config.ts
 ```
@@ -118,7 +118,7 @@ mysql --host="$MYSQL_HOST" --port="${MYSQL_PORT:-3306}" \
 Lalu jalankan integration test dengan environment database tersebut:
 
 ```bash
-DATABASE_URL="$DATABASE_URL" pnpm vitest run server/ai-memory-retention.integration.test.ts --reporter=verbose
+DATABASE_URL="$DATABASE_URL" pnpm vitest run src/c2/server/ai-memory-retention.integration.test.ts --reporter=verbose
 ```
 
 Test harus aktif, bukan `skipped`, dan harus memverifikasi bahwa payload expired terhapus sementara metadata/trace run tetap ada.
@@ -191,7 +191,7 @@ Sebelum cutover, hentikan worker lama atau cegah enqueue baru agar tidak terjadi
 pnpm check
 pnpm build
 pnpm vitest run --reporter=dot
-DATABASE_URL="$SUPABASE_POSTGRES_URL" pnpm vitest run server/ai-memory-retention.integration.test.ts --reporter=verbose
+DATABASE_URL="$SUPABASE_POSTGRES_URL" pnpm vitest run src/c2/server/ai-memory-retention.integration.test.ts --reporter=verbose
 ```
 
 Monitor `/healthz`, `/readyz`, `/metrics`, error rate, query latency, worker failures, purge duration, outbox backlog, dan authorization failures. Jika ada mismatch data, kegagalan constraint, atau purge yang tidak sesuai, lakukan rollback ke deployment/database source yang tervalidasi; jangan melakukan delete atau ad-hoc SQL corrective action tanpa backup dan approval.
@@ -213,7 +213,7 @@ Monitor `/healthz`, `/readyz`, `/metrics`, error rate, query latency, worker fai
 
 ## Rekomendasi untuk kondisi AngelMind sekarang
 
-Dengan kondisi repository saat ini, **jangan migrasikan `drizzle/*.sql` langsung ke Supabase**. Pilihan paling aman adalah mempertahankan database MySQL-compatible untuk aplikasi dan memakai Supabase untuk Storage/Auth, atau membuat proyek porting Postgres terpisah sebelum cutover. Supabase menyediakan SQL Editor dan jalur migration, tetapi targetnya tetap Postgres sehingga file migration AngelMind yang masih ber-dialect MySQL tidak dapat dianggap kompatibel otomatis [1] [2] [3].
+Dengan kondisi repository saat ini, **jangan migrasikan `src/c2/database/*.sql` langsung ke Supabase**. Pilihan paling aman adalah mempertahankan database MySQL-compatible untuk aplikasi dan memakai Supabase untuk Storage/Auth, atau membuat proyek porting Postgres terpisah sebelum cutover. Supabase menyediakan SQL Editor dan jalur migration, tetapi targetnya tetap Postgres sehingga file migration AngelMind yang masih ber-dialect MySQL tidak dapat dianggap kompatibel otomatis [1] [2] [3].
 
 ## Referensi
 

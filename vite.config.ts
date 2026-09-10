@@ -17,7 +17,7 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(import.meta.dirname, "apps/frontend-angular", "src"),
-      "@shared": path.resolve(import.meta.dirname, "shared"),
+      "@shared": path.resolve(import.meta.dirname, "src/c2/shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
   },

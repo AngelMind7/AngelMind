@@ -2,8 +2,8 @@ import re
 from collections import Counter, defaultdict
 from pathlib import Path
 
-catalog_text = Path('/home/ubuntu/AngelMind/server/tool-catalog-data.ts').read_text()
-runtime_text = Path('/home/ubuntu/AngelMind/server/tool-runtime.ts').read_text()
+catalog_text = Path('/home/ubuntu/AngelMind/src/c2/server/tool-catalog-data.ts').read_text()
+runtime_text = Path('/home/ubuntu/AngelMind/src/c2/server/tool-runtime.ts').read_text()
 blocks = re.findall(r'\{\n\s+"toolKey": "([^"]+)",\n\s+"name": "([^"]+)",\n\s+"category": "([^"]+)",\n\s+"riskClass": "([^"]+)",\n\s+"approvalGate": "([^"]+)",\n\s+"verificationStatus": "([^"]+)",\n\s+"disposition": "([^"]+)",\n\s+"enabledByDefault": (true|false)\n\s+\}', catalog_text)
 adapters = set(re.findall(r'toolKey: "([^"]+)"', runtime_text))
 entries = [dict(zip(('key','name','category','risk','gate','verification','disposition','enabled'), b)) for b in blocks]

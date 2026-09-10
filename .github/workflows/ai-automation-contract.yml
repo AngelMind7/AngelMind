@@ -3,10 +3,10 @@ on:
   push:
     branches: [main]
     paths:
-      - 'server/ai-automation.ts'
-      - 'server/rest-v1-ai-automation.ts'
-      - 'server/ai-platform.ts'
-      - 'server/ai-routing.ts'
+      - 'src/c2/server/ai-automation.ts'
+      - 'src/c2/server/rest-v1-ai-automation.ts'
+      - 'src/c2/server/ai-platform.ts'
+      - 'src/c2/server/ai-routing.ts'
       - 'docs/domain/13-ai-automation.md'
       - 'scripts/check-ai-automation-contract.mjs'
       - '.github/workflows/ai-automation-contract.yml'

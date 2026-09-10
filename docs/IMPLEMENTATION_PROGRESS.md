@@ -18,7 +18,7 @@ This file records source-level implementation that is actually present on `main`
 
 The following are intentionally not marked complete until source evidence exists on `main`:
 
-- Governed `tools.runGoverned` registration in `server/routers.ts`, including capability resolution, scope/approval policy, durable execution ledger, evidence normalization, correlation, finding, and report path. The legacy low-level `tools.run` remains available only for bounded offline/passive adapter invocation.
+- Governed `tools.runGoverned` registration in `src/c2/server/routers.ts`, including capability resolution, scope/approval policy, durable execution ledger, evidence normalization, correlation, finding, and report path. The legacy low-level `tools.run` remains available only for bounded offline/passive adapter invocation.
 - Transactional task → execution → evidence → finding → report orchestration across a single database transaction; the governed execution ledger and durable job path are implemented, while cross-entity transaction proof remains a separate migration task.
 - Full worker/queue lifecycle for tool executions, including durable enqueue from `tools.runGoverned`; low-level adapter jobs and retry/dead-letter handling are implemented, while production queue throughput remains environment work.
 - Adapter execution now uses `sandboxSpawn` for bounded environment, `/tmp` working directory, timeout, output, and process-concurrency controls. Stronger OS/container CPU, memory, filesystem and network isolation remains a deployment hardening gate.

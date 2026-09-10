@@ -1,7 +1,7 @@
 import fs from "node:fs";
 const required={
- "server/reporting-workflow.ts":["ReportView","executive","technical","disclosure","retest","privateByDefault: true","contentHash","sanitized"],
- "server/rest-v1-reporting.ts":["/api/v1/workspaces/:workspaceId/reports","/api/v1/reports/:id/status","/api/v1/reports/:id/export"],
+ "src/c2/server/reporting-workflow.ts":["ReportView","executive","technical","disclosure","retest","privateByDefault: true","contentHash","sanitized"],
+ "src/c2/server/rest-v1-reporting.ts":["/api/v1/workspaces/:workspaceId/reports","/api/v1/reports/:id/status","/api/v1/reports/:id/export"],
  "docs/domain/11-reporting.md":["report generation","templates","exports","disclosure packages","retest reporting"]
 };
 const missing=[];

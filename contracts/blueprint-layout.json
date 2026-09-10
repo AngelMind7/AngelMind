@@ -5,12 +5,12 @@
   "policy": "compatibility-first",
   "targets": {
     "apps/frontend-angular": { "current": ["apps/frontend-angular"], "status": "scaffolded", "deletionBlockedUntil": ["frontend-build-parity", "route-test-parity"] },
-    "apps/gateway-dotnet": { "current": ["server/_core", "server/rest-v1.ts", "server/routers.ts"], "status": "scaffolded", "deletionBlockedUntil": ["api-parity", "auth-parity", "database-parity"] },
-    "apps/orchestrator-langgraph": { "current": ["apps/orchestrator-langgraph", "server/governed-execution-service.ts", "server/worker.ts"], "status": "in-progress", "deletionBlockedUntil": ["worker-parity", "ledger-parity", "acceptance-parity"] },
-    "src/c2": { "current": ["src/c2/server/api/rest-v1-client.ts", "src/c2/modules/adapter_runtime", "server", "shared"], "status": "in-progress", "deletionBlockedUntil": ["domain-parity", "import-parity"] },
-    "contracts": { "current": ["contracts", "docs", "server/control-plane"], "status": "in-progress", "deletionBlockedUntil": ["contract-checks-green"] },
+    "apps/gateway-dotnet": { "current": ["src/c2/server/_core", "src/c2/server/rest-v1.ts", "src/c2/server/routers.ts"], "status": "scaffolded", "deletionBlockedUntil": ["api-parity", "auth-parity", "database-parity"] },
+    "apps/orchestrator-langgraph": { "current": ["apps/orchestrator-langgraph", "src/c2/server/governed-execution-service.ts", "src/c2/server/worker.ts"], "status": "in-progress", "deletionBlockedUntil": ["worker-parity", "ledger-parity", "acceptance-parity"] },
+    "src/c2": { "current": ["src/c2/server/api/rest-v1-client.ts", "src/c2/modules/adapter_runtime", "src/c2/server", "src/c2/shared"], "status": "in-progress", "deletionBlockedUntil": ["domain-parity", "import-parity"] },
+    "contracts": { "current": ["contracts", "docs", "src/c2/server/control-plane"], "status": "in-progress", "deletionBlockedUntil": ["contract-checks-green"] },
     "lab": { "current": ["lab", "docker-compose.yml", "e2e"], "status": "scaffolded", "deletionBlockedUntil": ["p0-p1-parity", "recovery-parity"] },
     "deploy": { "current": ["deploy", "Dockerfile", "railway.toml", ".github/workflows"], "status": "in-progress", "deletionBlockedUntil": ["staging-deploy-parity", "rollback-proof"] },
-    "tests": { "current": ["server/**/*.test.ts", "apps/frontend-angular/**/*/*.test.ts", "apps/orchestrator-langgraph/tests", "e2e"], "status": "scaffolded", "deletionBlockedUntil": ["coverage-parity", "full-suite-green"] }
+    "tests": { "current": ["src/c2/server/**/*.test.ts", "apps/frontend-angular/**/*/*.test.ts", "apps/orchestrator-langgraph/tests", "e2e"], "status": "scaffolded", "deletionBlockedUntil": ["coverage-parity", "full-suite-green"] }
   }
 }

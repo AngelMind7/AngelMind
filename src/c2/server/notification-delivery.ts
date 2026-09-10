@@ -1,0 +1,149 @@
+import { and, eq } from "drizzle-orm";
+import { createHmac } from "node:crypto";
+import { notificationDeliveries, notifications, type notificationDeliveryChannel, webhookConfigurations } from "../database/schema";
+import { getDb } from "./db";
+import { enqueueJob } from "./ai-platform";
+
+type NotificationChannel = (typeof notificationDeliveryChannel)[number];
+type NotificationRecord = typeof notifications.$inferSelect;
+type DeliveryResult = { delivered: boolean; reason?: string; providerMessageId?: string };
+
+export function getNotificationRetryDelayMs(attempts: number): number {
+  const normalizedAttempts = Number.isFinite(attempts) ? Math.max(0, Math.trunc(attempts)) : 0;
+  return Math.min(3_600_000, 5_000 * 2 ** normalizedAttempts);
+}
+
+export type NotificationProvider = {
+  channel: NotificationChannel;
+  isEnabled: () => boolean;
+  deliver: (notification: NotificationRecord, payload: Record<string, unknown>) => Promise<DeliveryResult>;
+};
+
+function isPrivateOrLocalHostname(hostname: string) {
+  const normalized = hostname.trim().toLowerCase().replace(/[\[\]]/g, "");
+  if (normalized === "localhost" || normalized.endsWith(".localhost") || normalized === "127.0.0.1" || normalized === "::1" || normalized.startsWith("10.") || normalized.startsWith("192.168.") || normalized.startsWith("169.254.")) return true;
+  const octets = normalized.split(".").map(Number);
+  if (octets.length === 4 && octets.every(Number.isInteger)) return octets[0] === 127 || octets[0] === 10 || (octets[0] === 172 && octets[1] >= 16 && octets[1] <= 31) || (octets[0] === 192 && octets[1] === 168) || (octets[0] === 169 && octets[1] === 254);
+  return normalized.endsWith(".internal") || normalized.endsWith(".local") || normalized.endsWith(".home.arpa");
+}
+
+export function prepareSignedWebhookRequest(endpoint: string, secret: string, payload: Record<string, unknown>, timestamp = Math.floor(Date.now() / 1000)) {
+  if (!secret.trim()) throw new Error("Webhook signing secret is required.");
+  const parsed = new URL(endpoint);
+  if (parsed.protocol !== "https:") throw new Error("Webhook endpoint must use HTTPS.");
+  if (parsed.username || parsed.password || isPrivateOrLocalHostname(parsed.hostname)) throw new Error("Webhook endpoint is not allowed by the outbound safety policy.");
+  const body = JSON.stringify(payload);
+  const signature = createHmac("sha256", secret).update(`${timestamp}.${body}`).digest("hex");
+  return { url: parsed.toString(), body, headers: { "content-type": "application/json", "x-angelmind-timestamp": String(timestamp), "x-angelmind-signature": `sha256=${signature}` } };
+}
+
+function redactText(value: string) {
+  return value.replace(/(authorization|cookie|token|secret|password)\s*[:=]\s*[^\s,;]+/gi, "$1=[REDACTED]").slice(0, 8_000);
+}
+
+export function buildRedactedNotificationPayload(notification: Pick<NotificationRecord, "eventType" | "severity" | "title" | "message" | "workspaceId">) {
+  return JSON.stringify({ eventType: notification.eventType, severity: notification.severity, title: redactText(notification.title), message: redactText(notification.message), workspaceId: notification.workspaceId });
+}
+
+export const notificationProviders: Record<NotificationChannel, NotificationProvider> = {
+  in_app: { channel: "in_app", isEnabled: () => true, deliver: async () => ({ delivered: true }) },
+  email: { channel: "email", isEnabled: () => Boolean(process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASSWORD), deliver: async () => ({ delivered: false, reason: "email-provider-delegated-to-email-delivery-ledger" }) },
+  webhook: {
+    channel: "webhook",
+    isEnabled: () => process.env.ANGELMIND_WEBHOOK_DELIVERY_ENABLED === "1",
+    deliver: async (notification, payload) => {
+      if (!notification.workspaceId) return { delivered: false, reason: "webhook-workspace-required" };
+      const db = await getDb();
+      if (!db) return { delivered: false, reason: "database-unavailable" };
+      const [configuration] = await db.select().from(webhookConfigurations).where(eq(webhookConfigurations.workspaceId, notification.workspaceId)).limit(1);
+      if (!configuration) return { delivered: false, reason: "webhook-configuration-missing" };
+      const reference = configuration.signingSecretReference?.trim() ?? "";
+      const secretName = reference.startsWith("env:") ? reference.slice(4).trim() : "";
+      if (!secretName || !/^[A-Z0-9_]{3,120}$/.test(secretName)) return { delivered: false, reason: "webhook-secret-reference-invalid" };
+      const secret = process.env[secretName] ?? null;
+      if (!secret) return { delivered: false, reason: "webhook-signing-secret-unavailable" };
+      const { dispatchWebhook } = await import("./webhook-dispatcher");
+      return dispatchWebhook({ eventType: notification.eventType, payload, configuration, resolveSecret: async () => secret });
+    },
+  },
+};
+
+function isDuplicateKeyError(error: unknown): boolean {
+  if (!error || typeof error !== "object") return false;
+  const value = error as { code?: unknown; errno?: unknown; sqlState?: unknown; sqlMessage?: unknown; message?: unknown };
+  const code = typeof value.code === "string" ? value.code.toUpperCase() : "";
+  const errno = typeof value.errno === "number" ? value.errno : Number(value.errno);
+  const sqlState = typeof value.sqlState === "string" ? value.sqlState : "";
+  const message = typeof value.sqlMessage === "string" ? value.sqlMessage : typeof value.message === "string" ? value.message : "";
+  return code === "ER_DUP_ENTRY" || code === "SQLITE_CONSTRAINT_UNIQUE" || sqlState === "23505" || errno === 1062 || /duplicate entry|unique constraint|unique violation/i.test(message);
+}
+
+export async function createNotificationDeliveryLedger(notification: NotificationRecord) {
+  const db = await getDb();
+  if (!db) return [];
+  const payload = buildRedactedNotificationPayload(notification);
+  const rows: Array<typeof notificationDeliveries.$inferSelect> = [];
+  for (const channel of Object.keys(notificationProviders) as NotificationChannel[]) {
+    const idempotencyKey = `notification:${notification.id}:${channel}`;
+    const [existing] = await db.select().from(notificationDeliveries).where(eq(notificationDeliveries.idempotencyKey, idempotencyKey)).limit(1);
+    if (existing) { rows.push(existing); continue; }
+    const provider = notificationProviders[channel];
+    const status = channel === "in_app" && provider.isEnabled() ? "sent" : provider.isEnabled() ? "queued" : "disabled";
+    try {
+      await db.insert(notificationDeliveries).values({ notificationId: notification.id, userId: notification.userId, workspaceId: notification.workspaceId, channel, status, idempotencyKey, attempts: status === "sent" ? 1 : 0, nextAttemptAt: new Date(), redactedPayload: payload });
+    } catch (error) {
+      if (!isDuplicateKeyError(error)) throw error;
+      // A concurrent worker may have won the unique insert; reconcile by reading the winner.
+    }
+    const [created] = await db.select().from(notificationDeliveries).where(eq(notificationDeliveries.idempotencyKey, idempotencyKey)).limit(1);
+    if (created) {
+      rows.push(created);
+      if (created.status === "queued") {
+        await enqueueJob(notification.userId, { workspaceId: notification.workspaceId ?? undefined, kind: "notification.deliver", idempotencyKey: `notification-deliver:${created.id}`, payload: { type: "notification_delivery", deliveryId: created.id }, maxAttempts: 3 });
+      }
+    }
+  }
+  return rows;
+}
+
+function affectedRowCount(result: unknown): number | undefined {
+  if (!result || typeof result !== "object") return undefined;
+  const value = result as { affectedRows?: unknown; rowsAffected?: unknown };
+  if (typeof value.affectedRows === "number") return value.affectedRows;
+  if (typeof value.rowsAffected === "number") return value.rowsAffected;
+  return undefined;
+}
+
+export async function executeNotificationDeliveryJob(payload: Record<string, unknown>) {
+  const deliveryId = Number(payload.deliveryId);
+  if (!Number.isInteger(deliveryId) || deliveryId < 1) throw new Error("Invalid notification delivery job payload.");
+  const db = await getDb();
+  if (!db) throw new Error("Database tidak tersedia.");
+  const [delivery] = await db.select().from(notificationDeliveries).where(eq(notificationDeliveries.id, deliveryId)).limit(1);
+  if (!delivery) throw new Error("Notification delivery tidak ditemukan.");
+  if (delivery.status === "sent" || delivery.status === "disabled") return delivery;
+  const provider = notificationProviders[delivery.channel];
+  if (!provider || !provider.isEnabled()) {
+    await db.update(notificationDeliveries).set({ status: "disabled", lastError: "Provider is disabled or not configured.", updatedAt: new Date() }).where(eq(notificationDeliveries.id, delivery.id));
+    return { ...delivery, status: "disabled" as const };
+  }
+  const [notification] = await db.select().from(notifications).where(eq(notifications.id, delivery.notificationId)).limit(1);
+  if (!notification) throw new Error("Notification source tidak ditemukan.");
+  let parsedPayload: Record<string, unknown>;
+  try { parsedPayload = JSON.parse(delivery.redactedPayload) as Record<string, unknown>; } catch { throw new Error("Notification delivery payload is invalid."); }
+  const attempt = delivery.attempts + 1;
+  const claim = await db.update(notificationDeliveries).set({ status: "sending", attempts: attempt, updatedAt: new Date() }).where(and(eq(notificationDeliveries.id, delivery.id), eq(notificationDeliveries.status, delivery.status)));
+  const claimedRows = affectedRowCount(claim);
+  if (claimedRows !== 1) {
+    if (claimedRows === undefined) throw new Error("Notification delivery claim could not be verified safely.");
+    return { ...delivery, status: "sending" as const, reason: "Notification delivery is already being processed by another worker." };
+  }
+  const result = await provider.deliver(notification, parsedPayload);
+  if (result.delivered) {
+    await db.update(notificationDeliveries).set({ status: "sent", providerMessageId: result.providerMessageId ?? null, lastError: null, updatedAt: new Date() }).where(and(eq(notificationDeliveries.id, delivery.id), eq(notificationDeliveries.status, "sending")));
+    return { ...delivery, status: "sent" as const, providerMessageId: result.providerMessageId ?? null };
+  }
+  const reason = result.reason ?? "Notification provider delivery failed.";
+  await db.update(notificationDeliveries).set({ status: "failed", lastError: reason, nextAttemptAt: new Date(Date.now() + getNotificationRetryDelayMs(attempt)), updatedAt: new Date() }).where(and(eq(notificationDeliveries.id, delivery.id), eq(notificationDeliveries.status, "sending")));
+  throw new Error(reason);
+}

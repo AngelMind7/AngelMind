@@ -107,4 +107,4 @@ jobs:
       - name: Apply migrations to ephemeral database
         run: pnpm drizzle-kit migrate
       - name: Run database integration contracts
-        run: pnpm exec vitest run server/ai-memory-retention.integration.test.ts server/ai-memory-context.integration.test.ts server/global-search.integration.test.ts
+        run: pnpm exec vitest run src/c2/server/ai-memory-retention.integration.test.ts src/c2/server/ai-memory-context.integration.test.ts src/c2/server/global-search.integration.test.ts

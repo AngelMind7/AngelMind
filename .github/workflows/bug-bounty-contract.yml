@@ -4,9 +4,9 @@ on:
     branches: [main]
   pull_request:
     paths:
-      - 'server/bug-bounty.ts'
-      - 'server/bug-bounty.test.ts'
-      - 'server/rest-v1-bug-bounty.ts'
+      - 'src/c2/server/bug-bounty.ts'
+      - 'src/c2/server/bug-bounty.test.ts'
+      - 'src/c2/server/rest-v1-bug-bounty.ts'
       - 'scripts/check-bug-bounty-contract.mjs'
       - 'docs/domain/09-bug-bounty.md'
 jobs:
@@ -23,4 +23,4 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm check:bugbounty-contract
-      - run: pnpm exec vitest run server/bug-bounty.test.ts
+      - run: pnpm exec vitest run src/c2/server/bug-bounty.test.ts

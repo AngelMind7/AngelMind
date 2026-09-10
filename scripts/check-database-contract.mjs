@@ -2,8 +2,8 @@ import { readFileSync, readdirSync } from "node:fs";
 import { resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
-const schema = readFileSync(resolve(root, "drizzle/schema.ts"), "utf8");
-const drizzleDir = resolve(root, "drizzle");
+const schema = readFileSync(resolve(root, "src/c2/database/schema.ts"), "utf8");
+const drizzleDir = resolve(root, "src/c2/database");
 const migrations = readdirSync(drizzleDir)
   .filter(file => /^\d{4}_.+\.sql$/.test(file))
   .sort();

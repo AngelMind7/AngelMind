@@ -46,7 +46,7 @@ for (const tool of [
     failures.push(`manifest-tool:${tool}`);
 }
 
-const runtime = readFileSync("server/tool-runtime.ts", "utf8");
+const runtime = readFileSync("src/c2/server/tool-runtime.ts", "utf8");
 for (const token of [
   "ANGELMIND_ENABLE_TARGET_EXECUTION",
   "scopeValidated",
@@ -57,7 +57,7 @@ for (const token of [
   if (!runtime.includes(token)) failures.push(`runtime-policy:${token}`);
 }
 
-const ledger = readFileSync("server/execution-ledger.ts", "utf8");
+const ledger = readFileSync("src/c2/server/execution-ledger.ts", "utf8");
 for (const token of [
   "createExecutionLedger",
   "getExecutionProgress",
@@ -69,7 +69,7 @@ for (const token of [
     failures.push(`execution-ledger:${token}`);
 }
 const progressEvents = readFileSync(
-  "server/execution-progress-events.ts",
+  "src/c2/server/execution-progress-events.ts",
   "utf8"
 );
 for (const token of [
@@ -82,7 +82,7 @@ for (const token of [
   if (!progressEvents.includes(`"${token}"`))
     failures.push(`execution-event:${token}`);
 }
-const runner = readFileSync("server/governed-tool-runner.ts", "utf8");
+const runner = readFileSync("src/c2/server/governed-tool-runner.ts", "utf8");
 for (const token of [
   "decideRuntimeResources",
   "runtimeConcurrencyLimit",
@@ -91,7 +91,7 @@ for (const token of [
   if (!runner.includes(token)) failures.push(`governed-runner:${token}`);
 }
 if (
-  !readFileSync("server/rest-v1.ts", "utf8").includes(
+  !readFileSync("src/c2/server/rest-v1.ts", "utf8").includes(
     "/api/v1/executions/:jobId"
   )
 )

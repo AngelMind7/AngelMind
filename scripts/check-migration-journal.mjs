@@ -2,7 +2,7 @@ import fs from "node:fs";
 import path from "node:path";
 
 const root = process.cwd();
-const drizzleDir = path.join(root, "drizzle");
+const drizzleDir = path.join(root, "src", "c2", "database");
 const journalPath = path.join(drizzleDir, "meta", "_journal.json");
 const journal = JSON.parse(fs.readFileSync(journalPath, "utf8"));
 const sqlFiles = fs.readdirSync(drizzleDir)

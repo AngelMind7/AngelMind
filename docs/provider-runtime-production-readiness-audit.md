@@ -184,9 +184,9 @@ Dengan staging token, jalankan lifecycle lengkap: workspace authorization, resea
 
 ## References
 
-[1]: https://github.com/AngelMind7/AngelMind/blob/c36a73e/server/_core/env.ts "AngelMind typed environment and production validator"
-[2]: https://github.com/AngelMind7/AngelMind/blob/c36a73e/server/security.ts "AngelMind health and readiness routes"
-[3]: https://github.com/AngelMind7/AngelMind/blob/c36a73e/server/_core/llm.ts "AngelMind LLM provider registry and fallback behavior"
+[1]: https://github.com/AngelMind7/AngelMind/blob/c36a73e/src/c2/server/_core/env.ts "AngelMind typed environment and production validator"
+[2]: https://github.com/AngelMind7/AngelMind/blob/c36a73e/src/c2/server/security.ts "AngelMind health and readiness routes"
+[3]: https://github.com/AngelMind7/AngelMind/blob/c36a73e/src/c2/server/_core/llm.ts "AngelMind LLM provider registry and fallback behavior"
 [4]: https://github.com/AngelMind7/AngelMind/blob/c36a73e/Dockerfile.tools "AngelMind runtime tools image"
 [5]: https://github.com/AngelMind7/AngelMind/blob/c36a73e/scripts/runtime-tool-smoke-test.sh "AngelMind harmless runtime adapter smoke test"
 [6]: https://github.com/AngelMind7/AngelMind/blob/c36a73e/config/tool-runtime-packs.yaml "AngelMind runtime pack policy"

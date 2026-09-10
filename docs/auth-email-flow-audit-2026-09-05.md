@@ -34,7 +34,7 @@ The follow-up implementation added session-only pending-verification email state
 
 **Severity: High repository completeness gap.**
 
-`server/_core/email-templates.ts` exports `buildPasswordResetEmail` and `buildAccountVerificationEmail`, and `server/email.test.ts` validates both templates. However, a runtime search found no non-test caller for either function. The only production caller of `enqueueEmailDelivery` is `server/organization.ts` for `organization_invitation`.
+`src/c2/server/_core/email-templates.ts` exports `buildPasswordResetEmail` and `buildAccountVerificationEmail`, and `src/c2/server/email.test.ts` validates both templates. However, a runtime search found no non-test caller for either function. The only production caller of `enqueueEmailDelivery` is `src/c2/server/organization.ts` for `organization_invitation`.
 
 The consequence is that the server-side email ledger and templates do not govern password-reset or verification mail. Firebase sends those messages directly, so the application has no local record of request, delivery attempt, provider message ID, retry, or failure for those account flows.
 
@@ -98,9 +98,9 @@ The email delivery path now uses an explicit five-attempt ceiling, passes that c
 The following checks were used as the audit baseline:
 
 - TypeScript check passed in the preceding repository validation.
-- `server/email.test.ts` covers password-reset and account-verification template rendering, localization fallback, escaping, and links.
-- `server/firebase.test.ts` covers disabled Firebase configuration behavior.
-- `server/security.test.ts` covers request security headers and readiness behavior.
+- `src/c2/server/email.test.ts` covers password-reset and account-verification template rendering, localization fallback, escaping, and links.
+- `src/c2/server/firebase.test.ts` covers disabled Firebase configuration behavior.
+- `src/c2/server/security.test.ts` covers request security headers and readiness behavior.
 - Runtime symbol search confirmed the reset/verification templates are not called outside tests.
 - Worker search confirmed `email.deliver` is registered and dispatches to `executeEmailDeliveryJob`.
 

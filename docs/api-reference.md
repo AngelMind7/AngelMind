@@ -40,7 +40,7 @@ Dokumen ini merangkum surface tRPC yang tersedia pada control plane dan aturan o
 
 Worker job lease memiliki claim, heartbeat periodik selama handler berjalan, stale recovery, retry backoff, dan dead-letter transition. Outbox dispatcher bersifat configurable: handler hanya dijalankan jika `outboxHandlers` didaftarkan secara eksplisit. Consumer receipts mencegah event yang sama diproses berulang oleh consumer yang sama. Provider outbound tidak aktif secara default.
 
-Migration wajib diterapkan berurutan. Migration research workspace consistency terbaru adalah `drizzle/0032_research_workspace_consistency.sql`; migration intelligence dedupe adalah `drizzle/0031_intelligence_feed_dedupe.sql`. Sebelum menerapkan migration pada database live, operator wajib mengambil backup, menjalankan preflight, dan melakukan smoke test rollback/restore sesuai `docs/production-runbook.md`.
+Migration wajib diterapkan berurutan. Migration research workspace consistency terbaru adalah `src/c2/database/0032_research_workspace_consistency.sql`; migration intelligence dedupe adalah `src/c2/database/0031_intelligence_feed_dedupe.sql`. Sebelum menerapkan migration pada database live, operator wajib mengambil backup, menjalankan preflight, dan melakukan smoke test rollback/restore sesuai `docs/production-runbook.md`.
 
 ## Release verification
 

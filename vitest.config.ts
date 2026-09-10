@@ -8,15 +8,15 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": path.resolve(templateRoot, "apps/frontend-angular", "src"),
-      "@shared": path.resolve(templateRoot, "shared"),
+      "@shared": path.resolve(templateRoot, "src/c2/shared"),
       "@assets": path.resolve(templateRoot, "attached_assets"),
     },
   },
   test: {
     environment: "node",
     include: [
-      "server/**/*.test.ts",
-      "server/**/*.spec.ts",
+      "src/c2/server/**/*.test.ts",
+      "src/c2/server/**/*.spec.ts",
       "apps/frontend-angular/**/*.test.ts",
       "apps/frontend-angular/**/*.spec.ts",
     ],

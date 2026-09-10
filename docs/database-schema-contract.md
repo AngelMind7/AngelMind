@@ -16,7 +16,7 @@ The V4 blueprint calls for a primary relational model of 50+ tables. The reposit
 
 ## Migration contract
 
-1. `drizzle/schema.ts` is the source-of-truth table declaration.
+1. `src/c2/database/schema.ts` is the source-of-truth table declaration.
 2. Every declared table must have a corresponding `CREATE TABLE` in the append-only migration history.
 3. The database contract gate requires at least 74 declared tables, at least 74 migrated tables, and at least 64 numbered migrations.
 4. Migration safety, journal, and rollback checks remain mandatory in CI.

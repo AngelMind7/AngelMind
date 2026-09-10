@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 
 const root = resolve(import.meta.dirname, "..");
 const manifest = JSON.parse(readFileSync(resolve(root, "config/tool-capability-registry.json"), "utf8"));
-const catalog = readFileSync(resolve(root, "server/tool-catalog-data.ts"), "utf8");
+const catalog = readFileSync(resolve(root, "src/c2/server/tool-catalog-data.ts"), "utf8");
 const failures = [];
 
 if (manifest.schemaVersion < 2) failures.push("UTF manifest schemaVersion must be >= 2");

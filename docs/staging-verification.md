@@ -19,9 +19,9 @@ ALLOW_STAGING_TESTS=true NODE_ENV=development pnpm test:staging
 
 The command runs these contracts:
 
-- `server/ai-memory-retention.integration.test.ts`
-- `server/ai-memory-context.integration.test.ts`
-- `server/global-search.integration.test.ts`
+- `src/c2/server/ai-memory-retention.integration.test.ts`
+- `src/c2/server/ai-memory-context.integration.test.ts`
+- `src/c2/server/global-search.integration.test.ts`
 
 The runner refuses `NODE_ENV=production`, a URL containing `production`, and Railway's `mysql.railway.internal` hostname. It does not print the database URL or any secret.
 

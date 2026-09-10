@@ -242,7 +242,7 @@ Jika migration gagal:
 1. Catat error lengkap yang tidak mengandung credential.
 2. Jangan mengulangi command berkali-kali tanpa membaca status jurnal dan schema.
 3. Periksa apakah sebagian statement sudah berhasil diterapkan.
-4. Bandingkan schema aktual dengan `drizzle/schema.ts` dan file SQL target.
+4. Bandingkan schema aktual dengan `src/c2/database/schema.ts` dan file SQL target.
 5. Gunakan backup atau forward-fix yang direview; jangan menghapus tabel atau menjalankan `DROP` secara spontan.
 
 Setelah migration berhasil, verifikasi schema:
@@ -324,7 +324,7 @@ Jangan menghapus audit/evidence untuk menyembunyikan kegagalan. Pause workspace 
 
 ## Referensi
 
-[^1]: [Railway — Using Variables](https://docs.railway.com/variables), termasuk service/shared/sealed variables, staged changes, multiline values, dan runtime availability.
+[^1]: [Railway — Using Variables](https://docs.railway.com/variables), termasuk service/src/c2/shared/sealed variables, staged changes, multiline values, dan runtime availability.
 [^2]: [Railway — Environments](https://docs.railway.com/environments), termasuk pemisahan staging dan production.
 [^3]: [Firebase — Best practices for signInWithRedirect](https://firebase.google.com/docs/auth/web/redirect-best-practices), termasuk authorized domains dan production redirect behavior.
 [^4]: [AngelMind deployment guide](./deployment.md).

@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 
-const drizzleDir = path.join(process.cwd(), "drizzle");
+const drizzleDir = path.join(process.cwd(), "src/c2/database");
 const migrations = fs.readdirSync(drizzleDir).filter(file => /^\d{4}_.+\.sql$/.test(file)).sort();
 const destructive = /(?:^|;)\s*(?:DROP\s+(?:TABLE|COLUMN|INDEX)|TRUNCATE\s+TABLE|DELETE\s+FROM)\b/im;
 const violations = [];

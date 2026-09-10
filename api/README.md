@@ -1,6 +1,6 @@
 # API Boundary and REST clients
 
-API ownership remains inside the current Express/tRPC application under `server/`. The versioned REST gateway is exposed under `/api/v1`; this directory contains the dependency-light TypeScript client at [`rest-v1-client.ts`](./rest-v1-client.ts).
+API ownership remains inside the current Express/tRPC application under `src/c2/server/`. The versioned REST gateway is exposed under `/api/v1`; this directory contains the dependency-light TypeScript client at [`rest-v1-client.ts`](./rest-v1-client.ts).
 
 The SDK supports health checks, workspace search, AI-run listing, and AI-run detail retrieval. It uses the same `{ data, apiVersion }` response envelope as the gateway and raises `AngelMindApiError` with HTTP status and stable error code for non-2xx responses. A custom `fetch` implementation can be injected for contract tests.
 

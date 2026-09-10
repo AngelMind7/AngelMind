@@ -40,7 +40,7 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 
 | Area | Status awal | Target commit evidence |
 |---|---|---|
-| Model registry/gateway health | Partial | Provider/model capability metadata plus admin health status, latency, and error metadata; live provider probes remain environment-dependent. |
+| Model registry/gateway health | Implemented (core) | Provider/model capability metadata, admin health status, latency/error metadata, freshness evaluation, stale fail-closed status, and deterministic health snapshot; live provider probes remain environment-dependent. |
 | AI orchestration | Implemented (core) | Deterministic planner, role/task assignment, dependency gating, confidence-filtered synthesis, cross-check verdict, human-review signal, persisted orchestration runs/nodes, plan hashes, and evidence-gated node transitions; live provider execution remains environment-dependent. |
 | AI provenance/memory | Implemented (core) | Run trace, input/output references, workspace isolation, retention-aware output retrieval, scheduled purge worker, and expired payload deletion are available; live provider verification remains environment-dependent. |
 | Job queue/retry/DLQ | Implemented (core) | Persistent claim lease recovery, retry backoff, max-attempt dead-letter, and completion/failure helpers. |

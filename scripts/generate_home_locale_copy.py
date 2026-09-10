@@ -59,6 +59,6 @@ for code, language in LOCALES.items():
     for key, value in translations.items():
         result[key][code] = value
 
-target = ROOT / "client/src/locales/home-copy.json"
+target = ROOT / "apps/frontend-angular/src/locales/home-copy.json"
 target.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 print(f"Wrote {len(result)} explicit command-center keys to {target}")

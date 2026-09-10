@@ -97,7 +97,7 @@ if (
 )
   failures.push("execution-api:missing-progress-route");
 if (
-  !readFileSync("client/src/pages/MissionControl.tsx", "utf8").includes(
+  !readFileSync("apps/frontend-angular/src/pages/MissionControl.tsx", "utf8").includes(
     "/api/v1/executions/"
   )
 )

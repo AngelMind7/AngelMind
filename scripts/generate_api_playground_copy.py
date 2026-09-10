@@ -17,5 +17,5 @@ result = {key: {"en": value} for key, value in SOURCE.items()}
 with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:
     for code, values in executor.map(translate, TARGETS.items()):
         for key, value in values.items(): result[key][code] = value
-(ROOT / "client/src/locales/api-playground-copy.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+(ROOT / "apps/frontend-angular/src/locales/api-playground-copy.json").write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 print("Wrote API Playground copy in 20 locales.")

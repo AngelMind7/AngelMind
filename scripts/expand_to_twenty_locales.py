@@ -27,9 +27,9 @@ def translate(source, language):
 
 def main():
     resources = {
-        ROOT / "client/src/locales/shared-expansion.json": SHARED,
-        ROOT / "client/src/locales/home-copy.json": {key: value["en"] for key, value in json.loads((ROOT / "client/src/locales/home-copy.json").read_text(encoding="utf-8")).items()},
-        ROOT / "client/src/locales/assurance-notifications-copy.json": {key: value["en"] for key, value in json.loads((ROOT / "client/src/locales/assurance-notifications-copy.json").read_text(encoding="utf-8")).items()},
+        ROOT / "apps/frontend-angular/src/locales/shared-expansion.json": SHARED,
+        ROOT / "apps/frontend-angular/src/locales/home-copy.json": {key: value["en"] for key, value in json.loads((ROOT / "apps/frontend-angular/src/locales/home-copy.json").read_text(encoding="utf-8")).items()},
+        ROOT / "apps/frontend-angular/src/locales/assurance-notifications-copy.json": {key: value["en"] for key, value in json.loads((ROOT / "apps/frontend-angular/src/locales/assurance-notifications-copy.json").read_text(encoding="utf-8")).items()},
     }
     for destination, source in resources.items():
         existing = json.loads(destination.read_text(encoding="utf-8")) if destination.exists() else {}

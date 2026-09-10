@@ -6,7 +6,7 @@ from openai import OpenAI
 
 ROOT = Path(__file__).resolve().parents[1]
 TARGETS = {"hi": "Hindi", "vi": "Vietnamese", "th": "Thai", "tr": "Turkish", "pl": "Polish", "nl": "Dutch", "it": "Italian", "sv": "Swedish"}
-path = ROOT / "client/src/locales/curated-translations.json"
+path = ROOT / "apps/frontend-angular/src/locales/curated-translations.json"
 catalog = json.loads(path.read_text(encoding="utf-8"))
 source = {key: key for key in catalog}
 

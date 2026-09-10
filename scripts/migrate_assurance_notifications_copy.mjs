@@ -2,8 +2,8 @@ import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
 const root = path.resolve(import.meta.dirname, "..");
-const assuranceFile = path.join(root, "client/src/pages/Assurance.tsx");
-const notificationsFile = path.join(root, "client/src/pages/Notifications.tsx");
+const assuranceFile = path.join(root, "apps/frontend-angular/src/pages/Assurance.tsx");
+const notificationsFile = path.join(root, "apps/frontend-angular/src/pages/Notifications.tsx");
 const assurancePairs = [
   ["<Eyebrow>Policy control · incident response · activation gate</Eyebrow>", "<Eyebrow>{copy(\"assurance.eyebrow\")}</Eyebrow>"], ["Assurance <span className=\"neon-pink\">Control</span>", "{copy(\"assurance.title\")}"], ["Every policy change and outbound-delivery activation follows a distinct-reviewer decision path. Incidents are workspace-scoped, timestamped, and retained in audit evidence.", "{copy(\"assurance.description\")}"],
   ["<Eyebrow>Reviewer evidence</Eyebrow>", "<Eyebrow>{copy(\"assurance.reviewerEvidence\")}</Eyebrow>"], [">Policy diff ledger</h2>", ">{copy(\"assurance.policyDiffLedger\")}</h2>"], ["Changed fields: {fields.length ? fields.join(\", \") : \"no parsable diff\"}", "{copy(\"assurance.changedFields\")}: {fields.length ? fields.join(\", \") : copy(\"assurance.noParsableDiff\")}"], [">No policy versions awaiting review.</p>", ">{copy(\"assurance.noPolicyVersions\")}</p>"],

@@ -47,6 +47,6 @@ for key, corrections in {
 }.items():
     result[key].update(corrections)
 
-target = ROOT / "client/src/locales/assurance-notifications-copy.json"
+target = ROOT / "apps/frontend-angular/src/locales/assurance-notifications-copy.json"
 target.write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 print(f"Wrote {len(result)} explicit Assurance and Signal Center keys to {target}")

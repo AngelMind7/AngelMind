@@ -16,28 +16,28 @@ export default defineConfig({
   plugins,
   resolve: {
     alias: {
-      "@": path.resolve(import.meta.dirname, "client", "src"),
+      "@": path.resolve(import.meta.dirname, "apps/frontend-angular", "src"),
       "@shared": path.resolve(import.meta.dirname, "shared"),
       "@assets": path.resolve(import.meta.dirname, "attached_assets"),
     },
   },
   envDir: path.resolve(import.meta.dirname),
-  root: path.resolve(import.meta.dirname, "client"),
-  publicDir: path.resolve(import.meta.dirname, "client", "public"),
+  root: path.resolve(import.meta.dirname, "apps/frontend-angular"),
+  publicDir: path.resolve(import.meta.dirname, "apps/frontend-angular", "public"),
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
     rollupOptions: {
       output: {
         manualChunks(id) {
-          if (id.includes("/client/src/pages/")) return "app-pages";
-          if (id.includes("/client/src/marketing/")) return "marketing";
-          if (id.includes("/client/src/contexts/")) return "app-context";
-          if (id.includes("/client/src/components/ui/")) return "app-ui";
-          if (id.includes("/client/src/components/")) return "app-components";
-          if (id.includes("/client/src/firebase")) return "app-auth";
-          if (id.endsWith("/client/src/App.tsx")) return "app-shell";
-          if (id.endsWith("/client/src/publicRoutes.ts") || id.endsWith("/client/src/authenticatedRoutes.ts")) return "app-routes";
+          if (id.includes("/apps/frontend-angular/src/pages/")) return "app-pages";
+          if (id.includes("/apps/frontend-angular/src/marketing/")) return "marketing";
+          if (id.includes("/apps/frontend-angular/src/contexts/")) return "app-context";
+          if (id.includes("/apps/frontend-angular/src/components/ui/")) return "app-ui";
+          if (id.includes("/apps/frontend-angular/src/components/")) return "app-components";
+          if (id.includes("/apps/frontend-angular/src/firebase")) return "app-auth";
+          if (id.endsWith("/apps/frontend-angular/src/App.tsx")) return "app-shell";
+          if (id.endsWith("/apps/frontend-angular/src/publicRoutes.ts") || id.endsWith("/apps/frontend-angular/src/authenticatedRoutes.ts")) return "app-routes";
 
           const marker = "/node_modules/";
           // pnpm paths contain a nested node_modules directory; use the

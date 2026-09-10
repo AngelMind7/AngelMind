@@ -1,10 +1,10 @@
 import { readFileSync } from "node:fs";
 
 const read = path => readFileSync(path, "utf8");
-const publicRoutes = read("client/src/publicRoutes.ts");
-const authenticatedRoutes = read("client/src/authenticatedRoutes.ts");
-const app = read("client/src/App.tsx");
-const pageState = read("client/src/components/PageState.tsx");
+const publicRoutes = read("apps/frontend-angular/src/publicRoutes.ts");
+const authenticatedRoutes = read("apps/frontend-angular/src/authenticatedRoutes.ts");
+const app = read("apps/frontend-angular/src/App.tsx");
+const pageState = read("apps/frontend-angular/src/components/PageState.tsx");
 
 const routePaths = source => [...source.matchAll(/path:\s*["'`]([^"'`]+)["'`]/g)].map(m => m[1]);
 const publicPaths = routePaths(publicRoutes);

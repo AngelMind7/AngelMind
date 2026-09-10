@@ -7,7 +7,7 @@ export default defineConfig({
   root: templateRoot,
   resolve: {
     alias: {
-      "@": path.resolve(templateRoot, "client", "src"),
+      "@": path.resolve(templateRoot, "apps/frontend-angular", "src"),
       "@shared": path.resolve(templateRoot, "shared"),
       "@assets": path.resolve(templateRoot, "attached_assets"),
     },
@@ -17,8 +17,8 @@ export default defineConfig({
     include: [
       "server/**/*.test.ts",
       "server/**/*.spec.ts",
-      "client/**/*.test.ts",
-      "client/**/*.spec.ts",
+      "apps/frontend-angular/**/*.test.ts",
+      "apps/frontend-angular/**/*.spec.ts",
     ],
     coverage: {
       provider: "v8",

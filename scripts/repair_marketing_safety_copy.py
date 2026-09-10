@@ -19,7 +19,7 @@ def repair(item, source):
     ], response_format=schema(source), max_completion_tokens=3000)
     return code, json.loads(response.choices[0].message.content)
 
-path = ROOT / "client/src/locales/marketing-copy.json"
+path = ROOT / "apps/frontend-angular/src/locales/marketing-copy.json"
 resource = json.loads(path.read_text(encoding="utf-8"))
 source = {key: resource[key]["en"] for key in KEYS}
 with concurrent.futures.ThreadPoolExecutor(max_workers=4) as executor:

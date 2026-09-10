@@ -28,7 +28,7 @@ requireAtLeast(concreteApiSurface, 260, "concrete executable API surface");
 for (const domain of ["auth","workspace","organization","research","evidence","knowledge","finding","control","audit","tools","ai","notification"]) if (!new RegExp(`\\b${domain}:\\s*router\\(`).test(router)) failures.push(`missing API router domain ${domain}`);
 for (const procedure of ["catalog","runtimeAdapters","runtimeHealth","run","approveTask","createObservation","promoteObservationToFinding","createSubmission","createArchive","verifyArchive","runRestoreDrill"]) if (!new RegExp(`\\b${procedure}:\\s*protectedProcedure`).test(router)) failures.push(`missing protected API procedure ${procedure}`);
 
-const routeSource = read("client/src/authenticatedRoutes.ts");
+const routeSource = read("apps/frontend-angular/src/authenticatedRoutes.ts");
 const routes = routeSource.match(/path:\s*"[^"]+"/g) ?? [];
 requireAtLeast(routes.length, 27, "authenticated routes");
 const requiredRoutes = [
@@ -51,12 +51,12 @@ const utfExecuteIndex = routeSource.indexOf('path: "/utf/runners/:id/execute"');
 const utfDynamicIndex = routeSource.indexOf('path: "/utf/runners/:id"');
 if (utfExecuteIndex < 0 || utfDynamicIndex < 0 || utfExecuteIndex > utfDynamicIndex) failures.push("UTF execute route must precede dynamic runner-id route to prevent first-match shadowing");
 
-const publicSource = read("client/src/publicRoutes.ts");
+const publicSource = read("apps/frontend-angular/src/publicRoutes.ts");
 for (const route of ["/","/product","/features","/how-it-works","/bug-bounty","/for-researchers","/trust-center","/docs","/blog","/api-playground","/security","/pricing","/changelog","/roadmap","/status","/contact","/academy","/legal/privacy","/legal/terms","/legal/cookies","/legal/acceptable-use","/legal/responsible-disclosure","/legal/data-processing","/client/:orgSlug"]) if (!publicSource.includes(`path: "${route}"`)) failures.push(`missing public blueprint route ${route}`);
 
 const domainDocs = ["01-identity","02-organization","03-asset-intel","04-threat-surface","05-vuln-research","06-offensive-engine","07-red-team","08-purple-team","09-bug-bounty","10-findings","11-reporting","12-threat-intel","13-ai-automation","14-governance"];
 for (const doc of domainDocs) requireFile(`docs/domain/${doc}.md`);
-for (const file of ["docs/application-menu.md","docs/database-schema-contract.md","docs/api/openapi.yaml","docs/api/endpoint-inventory.md","docs/blueprint-conformance.md","docs/launch-gate.md","docs/architecture/system-architecture.md","docs/architecture/data-flow.md","docs/architecture/security-model.md","railway.json","deploy/cloudflare/wrangler.toml","deploy/supabase/config.toml","deploy/firebase/firebase.json","deploy/firebase/.firebaserc","deploy/firebase/firestore.rules","deploy/firebase/firestore.indexes.json","deploy/cloudflare/src/index.ts","deploy/firebase/functions/index.js","deploy/firebase/public/index.html","server/tool-simulation.ts","server/tool-simulation.test.ts","server/simulation-rest.ts","server/chain-engine.ts","server/egress-policy.ts","server/mobile-analysis.ts","client/src/pages/ClientPortal.tsx","server/v4-gap-closure.ts","server/v4-gap-closure.test.ts"]) requireFile(file);
+for (const file of ["docs/application-menu.md","docs/database-schema-contract.md","docs/api/openapi.yaml","docs/api/endpoint-inventory.md","docs/blueprint-conformance.md","docs/launch-gate.md","docs/architecture/system-architecture.md","docs/architecture/data-flow.md","docs/architecture/security-model.md","railway.json","deploy/cloudflare/wrangler.toml","deploy/supabase/config.toml","deploy/firebase/firebase.json","deploy/firebase/.firebaserc","deploy/firebase/firestore.rules","deploy/firebase/firestore.indexes.json","deploy/cloudflare/src/index.ts","deploy/firebase/functions/index.js","deploy/firebase/public/index.html","server/tool-simulation.ts","server/tool-simulation.test.ts","server/simulation-rest.ts","server/chain-engine.ts","server/egress-policy.ts","server/mobile-analysis.ts","apps/frontend-angular/src/pages/ClientPortal.tsx","server/v4-gap-closure.ts","server/v4-gap-closure.test.ts"]) requireFile(file);
 
 const gapClosure = read("server/v4-gap-closure.ts");
 for (const marker of ["proxy-egress-mesh","mobile-analysis","database-consolidation","custom-script-safety","chain-builder","governed-c2","client-portal","agent-namespaces","targetExecutionEnabled: false","privilegedRuntime: false"]) if (!gapClosure.includes(marker)) failures.push(`V4 gap closure contract missing ${marker}`);
@@ -85,7 +85,7 @@ for (const marker of ["createExecutionLedger","getExecutionProgress","advanceExe
 const progressEvents = read("server/execution-progress-events.ts");
 for (const marker of ["execution.queued","execution.started","execution.progress","execution.completed","execution.failed"]) if (!progressEvents.includes(`"${marker}"`)) failures.push(`missing execution progress event ${marker}`);
 if (!read("server/rest-v1.ts").includes("/api/v1/executions/:jobId")) failures.push("missing authenticated execution progress endpoint");
-if (!read("client/src/pages/MissionControl.tsx").includes("/api/v1/executions/")) failures.push("Mission Control is not bound to persisted execution progress");
+if (!read("apps/frontend-angular/src/pages/MissionControl.tsx").includes("/api/v1/executions/")) failures.push("Mission Control is not bound to persisted execution progress");
 
 const simulation = read("server/tool-simulation.ts");
 for (const marker of ["simulateRegisteredTool","synthetic","inputSha256","mode: \"simulation\""]) if (!simulation.includes(marker)) failures.push(`simulation engine missing ${marker}`);

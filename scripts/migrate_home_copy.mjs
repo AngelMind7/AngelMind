@@ -1,7 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 
-const file = path.resolve(import.meta.dirname, "../client/src/pages/Home.tsx");
+const file = path.resolve(import.meta.dirname, "../apps/frontend-angular/src/pages/Home.tsx");
 let source = await readFile(file, "utf8");
 const pairs = [
   ["<Eyebrow>Authorized security research · internal command interface</Eyebrow>", "<Eyebrow>{copy(\"eyebrow\")}</Eyebrow>"],

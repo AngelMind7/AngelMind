@@ -8,7 +8,7 @@ from openai import OpenAI
 ROOT = Path(__file__).resolve().parents[1]
 TARGETS = {"id": "Indonesian", "ms": "Malay", "ar": "Arabic", "zh-CN": "Simplified Chinese", "ja": "Japanese", "ko": "Korean", "es": "Spanish", "pt": "Portuguese", "fr": "French", "de": "German", "ru": "Russian", "hi": "Hindi", "vi": "Vietnamese", "th": "Thai", "tr": "Turkish", "pl": "Polish", "nl": "Dutch", "it": "Italian", "sv": "Swedish"}
 RESIDUAL = re.compile(r"no target contact|no autonomous submission|no external delivery|no unverified claims", re.I)
-path = ROOT / "client/src/locales/marketing-copy.json"
+path = ROOT / "apps/frontend-angular/src/locales/marketing-copy.json"
 resource = json.loads(path.read_text(encoding="utf-8"))
 
 def translate(code, language, source):

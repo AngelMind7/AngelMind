@@ -11,7 +11,7 @@ Repository AngelMind berada dalam kondisi **aktif dan terintegrasi untuk control
 
 Namun repository **belum memenuhi seluruh blueprint V5.3 sebagai platform end-to-end penuh**. Gap terbesar berada pada identity/account security lengkap, domain research yang lebih kaya, provenance dan knowledge graph penuh, generic job/event adoption, admin console, pagination lintas domain, email/provider verification, browser E2E authenticated, performance, dan live deployment verification.
 
-Audit lokal menemukan **601 file** pada area `client/src`, `server`, `drizzle`, `e2e`, dan `scripts`. Contract surface saat ini terdiri dari **226 concrete tRPC leaves, 63 REST routes menurut master contract, dan 267 named API contract entries**. Repository memiliki **75 migration SQL dan 75 journal entries** yang konsisten.
+Audit lokal menemukan **601 file** pada area `apps/frontend-angular/src`, `server`, `drizzle`, `e2e`, dan `scripts`. Contract surface saat ini terdiri dari **226 concrete tRPC leaves, 63 REST routes menurut master contract, dan 267 named API contract entries**. Repository memiliki **75 migration SQL dan 75 journal entries** yang konsisten.
 
 Tidak ditemukan pemakaian route aktif yang memetakan `BlueprintModule`; modul generic legacy tersebut telah dihapus setelah verifikasi referensi route. Ini bukan bukti bahwa seluruh route masih generic.
 
@@ -91,9 +91,9 @@ Frontend memiliki page khusus untuk Evidence Vault, Playbooks, AI Workers, Agent
 
 Temuan utama frontend adalah sebagai berikut:
 
-1. `client/src/pages/Organizations.tsx` kini menyediakan perubahan role anggota, protected owner state, effective privileges, dan role audit history.
-2. `client/src/pages/Findings.tsx` menyediakan upload evidence langsung dari retest workflow.
-3. `client/src/authenticatedRoutes.ts` tidak memetakan `BlueprintModule` ke route aktif.
+1. `apps/frontend-angular/src/pages/Organizations.tsx` kini menyediakan perubahan role anggota, protected owner state, effective privileges, dan role audit history.
+2. `apps/frontend-angular/src/pages/Findings.tsx` menyediakan upload evidence langsung dari retest workflow.
+3. `apps/frontend-angular/src/authenticatedRoutes.ts` tidak memetakan `BlueprintModule` ke route aktif.
 4. `BlueprintModule.tsx` telah dihapus setelah seluruh referensi build/contract diperiksa.
 5. Beberapa page masih berupa file besar dengan banyak inline JSX. Ini meningkatkan biaya maintainability dan menyulitkan browser-level test isolation.
 6. UI state contracts pada core surfaces tersedia, tetapi audit penuh terhadap loading/error/empty/accessibility state untuk setiap sub-route belum selesai.
@@ -145,10 +145,10 @@ Endpoint backward-compatible `organization.roleAudit` tetap bounded, sedangkan `
 
 | File/area | Status audit | Tindakan yang disarankan |
 |---|---|---|
-| `client/src/pages/BlueprintModule.tsx` | Dihapus setelah reference check | Pastikan tidak muncul kembali pada audit berikutnya |
-| `client/src/authenticatedRoutes.ts` | Banyak route dikelompokkan ke page domain yang sama | Pecah feature folders secara bertahap, bukan sekadar route rename |
-| `client/src/pages/Organizations.tsx` | Fitur bekerja, tetapi page padat | Pecah member management, privilege viewer, audit history menjadi components |
-| `client/src/pages/Findings.tsx` | Retest/evidence bekerja, tetapi page padat | Pisahkan retest panel dan evidence upload hook |
+| `apps/frontend-angular/src/pages/BlueprintModule.tsx` | Dihapus setelah reference check | Pastikan tidak muncul kembali pada audit berikutnya |
+| `apps/frontend-angular/src/authenticatedRoutes.ts` | Banyak route dikelompokkan ke page domain yang sama | Pecah feature folders secara bertahap, bukan sekadar route rename |
+| `apps/frontend-angular/src/pages/Organizations.tsx` | Fitur bekerja, tetapi page padat | Pecah member management, privilege viewer, audit history menjadi components |
+| `apps/frontend-angular/src/pages/Findings.tsx` | Retest/evidence bekerja, tetapi page padat | Pisahkan retest panel dan evidence upload hook |
 | `server/organization.ts` | Role audit cursor/filter/export sudah tersedia | Tambahkan browser E2E setelah staging token tersedia |
 | `server/routers.ts` | API surface besar dan terpusat | Pertimbangkan domain router split tanpa mengubah contract |
 | `docs/blueprint-coverage.md` | Ada stale descriptions | Sinkronkan seluruh row dengan current `main` |
@@ -187,8 +187,8 @@ Audit ini merekomendasikan agar status proyek diperlakukan sebagai **repository-
 [3]: ./e2e.md "AngelMind Browser E2E Verification"
 [4]: ../playwright.config.ts "AngelMind Playwright Configuration"
 [5]: ../server/organization.ts "AngelMind Organization Domain Service"
-[6]: ../client/src/pages/Organizations.tsx "AngelMind Organizations UI"
-[7]: ../client/src/pages/Findings.tsx "AngelMind Findings and Retest UI"
+[6]: ../apps/frontend-angular/src/pages/Organizations.tsx "AngelMind Organizations UI"
+[7]: ../apps/frontend-angular/src/pages/Findings.tsx "AngelMind Findings and Retest UI"
 [8]: ../drizzle/0074_organization_audit_events.sql "Organization Audit Events Migration"
-[9]: ../client/src/pages/BlueprintModule.tsx "Legacy Blueprint Module"
-[10]: ../client/src/authenticatedRoutes.ts "Authenticated Route Map"
+[9]: ../apps/frontend-angular/src/pages/BlueprintModule.tsx "Legacy Blueprint Module"
+[10]: ../apps/frontend-angular/src/authenticatedRoutes.ts "Authenticated Route Map"

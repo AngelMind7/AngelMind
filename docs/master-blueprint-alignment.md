@@ -55,7 +55,7 @@ AngelMind/
 │       └── locales/                 # Typed UI resources; English fallback
 ├── server/                          # tRPC procedures, policy-bound service workflows
 │   └── control-plane/               # Roles, guardrails, rehearsal, audit, assurance contracts
-├── research-service/                # Python reference contracts and deterministic tests only
+├── apps/orchestrator-langgraph/                # Python reference contracts and deterministic tests only
 │   └── src/angelmind_research/
 ├── drizzle/                         # MySQL schema and forward-only migrations
 ├── docs/                            # Architecture, safety, i18n, operations, rollout evidence

@@ -3,7 +3,7 @@
 This package is the Python 3.12+ reference implementation of the core safety contract. It contains only immutable domain models, deterministic scope and governance guards, and a network-free rehearsal primitive. It intentionally has no scanner, HTTP client, browser automation, credential loader, fingerprint rotation, or active research capability.
 
 ```bash
-cd research-service
+cd apps/orchestrator-langgraph
 python -m pip install -e '.[dev]'
 PYTHONPATH=src pytest
 ruff check .

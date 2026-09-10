@@ -4,7 +4,7 @@ This record reconciles the master specification with the current implementation 
 
 ## Repository layout decision
 
-The repository uses a modular monolith layout (`client/`, `server/`, `shared/`, `drizzle/`, `runtime/`, and `research-service/`) rather than duplicating code into `apps/`, `packages/`, `database/`, and `tool-registry/`. Domain boundaries are preserved by server modules and package-level contracts. New code must remain in the existing layout unless a migration plan is approved; empty compatibility directories are not created merely to satisfy a textual tree.
+The repository uses a modular monolith layout (`client/`, `server/`, `shared/`, `drizzle/`, `runtime/`, and `apps/orchestrator-langgraph/`) rather than duplicating code into `apps/`, `packages/`, `database/`, and `tool-registry/`. Domain boundaries are preserved by server modules and package-level contracts. New code must remain in the existing layout unless a migration plan is approved; empty compatibility directories are not created merely to satisfy a textual tree.
 
 ## Database decision
 

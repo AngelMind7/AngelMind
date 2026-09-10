@@ -46,8 +46,8 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install safety reference package
-        working-directory: research-service
+        working-directory: apps/orchestrator-langgraph
         run: python -m pip install -e '.[dev]'
       - name: Run deterministic safety tests
-        working-directory: research-service
+        working-directory: apps/orchestrator-langgraph
         run: PYTHONPATH=src pytest

@@ -29,7 +29,7 @@ The repository includes automated contracts for:
 - migration journal/safety/rollback consistency;
 - provider-neutral source boundaries;
 - TypeScript/Vitest/build/bundle/PWA checks in CI;
-- Python research-service tests and lint;
+- Python apps/orchestrator-langgraph tests and lint;
 - ephemeral database integration contracts;
 - release-readiness and container/tool-runtime contracts;
 - staging-safe E2E, accessibility, security, load, and post-deploy verification workflows.

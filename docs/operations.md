@@ -2,7 +2,7 @@
 
 ## Local development
 
-Run the dashboard with `pnpm dev`, verify TypeScript with `pnpm check`, and run the safety suite with `pnpm test`. The Python reference package is intentionally standalone: create a Python 3.12 environment, install the `dev` extra, and execute `pytest` from `research-service`.
+Run the dashboard with `pnpm dev`, verify TypeScript with `pnpm check`, and run the safety suite with `pnpm test`. The Python reference package is intentionally standalone: create a Python 3.12 environment, install the `dev` extra, and execute `pytest` from `apps/orchestrator-langgraph`.
 
 ## Scheduling
 

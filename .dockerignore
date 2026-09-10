@@ -12,7 +12,7 @@ test-results
 .DS_Store
 uploads
 /tmp
-research-service/.venv
-research-service/__pycache__
+apps/orchestrator-langgraph/.venv
+apps/orchestrator-langgraph/__pycache__
 __pycache__
 *.pyc

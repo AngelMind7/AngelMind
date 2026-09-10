@@ -3,5 +3,5 @@
 
 # Safety-sensitive areas require repository-owner review.
 server/control-plane/ @AngelMind7
-research-service/ @AngelMind7
+apps/orchestrator-langgraph/ @AngelMind7
 infrastructure/ @AngelMind7

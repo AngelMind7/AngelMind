@@ -14,7 +14,7 @@ This branch migrates the existing AngelMind implementation toward the repository
 | `contracts` | `contracts/`, `docs/`, route/schema declarations | Contract files are canonical; generated or duplicate declarations must be proven equivalent first. |
 | `lab` | `lab/self-contained`, `docker-compose.yml`, integration fixtures | Expand by scenario and acceptance row. |
 | `deploy` | `infrastructure/`, Railway files, Dockerfiles, workflows | Provider-specific files remain until replacement deployment is verified. |
-| `tests` | `server/**/*.test.ts`, `client/**/*.test.ts`, `e2e/`, `research-service/tests` | Move tests only when tooling and coverage remain identical. |
+| `tests` | `server/**/*.test.ts`, `client/**/*.test.ts`, `e2e/`, `apps/orchestrator-langgraph/tests` | Move tests only when tooling and coverage remain identical. |
 
 ## Safety rules
 

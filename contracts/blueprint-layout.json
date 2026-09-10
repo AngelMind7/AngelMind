@@ -11,6 +11,6 @@
     "contracts": { "current": ["contracts", "docs", "server/control-plane"], "status": "in-progress", "deletionBlockedUntil": ["contract-checks-green"] },
     "lab": { "current": ["lab", "docker-compose.yml", "e2e"], "status": "scaffolded", "deletionBlockedUntil": ["p0-p1-parity", "recovery-parity"] },
     "deploy": { "current": ["infrastructure", "Dockerfile", "railway.toml", ".github/workflows"], "status": "scaffolded", "deletionBlockedUntil": ["staging-deploy-parity", "rollback-proof"] },
-    "tests": { "current": ["server/**/*.test.ts", "client/**/*.test.ts", "research-service/tests", "e2e"], "status": "scaffolded", "deletionBlockedUntil": ["coverage-parity", "full-suite-green"] }
+    "tests": { "current": ["server/**/*.test.ts", "client/**/*.test.ts", "apps/orchestrator-langgraph/tests", "e2e"], "status": "scaffolded", "deletionBlockedUntil": ["coverage-parity", "full-suite-green"] }
   }
 }

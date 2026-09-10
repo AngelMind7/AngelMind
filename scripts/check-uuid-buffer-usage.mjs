@@ -2,7 +2,7 @@ import { readdir, readFile } from "node:fs/promises";
 import path from "node:path";
 
 const root = process.cwd();
-const sourceRoots = ["server", "client", "shared", "research-service", "scripts"];
+const sourceRoots = ["server", "client", "shared", "apps/orchestrator-langgraph", "scripts"];
 const sourceExtensions = new Set([".ts", ".tsx", ".js", ".jsx", ".mjs", ".cjs"]);
 const ignoredDirectories = new Set(["node_modules", "dist", "coverage", ".git"]);
 const uuidBufferCall = /(?:\b(?:uuid\s*\.\s*)?v[356]\s*\(|\b(?:uuid\s*\.\s*)?\b(?:v3|v5|v6)\s*\()/g;

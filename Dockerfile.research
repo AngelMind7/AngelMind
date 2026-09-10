@@ -6,8 +6,8 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
 RUN useradd --create-home --shell /usr/sbin/nologin angelmind
-COPY research-service ./research-service
-RUN python -m pip install --no-cache-dir ./research-service \
+COPY apps/orchestrator-langgraph ./apps/orchestrator-langgraph
+RUN python -m pip install --no-cache-dir ./apps/orchestrator-langgraph \
     && chown -R angelmind:angelmind /app
 
 USER angelmind

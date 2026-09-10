@@ -118,5 +118,5 @@ __pycache__/
 .project-config.json
 
 # Generated Python/runtime artifacts
-research-service/.pytest_cache/
-research-service/**/__pycache__/
+apps/orchestrator-langgraph/.pytest_cache/
+apps/orchestrator-langgraph/**/__pycache__/

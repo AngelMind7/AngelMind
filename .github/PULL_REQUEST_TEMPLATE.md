@@ -13,7 +13,7 @@ Describe what changed and why.
 
 - [ ] `pnpm check`
 - [ ] `pnpm test -- --run`
-- [ ] Python safety tests, if `research-service/` changed
+- [ ] Python safety tests, if `apps/orchestrator-langgraph/` changed
 - [ ] `git diff --check`
 
 ## Evidence and rollback

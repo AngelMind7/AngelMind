@@ -49,6 +49,7 @@ import * as reputation from "./reputation";
 import * as integrations from "./integrations";
 import { planIntegrationSync } from "./integration-contract";
 import { buildUsageInvoicePreview } from "./usage-billing-contract";
+import { analyzeKnowledgeGraph } from "./knowledge-graph-contract";
 
 const workspaceInput = z.object({
   name: z.string().min(2).max(120),
@@ -1647,6 +1648,12 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         knowledgeGraph.traverseGraph(ctx.user.id, input)
       ),
+    analyze: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), asOf: z.coerce.date().optional() }))
+      .query(async ({ ctx, input }) => {
+        const graph = await knowledgeGraph.listGraph(ctx.user.id, input.workspaceId, { asOf: input.asOf });
+        return analyzeKnowledgeGraph(graph.nodes, graph.edges);
+      }),
   }),
   evidence: router({
     list: protectedProcedure

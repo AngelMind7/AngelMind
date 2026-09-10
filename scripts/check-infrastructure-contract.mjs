@@ -20,15 +20,15 @@ const requiredFiles = [
   ".github/workflows/blueprint-gate.yml",
   ".github/workflows/infrastructure-contract.yml",
   "railway.json",
-  "infrastructure/cloudflare/wrangler.toml",
-  "infrastructure/cloudflare/src/index.ts",
-  "infrastructure/supabase/config.toml",
-  "infrastructure/firebase/firebase.json",
-  "infrastructure/firebase/.firebaserc",
-  "infrastructure/firebase/firestore.rules",
-  "infrastructure/firebase/firestore.indexes.json",
-  "infrastructure/firebase/functions/index.js",
-  "infrastructure/firebase/public/index.html",
+  "deploy/cloudflare/wrangler.toml",
+  "deploy/cloudflare/src/index.ts",
+  "deploy/supabase/config.toml",
+  "deploy/firebase/firebase.json",
+  "deploy/firebase/.firebaserc",
+  "deploy/firebase/firestore.rules",
+  "deploy/firebase/firestore.indexes.json",
+  "deploy/firebase/functions/index.js",
+  "deploy/firebase/public/index.html",
 ];
 requiredFiles.forEach(requireFile);
 
@@ -44,31 +44,31 @@ requireMarker("railway.json", "ON_FAILURE");
 requireMarker("railway.json", "restartPolicyMaxRetries");
 
 // Cloudflare: Workers + KV/R2/D1/Durable Objects descriptors.
-requireMarker("infrastructure/cloudflare/wrangler.toml", "workers_dev");
-requireMarker("infrastructure/cloudflare/wrangler.toml", "[[kv_namespaces]]");
-requireMarker("infrastructure/cloudflare/wrangler.toml", "[[r2_buckets]]");
-requireMarker("infrastructure/cloudflare/wrangler.toml", "[[d1_databases]]");
-requireMarker("infrastructure/cloudflare/wrangler.toml", "[durable_objects]");
-requireMarker("infrastructure/cloudflare/src/index.ts", "fetch");
-requireMarker("infrastructure/cloudflare/src/index.ts", "EXECUTION_ROOMS");
-requireMarker("infrastructure/cloudflare/src/index.ts", "EDGE_ROUTE_NOT_CONFIGURED");
+requireMarker("deploy/cloudflare/wrangler.toml", "workers_dev");
+requireMarker("deploy/cloudflare/wrangler.toml", "[[kv_namespaces]]");
+requireMarker("deploy/cloudflare/wrangler.toml", "[[r2_buckets]]");
+requireMarker("deploy/cloudflare/wrangler.toml", "[[d1_databases]]");
+requireMarker("deploy/cloudflare/wrangler.toml", "[durable_objects]");
+requireMarker("deploy/cloudflare/src/index.ts", "fetch");
+requireMarker("deploy/cloudflare/src/index.ts", "EXECUTION_ROOMS");
+requireMarker("deploy/cloudflare/src/index.ts", "EDGE_ROUTE_NOT_CONFIGURED");
 
 // Supabase: API/Auth/Realtime configuration boundary.
-requireMarker("infrastructure/supabase/config.toml", "[api]");
-requireMarker("infrastructure/supabase/config.toml", "[auth]");
-requireMarker("infrastructure/supabase/config.toml", "[realtime]");
+requireMarker("deploy/supabase/config.toml", "[api]");
+requireMarker("deploy/supabase/config.toml", "[auth]");
+requireMarker("deploy/supabase/config.toml", "[realtime]");
 
 // Firebase: backup Auth/cache/push/Functions boundary with Firestore rules.
-requireMarker("infrastructure/firebase/firebase.json", "functions");
-requireMarker("infrastructure/firebase/firebase.json", "firestore");
-requireMarker("infrastructure/firebase/firestore.rules", "match /databases/{database}/documents");
-requireMarker("infrastructure/firebase/firestore.rules", "allow read, write: if false");
-requireMarker("infrastructure/firebase/functions/index.js", "exports");
-requireMarker("infrastructure/firebase/public/index.html", "AngelMind");
+requireMarker("deploy/firebase/firebase.json", "functions");
+requireMarker("deploy/firebase/firebase.json", "firestore");
+requireMarker("deploy/firebase/firestore.rules", "match /databases/{database}/documents");
+requireMarker("deploy/firebase/firestore.rules", "allow read, write: if false");
+requireMarker("deploy/firebase/functions/index.js", "exports");
+requireMarker("deploy/firebase/public/index.html", "AngelMind");
 
 // The repository contract intentionally uses placeholders for provider IDs/secrets;
 // live credentials, DNS, paid plans, and provider accounts are never committed.
-const cloudflare = read("infrastructure/cloudflare/wrangler.toml");
+const cloudflare = read("deploy/cloudflare/wrangler.toml");
 const railway = read("railway.json");
 if (/(api[_-]?token|service[_-]?key|secret[_-]?key)\s*=\s*[\"'][^\"']+[\"']/i.test(cloudflare)) {
   failures.push("Cloudflare descriptor appears to contain a committed secret/token");

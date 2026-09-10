@@ -239,7 +239,7 @@ ai-bug-bounty/
 │       ├── bug_report.md
 │       └── feature_request.md
 │
-├── 📁 infrastructure/
+├── 📁 deploy/
 │   ├── terraform/
 │   │   ├── modules/
 │   │   │   ├── vpc/

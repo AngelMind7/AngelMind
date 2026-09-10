@@ -12,7 +12,7 @@ AngelMind saat ini adalah satu control-plane repository dengan dua runtime utama
 | `scripts/` | Tooling maintenance dan one-off content migration | Campuran; script yang sudah dipakai perlu diarsipkan |
 | `docs/` | Architecture, governance, deployment, readiness, dan blueprint mapping | Aktif |
 | `.github/workflows/` | CI, container validation, E2E smoke, dependency/security checks | Aktif |
-| `infrastructure/` | Prometheus scrape configuration dan infrastructure notes | Aktif |
+| `deploy/` | Prometheus scrape configuration dan infrastructure notes | Aktif |
 | `ai-core/`, `api/`, `web/` | Dokumentasi boundary arsitektur masa depan; runtime source of truth tetap `apps/orchestrator-langgraph/`, `server/`, dan `client/` | Sengaja belum menjadi package/runtime terpisah |
 
 ## Boundary yang wajib dipertahankan

@@ -61,7 +61,7 @@ AngelMind/
 ├── docs/                            # Architecture, safety, i18n, operations, rollout evidence
 ├── scripts/                         # Repeatable maintenance and locale-resource generation
 ├── .github/                         # CI, dependency review, code ownership, issue templates
-└── infrastructure/                  # Deferred, reviewed deployment descriptors—not a default runtime dependency
+└── deploy/                  # Deferred, reviewed deployment descriptors—not a default runtime dependency
 ```
 
 The proposed `ai-core`, `api`, `web`, and `infrastructure` domains from the source blueprint are retained as architectural boundaries, not prematurely created services. An API gateway or Python service split is only justified when contract ownership, latency, security isolation, or runtime needs make the integrated service insufficient. Any future service contract must be versioned, authenticated, workspace-scoped, and guarded before feature logic executes.

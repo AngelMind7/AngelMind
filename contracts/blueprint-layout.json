@@ -6,11 +6,11 @@
   "targets": {
     "apps/frontend-angular": { "current": ["client"], "status": "scaffolded", "deletionBlockedUntil": ["frontend-build-parity", "route-test-parity"] },
     "apps/gateway-dotnet": { "current": ["server/_core", "server/rest-v1.ts", "server/routers.ts"], "status": "scaffolded", "deletionBlockedUntil": ["api-parity", "auth-parity", "database-parity"] },
-    "apps/orchestrator-langgraph": { "current": ["server/governed-execution-service.ts", "server/worker.ts", "server/research-workflow.ts"], "status": "scaffolded", "deletionBlockedUntil": ["worker-parity", "ledger-parity", "acceptance-parity"] },
+    "apps/orchestrator-langgraph": { "current": ["apps/orchestrator-langgraph", "server/governed-execution-service.ts", "server/worker.ts"], "status": "in-progress", "deletionBlockedUntil": ["worker-parity", "ledger-parity", "acceptance-parity"] },
     "src/c2": { "current": ["src/c2/server/api/rest-v1-client.ts", "src/c2/modules/adapter_runtime", "server", "shared"], "status": "in-progress", "deletionBlockedUntil": ["domain-parity", "import-parity"] },
     "contracts": { "current": ["contracts", "docs", "server/control-plane"], "status": "in-progress", "deletionBlockedUntil": ["contract-checks-green"] },
     "lab": { "current": ["lab", "docker-compose.yml", "e2e"], "status": "scaffolded", "deletionBlockedUntil": ["p0-p1-parity", "recovery-parity"] },
-    "deploy": { "current": ["infrastructure", "Dockerfile", "railway.toml", ".github/workflows"], "status": "scaffolded", "deletionBlockedUntil": ["staging-deploy-parity", "rollback-proof"] },
+    "deploy": { "current": ["deploy", "Dockerfile", "railway.toml", ".github/workflows"], "status": "in-progress", "deletionBlockedUntil": ["staging-deploy-parity", "rollback-proof"] },
     "tests": { "current": ["server/**/*.test.ts", "client/**/*.test.ts", "apps/orchestrator-langgraph/tests", "e2e"], "status": "scaffolded", "deletionBlockedUntil": ["coverage-parity", "full-suite-green"] }
   }
 }

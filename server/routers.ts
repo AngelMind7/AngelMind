@@ -51,6 +51,7 @@ import { planIntegrationSync } from "./integration-contract";
 import { buildUsageInvoicePreview } from "./usage-billing-contract";
 import { analyzeKnowledgeGraph } from "./knowledge-graph-contract";
 import * as persistedOrchestration from "./persisted-orchestration";
+import { evaluateModelHealth } from "./ai-health-contract";
 
 const workspaceInput = z.object({
   name: z.string().min(2).max(120),
@@ -1267,6 +1268,7 @@ export const appRouter = router({
   }),
   ai: router({
     models: protectedProcedure.query(() => aiPlatform.listModels()),
+    healthSnapshot: protectedProcedure.query(async () => (await aiPlatform.listModels()).map(model => evaluateModelHealth(model))),
     circuitStates: protectedProcedure.query(({ ctx }) => {
       if (ctx.user.role !== "admin") throw new Error("Admin role is required to view AI circuit diagnostics.");
       return listDistributedCircuitStates();

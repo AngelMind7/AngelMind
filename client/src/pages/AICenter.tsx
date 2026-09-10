@@ -14,6 +14,7 @@ export default function AICenter() {
   const [workspaceId, setWorkspaceId] = useState<number>();
   const selectedWorkspaceId = workspaceId ?? workspaces.data?.[0]?.id;
   const models = trpc.ai.models.useQuery();
+  const health = trpc.ai.healthSnapshot.useQuery();
   const runs = trpc.ai.runs.useQuery({ workspaceId: selectedWorkspaceId! }, { enabled: Boolean(selectedWorkspaceId) });
   const jobs = trpc.ai.jobs.useQuery({ workspaceId: selectedWorkspaceId }, { enabled: Boolean(selectedWorkspaceId) });
   const [modelKey, setModelKey] = useState("");
@@ -22,7 +23,7 @@ export default function AICenter() {
   const [jobKind, setJobKind] = useState("research-processing");
   const utils = trpc.useUtils();
   useEffect(() => { if (!modelKey && models.data?.[0]?.modelKey) setModelKey(models.data[0].modelKey); }, [modelKey, models.data]);
-  const refresh = () => { void models.refetch(); void runs.refetch(); void jobs.refetch(); };
+  const refresh = () => { void models.refetch(); void health.refetch(); void runs.refetch(); void jobs.refetch(); };
   const startRun = trpc.ai.startRun.useMutation({ onSuccess: () => { void runs.refetch(); toast.success("AI run trace dibuat dengan status queued."); }, onError: error => toast.error(error.message) });
   const enqueueJob = trpc.ai.enqueueJob.useMutation({ onSuccess: () => { void jobs.refetch(); toast.success("Job dimasukkan ke durable queue."); }, onError: error => toast.error(error.message) });
   const selectedModel = models.data?.find(model => model.modelKey === modelKey);

@@ -7,6 +7,11 @@ export const integrationProviders = ["github", "gitlab", "slack", "discord", "cu
 export const integrationStatuses = ["draft", "connected", "disabled"] as const;
 export type IntegrationProvider = (typeof integrationProviders)[number];
 
+export function validateSecretReference(value: string | undefined) {
+  if (!value) return true;
+  return /^(env|vault|secret|lab):[A-Za-z0-9._:/-]{2,500}$/.test(value.trim());
+}
+
 export function assertIntegrationAccess(userId: number, workspaceId: number, intent: "read" | "manage") {
   if (!Number.isInteger(userId) || userId < 1 || !Number.isInteger(workspaceId) || workspaceId < 1 || !canAccessWorkspace(userId, workspaceId, intent)) throw new Error("Workspace access denied.");
 }
@@ -24,7 +29,7 @@ export async function upsertConnection(userId: number, input: { workspaceId: num
   assertAccess(userId, input.workspaceId, "manage");
   if (!integrationProviders.includes(input.provider) || input.name.trim().length < 2 || input.name.length > 160 || input.scopes.length > 50 || input.scopes.some(scope => scope.trim().length < 1 || scope.length > 80)) throw new Error("Integration input is invalid.");
   if (input.endpoint && !/^https:\/\//i.test(input.endpoint)) throw new Error("Integration endpoint must use HTTPS.");
-  if (input.secretReference && input.secretReference.length > 512) throw new Error("Integration secret reference is too long.");
+  if (input.secretReference && (input.secretReference.length > 512 || !validateSecretReference(input.secretReference))) throw new Error("Integration secret reference must be a non-secret env, vault, secret, or lab reference.");
   const db = await getDb();
   if (!db) throw new Error("Database tidak tersedia.");
   await db.insert(integrationConnections).values({ workspaceId: input.workspaceId, provider: input.provider, name: input.name.trim(), endpoint: input.endpoint ?? null, secretReference: input.secretReference ?? null, scopes: JSON.stringify(input.scopes), status: "draft", createdByUserId: userId, updatedAt: new Date() }).onDuplicateKeyUpdate({ set: { name: input.name.trim(), endpoint: input.endpoint ?? null, secretReference: input.secretReference ?? null, scopes: JSON.stringify(input.scopes), updatedAt: new Date() } });

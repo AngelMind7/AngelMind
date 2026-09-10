@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { planIntegrationSync, validateIntegrationScopes } from "./integration-contract";
+import { validateSecretReference } from "./integrations";
 
 describe("self-contained integration contract", () => {
   it("validates provider scopes without contacting a provider", () => {
@@ -21,5 +22,11 @@ describe("self-contained integration contract", () => {
     const preview = planIntegrationSync({ provider: "slack", status: "draft", scopes: ["messages:read"], fixture: JSON.stringify([{ externalId: "1", kind: "notification", title: "Synthetic", payload: {} }]) });
     expect(preview.accepted).toHaveLength(0);
     expect(preview.rejected[0]?.reason).toBe("connection_draft");
+  });
+
+  it("accepts secret references but rejects raw credential material", () => {
+    expect(validateSecretReference("env:ANGELMIND_PROVIDER_SECRET")).toBe(true);
+    expect(validateSecretReference("vault:workspace/provider/token")).toBe(true);
+    expect(validateSecretReference("sk-live-raw-secret-value")).toBe(false);
   });
 });

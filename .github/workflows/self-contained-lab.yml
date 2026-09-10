@@ -1,0 +1,35 @@
+name: Self-Contained Lab Contract
+
+on:
+  push:
+    paths:
+      - "lab/self-contained/**"
+      - "scripts/check-self-contained-lab.mjs"
+      - "package.json"
+      - ".github/workflows/self-contained-lab.yml"
+  pull_request:
+    paths:
+      - "lab/self-contained/**"
+      - "scripts/check-self-contained-lab.mjs"
+      - "package.json"
+      - ".github/workflows/self-contained-lab.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  manifest-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm check:self-contained-lab

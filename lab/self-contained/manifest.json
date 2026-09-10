@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "labId": "angelmind-self-contained-lab",
+  "mode": "private_reproducible",
+  "externalDependenciesAllowed": false,
+  "profiles": {
+    "core": {
+      "services": ["control-plane", "gateway", "worker", "postgres", "evidence", "report"],
+      "targets": ["scope-lab", "worker-lab", "evidence-lab"],
+      "acceptance": ["P0-01", "P0-02", "P0-03", "P0-04", "P0-05", "P0-06", "P0-07", "P0-08", "P0-09", "P0-10", "P0-11", "P0-12", "P0-13", "P0-14"]
+    },
+    "full": {
+      "services": ["control-plane", "gateway", "worker", "postgres", "mongo", "evidence", "report", "telemetry", "secret-service", "object-store", "local-cloud", "local-k8s", "private-chain"],
+      "targets": ["web-api-lab", "database-lab", "identity-lab", "network-lab", "deception-lab", "cloud-lab", "k8s-lab", "mobile-artifact-lab", "blockchain-lab", "telemetry-lab"],
+      "acceptance": ["P0-01", "P0-02", "P0-03", "P0-04", "P0-05", "P0-06", "P0-07", "P0-08", "P0-09", "P0-10", "P0-11", "P0-12", "P0-13", "P0-14", "P1-01", "P1-02", "P1-03", "P1-04", "P1-05", "P1-06", "P1-07", "P1-08", "P1-09", "P1-10", "P1-11", "P1-12", "P1-13", "P1-14", "P1-15", "P1-16", "P1-17", "P1-18"]
+    }
+  },
+  "replacementPolicy": {
+    "externalTarget": "synthetic_target",
+    "licensedTool": "controlled_validator",
+    "cloudAccount": "local_cloud_service",
+    "physicalDevice": "artifact_fixture_or_virtual_namespace",
+    "humanCiApproval": "signed_lab_authority",
+    "productionEvidence": "live_lab_evidence"
+  },
+  "invariants": [
+    "targetTraffic=false",
+    "no_plaintext_secrets",
+    "no_untracked_execution",
+    "high_critical_requires_approval",
+    "evidence_requires_hash_and_provenance",
+    "release_requires_p0_and_p1"
+  ]
+}

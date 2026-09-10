@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "source": "STRUKTURANGEL(1).pdf",
+  "critical": {
+    "P0-01": ["server/production-readiness.test.ts"],
+    "P0-02": ["server/control-plane/program-scope.test.ts", "server/control-plane/guardrails.test.ts"],
+    "P0-03": ["server/control-plane/authorized-capability.test.ts", "server/control-plane/run-eligibility.test.ts"],
+    "P0-04": ["server/worker.test.ts"],
+    "P0-05": ["server/execution-state-machine.test.ts", "server/execution-ledger.test.ts"],
+    "P0-06": ["server/execution-recovery.test.ts", "server/execution-orchestrator.test.ts"],
+    "P0-07": ["server/control-plane/evidence-validation.test.ts", "server/evidence-scanner.test.ts"],
+    "P0-08": ["server/control-plane/report-validation.test.ts", "server/control-plane/report-composer.test.ts"],
+    "P0-09": ["server/integration-contract.test.ts", "server/rest-v1.test.ts"],
+    "P0-10": ["server/execution-recovery.test.ts", "server/production-readiness.test.ts"],
+    "P0-11": ["server/execution-recovery.test.ts"],
+    "P0-12": ["server/control-plane/run-eligibility.test.ts", "server/control-plane/authorized-capability.test.ts"],
+    "P0-13": ["server/control-plane/audit-chain.test.ts", "server/control-plane/audit-state-crypto.test.ts"],
+    "P0-14": ["server/control-plane/access-matrix.test.ts", "server/organization-privileges.test.ts"]
+  },
+  "hard": {
+    "P1-01": ["server/security-platform.test.ts", "server/rest-v1.test.ts"],
+    "P1-02": ["server/control-plane/smart-contract-audit.test.ts", "server/storage.test.ts"],
+    "P1-03": ["server/mfa.test.ts", "server/firebase-auth.test.ts"],
+    "P1-04": ["server/runtime-resource-policy.test.ts", "server/runtime-sandbox.test.ts"],
+    "P1-05": ["server/purple-team.test.ts", "server/bug-bounty.test.ts"],
+    "P1-06": ["server/observability.test.ts", "server/event-contract.test.ts"],
+    "P1-07": ["server/persisted-orchestration.test.ts", "server/ai-orchestration.test.ts"],
+    "P1-08": ["server/security.test.ts", "server/ai-health-contract.test.ts"],
+    "P1-09": ["server/execution-recovery.test.ts", "server/asset-verification.test.ts"],
+    "P1-10": ["server/asset-verification.test.ts", "server/control-plane/archive-integrity.test.ts"],
+    "P1-11": ["server/production-readiness.test.ts", "server/execution-recovery.test.ts"],
+    "P1-12": ["server/production-readiness.test.ts"],
+    "P1-13": ["server/capability-registry.test.ts", "server/master-capability-registry.test.ts"],
+    "P1-14": ["server/research-vector-selection.test.ts"],
+    "P1-15": ["server/correlation-engine.test.ts", "server/chain-engine.test.ts"],
+    "P1-16": ["server/ai-automation.test.ts", "server/prompt-registry.test.ts"],
+    "P1-17": ["server/chain-engine.test.ts", "server/control-plane/knowledge-graph.test.ts"],
+    "P1-18": ["server/rate-limit.test.ts", "server/runtime-resource-policy.test.ts"]
+  }
+}

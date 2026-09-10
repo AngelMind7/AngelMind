@@ -65,6 +65,7 @@ export default function OperationsAdmin() {
           <WebhookPanel workspaceId={workspaceId} />
           <WebhookActivationRequest workspaceId={workspaceId} />
           <ArchivePanel workspaceId={workspaceId} />
+          <AuditChainPanel workspaceId={workspaceId} />
           <CircuitDashboard />
           <EmailProviderHealth />
           <AbuseDiagnostics />
@@ -79,6 +80,11 @@ export default function OperationsAdmin() {
       )}
     </div>
   );
+}
+
+function AuditChainPanel({ workspaceId }: { workspaceId: number }) {
+  const verification = trpc.audit.verifyChain.useQuery({ workspaceId }, { retry: false });
+  return <NeonFrame className="p-5 sm:p-6"><div className="flex items-center justify-between gap-3"><div><Eyebrow>Immutable audit verification</Eyebrow><h2 className="mt-2 font-display text-2xl font-bold text-white">Workspace chain health</h2></div><Badge variant="outline" className={verification.data?.valid ? "border-emerald-300/40 text-emerald-200" : "border-amber-300/40 text-amber-200"}>{verification.isLoading ? "checking" : verification.data?.valid ? "valid" : "review"}</Badge></div><p className="mt-3 text-sm leading-6 text-slate-500">Recomputes the workspace audit chain in order and surfaces the first broken entry without exposing audit payloads.</p>{verification.isLoading ? <p className="mt-5 text-xs text-slate-500">Verifying chain…</p> : verification.isError ? <p className="mt-5 text-xs text-rose-300">Verification failed: {verification.error.message}</p> : verification.data ? <div className="mt-5 grid gap-3 sm:grid-cols-3"><div className="border border-white/10 p-3"><p className="text-[10px] uppercase tracking-[.14em] text-slate-500">Entries checked</p><p className="mt-2 text-2xl font-bold text-white">{verification.data.checkedCount}</p></div><div className="border border-white/10 p-3"><p className="text-[10px] uppercase tracking-[.14em] text-slate-500">Broken entry</p><p className="mt-2 text-2xl font-bold text-white">{verification.data.brokenAtEntryId ?? "—"}</p></div><div className="border border-white/10 p-3 sm:col-span-1"><p className="text-[10px] uppercase tracking-[.14em] text-slate-500">Result</p><p className="mt-2 text-sm font-semibold text-slate-100">{verification.data.valid ? "All links verified" : verification.data.reason ?? "Manual review required"}</p></div></div> : null}</NeonFrame>;
 }
 
 function CircuitDashboard() {

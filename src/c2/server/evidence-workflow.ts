@@ -107,12 +107,21 @@ export async function listEvidenceLineage(userId: number, evidenceArtifactId: nu
 
 export async function replayEvidenceProvenance(userId: number, evidenceArtifactId: number) {
   const { db, artifact } = await loadArtifact(userId, evidenceArtifactId);
-  const [provenance, lineage, links] = await Promise.all([
-    db.select().from(evidenceProvenance).where(eq(evidenceProvenance.evidenceArtifactId, artifact.id)).limit(1),
+  const [provenanceHistory, lineage, links] = await Promise.all([
+    db.select().from(evidenceProvenance).where(eq(evidenceProvenance.evidenceArtifactId, artifact.id)).orderBy(asc(evidenceProvenance.capturedAt), asc(evidenceProvenance.id)),
     db.select().from(evidenceLineage).where(and(eq(evidenceLineage.workspaceId, artifact.workspaceId), eq(evidenceLineage.evidenceArtifactId, artifact.id))).orderBy(asc(evidenceLineage.createdAt), asc(evidenceLineage.id)),
     db.select().from(researchEvidenceLinks).where(and(eq(researchEvidenceLinks.workspaceId, artifact.workspaceId), eq(researchEvidenceLinks.evidenceArtifactId, artifact.id))).orderBy(asc(researchEvidenceLinks.createdAt)),
   ]);
-  return { artifact, provenance: provenance[0] ?? null, lineage, researchLinks: links, replayable: Boolean(provenance[0] || lineage.length || links.length) };
+  const acquisitionHistory = provenanceHistory.filter(entry => entry.sourceType === "worker_acquisition");
+  return {
+    artifact,
+    provenance: provenanceHistory.at(-1) ?? null,
+    provenanceHistory,
+    acquisitionHistory,
+    lineage,
+    researchLinks: links,
+    replayable: Boolean(provenanceHistory.length || lineage.length || links.length),
+  };
 }
 
 export async function listFindingRelations(userId: number, findingId: number) {

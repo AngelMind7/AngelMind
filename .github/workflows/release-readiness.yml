@@ -29,3 +29,6 @@ jobs:
 
       - name: Monitoring and alerting contract
         run: node scripts/check-monitoring-contract.mjs
+
+      - name: Production readiness evidence contract
+        run: node scripts/check-production-readiness-evidence.mjs

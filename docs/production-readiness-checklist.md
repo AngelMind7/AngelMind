@@ -1,5 +1,7 @@
 # AngelMind production readiness checklist
 
+The machine-readable release declaration is [`production-readiness-evidence.json`](./production-readiness-evidence.json) and is checked by `pnpm check:production-readiness-evidence`. Its current decision is intentionally **not-production-ready** until environment, provider, backup, operations, and human sign-off gates are evidenced.
+
 This checklist separates repository-complete work from checks that require a real staging or production environment. It is intended to prevent a passing local build from being mistaken for a verified live deployment.
 
 ## Repository gates

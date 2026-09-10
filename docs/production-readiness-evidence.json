@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "repository": "AngelMind7/AngelMind",
+  "decision": "not-production-ready",
+  "repositoryBaseline": "self-contained-lab-verified",
+  "gates": {
+    "repositoryTests": { "status": "verified", "evidence": "pnpm test -- --run" },
+    "typecheck": { "status": "verified", "evidence": "pnpm check" },
+    "productionBuild": { "status": "verified", "evidence": "pnpm build" },
+    "migrationContracts": { "status": "verified", "evidence": "journal+safety+rollback checks" },
+    "selfContainedLab": { "status": "verified", "evidence": "scripts/check-self-contained-lab.mjs" },
+    "stagingDatabase": { "status": "pending-environment", "evidence": "STAGING_DATABASE_URL is not available to repository CI" },
+    "stagingE2E": { "status": "pending-environment", "evidence": "E2E_BASE_URL and short-lived test token are not available" },
+    "productionDeployment": { "status": "blocked-authorization", "evidence": "deployment hook and protected environment approval required" },
+    "productionBackupRestore": { "status": "pending-environment", "evidence": "live backup provider and restore target are not available" },
+    "externalProviders": { "status": "disabled-by-default", "evidence": "provider activation requires secrets, allowlist, and separate review" },
+    "monitoringEscalation": { "status": "pending-operations", "evidence": "production alert destination and on-call owner are not configured" },
+    "humanReleaseSignoff": { "status": "pending-human", "evidence": "release owner and independent reviewer must be recorded" }
+  },
+  "prohibitedClaims": [
+    "production-ready",
+    "live-deployed",
+    "production-database-verified",
+    "third-party-target-authorized"
+  ]
+}

@@ -1,10 +1,10 @@
 import { createHash } from "node:crypto";
-import { and, asc, desc, eq, like, ne, or } from "drizzle-orm";
+import { and, asc, desc, eq, like, lt, ne, or } from "drizzle-orm";
 import { evidenceArtifacts, evidenceLineage, evidenceProvenance, findingRelations, findingRetests, findings, outboxEvents, researchEvidenceLinks, researchHypotheses, researchObservations, reportVersions, workspaces } from "../database/schema";
 import { upsertSearchDocument } from "./global-search";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
-import { assertExpectedRevision, nextRevision } from "./_core/query-safety";
+import { assertExpectedRevision, decodePageCursor, nextRevision, pageResult } from "./_core/query-safety";
 import { assertRetestOutcome } from "./retest-validation";
 import { appendAuditChainEntry } from "./control-plane/audit-chain";
 import { assertEventPayload, assertEventType } from "./event-contract";
@@ -73,6 +73,19 @@ export async function listEvidenceWithProvenance(userId: number, workspaceId: nu
   const db = await getDb();
   if (!db) return [];
   return db.select({ id: evidenceArtifacts.id, findingId: evidenceArtifacts.findingId, artifactType: evidenceArtifacts.artifactType, storageReference: evidenceArtifacts.storageReference, sha256: evidenceArtifacts.sha256, createdAt: evidenceArtifacts.createdAt, provenanceId: evidenceProvenance.id, sourceType: evidenceProvenance.sourceType, sourceReference: evidenceProvenance.sourceReference, capturedAt: evidenceProvenance.capturedAt, capturedByUserId: evidenceProvenance.capturedByUserId, provenanceMetadata: evidenceProvenance.metadata }).from(evidenceArtifacts).leftJoin(evidenceProvenance, eq(evidenceProvenance.evidenceArtifactId, evidenceArtifacts.id)).where(eq(evidenceArtifacts.workspaceId, workspaceId)).orderBy(desc(evidenceArtifacts.createdAt));
+}
+
+export async function listEvidencePage(userId: number, input: { workspaceId: number; pageSize?: number; cursor?: string }) {
+  if (!(await canAccessWorkspace(userId, input.workspaceId, "read"))) throw new Error("Workspace tidak dapat diakses.");
+  const db = await getDb();
+  if (!db) return { items: [], nextCursor: null };
+  const pageSize = Math.min(Math.max(input.pageSize ?? 25, 1), 100);
+  const cursor = decodePageCursor(input.cursor);
+  const condition = cursor
+    ? and(eq(evidenceArtifacts.workspaceId, input.workspaceId), or(lt(evidenceArtifacts.createdAt, new Date(cursor.createdAt)), and(eq(evidenceArtifacts.createdAt, new Date(cursor.createdAt)), lt(evidenceArtifacts.id, cursor.id))))
+    : eq(evidenceArtifacts.workspaceId, input.workspaceId);
+  const rows = await db.select({ id: evidenceArtifacts.id, findingId: evidenceArtifacts.findingId, artifactType: evidenceArtifacts.artifactType, storageReference: evidenceArtifacts.storageReference, sha256: evidenceArtifacts.sha256, status: evidenceArtifacts.status, createdAt: evidenceArtifacts.createdAt, provenanceId: evidenceProvenance.id, sourceType: evidenceProvenance.sourceType, sourceReference: evidenceProvenance.sourceReference, capturedAt: evidenceProvenance.capturedAt, capturedByUserId: evidenceProvenance.capturedByUserId, provenanceMetadata: evidenceProvenance.metadata }).from(evidenceArtifacts).leftJoin(evidenceProvenance, eq(evidenceProvenance.evidenceArtifactId, evidenceArtifacts.id)).where(condition).orderBy(desc(evidenceArtifacts.createdAt), desc(evidenceArtifacts.id)).limit(pageSize + 1);
+  return pageResult(rows, pageSize);
 }
 
 export async function recordEvidenceProvenance(userId: number, input: { evidenceArtifactId: number; sourceType: string; sourceReference: string; capturedAt: Date; metadata?: Record<string, unknown> }) {

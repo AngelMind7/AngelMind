@@ -61,7 +61,7 @@ import { createNotificationDeliveryLedger } from "../notification-delivery";
 import { isCronDueAt, normalizeUtcCronExpression } from "./cron";
 import { parseStoredProgramScope } from "./program-scope";
 import { verifyAuthorizationReference } from "./authorization-reference";
-import { assertExpectedRevision, nextRevision } from "../_core/query-safety";
+import { assertExpectedRevision, decodePageCursor, nextRevision, pageResult } from "../_core/query-safety";
 import { assertCursor, createCursor, normalizePageSize } from "../pagination";
 import { appendAuditChainEntry, verifyAuditChain } from "./audit-chain";
 
@@ -1296,6 +1296,22 @@ export async function listAudit(
     .where(condition)
     .orderBy(desc(auditEvents.createdAt))
     .limit(100);
+}
+
+export async function listAuditPage(userId: number, input: { workspaceId: number; traceId?: string; pageSize?: number; cursor?: string }) {
+  await readableWorkspaceIdOrThrow(userId, input.workspaceId);
+  const db = await getDb();
+  if (!db) return { items: [], nextCursor: null };
+  const pageSize = Math.min(Math.max(input.pageSize ?? 25, 1), 100);
+  const cursor = decodePageCursor(input.cursor);
+  const normalizedTraceId = input.traceId?.trim().slice(0, 128);
+  const conditions = [
+    eq(auditEvents.workspaceId, input.workspaceId),
+    normalizedTraceId ? eq(auditEvents.traceId, normalizedTraceId) : undefined,
+    cursor ? or(lt(auditEvents.createdAt, new Date(cursor.createdAt)), and(eq(auditEvents.createdAt, new Date(cursor.createdAt)), lt(auditEvents.id, cursor.id))) : undefined,
+  ];
+  const rows = await db.select().from(auditEvents).where(and(...conditions)).orderBy(desc(auditEvents.createdAt), desc(auditEvents.id)).limit(pageSize + 1);
+  return pageResult(rows, pageSize);
 }
 
 export async function verifyWorkspaceAuditChain(userId: number, workspaceId: number) {

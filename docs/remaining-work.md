@@ -266,3 +266,9 @@ API rate limiting now feeds repeated violations into a bounded behavioral risk r
 ## Latest implementation slice — 2026-09-06 (Versioned envelope encryption)
 
 Sensitive MFA secrets now use a reusable AES-256-GCM envelope format carrying an explicit key version. Decryption accepts the active key and an optional `MFA_ENCRYPTION_KEY_PREVIOUS` during rotation, while legacy three-part MFA ciphertext remains readable for migration compatibility. Tamper rejection, key-version selection, and previous-key rotation are covered by deterministic tests. Centralized KMS/HSM integration and live rotation drills remain environment-gated.
+
+## Latest implementation slice — 2026-09-10 (Evidence and audit pagination)
+
+Evidence artifacts now expose a bounded cursor-paginated `evidence.listPage` procedure using a deterministic `createdAt`/ID continuation cursor, while the Evidence Vault renders page counts and a next-page control without weakening workspace authorization. Audit records now expose a matching `audit.listPage` procedure with optional trace filtering, bounded page size, and deterministic continuation. Existing unpaginated procedures remain backward compatible for legacy clients. Domain-wide pagination for other bounded operational lists remains follow-up work.
+
+The Evidence Vault now renders provenance replay history and acquisition timeline records, and the Operations Console exposes workspace audit-chain verification results including checked count, first broken entry, and reason. Provider activation, distributed tracing, and live environment verification remain deployment-gated.

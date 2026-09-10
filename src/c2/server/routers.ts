@@ -1691,6 +1691,9 @@ export const appRouter = router({
           input.workspaceId
         )
       ),
+    listPage: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), pageSize: z.number().int().min(1).max(100).optional(), cursor: z.string().max(512).optional() }))
+      .query(({ ctx, input }) => evidenceWorkflow.listEvidencePage(ctx.user.id, input)),
     recordProvenance: protectedProcedure
       .input(
         z.object({
@@ -2778,6 +2781,9 @@ export const appRouter = router({
       .query(({ ctx, input }) =>
         controlPlane.listAudit(ctx.user.id, input.workspaceId, input.traceId)
       ),
+    listPage: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), traceId: z.string().trim().max(128).optional(), pageSize: z.number().int().min(1).max(100).optional(), cursor: z.string().max(512).optional() }))
+      .query(({ ctx, input }) => controlPlane.listAuditPage(ctx.user.id, input)),
     verifyChain: protectedProcedure
       .input(z.object({ workspaceId: z.number().int().positive() }))
       .query(({ ctx, input }) => controlPlane.verifyWorkspaceAuditChain(ctx.user.id, input.workspaceId)),

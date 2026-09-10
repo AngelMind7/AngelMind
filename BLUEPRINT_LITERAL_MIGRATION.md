@@ -7,14 +7,14 @@ This branch migrates the existing AngelMind implementation toward the repository
 | Blueprint target | Current implementation during migration | Migration rule |
 |---|---|---|
 | `apps/frontend-angular` | `client/` | Move only after the frontend build entrypoint and route tests have an equivalent target build. |
-| `apps/gateway-dotnet` | `server/_core`, `server/rest-v1.ts`, `server/routers.ts` | Requires a separately buildable gateway implementation; no source deletion before parity. |
-| `apps/orchestrator-langgraph` | `server/governed-execution-service.ts`, worker, research workflow | Requires durable lifecycle and contract parity. |
-| `src/c2/server` | `server/` | Compatibility source remains until the replacement passes all API and database gates. |
-| `src/c2/modules` | `server/control-plane`, `server/engine`, `runtime/` | Migrate by bounded domain, not by blind file moves. |
+| `apps/gateway-dotnet` | `src/c2/server/_core`, `src/c2/server/rest-v1.ts`, `src/c2/server/routers.ts` | Requires a separately buildable gateway implementation; no source deletion before parity. |
+| `apps/orchestrator-langgraph` | `src/c2/server/governed-execution-service.ts`, worker, research workflow | Requires durable lifecycle and contract parity. |
+| `src/c2/server` | `src/c2/server/` | Compatibility source remains until the replacement passes all API and database gates. |
+| `src/c2/modules` | `src/c2/server/control-plane`, `src/c2/server/engine`, `src/c2/modules/adapter_runtime/` | Migrate by bounded domain, not by blind file moves. |
 | `contracts` | `contracts/`, `docs/`, route/schema declarations | Contract files are canonical; generated or duplicate declarations must be proven equivalent first. |
 | `lab` | `lab/self-contained`, `docker-compose.yml`, integration fixtures | Expand by scenario and acceptance row. |
 | `deploy` | `deploy/`, Railway files, Dockerfiles, workflows | Provider-specific files remain until replacement deployment is verified. |
-| `tests` | `server/**/*.test.ts`, `client/**/*.test.ts`, `e2e/`, `apps/orchestrator-langgraph/tests` | Move tests only when tooling and coverage remain identical. |
+| `tests` | `src/c2/server/**/*.test.ts`, `apps/frontend-angular/**/*.test.ts`, `e2e/`, `apps/orchestrator-langgraph/tests` | Move tests only when tooling and coverage remain identical. |
 
 ## Safety rules
 

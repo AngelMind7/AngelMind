@@ -1,7 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { computeRetryDelayMs, parseJobPayload, resolveJobTraceContext, shouldDeadLetter, toolExecutionJobHandler } from "./worker";
+import { ADAPTER_HEALTH_REFRESH_INTERVAL_MS, computeRetryDelayMs, parseJobPayload, resolveJobTraceContext, shouldDeadLetter, toolExecutionJobHandler } from "./worker";
 
 describe("durable worker retry policy", () => {
+  it("uses the five-minute adapter health refresh cadence", () => {
+    expect(ADAPTER_HEALTH_REFRESH_INTERVAL_MS).toBe(5 * 60_000);
+  });
+
   it("validates and forwards tool execution jobs to the governed pipeline", async () => {
     const calls: unknown[] = [];
     const handler = toolExecutionJobHandler(async payload => { calls.push(payload); return {} as never; });

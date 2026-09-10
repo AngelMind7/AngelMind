@@ -45,6 +45,7 @@ export const routedProcedurePermissions = {
   "tools.runtimeAdapters": "read-member",
   "tools.runtimeHealth": "read-member",
   "tools.run": "responder",
+  "tools.runGoverned": "responder",
   "operations.members": "owner",
   "operations.emailProviderHealth": "authenticated",
   "operations.verifyEmailProvider": "authenticated",

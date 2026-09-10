@@ -11,6 +11,7 @@ import { expireAssetVerifications } from "./asset-verification";
 import { executeToolPipeline } from "./tool-execution-pipeline";
 import type { ToolRuntimeRequest } from "./tool-runtime";
 import { executeResearchTaskJob } from "./research-task-executor";
+import { checkRegisteredAdapterHealth } from "./tool-runtime";
 
 export type WorkerJob = {
   id: number;
@@ -28,6 +29,7 @@ export const WORKER_HEARTBEAT_INTERVAL_MS = 10_000;
 export const MODEL_CATALOG_REFRESH_INTERVAL_MS = 15 * 60_000;
 export const MEMORY_PURGE_INTERVAL_MS = 15 * 60_000;
 export const ASSET_VERIFICATION_EXPIRY_INTERVAL_MS = 15 * 60_000;
+export const ADAPTER_HEALTH_REFRESH_INTERVAL_MS = 5 * 60_000;
 export const MAX_JOB_PAYLOAD_BYTES = 1_000_000;
 export const MAX_TRACE_FIELD_LENGTH = 256;
 
@@ -143,6 +145,18 @@ export function toolExecutionJobHandler(onExecute: typeof executeToolPipeline = 
 }
 
 if (process.env.RUN_WORKER === "true") {
+  const refreshAdapterHealth = async () => {
+    try {
+      const health = await checkRegisteredAdapterHealth();
+      const available = health.filter(item => item.available).length;
+      console.info(`[worker] adapter health refreshed available=${available} total=${health.length}`);
+    } catch (error) {
+      console.error(`[worker] adapter health refresh failed: ${error instanceof Error ? error.message : "unknown error"}`);
+    }
+  };
+  void refreshAdapterHealth();
+  const adapterHealthTimer = setInterval(() => void refreshAdapterHealth(), ADAPTER_HEALTH_REFRESH_INTERVAL_MS);
+  adapterHealthTimer.unref?.();
   const refreshCatalog = async () => {
     try {
       const result = await refreshModelCatalog();

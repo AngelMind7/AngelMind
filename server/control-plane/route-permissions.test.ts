@@ -6,7 +6,7 @@ import {
 
 describe("routed procedure authorization contract", () => {
   it("contains every workspace-scoped operation with an explicit role requirement", () => {
-    expect(Object.keys(routedProcedurePermissions)).toHaveLength(120);
+    expect(Object.keys(routedProcedurePermissions)).toHaveLength(121);
     expect(routedProcedurePermissions["operations.addMember"]).toBe("owner");
     expect(routedProcedurePermissions["operations.runRestoreDrill"]).toBe(
       "owner"
@@ -57,6 +57,7 @@ describe("routed procedure authorization contract", () => {
       "responder"
     );
     expect(routedProcedurePermissions["tools.run"]).toBe("responder");
+    expect(routedProcedurePermissions["tools.runGoverned"]).toBe("responder");
     expect(routedProcedurePermissions["ai.startRun"]).toBe("responder");
     expect(routedProcedurePermissions["ai.updateRun"]).toBe("responder");
     expect(routedProcedurePermissions["ai.evaluateRun"]).toBe(

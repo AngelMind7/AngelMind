@@ -52,6 +52,7 @@ import { buildUsageInvoicePreview } from "./usage-billing-contract";
 import { analyzeKnowledgeGraph } from "./knowledge-graph-contract";
 import * as persistedOrchestration from "./persisted-orchestration";
 import { evaluateModelHealth } from "./ai-health-contract";
+import { executeGovernedCapability } from "./governed-execution-service";
 
 const workspaceInput = z.object({
   name: z.string().min(2).max(120),
@@ -824,6 +825,18 @@ export const appRouter = router({
           scopeValidated: true,
         });
       }),
+    runGoverned: protectedProcedure
+      .input(z.object({
+        workspaceId: z.number().int().positive(),
+        capability: z.string().trim().min(1).max(160),
+        mode: z.enum(["offline_artifact", "passive_readonly", "active_nondestructive", "privileged_or_destructive"]),
+        input: z.string().max(2_000_000),
+        target: z.string().trim().min(1).max(255).optional(),
+        approvalId: z.number().int().positive().optional(),
+        sessionId: z.number().int().positive().optional(),
+        assetId: z.number().int().positive().optional(),
+      }))
+      .mutation(({ ctx, input }) => executeGovernedCapability({ userId: ctx.user.id, ...input })),
   }),
   control: router({
     dashboard: protectedProcedure.query(({ ctx }) =>

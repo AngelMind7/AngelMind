@@ -33,15 +33,15 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 | Submission tracking | Implemented (core) | `submissions` + `submissionEvents` migration, transition API, readiness/human-review gate. |
 | Comments/mentions/review | Implemented (core) | Workspace-scoped comments, persisted mentions, in-app mention notifications, parentCommentId validation, recursive threaded rendering, and reviewer checks are available; provider delivery remains environment-dependent. |
 | Notifications | Implemented (core) | Cursor polling, comment mention delivery, event preferences, bounded retry backoff, delivery ledger, and outbound safety boundary are available; provider activation remains gated. |
-| Search/saved views/tags/notes | Implemented (core) | Workspace-scoped global search across findings, assets, sessions, programs, and reports. Saved views/tags/notes remain partial. |
-| Knowledge graph/intelligence | Partial | Explicit relationship records and change detection signals. |
+| Search/saved views/tags/notes | Implemented (core) | Workspace-scoped search, saved views, tags, notes, visibility-aware indexing, private-note isolation, and search consistency hooks. |
+| Knowledge graph/intelligence | Implemented (core) | Explicit relationship records, time-bounded traversal, orphan/cycle/integrity analysis, confidence signals, and workspace-scoped graph analysis. |
 
 ## Commit group D — AI and platform reliability
 
 | Area | Status awal | Target commit evidence |
 |---|---|---|
 | Model registry/gateway health | Partial | Provider/model capability metadata plus admin health status, latency, and error metadata; live provider probes remain environment-dependent. |
-| AI orchestration | Partial | Deterministic planner, role/task assignment, dependency gating, confidence-filtered synthesis, cross-check verdict, and human-review signal; provider execution and persisted agent-run graph remain environment/architecture dependent. |
+| AI orchestration | Implemented (core) | Deterministic planner, role/task assignment, dependency gating, confidence-filtered synthesis, cross-check verdict, human-review signal, persisted orchestration runs/nodes, plan hashes, and evidence-gated node transitions; live provider execution remains environment-dependent. |
 | AI provenance/memory | Implemented (core) | Run trace, input/output references, workspace isolation, retention-aware output retrieval, scheduled purge worker, and expired payload deletion are available; live provider verification remains environment-dependent. |
 | Job queue/retry/DLQ | Implemented (core) | Persistent claim lease recovery, retry backoff, max-attempt dead-letter, and completion/failure helpers. |
 | Events/outbox/idempotency | Implemented (core) | Versioned schemaVersion, transactional persistence, dedupe/idempotency keys, bounded delivery transitions, worker dispatcher, unknown-handler dead-lettering, and admin-only failed-event replay are available; live replay drill remains environment-dependent. |
@@ -54,8 +54,8 @@ Dokumen ini adalah source of truth untuk delivery bertahap terhadap blueprint. S
 |---|---|---|
 | Public website | Partial | Blueprint route inventory, reviewed content, legal/trust/status boundaries, no interactive demo route, and public safety E2E checks. |
 | Developer platform | Implemented (core) | Public API docs/playground routes, scoped API key create/rotation/revocation, workspace authorization, and hashed secrets. |
-| Integrations | Blocked/Partial | Credential scopes, sync state, webhook/audit contracts; external activation requires secrets and review. |
-| Billing/usage/invoices | Partial/Blocked | Data model and usage contracts can be implemented; payment provider activation requires account configuration. |
+| Integrations | Implemented (core) | Workspace-scoped credential references, provider scope validation, synthetic sync preview, rejected-event handling, deterministic evidence hashes, and preview-only dispatch; external activation requires secrets and review. |
+| Billing/usage/invoices | Implemented (core) | Deterministic usage ledger, duplicate protection, period validation, quota calculation, invoice preview, and evidence hash; payment provider activation remains disabled until configured. |
 | Observability/incident/backup | Implemented (core) | Health/readiness/metrics endpoints, trace IDs, incident workflow, signed archive/restore contracts; provider backup drill remains deployment dependent. |
 | Accessibility/performance/i18n | Implemented (core) | Localization/accessibility inventories, semantic dashboard navigation labels, lazy routes, PWA checks, vendor chunk splitting, public safety E2E, enforced bundle budgets, and manual staging axe workflow are available; live staging execution remains environment-dependent. |
 

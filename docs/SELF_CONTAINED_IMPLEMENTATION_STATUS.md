@@ -10,20 +10,20 @@ The repository has passed the current local verification baseline:
 
 | Area | Result |
 |---|---:|
-| Full TypeScript test suite | 141 files passed, 466 tests passed, 3 repository-declared skips |
+| Full TypeScript test suite | 147 files passed, 484 tests passed, 3 repository-declared skips |
 | Core P0 governance tests | 9 files passed, 37 tests passed |
 | Self-contained lab manifest | Passed |
 | P0 acceptance IDs represented | 14/14 |
 | P1 acceptance IDs represented | 18/18 |
-| Master contract | Passed; 133 routes, 325 concrete API endpoints |
-| API v1 and API surface | Passed; 267 named endpoints, 406 concrete API surface entries |
+| Master contract | Passed; 133 routes, 332 concrete API endpoints |
+| API v1 and API surface | Passed; 267 named endpoints, 413 concrete API surface entries |
 | UTF module contract | Passed; 72 governed manifests |
 | Tool runtime contract | Passed; 73 UTF modules and 17 executable adapters represented |
 | Red-team contract | Passed; simulation-only high-risk boundary |
 | Bug bounty contract | Passed; 14 routes |
 | Provider-neutral contract | Passed |
-| Migration journal | Passed; 83 SQL files and 83 journal entries |
-| Migration safety | Passed; 83 migration files inspected |
+| Migration journal | Passed; 84 SQL files and 84 journal entries |
+| Migration safety | Passed; 84 migration files inspected |
 | Migration rollback contract | Passed for the current rollback contract |
 | Monitoring contract | Passed; 7 alerts and 9 metric references |
 

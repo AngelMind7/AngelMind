@@ -50,6 +50,7 @@ import * as integrations from "./integrations";
 import { planIntegrationSync } from "./integration-contract";
 import { buildUsageInvoicePreview } from "./usage-billing-contract";
 import { analyzeKnowledgeGraph } from "./knowledge-graph-contract";
+import * as persistedOrchestration from "./persisted-orchestration";
 
 const workspaceInput = z.object({
   name: z.string().min(2).max(120),
@@ -108,6 +109,17 @@ export const appRouter = router({
         if (!Array.isArray(events)) throw new Error("Usage events must be an array.");
         return buildUsageInvoicePreview({ workspaceId: input.workspaceId, periodStart: input.periodStart, periodEnd: input.periodEnd, quotaCents: input.quotaCents, events: events as Parameters<typeof buildUsageInvoicePreview>[0]["events"] });
       }),
+  }),
+  orchestration: router({
+    create: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), objective: z.string().trim().min(10).max(2_000), roles: z.array(z.enum(["scope", "evidence", "risk", "report"])).min(1).max(4), evidenceReferences: z.array(z.string().trim().min(1).max(512)).max(100).optional() }))
+      .mutation(({ ctx, input }) => persistedOrchestration.createPersistedOrchestration(ctx.user.id, input)),
+    get: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), runId: z.number().int().positive() }))
+      .query(({ ctx, input }) => persistedOrchestration.getPersistedOrchestration(ctx.user.id, input.workspaceId, input.runId)),
+    setNodeStatus: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), runId: z.number().int().positive(), nodeId: z.number().int().positive(), status: z.enum(["running", "completed", "failed", "needs_review"]), observationJson: z.string().max(100_000).optional(), evidenceHash: z.string().regex(/^[a-f0-9]{64}$/).optional() }))
+      .mutation(({ ctx, input }) => persistedOrchestration.setOrchestrationNodeStatus(ctx.user.id, input)),
   }),
   auth: router({
     apiKeys: protectedProcedure.query(({ ctx }) =>

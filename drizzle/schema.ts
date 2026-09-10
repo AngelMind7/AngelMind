@@ -624,6 +624,34 @@ export const aiRunOutputs = mysqlTable("aiRunOutputs", {
   createdAt: timestamp("createdAt").defaultNow().notNull(),
 }, table => [uniqueIndex("ai_run_output_run_uq").on(table.runId), index("ai_run_output_workspace_created_idx").on(table.workspaceId, table.createdAt)]);
 
+export const orchestrationRunStatus = ["queued", "running", "completed", "failed", "needs_review", "cancelled"] as const;
+export const orchestrationNodeStatus = ["queued", "blocked", "running", "completed", "failed", "needs_review"] as const;
+export const orchestrationRuns = mysqlTable("orchestrationRuns", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  createdByUserId: int("createdByUserId").notNull(),
+  objective: varchar("objective", { length: 2_000 }).notNull(),
+  evidenceReferences: text("evidenceReferences").notNull(),
+  planHash: varchar("planHash", { length: 64 }).notNull(),
+  status: mysqlEnum("status", orchestrationRunStatus).default("queued").notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [index("orchestration_run_workspace_created_idx").on(table.workspaceId, table.createdAt), index("orchestration_run_status_idx").on(table.status, table.updatedAt)]);
+export const orchestrationNodes = mysqlTable("orchestrationNodes", {
+  id: int("id").autoincrement().primaryKey(),
+  workspaceId: int("workspaceId").notNull().references(() => workspaces.id, { onDelete: "cascade" }),
+  orchestrationRunId: int("orchestrationRunId").notNull().references(() => orchestrationRuns.id, { onDelete: "cascade" }),
+  taskKey: varchar("taskKey", { length: 120 }).notNull(),
+  role: varchar("role", { length: 40 }).notNull(),
+  objective: varchar("objective", { length: 2_000 }).notNull(),
+  dependsOn: text("dependsOn").notNull(),
+  status: mysqlEnum("status", orchestrationNodeStatus).default("queued").notNull(),
+  observationJson: text("observationJson"),
+  evidenceHash: varchar("evidenceHash", { length: 64 }),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+}, table => [uniqueIndex("orchestration_node_run_task_uq").on(table.orchestrationRunId, table.taskKey), index("orchestration_node_workspace_status_idx").on(table.workspaceId, table.status, table.updatedAt)]);
+
 export const aiMemoryScope = ["user", "workspace", "session", "program"] as const;
 export const aiMemoryStatus = ["active", "archived", "purged"] as const;
 export const aiMemories = mysqlTable("aiMemories", {

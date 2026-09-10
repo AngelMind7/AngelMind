@@ -1118,6 +1118,8 @@ export const restoreDrillRuns = mysqlTable("restoreDrillRuns", {
   errorMessage: varchar("errorMessage", { length: 2_000 }),
   startedAt: timestamp("startedAt").defaultNow().notNull(),
   completedAt: timestamp("completedAt"),
+  rtoMs: int("rtoMs"),
+  rpoReference: varchar("rpoReference", { length: 255 }),
 }, table => [uniqueIndex("restore_drill_archive_key_uq").on(table.archiveId, table.idempotencyKey), index("restore_drill_workspace_started_idx").on(table.workspaceId, table.startedAt), index("restore_drill_archive_status_idx").on(table.archiveId, table.status)]);
 
 export const policyVersions = mysqlTable("policyVersions", {

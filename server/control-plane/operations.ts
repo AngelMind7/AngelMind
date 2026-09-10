@@ -710,6 +710,7 @@ export async function runAuditArchiveDrill(
       replayed: true as const,
     };
   }
+  const drillStartedAt = Date.now();
   try {
     const verification = await verifyAuditArchive(ownerUserId, archiveId);
     if (!verification.valid)
@@ -723,6 +724,7 @@ export async function runAuditArchiveDrill(
       .update(auditArchives)
       .set({ lastRestoreDrillAt: new Date() })
       .where(eq(auditArchives.id, archiveId));
+    const rtoMs = Date.now() - drillStartedAt;
     await db
       .update(restoreDrillRuns)
       .set({
@@ -730,6 +732,8 @@ export async function runAuditArchiveDrill(
         valid: 1,
         recordsChecked: JSON.stringify(plan.recordCounts),
         completedAt: new Date(),
+        rtoMs,
+        rpoReference: archive.createdAt.toISOString(),
       })
       .where(
         and(
@@ -743,6 +747,8 @@ export async function runAuditArchiveDrill(
       mode: "plan-only" as const,
       requiresHumanConfirmation: plan.requiresHumanConfirmation,
       recordsChecked: plan.recordCounts,
+      rtoMs,
+      rpoReference: archive.createdAt.toISOString(),
       mutationPerformed: false as const,
       rollbackRequired: false as const,
       replayed: false as const,
@@ -754,7 +760,7 @@ export async function runAuditArchiveDrill(
         : "Restore drill failed.";
     await db
       .update(restoreDrillRuns)
-      .set({ status: "failed", errorMessage: message, completedAt: new Date() })
+      .set({ status: "failed", errorMessage: message, completedAt: new Date(), rtoMs: Date.now() - drillStartedAt, rpoReference: archive.createdAt.toISOString() })
       .where(
         and(
           eq(restoreDrillRuns.archiveId, archiveId),

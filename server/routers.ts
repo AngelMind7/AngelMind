@@ -48,6 +48,7 @@ import { executeIdempotent } from "./idempotency";
 import * as reputation from "./reputation";
 import * as integrations from "./integrations";
 import { planIntegrationSync } from "./integration-contract";
+import { buildUsageInvoicePreview } from "./usage-billing-contract";
 
 const workspaceInput = z.object({
   name: z.string().min(2).max(120),
@@ -94,6 +95,17 @@ export const appRouter = router({
       .query(({ ctx, input }) => {
         integrations.assertIntegrationAccess(ctx.user.id, input.workspaceId, "read");
         return planIntegrationSync({ provider: input.provider, status: input.status, scopes: input.scopes, fixture: input.fixture });
+      }),
+  }),
+  usage: router({
+    invoicePreview: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), periodStart: z.string().datetime(), periodEnd: z.string().datetime(), quotaCents: z.number().int().min(0).max(100_000_000), events: z.string().max(1_000_000) }))
+      .query(({ ctx, input }) => {
+        integrations.assertIntegrationAccess(ctx.user.id, input.workspaceId, "read");
+        let events: unknown;
+        try { events = JSON.parse(input.events); } catch { throw new Error("Usage events must be valid JSON."); }
+        if (!Array.isArray(events)) throw new Error("Usage events must be an array.");
+        return buildUsageInvoicePreview({ workspaceId: input.workspaceId, periodStart: input.periodStart, periodEnd: input.periodEnd, quotaCents: input.quotaCents, events: events as Parameters<typeof buildUsageInvoicePreview>[0]["events"] });
       }),
   }),
   auth: router({

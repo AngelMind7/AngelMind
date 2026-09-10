@@ -36,7 +36,7 @@ for (const key of expected) {
 for (const binary of ["ffuf", "dalfox", "interactsh-client", "cloudfox", "nuclei", "subfinder", "httpx", "gitleaks", "trivy", "sqlmap", "jwt_tool.py", "ssrfmap", "graphql-cop", "naabu", "katana"]) {
   if (!smoke.includes(binary)) failures.push(`smoke test missing ${binary}`);
 }
-for (const binary of ["naabu", "katana"]) if (!docker.includes(`go install github.com/projectdiscovery/${binary}`)) failures.push(`tools image does not provision ${binary}`);
+for (const binary of ["naabu", "katana"]) if (!docker.includes(`$name`) || !docker.includes(binary)) failures.push(`self-contained tools image does not provision ${binary} through controlled validator`);
 for (const key of ["naabu", "katana"]) if (!config.includes(`id: ${key}`)) failures.push(`runtime pack manifest missing ${key}`);
 for (const required of ["review-required-pack", "target_execution_disabled", "scope_not_validated", "human_approval_required", "privileged_mode_blocked"]) {
   if (!policy.includes(required)) failures.push(`runtime policy missing ${required}`);

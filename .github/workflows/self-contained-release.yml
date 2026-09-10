@@ -1,0 +1,42 @@
+name: Self-Contained Release Gate
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  release-gate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.15.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Self-contained lab contract
+        run: pnpm check:self-contained-lab
+      - name: Typecheck
+        run: pnpm check
+      - name: Full test suite
+        run: pnpm test
+      - name: Master and API contracts
+        run: pnpm check:master-contract && pnpm check:api-v1-contract
+      - name: Domain and runtime contracts
+        run: pnpm check:utf-contract && pnpm check:redteam-contract && pnpm check:bugbounty-contract && pnpm check:tool-runtime-contract
+      - name: Migration and provider contracts
+        run: pnpm check:provider-neutral && pnpm check:migration-journal && pnpm check:migration-safety && pnpm check:migration-rollback
+      - name: Monitoring contract
+        run: pnpm check:monitoring-contract
+      - name: Production build
+        run: pnpm build

@@ -7,9 +7,11 @@ export const integrationProviders = ["github", "gitlab", "slack", "discord", "cu
 export const integrationStatuses = ["draft", "connected", "disabled"] as const;
 export type IntegrationProvider = (typeof integrationProviders)[number];
 
-function assertAccess(userId: number, workspaceId: number, intent: "read" | "manage") {
+export function assertIntegrationAccess(userId: number, workspaceId: number, intent: "read" | "manage") {
   if (!Number.isInteger(userId) || userId < 1 || !Number.isInteger(workspaceId) || workspaceId < 1 || !canAccessWorkspace(userId, workspaceId, intent)) throw new Error("Workspace access denied.");
 }
+
+const assertAccess = assertIntegrationAccess;
 
 export async function listConnections(userId: number, workspaceId: number) {
   assertAccess(userId, workspaceId, "read");

@@ -47,6 +47,7 @@ import * as findingSimilarity from "./finding-similarity";
 import { executeIdempotent } from "./idempotency";
 import * as reputation from "./reputation";
 import * as integrations from "./integrations";
+import { planIntegrationSync } from "./integration-contract";
 
 const workspaceInput = z.object({
   name: z.string().min(2).max(120),
@@ -88,6 +89,12 @@ export const appRouter = router({
     setStatus: protectedProcedure
       .input(z.object({ workspaceId: z.number().int().positive(), integrationId: z.number().int().positive(), status: z.enum(integrations.integrationStatuses) }))
       .mutation(({ ctx, input }) => integrations.setStatus(ctx.user.id, input.workspaceId, input.integrationId, input.status)),
+    previewSync: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), provider: z.enum(["github", "gitlab", "slack", "discord", "custom"]), status: z.enum(integrations.integrationStatuses), scopes: z.array(z.string().trim().min(1).max(80)).max(10), fixture: z.string().max(100_000) }))
+      .query(({ ctx, input }) => {
+        integrations.assertIntegrationAccess(ctx.user.id, input.workspaceId, "read");
+        return planIntegrationSync({ provider: input.provider, status: input.status, scopes: input.scopes, fixture: input.fixture });
+      }),
   }),
   auth: router({
     apiKeys: protectedProcedure.query(({ ctx }) =>

@@ -36,7 +36,7 @@ done
 fixture=$(mktemp)
 trap 'rm -f "$fixture"' EXIT
 printf 'offline fixture\n' > "$fixture"
-runner_output=$(python3 /app/runtime/custom_script_runner.py "$fixture")
+runner_output=$(python3 /app/src/c2/modules/adapter_runtime/custom_script_runner.py "$fixture")
 printf '%s\n' "$runner_output" | grep -q 'angelmind.custom-artifact.v1' || { echo "FAILED custom_script_runner" >&2; missing=1; }
 echo "EXECUTED custom_script_runner: $runner_output"
 

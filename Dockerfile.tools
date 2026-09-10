@@ -6,7 +6,7 @@ FROM node:22-bookworm-slim
 ENV NODE_ENV=production PATH=/usr/local/bin:$PATH
 RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates coreutils python3 && rm -rf /var/lib/apt/lists/*
 
-COPY runtime/controlled_validator.sh /usr/local/bin/angelmind-controlled-validator
+COPY src/c2/modules/adapter_runtime/controlled_validator.sh /usr/local/bin/angelmind-controlled-validator
 RUN chmod 0755 /usr/local/bin/angelmind-controlled-validator \
   && for name in ffuf dalfox interactsh-client cloudfox nuclei subfinder httpx gitleaks trivy sqlmap jwt_tool.py ssrfmap graphql-cop naabu katana; do \
        ln -s /usr/local/bin/angelmind-controlled-validator "/usr/local/bin/$name"; \
@@ -14,7 +14,7 @@ RUN chmod 0755 /usr/local/bin/angelmind-controlled-validator \
 
 # Burp Suite Professional remains an explicit external artifact and is never downloaded.
 COPY config/tool-runtime-packs.yaml /etc/angelmind/tool-runtime-packs.yaml
-COPY runtime/custom_script_runner.py /app/runtime/custom_script_runner.py
+COPY src/c2/modules/adapter_runtime/custom_script_runner.py /app/src/c2/modules/adapter_runtime/custom_script_runner.py
 COPY scripts/runtime-tool-smoke-test.sh /usr/local/bin/runtime-tool-smoke-test
 RUN chmod 0755 /usr/local/bin/runtime-tool-smoke-test
 ENTRYPOINT ["runtime-tool-smoke-test"]

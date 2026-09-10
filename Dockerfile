@@ -76,8 +76,8 @@ COPY --from=build --chown=angelmind:angelmind /app/dist ./dist
 COPY --from=build --chown=angelmind:angelmind /app/package.json /app/pnpm-lock.yaml /app/pnpm-workspace.yaml ./
 COPY --chown=angelmind:angelmind patches ./patches
 COPY --chown=angelmind:angelmind config/tool-runtime-packs.yaml ./config/tool-runtime-packs.yaml
-COPY --chown=angelmind:angelmind runtime/rules.yar /etc/angelmind/rules.yar
-COPY --chown=angelmind:angelmind runtime/capstone_inspect.py runtime/unicorn_probe.py runtime/dkim_verify.py runtime/custom_script_runner.py ./runtime/
+COPY --chown=angelmind:angelmind src/c2/modules/adapter_runtime/rules.yar /etc/angelmind/rules.yar
+COPY --chown=angelmind:angelmind src/c2/modules/adapter_runtime/capstone_inspect.py src/c2/modules/adapter_runtime/unicorn_probe.py src/c2/modules/adapter_runtime/dkim_verify.py src/c2/modules/adapter_runtime/custom_script_runner.py ./src/c2/modules/adapter_runtime/
 COPY scripts/install-python-runtime-deps.sh /usr/local/bin/install-python-runtime-deps
 RUN chmod 0755 /usr/local/bin/install-python-runtime-deps \
     && /usr/local/bin/install-python-runtime-deps \

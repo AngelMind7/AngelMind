@@ -23,7 +23,7 @@ The smoke test fails when a provisioned command is absent, cannot produce a harm
 | `trivy` | Pinned Go binary | `TRIVY_VERSION` | Executed by container smoke test | Not used |
 | `sqlmap` | Pinned source checkout | `SQLMAP_VERSION` | Executed by container smoke test | Not used |
 | `jwt_tool.py` | Source checkout | `JWT_TOOL_REF=3bc7407cf2222d6a821dcc19c776e5a1b1cb9a9b` | Executed by container smoke test | Not used |
-| `custom_scripts` | Repository runtime | `runtime/custom_script_runner.py` | Executes offline fixture test | Network-free |
+| `custom_scripts` | Repository runtime | `src/c2/modules/adapter_runtime/custom_script_runner.py` | Executes offline fixture test | Network-free |
 | `burp-rest-cli` | Vendor artifact | Supplied separately with license/checksum | Not present unless supplied | Disabled in default image |
 | `ssrfmap` | Custom/source adapter | Supplied separately after review | Not present in default image | Disabled in default image |
 | `graphql-cop` | Custom/source adapter | Supplied separately after review | Not present in default image | Disabled in default image |

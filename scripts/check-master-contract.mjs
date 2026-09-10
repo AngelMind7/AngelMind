@@ -102,7 +102,7 @@ if (!chainEngine.includes("cycle_detected") || !chainEngine.includes("planChainE
 
 const migrations = readdirSync(resolve(root, "drizzle")).filter(file => file.endsWith(".sql"));
 requireAtLeast(migrations.length, 64, "migration files");
-if (!read("runtime/custom_script_runner.py").includes("never executes input as code")) failures.push("custom script runner safety contract is missing");
+if (!read("src/c2/modules/adapter_runtime/custom_script_runner.py").includes("never executes input as code")) failures.push("custom script runner safety contract is missing");
 const toolsDockerfile = read("Dockerfile.tools"); const smoke = read("scripts/runtime-tool-smoke-test.sh");
 for (const command of ["ffuf","dalfox","interactsh-client","cloudfox","nuclei","subfinder","httpx","gitleaks","trivy","sqlmap","jwt_tool.py","naabu","katana"]) { if (!smoke.includes(command)) failures.push(`tools smoke suite omits ${command}`); if (!toolsDockerfile.includes(command)) failures.push(`tools image does not provision ${command}`); }
 for (const marker of ["docker build --file Dockerfile.tools","docker run --rm angelmind-tools"]) if (!read(".github/workflows/container.yml").includes(marker)) failures.push(`container E2E workflow omits ${marker}`);

@@ -14,4 +14,8 @@ describe("persisted orchestration graph state contract", () => {
     expect(validatePersistedNodeTransition("queued", "running")).toBe(true);
     expect(validatePersistedNodeTransition("running", "needs_review")).toBe(true);
   });
+  it("blocks execution until all dependencies are completed", () => {
+    expect(() => validatePersistedNodeTransition("blocked", "running", undefined, ["blocked"])).toThrow(/dependencies/);
+    expect(validatePersistedNodeTransition("blocked", "running", undefined, ["completed"])).toBe(true);
+  });
 });

@@ -22,8 +22,8 @@ The repository has passed the current local verification baseline:
 | Red-team contract | Passed; simulation-only high-risk boundary |
 | Bug bounty contract | Passed; 14 routes |
 | Provider-neutral contract | Passed |
-| Migration journal | Passed; 84 SQL files and 84 journal entries |
-| Migration safety | Passed; 84 migration files inspected |
+| Migration journal | Passed; 85 SQL files and 85 journal entries |
+| Migration safety | Passed; 85 migration files inspected |
 | Migration rollback contract | Passed for the current rollback contract |
 | Monitoring contract | Passed; 7 alerts and 9 metric references |
 

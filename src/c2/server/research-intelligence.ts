@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, lt, or } from "drizzle-orm";
 import { evolutionSnapshots, failureObservations, intelligenceFeedItems, playbooks, playbookRuns, researchSessions, researchTaskDependencies, researchTasks, workspaces } from "../database/schema";
 import { getDb } from "./db";
 import { canAccessWorkspace } from "./control-plane/operations";
@@ -8,6 +8,7 @@ import { currentTraceContext } from "./_core/trace-context";
 import { enqueueJob } from "./ai-platform";
 import { fetchIntelligenceFeed } from "./intelligence-provider";
 import { playbookJobPayload } from "./playbook-executor";
+import { decodePageCursor, pageResult } from "./_core/query-safety";
 
 async function requireWorkspace(userId: number, workspaceId: number, intent: "read" | "respond" | "manage" = "read") {
   if (!(await canAccessWorkspace(userId, workspaceId, intent))) throw new Error("Workspace tidak ditemukan atau tidak dapat diakses.");
@@ -167,6 +168,16 @@ export async function runPlaybook(userId: number, input: { workspaceId: number; 
 export async function listPlaybookRuns(userId: number, workspaceId: number, sessionId?: number) {
   const { db } = await requireWorkspace(userId, workspaceId);
   return db.select().from(playbookRuns).where(sessionId ? and(eq(playbookRuns.workspaceId, workspaceId), eq(playbookRuns.sessionId, sessionId)) : eq(playbookRuns.workspaceId, workspaceId)).orderBy(desc(playbookRuns.updatedAt)).limit(100);
+}
+
+export async function listPlaybookRunsPage(userId: number, input: { workspaceId: number; sessionId?: number; pageSize?: number; cursor?: string }) {
+  const { db } = await requireWorkspace(userId, input.workspaceId);
+  const pageSize = Math.min(Math.max(input.pageSize ?? 25, 1), 100);
+  const cursor = decodePageCursor(input.cursor);
+  const scope = input.sessionId ? and(eq(playbookRuns.workspaceId, input.workspaceId), eq(playbookRuns.sessionId, input.sessionId)) : eq(playbookRuns.workspaceId, input.workspaceId);
+  const where = cursor ? and(scope, or(lt(playbookRuns.updatedAt, new Date(cursor.createdAt)), and(eq(playbookRuns.updatedAt, new Date(cursor.createdAt)), lt(playbookRuns.id, cursor.id)))) : scope;
+  const rows = await db.select().from(playbookRuns).where(where).orderBy(desc(playbookRuns.updatedAt), desc(playbookRuns.id)).limit(pageSize + 1);
+  return pageResult(rows, pageSize);
 }
 
 export async function transitionPlaybookRun(userId: number, input: { workspaceId: number; runId: number; status: PlaybookRunTransitionStatus; error?: string; completedTaskIds?: number[]; failedTaskIds?: number[]; nextTaskIndex?: number }) {

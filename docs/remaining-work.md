@@ -276,3 +276,7 @@ The Evidence Vault now renders provenance replay history and acquisition timelin
 ## Latest implementation slice — 2026-09-10 (AI run and job pagination)
 
 AI run history now exposes `ai.runsPage`, and queued/workspace jobs expose `ai.jobsPage`, both with bounded page sizes and deterministic `createdAt`/ID cursors. Workspace authorization is enforced before page reads, while the original `ai.runs` and `ai.jobs` procedures remain available for compatibility. Additional bounded operational lists remain candidates for future pagination slices.
+
+## Latest implementation slice — 2026-09-10 (Playbook run pagination)
+
+Research playbook history now exposes `research.playbookRunsPage` with optional session filtering, bounded page size, and a deterministic `updatedAt`/ID cursor. Workspace authorization remains enforced and the legacy `research.playbookRuns` procedure remains compatible. Remaining bounded lists are now explicitly tracked rather than silently treated as complete.

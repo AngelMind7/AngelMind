@@ -2533,6 +2533,9 @@ export const appRouter = router({
           input.sessionId
         )
       ),
+    playbookRunsPage: protectedProcedure
+      .input(z.object({ workspaceId: z.number().int().positive(), sessionId: z.number().int().positive().optional(), pageSize: z.number().int().min(1).max(100).optional(), cursor: z.string().max(512).optional() }))
+      .query(({ ctx, input }) => researchIntelligence.listPlaybookRunsPage(ctx.user.id, input)),
     transitionPlaybookRun: protectedProcedure
       .input(
         z.object({

@@ -24,9 +24,9 @@ const schemaTables = [
 ].map(match => match[1]);
 const migratedTables = [
   ...migrationSql.matchAll(
-    /\bCREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?`([^`]+)`/gi
+    /\bCREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?(?:`([^`]+)`|([A-Za-z0-9_]+))/gi
   ),
-].map(match => match[1]);
+].map(match => match[1] ?? match[2]);
 const uniqueSchemaTables = [...new Set(schemaTables)];
 const uniqueMigratedTables = new Set(migratedTables);
 const failures = [];
